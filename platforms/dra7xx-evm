@@ -43,6 +43,7 @@ sound/playback/alsa
 sound/capture/alsa/hisamplingrate
 sound/playback/alsa/hisamplingrate
 spi_master/mtd/spi-omap2-mcspi
+spi_master/mtd/spi-ti-qspi
 usbxhci/host/msc/xhci-hcd
 usbxhci/host/hid/xhci-hcd
 usbxhci/host/iso/xhci-hcd
