@@ -33,6 +33,18 @@ TEST_NAME=$(basename ${0%.sh})
 PREFIX=$TEST_NAME
 INC=0
 CPU=
+pass_count=0
+fail_count=0
+
+test_status_show() {
+    echo "-------- total = $(($pass_count + $fail_count))"
+    echo "-------- pass = $pass_count"
+    # report failure only if it is there
+    if [ $fail_count -ne 0 ] ; then
+      echo "-------- fail = $fail_count"
+    fi
+}
+
 
 if [ -f /sys/power/wake_lock ]; then
     use_wakelock=1
@@ -65,10 +77,12 @@ check() {
     $func $@
     if [ $? != 0 ]; then
     log_end "fail"
+    fail_count=$(($fail_count + 1))
     return 1
     fi
 
     log_end "pass"
+    pass_count=$(($pass_count + 1))
 
     return 0
 }
