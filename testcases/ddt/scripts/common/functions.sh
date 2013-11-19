@@ -42,9 +42,9 @@ test_status_show() {
     # report failure only if it is there
     if [ $fail_count -ne 0 ] ; then
       echo "-------- fail = $fail_count"
+      exit 1
     fi
 }
-
 
 if [ -f /sys/power/wake_lock ]; then
     use_wakelock=1
@@ -303,10 +303,10 @@ wakeup_time_random()
 # cleanup cpuloadgen
 remove_cpuloadgen()
 {
-    report "remove cpuloadgen"
     if [ `which cpuloadgen` ]; then
         sleep 5
         killall cpuloadgen 2>/dev/null
+    	report "killed cpuloadgen"
     else
         report "cpuloadgen is not installed"
     fi
@@ -380,10 +380,13 @@ resume_memtest()
 # kill memtester
 kill_memtest()
 {
-    MEMTESTERPID=`ps | grep memtester | grep -v grep | cut -c 0-5`
-    kill -TERM $MEMTESTERPID
-    killall memtester 2>/dev/null
-    report "killed memtest"
+     if [ `which memtester` ]; then  
+        sleep 2                      
+        killall memtester 2>/dev/null
+    	report "killed memtest"
+     else                                    
+        report "memtester is not installed"
+     fi
 }
 
 # give me some idle time
