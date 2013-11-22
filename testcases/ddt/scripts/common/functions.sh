@@ -408,13 +408,19 @@ no_suspend()
 #   -p power_state  optional; power state like 'mem' or 'standby'; default to 'mem'
 #   -t max_stime    optional; maximum suspend or standby time; default to 10s; the suspend time will be a random number
 #   -i iterations   optional; iterations to suspend/resume; default to 1
+#   -u usb_remove   optional; usb_state to indicate if usb module needs to be removed prior to suspend; default to '0'
+#                              0 indicates 'dont care'; 1 indicates 'remove usb module'; 2 indicates 'do not remove usb module'
+#   -m usb_module   optional; usb_module to indicate the name of usb module to be removed; default to ''
 suspend()
 {
-    while getopts :p:t:i: arg
+    while getopts :p:t:i:u:m: arg
     do case $arg in
       p)  power_state="$OPTARG";;
       t)  max_stime="$OPTARG";;
       i)  iterations="$OPTARG";;
+      u)  usb_remove="$OPTARG";;
+      m)  usb_module="$OPTARG";;
+
       \?)  test_print_trc "Invalid Option -$OPTARG ignored." >&2
       exit 1
       ;;
@@ -425,10 +431,14 @@ suspend()
     : ${power_state:='mem'}
     : ${max_stime:='10'}
     : ${iterations:='1'}
+    : ${usb_remove:='0'}
+    : ${usb_module:=''}
 
     test_print_trc "suspend function: power_state: $power_state"
     test_print_trc "suspend function: max_stime: $max_stime"
     test_print_trc "suspend function: iterations: $iterations"
+    test_print_trc "suspend function: usb_remove: $usb_remove"
+    test_print_trc "suspend function: usb_module: $usb_module"
 
     if [ $use_wakelock -ne 0 ]; then
         report "removing wakelock $PSID (sec=$sec msec=$msec off=$off bug=$bug)"
@@ -441,6 +451,14 @@ suspend()
 
       wakeup_time_random $max_stime
       suspend_time=$sec
+      if [ $usb_remove = 1 ]; then
+         if [ "$usb_module" = '' ]; then
+            die "No usb_module in command line although usb module remove flag has been selected"
+         fi
+         `modprobe -r $usb_module`
+      elif [ $usb_remove = 2 ]; then
+         inverted_return='true'
+      fi 
       # clear dmesg before suspend
       dmesg -c > /dev/null
       if [ -e $DEBUGFS_LOCATION/pm_debug/wakeup_timer_seconds ]; then
@@ -454,9 +472,17 @@ suspend()
           # Stop the test if there is no rtcwake or wakeup_timer support 
           die "There is no automated way (wakeup_timer or /dev/rtc0) to wakeup the board. No suspend!"
       fi
-
-      check_suspend
-      check_resume
+     
+      if [ $usb_remove = 2 ]; then
+         check_suspend_fail
+      else
+         check_suspend
+         check_resume
+         if [ $usb_remove = 1 ]; then
+            echo "USB_REMOVE flag is $usb_remove"
+            `modprobe $usb_module`
+         fi 
+      fi
 
       i=`expr $i + 1`
     done
@@ -469,6 +495,13 @@ check_suspend()
 {
     expect="PM: suspend of devices complete"
     dmesg | grep -i "$expect" && report "suspend successfully" || die "suspend failed"
+}
+
+# check if suspend/standby failed as expected by checking the kernel messages
+check_suspend_fail()
+{
+    expect="PM: Some devices failed to suspend"
+    dmesg | grep -i "$expect" && report "suspend failed as expected" || die "suspend did not fail as expected"
 }
 
 # check if resume is ok by checking the kernel messages
