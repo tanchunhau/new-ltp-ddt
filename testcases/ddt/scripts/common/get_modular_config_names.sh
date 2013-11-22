@@ -44,6 +44,10 @@ IFS=","
 for DRIVER in $DRIVERS
 do
   case $DRIVER in
+    
+    *ti_cpsw)                                 
+      net="CONFIG_TI_CPSW:ti_cpsw";;
+
     *omap2-nand)
       nand="CONFIG_MTD_NAND_OMAP2:omap2";; 
     *davinci_nand)
@@ -132,8 +136,7 @@ case $MACHINE in
         omap5-evm)
                 sound='CONFIG_SND_SOC:snd-soc-core CONFIG_SND_OMAP_SOC:snd-soc-omap';;
 	am335x-evm|am335x-sk|beaglebone|beaglebone-black)
-	        sound='CONFIG_SND_SOC_TLV320AIC3X:snd-soc-tlv320aic3x CONFIG_SND_AM335X_SOC_EVM:snd-soc-evm CONFIG_SND_DAVINCI_SOC_MCASP:snd-soc-davinci-mcasp CONFIG_SND_AM33XX_SOC:snd-soc-davinci'
-		usb='CONFIG_USB_MUSB_TI81XX_GLUE:musb';;
+	        sound='CONFIG_SND_SOC_TLV320AIC3X:snd-soc-tlv320aic3x CONFIG_SND_AM335X_SOC_EVM:snd-soc-evm CONFIG_SND_DAVINCI_SOC_MCASP:snd-soc-davinci-mcasp CONFIG_SND_AM33XX_SOC:snd-soc-davinci';;
 	am180x-evm|am181x-evm|da850-omapl138-evm)
 		sound='CONFIG_SND_DA850_SOC_EVM:snd-soc-evm CONFIG_SND_DAVINCI_SOC:snd-soc-davinci CONFIG_SND_DAVINCI_SOC_MCASP:snd-soc-davinci-mcasp CONFIG_SND_SOC_TLV320AIC3X:snd-soc-tlv320aic3x';;
 	am180x-evm|am181x-evm|da850-omapl138-evm|am17x-evm|da830-omapl137-evm)
