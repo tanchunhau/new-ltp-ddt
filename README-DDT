@@ -81,8 +81,16 @@
      the tests, giving users ability to filter test cases based on estimated
      execution time.
      SCOPE TAGS:
-      'S', 'M', 'L'  (for Small, Medium and Large tests.
+      'XS', 'S', 'M', 'L', 'XL', 'XXL' (for eXtra Small, Small, Medium, etc.
 		     Just imagine you are buying clothes ;)
+      We used the following rough guidelines to determine test duration based 
+      on scope:
+        XS:  <= 1  min
+        S:   <= 10 mins
+        M:   <= 1  hour
+        L:   <= 4  hours
+        XL:  <= 24 hours
+        XXL: <= 1  week
      TYPE TAGS:
       ‘FUNC’, ‘PERF’, ‘STRESS’, ‘USECASE’, ‘COMPLIANCE’, ‘MODULAR’, ‘DOC’
    COMMANDS is a list of one or more shell commands separated by semicolon (;),
