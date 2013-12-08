@@ -430,6 +430,7 @@ no_suspend()
 #   -m usb_module   optional; usb_module to indicate the name of usb module to be removed; default to ''
 suspend()
 {
+
     while getopts :p:t:i:u:m: arg
     do case $arg in
       p)  power_state="$OPTARG";;
@@ -448,8 +449,19 @@ suspend()
     : ${power_state:='mem'}
     : ${max_stime:='10'}
     : ${iterations:='1'}
-    : ${usb_remove:='0'}
-    : ${usb_module:=''}
+    # for am335x-based soc force the usb_remove flag to be set i
+    # if not explicitly mentioned in test case and take care of
+    # module name also
+    case $MACHINE in                                                  
+        am335x-evm|am335x-sk|beaglebone|beaglebone-black)                 
+                : ${usb_remove:='1'}
+                modname=`get_modular_name.sh usb`
+                : ${usb_module:=$modname}
+                ;;
+        *)                                                              
+                : ${usb_remove:='0'}
+                : ${usb_module:=''};;
+    esac      
 
     test_print_trc "suspend function: power_state: $power_state"
     test_print_trc "suspend function: max_stime: $max_stime"
