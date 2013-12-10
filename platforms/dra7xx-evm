@@ -53,3 +53,4 @@ watchdog/omap_wdt
 pwm/ehrpwm
 pwm/ecap
 pwm/backlight
+ipc

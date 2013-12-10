@@ -58,3 +58,4 @@ video/display/1080i/v4l2/<drivername>
 video/display/1080p/v4l2/<drivername>
 watchdog/<drivername>
 ubifs
+ipc
