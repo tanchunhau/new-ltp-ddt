@@ -160,6 +160,10 @@ test_print_trc " URL          : $URL"
 fi
 test_print_trc " *************** END OF TEST PARAMETERS ***************"
 
+test_print_trc " ****************** AUDIO DEV INFO ******************"
+aplay -l
+arecord -l
+test_print_trc " *************** END OF AUDIO DEV INFO ***************"
 
 case "$TYPE" in
 	
