@@ -94,7 +94,7 @@ do
       clcd="CONFIG_DA850_UI_CLCD:panel";; #not sure if this is the right one
 
     *sound)
-      sound='CONFIG_SND_SOC:snd-soc-core CONFIG_SND_OMAP_SOC:snd-soc-omap';;
+      sound='CONFIG_SND_SOC:snd-soc-core';;
 
     *musb_ti81xx)
       usb="CONFIG_USB_MUSB_DSPS:musb_dsps";;
@@ -128,15 +128,17 @@ case $MACHINE in
 	omap3evm|am37x-evm)
 		sound='CONFIG_SND_OMAP_SOC_OMAP3EVM:snd_soc_omap3evm';;
 	beagleboard)
-		sound='CONFIG_SND_OMAP_SOC_OMAP3_BEAGLE:snd-soc-omap3beagle CONFIG_SND_OMAP_SOC:snd-soc-omap CONFIG_SND_OMAP_SOC_MCBSP:snd-soc-omap-mcbsp CONFIG_SND_SOC_TWL4030:snd-soc-twl4030'
+		sound='CONFIG_SND_OMAP_SOC:snd-soc-omap CONFIG_SND_OMAP_SOC_MCBSP:snd-soc-omap-mcbsp CONFIG_SND_SOC_TWL4030:snd-soc-twl4030 CONFIG_SND_OMAP_SOC_OMAP_TWL4030:snd-soc-omap-twl4030'
 		usb='CONFIG_USB_EHCI_HCD:ehci-hcd'
 		graphics='CONFIG_PANEL_DVI:panel_dvi CONFIG_PANEL_GENERIC_DPI:panel_generic_dpi CONFIG_FB_OMAP2:omapfb';; 
 	am3517-evm)
 		sound='CONFIG_SND_OMAP_SOC_AM3517EVM:snd-soc-am3517evm';;
         omap5-evm)
-                sound='CONFIG_SND_SOC:snd-soc-core CONFIG_SND_OMAP_SOC:snd-soc-omap';;
-	am335x-evm|am335x-sk|beaglebone|beaglebone-black)
-	        sound='CONFIG_SND_SOC_TLV320AIC3X:snd-soc-tlv320aic3x CONFIG_SND_AM335X_SOC_EVM:snd-soc-evm CONFIG_SND_DAVINCI_SOC_MCASP:snd-soc-davinci-mcasp CONFIG_SND_AM33XX_SOC:snd-soc-davinci';;
+                sound='CONFIG_SND_OMAP_SOC:snd-soc-omap CONFIG_SND_OMAP_SOC_MCPDM:snd-soc-omap-mcpdm CONFIG_SND_SOC_TWL6040:snd-soc-twl6040 CONFIG_SND_OMAP_SOC_OMAP_ABE_TWL6040:snd-soc-omap-abe-twl6040';;
+	am335x-evm|am335x-sk|beaglebone)
+	        sound='CONFIG_SND_DAVINCI_SOC:snd-soc-davinci CONFIG_SND_DAVINCI_SOC_MCASP:snd-soc-davinci-mcasp CONFIG_SND_SOC_TLV320AIC3X:snd-soc-tlv320aic3x CONFIG_SND_AM335X_SOC_EVM:snd-soc-evm';;
+	beaglebone-black)
+	        sound='CONFIG_SND_DAVINCI_SOC:snd-soc-davinci CONFIG_SND_DAVINCI_SOC_MCASP:snd-soc-davinci-mcasp CONFIG_SND_AM335X_SOC_EVM:snd-soc-evm';;
 	am180x-evm|am181x-evm|da850-omapl138-evm)
 		sound='CONFIG_SND_DA850_SOC_EVM:snd-soc-evm CONFIG_SND_DAVINCI_SOC:snd-soc-davinci CONFIG_SND_DAVINCI_SOC_MCASP:snd-soc-davinci-mcasp CONFIG_SND_SOC_TLV320AIC3X:snd-soc-tlv320aic3x';;
 	am180x-evm|am181x-evm|da850-omapl138-evm|am17x-evm|da830-omapl137-evm)
