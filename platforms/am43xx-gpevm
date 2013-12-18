@@ -12,6 +12,7 @@ crypto/crypto-omap/sha224
 crypto/crypto-omap/sha384
 crypto/crypto-omap/sha512
 edma
+emmc
 gpio
 graphics/fb0/DA8xx_FB_Drv
 i2c/non_eeprom
