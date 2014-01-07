@@ -44,11 +44,12 @@ FILTER_OUT_DIRS                 += edma_test_suite
 endif
 
 ifeq ($(PLATFORM),dm6467-evm)
-FILTER_OUT_DIRS			+= fbdev_display_test_suite
+FILTER_OUT_DIRS			            += fbdev_display_test_suite
 FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),dm6446-evm)
@@ -57,6 +58,7 @@ FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),dm368-evm)
@@ -65,6 +67,7 @@ FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),dm365-evm)
@@ -72,6 +75,7 @@ FILTER_OUT_DIRS                 += fbdev_display_test_suite
 FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),dm355-evm)
@@ -80,6 +84,7 @@ FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),am180x-evm)
@@ -88,6 +93,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),am170x-evm)
@@ -96,6 +102,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),am181x-evm)
@@ -105,6 +112,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),am335x-evm)
@@ -147,6 +155,7 @@ FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += edma_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),am37x-evm)
@@ -154,6 +163,7 @@ FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += edma_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),am387x-evm)
@@ -163,6 +173,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),dm385-evm)
@@ -172,6 +183,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),dm813x-evm)
@@ -181,6 +193,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),am389x-evm)
@@ -190,6 +203,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),am45x-evm)
@@ -199,6 +213,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),beagleboard)
@@ -207,6 +222,7 @@ FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += edma_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),c6a814x-evm)
@@ -216,6 +232,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),c6a816x-evm)
@@ -225,6 +242,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),dm37x-evm)
@@ -234,6 +252,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),da850-omapl138-evm)
@@ -243,6 +262,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),da830-omapl137-evm)
@@ -252,6 +272,7 @@ FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),omap3evm)
@@ -260,6 +281,7 @@ FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += edma_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),tci6614-evm)
@@ -270,6 +292,7 @@ FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),keystone-evm)
@@ -280,6 +303,7 @@ FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 include $(top_srcdir)/include/mk/generic_trunk_target.mk
