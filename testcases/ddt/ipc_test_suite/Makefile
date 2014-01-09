@@ -12,7 +12,7 @@ UNWANTED_FILES          := Makefile
 INSTALL_MODE            := 00755
 
 
-MAKE_TARGETS    := mbox_test.ko
+MAKE_TARGETS    := mbox_test.ko iommu_test.ko
 
 
 include $(top_srcdir)/include/mk/generic_leaf_target.mk

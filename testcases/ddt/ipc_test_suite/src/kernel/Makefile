@@ -1,15 +1,16 @@
 # MakeFile function     :: MakeFile for compiling IPC kernel module 
 
 
-obj-m = mbox_test.o
+obj-m = mbox_test.o iommu_test.o
 mbox_test-objs = main.o
+iommu_test-objs = iommu.o
 
 MAKE_TARGETS		:= modules
 
 
 modules:
 	make -C $(KERNEL_DIR) ARCH=arm SUBDIRS=$(PWD) modules
-	cp mbox_test.ko  ../../
+	cp *.ko  ../../
 
 
 
