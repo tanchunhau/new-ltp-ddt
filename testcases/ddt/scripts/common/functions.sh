@@ -716,6 +716,12 @@ log_pm_count()
       pwr_state_place=5
     elif [ "$pwr_state" = "RET-LOGIC-OFF" ]; then
       pwr_state_place=6
+    elif [ "$pwr_state" = "RET-MEMBANK1-OFF" ]; then
+      pwr_state_place=7
+    elif [ "$pwr_state" = "RET-MEMBANK2-OFF" ]; then
+      pwr_state_place=8
+    else
+      die "Unknown power status name: $pwr_state"
     fi
 
     pwrdm_stat=`cat $DEBUGFS_LOCATION/pm_debug/count | grep ^$pwrdm | \
