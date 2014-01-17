@@ -30,6 +30,9 @@ include $(top_srcdir)/include/mk/env_pre.mk
 # Disabling EDMA tests until 3.8+ compatible tests are available
 FILTER_OUT_DIRS                 += edma_test_suite
 
+# Disable ipc modules install until the build issues are resolved
+FILTER_OUT_DIRS                 += ipc_test_suite
+
 ifeq ($(PLATFORM),dra7xx-evm)
 FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += gpio_test_suite

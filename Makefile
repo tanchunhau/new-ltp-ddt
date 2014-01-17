@@ -239,7 +239,8 @@ ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwGPIO)))
 endif
 
 ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwIPC)))
-	MODULES_TO_BUILD += modules_ipc
+# Disable ipc modules install until the build issues are resolved
+#	MODULES_TO_BUILD += modules_ipc
 endif
 
 modules_edma:
