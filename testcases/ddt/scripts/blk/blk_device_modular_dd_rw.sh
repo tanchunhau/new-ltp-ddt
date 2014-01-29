@@ -72,28 +72,16 @@ test_print_trc "FS_TYPE: $FS_TYPE"
 
 ############# Do the work ###########################################
 test_print_trc "Doing insmod;read/write;rmmod test for $TEST_LOOP times"
-if [ -z $DEV_NODE ]; then
-  #do_cmd do_modular_common.sh -d "$DEVICE_TYPE" -l "$TEST_LOOP" -a "\"do_cmd blk_device_dd_readwrite_test.sh -f "$FS_TYPE" -b "$DD_BUFSIZE" -c "$DD_CNT" -l "1" -d "$DEVICE_TYPE" \" " 
-  do_cmd do_modular_common.sh -d "$DEVICE_TYPE" -l "$TEST_LOOP" -a "\"do_cmd blk_device_dd_readwrite_test.sh -b "$DD_BUFSIZE" -c "$DD_CNT" -l "1" -d "$DEVICE_TYPE" \" " 
-else
-  do_cmd do_modular_common.sh -d "$DEVICE_TYPE" -l "$TEST_LOOP" -a "\"do_cmd blk_device_dd_readwrite_test.sh -b "$DD_BUFSIZE" -c "$DD_CNT" -l "1" -d "$DEVICE_TYPE" -n "$DEV_NODE"\" " 
+
+cmd="do_cmd blk_device_dd_readwrite_test.sh -b "$DD_BUFSIZE" -c "$DD_CNT" -l "1" -d "$DEVICE_TYPE" "
+if [ -n "$FS_TYPE" ]; then
+  cmd="$cmd -f \"$FS_TYPE\" "
 fi
-#x=0
-#while [ $x -lt $TEST_LOOP ]
-#do
-#
-#	MOD_NAME=`get_modular_name.sh "$DEVICE_TYPE"` || die "error getting modular name" 
-#	do_cmd insmod.sh "$MOD_NAME"
-#
-#	if [ !$SKIP_RW ]; then
-#		do_cmd blk_device_dd_readwrite_test.sh -f "$FS_TYPE" -b "$DD_BUFSIZE" -c "$DD_CNT" -l "1" -d "$DEVICE_TYPE" -n "$DEV_NODE"
-#	fi
-#
-#	do_cmd rmmod.sh "$MOD_NAME"
-#
-#        x=$((x+1))
-#
-#done
+if [ -n "$DEV_NODE" ]; then
+  cmd="$cmd -n \"$DEV_NODE\" "
+fi
+do_cmd do_modular_common.sh -d "$DEVICE_TYPE" -l "$TEST_LOOP" -a "\" "$cmd" \" "
+
 
 
 
