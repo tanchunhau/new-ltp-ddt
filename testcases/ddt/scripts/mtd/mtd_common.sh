@@ -65,7 +65,7 @@ find_mtdpart_with_biggest_size() {
 find_mtd_part_range() {
   DEVICE_TYPE=$1
   # Assume maximum number of mtd partition is less than 15
-  local CNT=15
+  local CNT=30
   local PART=0  # starting searching from partition 0.
   local PART_RANGE=''
   while [ $PART -le $CNT ]; do
