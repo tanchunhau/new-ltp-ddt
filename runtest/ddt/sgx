@@ -2,9 +2,9 @@
 # @desc Running various graphics demos
 # @requires graphics
 
-SGX_S_FUNC_BLIT source 'common.sh'; graphics_install.sh || die "The graphics package is not installed"; do_cmd '/usr/local/bin/sgx_blit_test -t'
-SGX_S_FUNC_CLIPBLIT source 'common.sh';graphics_install.sh || die "The graphics package is not installed"; do_cmd '/usr/local/bin/sgx_clipblit_test'
-SGX_S_FUNC_RENDERFLIP source 'common.sh';graphics_install.sh || die "The graphics package is not installed"; do_cmd '/usr/local/bin/sgx_render_flip_test -nf '
+SGX_S_FUNC_BLIT source 'common.sh'; which sgx_blit_test || die "sgx_blit_test is not installed"; do_cmd 'sgx_blit_test -t' 
+SGX_S_FUNC_CLIPBLIT source 'common.sh'; which sgx_clipblit_test || die "sgx_clipblit_test is not installed"; do_cmd 'sgx_clipblit_test'              
+SGX_S_FUNC_RENDERFLIP source 'common.sh'; which sgx_render_flip_test || die "sgx_render_flip_test is not installed"; do_cmd 'sgx_render_flip_test -nf'      
 SGX_M_FUNC_OGLESCOVERFLOW source 'common.sh';graphics_install.sh || die "The graphics package is not installed"; do_cmd '/opt/gfxsdkdemos/ogles/OGLESCoverflow -qaf=1000'
 SGX_M_FUNC_OGLESEVILSKULL source 'common.sh';graphics_install.sh || die "The graphics package is not installed"; do_cmd '/opt/gfxsdkdemos/ogles/OGLESEvilSkull -qaf=1000'
 SGX_M_FUNC_OGLESFILMTV source 'common.sh';graphics_install.sh || die "The graphics package is not installed"; do_cmd '/opt/gfxsdkdemos/ogles/OGLESFilmTV -qaf=1000'
