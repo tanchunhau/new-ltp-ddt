@@ -65,6 +65,8 @@ case $MACHINE in
   beaglebone) REGULATOR="vdd_mpu";;
   am180x-evm) REGULATOR="VDCDC3";;
   omap5-evm)  REGULATOR="smps123";;
+  am43xx-epos) REGULATOR="vdd_mpu";;
+  am43xx-gpevm) REGULATOR="vdd_mpu";;
 esac
 
 
