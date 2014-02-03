@@ -8,7 +8,7 @@ echo $VAR10
 EXP=`zcat /proc/config.gz | grep 'CONFIG_HZ=' | awk -F '[:=]' '{print $2}'`
 echo $EXP
 EXP=`echo "($EXP * 10)" | bc` # Calculating expected ticks in 10 seconds
-EXPPER=`echo "($EXP / 10)" | bc` #Calculating 10% of expected increase
+EXPPER=`echo "($EXP / 2)" | bc` #Calculating 50% of expected increase
 ACTPER=$(($VAR10-$VAR))
 
 echo "The difference is $ACTPER"
