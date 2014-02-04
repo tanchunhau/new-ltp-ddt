@@ -23,7 +23,8 @@ MTD_CHAR_DEV="/dev/$MTD_CHAR"
 # if this /sys/ entry doesn't exist, don't do any check.
 
 find_part_type() {
-  MTD_DEV="mtdblock$1"
+  PART=$1
+  MTD_DEV="mtdblock$PART"
   if [ -e /sys/block/$MTD_DEV/device/type ]; then
     TYPE=`cat /sys/block/$MTD_DEV/device/type`
     if [ $TYPE == 'nand' ]; then
@@ -145,4 +146,25 @@ get_pagesize() {
   DEV_NODE=$1
   PSIZE=`mtdinfo "$DEV_NODE" |grep 'Minimum input/output unit size' |awk '{print $5}'`
   echo "$PSIZE"
+}
+
+# get mtd partition number for part_name like 'kernel', 'file-system'
+# $1: device_type like 'nand', 'spi'
+# $2: part_name like 'kernel', 'u-boot-spl-os', 'file-system'
+# output:
+#   partition number for part_name; either empty or number
+#   caller script should check the validity of the return
+get_partnum_from_name() {
+  device_type=$1
+  part_name=$2
+  test_part=''
+  parts=`cat /proc/mtd |grep -i "$part_name" |grep -oE "mtd[[:digit:]]+" |sed 's/mtd//' `
+  for part in $parts
+  do
+    type=`find_part_type $part`
+    if [ $type = $device_type ]; then
+      test_part=$part
+    fi
+  done
+  echo "$test_part"
 }
