@@ -321,7 +321,11 @@ cpu_load_random()
         i=0
         while [ $i -lt $num_cpu ]; do
             cpus_load="$cpus_load "`random_ne0 100`
+            i=`expr $i + 1` 
         done
+        if [ $num_cpu -lt 2 ]; then
+            cpus_load="$cpus_load 0"
+        fi
         time=`random_ne0 600`
         report "cpuloadgen $cpus_load $time"
         time cpuloadgen $cpus_load $time &
