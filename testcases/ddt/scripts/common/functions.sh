@@ -408,8 +408,6 @@ idlebig_random()
     report "bigidle: $time seconds"
     report "Processes running:"
     ps 
-    report "Load running:"
-    top -n1 -b
     report "cpu1 status:"
     cat /sys/devices/system/cpu/cpu1/online
     sleep $time
