@@ -50,7 +50,7 @@ get_tarball() {
     do_cmd rm -f "/$TARBALL_BASENAME"
   fi
   do_cmd cd /
-  do_cmd wget "$TARBALL_SRC"
+  do_cmd Wget "$TARBALL_SRC"
   do_cmd mv "/$TARBALL_BASENAME" "$TARBALL_PATH"
 }
 
