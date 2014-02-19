@@ -173,7 +173,7 @@ case "$TYPE" in
 	playback)
 		if test "$URL" != ''
 		then
-			do_cmd wget $URL -O $FILE
+			do_cmd Wget $URL -O $FILE
 		fi
 
 		if [ ! -s $FILE ]
