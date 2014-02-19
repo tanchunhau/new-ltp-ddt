@@ -12,6 +12,7 @@
 # GNU General Public License for more details.
 # 
 source "st_log.sh"
+source "site_info"
 
 ########### DEFINE CONSTANTS ############
 KB=1024
@@ -352,5 +353,11 @@ replace_onebyte()
   do_cmd "dd if=$inputfile of=$tempfile bs=1 count=$(( $fs - $offset - 1 )) skip=$(( $offset + 1 )) seek=$(( $offset + 1 ))"
 
   do_cmd "cp $tempfile $inputfile"
+}
+
+# wrapper for wget
+Wget()
+{
+  wget $* || wget --proxy off $* || http_proxy=$SITE_HTTP_PROXY wget $*
 }
 
