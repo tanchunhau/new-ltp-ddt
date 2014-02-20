@@ -85,11 +85,18 @@ da850-omapl138-evm)
                 MAXVAL=127
                 STEP=30
                 ;;
-am387x-evm|am389x-evm|am335x-evm|dm385-evm)
+am387x-evm|am389x-evm|am335x-evm|dm385-evm|am43xx-gpevm)
                 CAPTURE_NAME="PGA Capture Volume";
                 PLAYBACK_NAME="PCM Playback Volume"
                 MINVAL=0
                 MAXVAL=127
+                STEP=30
+                ;;
+am43xx-epos)
+                CAPTURE_NAME="ADC Capture Volume";
+                PLAYBACK_NAME="DAC Playback Volume"
+                MINVAL=0
+                MAXVAL=175
                 STEP=30
                 ;;
 esac
