@@ -130,11 +130,12 @@ find_part_with_biggest_size() {
 # return size is in 'MBytes'
 get_part_size_of_devnode() {
   PART_DEVNODE=$1
-  #PARTSIZE=`fdisk -l "$PART_DEVNODE" | grep "$PART_DEVNODE:" |cut -d"," -f2 |sed s/bytes//`  
-  PARTSIZE=`fdisk -l "$PART_DEVNODE" | grep "Disk "$PART_DEVNODE":" | awk '{print $3 }' `
-  if [ $PARTSIZE -le 0 ]; then
+  PARTBYTES=`fdisk -l "$PART_DEVNODE" | grep "Disk "$PART_DEVNODE":" | awk '{print $5 }' `
+  if [ $PARTBYTES -le 0 ]; then
     die "Could not get partition size from $PART_DEVNODE"
   fi
+
+  PARTSIZE=$((${PARTBYTES}/MB))
   echo $PARTSIZE
 }
 
