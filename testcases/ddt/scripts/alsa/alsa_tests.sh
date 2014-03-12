@@ -132,6 +132,23 @@ case $MACHINE in
 *da850-omapl138-evm)
 	amixer cset name='PCM Playback Volume' 127,127 
 ;;
+*am43xx-epos)                                                      
+        amixer sset 'DAC' 127                                                   
+        amixer sset 'HP Analog' 66                                              
+        amixer sset 'HP Driver' 0 on                                            
+        amixer sset 'HP Left' on                                                
+        amixer sset 'HP Right' on                                               
+        amixer sset 'SP Analog' 127                                             
+        amixer sset 'SP Driver' 0 on                                            
+        amixer sset 'SP Left' on                                                
+        amixer sset 'SP Right' on                                               
+        amixer sset 'Output Left From Left DAC' on                              
+        amixer sset 'Output Right From Right DAC' on                            
+        amixer sset 'MIC1RP P-Terminal' 'FFR 10 Ohm'                            
+        amixer sset 'MIC1LP P-Terminal' 'FFR 10 Ohm'                            
+        amixer sset 'ADC' 40                                                    
+        amixer cset name='ADC Capture Switch' on                                
+;;           
 esac
 
 ########################### REUSABLE TEST LOGIC ###############################
