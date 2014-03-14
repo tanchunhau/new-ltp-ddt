@@ -498,7 +498,9 @@ suspend()
           echo -n "$power_state" > /sys/power/state
       elif [ -e /dev/rtc0 ]; then
           report "Use rtc to suspend resume"
-          do_cmd rtcwake -d /dev/rtc0 -m ${power_state} -s ${suspend_time}
+          # sending twice in case a late interrupt aborted the suspend path.
+          # since this is not common, it is expected that 2 tries should be enough
+          do_cmd rtcwake -d /dev/rtc0 -m ${power_state} -s ${suspend_time} || do_cmd rtcwake -d /dev/rtc0 -m ${power_state} -s ${suspend_time}
       else
           # Stop the test if there is no rtcwake or wakeup_timer support 
           die "There is no automated way (wakeup_timer or /dev/rtc0) to wakeup the board. No suspend!"
