@@ -6,4 +6,4 @@
 # @setup_requires sata
 
 #SATA_MODULAR_STRESS_0001 source "common.sh"; do_cmd blk_device_modular_dd_rw.sh -l "10" -d "sata" -s
-SATA_L_MODULAR_MULTI_0001 source "common.sh"; do_cmd do_modular_common.sh -l "10" -d "sata" 
+SATA_S_MODULAR_MULTI source "common.sh"; do_cmd do_modular_common.sh -l "10" -d "sata" 
