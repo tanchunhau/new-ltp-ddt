@@ -4,8 +4,10 @@
 # @requires usb/host || usbxhci/host
 # @setup_requires usbhostmsc
 
-USBHOST_L_STRESS_EXT2_DD_RW_0001 source 'common.sh'; do_cmd install_modules.sh 'usb'; DEV_NODE=`get_blk_device_node.sh "usb"` || die "error getting devnode for usb"; do_cmd blk_device_dd_readwrite_test.sh -f "ext2" -b "10M" -c "1" -d "usb" -l "100" 
-USBXHCIHOST_L_STRESS_EXT2_DD_RW_0001 source 'common.sh'; do_cmd install_modules.sh 'usbxhci'; DEV_NODE=`get_blk_device_node.sh "usbxhci"` || die "error getting devnode for usbxhci"; do_cmd blk_device_dd_readwrite_test.sh -f "ext2" -b "10M" -c "1" -d "usbxhci" -l "100" 
+USBHOST_M_STRESS_EXT2_DD_RW_0001 source 'common.sh'; do_cmd install_modules.sh 'usb'; DEV_NODE=`get_blk_device_node.sh "usb"` || die "error getting devnode for usb"; do_cmd blk_device_dd_readwrite_test.sh -f "ext2" -b "10M" -c "1" -d "usb" -l "100" 
+USBHOST_L_STRESS_EXT2_DD_RW_0001 source 'common.sh'; do_cmd install_modules.sh 'usb'; DEV_NODE=`get_blk_device_node.sh "usb"` || die "error getting devnode for usb"; do_cmd blk_device_dd_readwrite_test.sh -f "ext2" -b "10M" -c "1" -d "usb" -l "500" 
+USBXHCIHOST_M_STRESS_EXT2_DD_RW_0001 source 'common.sh'; do_cmd install_modules.sh 'usbxhci'; DEV_NODE=`get_blk_device_node.sh "usbxhci"` || die "error getting devnode for usbxhci"; do_cmd blk_device_dd_readwrite_test.sh -f "ext2" -b "10M" -c "1" -d "usbxhci" -l "100" 
+USBXHCIHOST_L_STRESS_EXT2_DD_RW_0001 source 'common.sh'; do_cmd install_modules.sh 'usbxhci'; DEV_NODE=`get_blk_device_node.sh "usbxhci"` || die "error getting devnode for usbxhci"; do_cmd blk_device_dd_readwrite_test.sh -f "ext2" -b "10M" -c "1" -d "usbxhci" -l "500" 
 
 
 
