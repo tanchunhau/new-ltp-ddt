@@ -224,9 +224,10 @@ check_kernel_errors()
   type=$1
   case $type in
     kmemleak)
+      check_config_options "y" DEBUG_KMEMLEAK
       kmemleaks="/sys/kernel/debug/kmemleak"
       if [ ! -e ${kmemleaks} ]; then
-        die "kmemleak sys entry doesn't exist; Please enable DEBUG_KMEMLEAK"
+        die "kmemleak sys entry doesn't exist; perhaps need to increase CONFIG_DEBUG_KMEMLEAK_EARLY_LOG_SIZE"
       fi
 
       # clear the list of all current possible memory leaks before scan
@@ -245,7 +246,7 @@ check_kernel_errors()
        
     ;;
     spinlock)
-      zcat /proc/config.gz | grep "DEBUG_SPINLOCK=y" || die "Please enable DEBUG_SPINLOCK"
+      check_config_options "y" DEBUG_SPINLOCK
       # Check dmesg to catch the error
       spinlock_errors="BUG: spinlock"
       dmesg |grep -i "${spinlock_errors}" && die "There is spinlock errors showing in dmesg" || test_print_trc "No spinlock related error found in dmesg"
@@ -294,7 +295,7 @@ check_config_options()
   IFS='^';y=${y[@]}
   IFS=' '
   for option in $y; do
-    zcat /proc/config.gz | egrep "$option$check" || die "$option is not $check"
+    zcat /proc/config.gz | egrep "$option$check" || IFS=$OIFS; die "$option is not $check"
   done
   IFS=$OIFS
 }
