@@ -48,8 +48,9 @@ p_type='ifupdown'
 p_sequence='one'
 p_duration=10
 p_pktsize=64
+p_interfaces='all'
 OFS=$IFS
-while getopts ":l:t:s:d:p:" opt; do
+while getopts ":l:t:s:d:p:i" opt; do
   case $opt in 
   l)
     p_iterations=$OPTARG
@@ -66,6 +67,8 @@ while getopts ":l:t:s:d:p:" opt; do
   p)
     p_pktsize=$OPTARG
     ;;
+  i)
+   p_interfaces="$OPTARG"
   esac
 done
 
@@ -73,8 +76,13 @@ done
 j=0
 for device in `find /sys/class/net/*eth*`
 do 
+  operstate='down'
   interface=`echo $device | cut -c16-`
-  int_name[j]=$interface
+  operstate=`cat /sys/class/net/$interface/operstate`
+  if [ "$p_interfaces" == 'all' ] || [ "$operstate" == 'up' ]
+  then
+    int_name[j]=$interface
+  fi
   j+=1
 done
 

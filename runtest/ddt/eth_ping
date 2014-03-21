@@ -34,3 +34,23 @@ ETH_S_FUNC_MULTI_INTERFACE_PING_DOWN source 'common.sh'; eth_multi.sh -l 5 -t 'p
 ETH_XL_STRESS_MULTI_INTERFACE_PING_UPDOWN source 'common.sh'; eth_multi.sh -l 50 -t 'ping_updown' -d 1800
 ETH_XL_STRESS_MULTI_INTERFACE_PING_DOWN source 'common.sh'; eth_multi.sh -l 50 -t 'ping_down' -d 1800
 
+ETH_S_FUNC_MULTI_INTERFACE_UP_DOWN_ONE_AT_A_TIME_UP_INTFCS source 'common.sh'; eth_multi.sh -l 2 -t 'ifupdown' -s 'one' -i "up"
+ETH_S_FUNC_MULTI_INTERFACE_UP_DOWN_ALL_AT_A_TIME_UP_INTFCS source 'common.sh'; eth_multi.sh -l 2 -t 'ifupdown' -s 'all' -i "up"
+ETH_S_FUNC_MULTI_INTERFACE_UP_DOWN_REVERSE_UP_INTFCS source 'common.sh'; eth_multi.sh -l 2 -t 'ifupdown' -s 'reverse' -i "up"
+
+ETH_L_STRESS_MULTI_INTERFACE_UP_DOWN_ONE_AT_A_TIME_UP_INTFCS source 'common.sh'; eth_multi.sh -l 100 -t 'ifupdown' -s 'one' -i "up"
+ETH_L_STRESS_MULTI_INTERFACE_UP_DOWN_ALL_AT_A_TIME_UP_INTFCS source 'common.sh'; eth_multi.sh -l 100 -t 'ifupdown' -s 'all' -i "up"
+ETH_S_FUNC_MULTI_INTERFACE_PING_ONE_AT_A_TIME_UP_INTFCS source 'common.sh'; eth_multi.sh -l 2 -t 'ping' -s 'one' -d 60 -i "up"
+
+ETH_S_FUNC_MULTI_INTERFACE_PING_ALL_AT_A_TIME_UP_INTFCS source 'common.sh'; eth_multi.sh -l 2 -t 'ping' -s 'all' -d 60 -i "up"
+ETH_S_FUNC_MULTI_INTERFACE_PING_REVERSE_UP_INTFCS source 'common.sh'; eth_multi.sh -l 2 -t 'ping' -s 'reverse' -d 60 -i "up"
+
+ETH_L_STRESS_MULTI_INTERFACE_PING_1800S_ONE_AT_A_TIME_UP_INTFCS source 'common.sh'; eth_multi.sh -l 2 -t 'ping' -s 'one' -d 1800 -i "up"
+ETH_L_STRESS_MULTI_INTERFACE_PING_1800S_ALL_AT_A_TIME_UP_INTFCS source 'common.sh'; eth_multi.sh -l 2 -t 'ping' -s 'all' -d 1800 -i "up"
+ETH_L_STRESS_MULTI_INTERFACE_PING_1800S_REVERSE_UP_INTFCS source 'common.sh'; eth_multi.sh -l 2 -t 'ping' -s 'reverse' -d 1800 -i "up"
+
+ETH_S_FUNC_MULTI_INTERFACE_PING_UPDOWN_UP_INTFCS source 'common.sh'; eth_multi.sh -l 5 -t 'ping_updown' -d 60 -i "up"
+ETH_S_FUNC_MULTI_INTERFACE_PING_DOWN_UP_INTFCS source 'common.sh'; eth_multi.sh -l 5 -t 'ping_down' -d 60 -i "up"
+
+ETH_XL_STRESS_MULTI_INTERFACE_PING_UPDOWN_UP_INTFCS source 'common.sh'; eth_multi.sh -l 50 -t 'ping_updown' -d 1800 -i "up"
+ETH_XL_STRESS_MULTI_INTERFACE_PING_DOWN_UP_INTFCS source 'common.sh'; eth_multi.sh -l 50 -t 'ping_down' -d 1800 -i "up"
