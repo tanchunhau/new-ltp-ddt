@@ -110,6 +110,11 @@ die() {
   exit 1
 }
 
+skip_test() {
+  test_print_wrg "SKIPPING TEST: $*"
+  exit 0
+}
+
 # Extract value from key value pair list file
 #  $1: the file with key value list
 #  $2: the key of the value to return
@@ -295,7 +300,8 @@ check_config_options()
   IFS='^';y=${y[@]}
   IFS=' '
   for option in $y; do
-    zcat /proc/config.gz | egrep "$option$check" || IFS=$OIFS; die "$option is not $check"
+    zcat /proc/config.gz | egrep "$option$check" ||  IFS=$OIFS; \
+    if is_opt_config "$option"; then skip_test "optional $option not enabled"; else die "$option is not $check"; fi
   done
   IFS=$OIFS
 }
@@ -361,4 +367,39 @@ Wget()
 {
   wget $* || wget --proxy off $* || http_proxy=$SITE_HTTP_PROXY wget $*
 }
+
+opt_config_values=(
+"CONFIG_CRYPTO_HW" \
+"CONFIG_CRYPTO_DEV_OMAP_AES" \
+"CONFIG_CRYPTO_DEV_OMAP_SHAM" \
+"CONFIG_CRYPTO_TEST" \
+"CONFIG_CRYPTO_MANAGER_DISABLE_TESTS" \
+"CONFIG_MTD_TESTS" \
+"CONFIG_SPI_SPIDEV" \
+"CONFIG_USB_TEST" \
+"CONFIG_DEBUG_SPINLOCK" \
+"CONFIG_DEBUG_MUTEXES" \
+"CONFIG_DEBUG_KMEMLEAK" \
+"CONFIG_DEVKMEM" \
+"CONFIG_HAVE_DEBUG_KMEMLEAK" \
+"CONFIG_DEBUG_KMEMLEAK_TEST" \
+"CONFIG_DEBUG_KMEMLEAK_DEFAULT_OFF" \
+"CONFIG_DEBUG_LOCK_ALLOC" \
+"CONFIG_DEBUG_INFO" \
+"CONFIG_DEBUG_FS" \
+"CONFIG_DEBUG_KERNEL" \
+"CONFIG_PM_DEBUG" \
+"CONFIG_DEBUG_GPIO" \
+"CONFIG_USB_DEBUG" \
+"CONFIG_SND_DEBUG" \
+"CONFIG_RTC_DEBUG" \
+)
+
+# $1: CONFIG option to check
+is_opt_config() {
+  local c
+  for c in "${opt_config_values[@]}"; do [[ "$c" == "$1" ]] && return 0; done
+  return 1
+}
+
 
