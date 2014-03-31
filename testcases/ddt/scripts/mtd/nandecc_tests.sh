@@ -176,6 +176,11 @@ do_cmd "hexdump -C $corrected_nanddump > "$hexdump_corrected" "
 test_print_trc "diff "$hexdump_original" "$hexdump_corrected" "
 diff "$hexdump_original" "$hexdump_corrected"
 if [ $? -ne 0 ]; then
+  test_print_trc "Nand dump from uncorrected page ..."
+  uncorrected_nanddump="$TMPDIR/testfile_nanddump.uncorrected"
+  do_cmd "nanddump -n -o -l "$pagesize" -f "$uncorrected_nanddump" "$dev_node" "
+  do_cmd "hexdump -C "$uncorrected_nanddump" "
+
   die "Nand ECC Test failed. Not all errors are corrected"
 else
   test_print_trc "Nand ECC Test Pass"
