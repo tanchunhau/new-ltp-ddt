@@ -123,13 +123,14 @@ case $DEV_TYPE in
       test_print_trc "ubidetach -d $UBI_DEVICE_NUM"
       ubidetach -d $UBI_DEVICE_NUM
       ls /dev/ub*
-      # For now, temp hard code -s and -O.
-      #do_cmd "ubiformat "$CHAR_DEV_NODE" -s 512 -O 2048 -e $MTD_ERASEBLOCKS -y -q"
-      do_cmd "$FLASH_ERASEALL $CHAR_DEV_NODE"
-      do_cmd "ubiformat "$CHAR_DEV_NODE" -s "$SUBPAGE_SIZE" -O "$PAGE_SIZE" -e $MTD_ERASEBLOCKS -y -q"
-      do_cmd "ubiattach /dev/ubi_ctrl -m "$PART" -O "$PAGE_SIZE" "
+
+      #do_cmd "$FLASH_ERASEALL $CHAR_DEV_NODE"
+      #do_cmd "ubiformat "$CHAR_DEV_NODE" -s "$SUBPAGE_SIZE" -O "$PAGE_SIZE" -e $MTD_ERASEBLOCKS -y -q"
+      do_cmd "ubiformat "$CHAR_DEV_NODE" -y -q"
+      #do_cmd "ubiattach /dev/ubi_ctrl -m "$PART" -O "$PAGE_SIZE" "
+      do_cmd "ubiattach -p "$CHAR_DEV_NODE" -d $UBI_DEVICE_NUM "
       do_cmd "ls /dev/ub*"
-      
+
       # before mk vol, need remove the existing one
       # First find out the name of existing volume name if it exists
       if [ -e /sys/class/ubi/ubi"$UBI_DEVICE_NUM"_"$UBI_VOLUME_NUM" ]; then
