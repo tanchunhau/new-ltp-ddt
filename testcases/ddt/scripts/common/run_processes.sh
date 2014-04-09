@@ -73,7 +73,7 @@ while getopts ":c:n:a:d:p:" opt; do
     if [[ $PRIORITY_SET = 0 ]]; then
       #echo "-task_priority was triggered, Parameter: $OPTARG" >&2
       PRIORITY_SET=1
-      if [[ $OPTARG -ge 20 ]] && [[ $OPTARG -le -20 ]]         
+      if [[ $OPTARG -lt 20 ]] && [[ $OPTARG -ge -20 ]]         
        then                                                          
          p_priority=$OPTARG                                     
       else
