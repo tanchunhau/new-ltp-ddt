@@ -62,6 +62,8 @@ eth*)
 		NAME='57';;
 	omap5-evm)
 		NAME='109';;
+	dra7xx-evm)
+		NAME='83';;
     keystone-evm)
         NAME='80';;
 	esac
