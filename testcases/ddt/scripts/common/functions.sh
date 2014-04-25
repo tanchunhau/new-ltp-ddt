@@ -24,6 +24,8 @@
 #       - initial API and implementation
 #     Carlos Hernandez <ceh@ti.com>
 #       - Add new functions
+#     Alejandro Hernandez <ajhernandez@ti.com>
+#       - Add new functions
 #
 
 source "common.sh"     # include ltp-ddt common functions
@@ -796,4 +798,138 @@ on_exit()
 }
 
 trap on_exit EXIT
+
+
+#Function to validate a condition, takes the
+# following parameters
+#    $1: Condition to assert, i.e [ 1 -ne 2 ]
+#If the conditions is not true the function exits the program and prints
+#the backtrace
+assert() {
+  eval "${@}"
+  if [ $? -ne 0 ]
+  then
+    echo "Assertion ${@} failed"
+    i=0
+    while caller $i
+    do
+      i=$((i+1))
+    done 
+    exit 2
+  fi
+}
+
+#Funtion to parse text into sections.
+#Inputs:
+#  $1: pattern to match for a start of section
+#  $2: text to parse
+#  $3: separator to use for the elements returned in $4
+#  $4: variable to assign the result list that will contain
+#Output:
+#A list named $4 whose element are text that match
+#<text that matched $1><$3><section text>
+get_sections() {
+  assert [ ${#} -eq 4 ]
+  local key_val_indexer=$3
+  local current_section
+  local old_IFS=$IFS
+  local sections_dict
+  IFS=$'\n'
+  i=0
+  for line in $2
+  do
+    if [[ "$line" =~ $1 ]]
+    then
+      if [[ -n "$current_section" ]]
+      then
+        eval "$4[$i]=\"$current_section\""
+        i=$((i+1))
+      fi
+      current_section="${BASH_REMATCH[0]}${key_val_indexer}"
+      if [[ ${#BASH_REMATCH[@]} -gt 1 ]]
+      then
+        current_section="${BASH_REMATCH[1]}${key_val_indexer}"
+      fi
+    elif [[ -n "$current_section" ]]
+    then
+      current_section="${current_section}${line}"'\n'
+    fi
+  done
+  if [[ -n "$current_section" ]]
+  then
+    eval "$4[$i]=\"$current_section\""
+  fi
+  IFS=$old_IFS
+}
+
+#Function to obtain the value referenced by a key from a
+#sections list returned by get_sections.
+#Inputs:
+#  $1: key whose value will be returned
+#  $2: the list to search in, i.e sections_dict[@]
+#  $3: the separator used when creating the elements in
+#      list $2
+#Output:
+#The text associated with the key if any
+get_section_val() {
+  assert [ ${#} -eq 3 ]
+  local key="$1"
+  local dict=("${!2}")
+  local current_tuple
+  local old_IFS=$IFS
+  for idx in $(seq 0 $((${#dict[@]}-1)))
+  do
+    IFS=$3
+    current_tuple=( ${dict[$idx]} )
+    if [ "$key" == "${current_tuple[0]}" ]
+    then
+       echo -e ${current_tuple[@]:1}
+       break
+    fi
+  done
+  IFS=$old_IFS
+}
+
+
+#Function to obtain a list of keys from a
+#sections_dict like list returned by get_sections.
+#Inputs:
+#  $1: the list to search in, i.e sections_dict[@]
+#  $2: the separator used when creating the elements in
+#      list $1
+#  $3: name of the result list
+#  $4: (optional) pattern to match in keys, when this
+#      parameters is set only the keys that match $4 are
+#      included in $3. If $4 has a grouping construct
+#      then only the captured group is included in $3
+#Output:
+#a list named $3 with all the keys found in $1
+get_sections_keys() {
+  assert [ ${#} -eq 3 -o ${#} -eq 4 ]
+  local dict=("${!1}")
+  local current_tuple
+  local old_IFS=$IFS
+  local filter_idx=0
+  for idx in $(seq 0 $((${#dict[@]}-1)))
+  do
+    IFS=$2
+    current_tuple=( ${dict[$idx]} )
+    if [ ${#} -eq 4 ]
+    then
+      if [[ "${current_tuple[0]}" =~ $4 ]]
+      then
+        if [[ ${#BASH_REMATCH[@]} -gt 1 ]]
+        then
+          eval "$3[$filter_idx]=\"${BASH_REMATCH[1]}\""
+        else
+          eval "$3[$filter_idx]=\"${BASH_REMATCH[0]}\""
+        fi
+      fi
+      filter_idx=$((filter_idx+1))
+    else
+      eval "$3[$idx]=\"${current_tuple[0]}\""
+    fi
+  done
+  IFS=$old_IFS
+}
 
