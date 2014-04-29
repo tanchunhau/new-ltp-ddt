@@ -34,6 +34,7 @@ cat <<-EOF >&2
     usage: ./${0##*/} [-n dev_node] [-r rules] 
     -n dev_node: optional; if not provided, choose one with the biggest size
     -r rules: the rules used to inject error bits
+    -t test_type: optional; by default is positive test. you could pass 'negative'
     -h Help         print this usage
 EOF
 exit 0
@@ -90,10 +91,11 @@ modify_nanddump_file()
 }
 
 ################################ CLI Params ####################################
-while getopts  :n:r:h arg
+while getopts  :n:r:t:h arg
 do case $arg in
     n)      dev_node="$OPTARG";;
     r)      rules="$OPTARG";;
+    t)      type="$OPTARG";;
     h)      usage;;
     :)      die "$0: Must supply an argument to -$OPTARG.";;
     \?)     die "Invalid Option -$OPTARG ";;
@@ -116,6 +118,10 @@ case $MACHINE in
 esac
 
 ########################### DYNAMICALLY-DEFINED Params #########################
+if [ -z "$type" ]; then
+  type="positive"
+fi
+
 if [ -z "$dev_node" ]; then
   part=`get_mtd_partition_number.sh "nand" `
   dev_node="/dev/mtd$part"
@@ -175,18 +181,24 @@ do_cmd "hexdump -C $orig_nanddump > "$hexdump_original" "
 do_cmd "hexdump -C $corrected_nanddump > "$hexdump_corrected" "
 test_print_trc "diff "$hexdump_original" "$hexdump_corrected" "
 diff "$hexdump_original" "$hexdump_corrected"
+  
 if [ $? -ne 0 ]; then
-  test_print_trc "Nand dump from uncorrected page ..."
-  uncorrected_nanddump="$TMPDIR/testfile_nanddump.uncorrected"
-  do_cmd "nanddump -n -o -l "$pagesize" -f "$uncorrected_nanddump" "$dev_node" "
-  do_cmd "hexdump -C "$uncorrected_nanddump" "
+  if [ $type = 'negative' ]; then
+    test_print_trc "The bit error(s) are not corrected as expected, checking if dut is ok..."
+    #check if dut is still stable
+    do_cmd "cat /proc/mtd"
+    do_cmd "time dd if=/dev/urandom of=$dev_node bs=1M count=10"  
+    exit 0
+  else
+    test_print_trc "Nand dump from uncorrected page ..."
+    uncorrected_nanddump="$TMPDIR/testfile_nanddump.uncorrected"
+    do_cmd "nanddump -n -o -l "$pagesize" -f "$uncorrected_nanddump" "$dev_node" "
+    do_cmd "hexdump -C "$uncorrected_nanddump" "
 
-  die "Nand ECC Test failed. Not all errors are corrected"
+    die "Nand ECC Test failed. Not all errors are corrected"
+  fi
 else
   test_print_trc "Nand ECC Test Pass"
   exit 0
 fi
-
-
-
 
