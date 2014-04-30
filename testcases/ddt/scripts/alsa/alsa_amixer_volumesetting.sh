@@ -99,6 +99,13 @@ am43xx-epos)
                 MAXVAL=175
                 STEP=30
                 ;;
+dra7xx-evm)
+                CAPTURE_NAME="PGA Capture Volume";
+                PLAYBACK_NAME="PCM Playback Volume"
+                MINVAL=0
+                MAXVAL=119
+                STEP=30
+                ;;
 esac
 
 
