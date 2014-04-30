@@ -86,6 +86,11 @@ am43xx-epos)
         PLAYBACK_SWITCH_NAME_1="HP Driver Playback Switch"
         PLAYBACK_SWITCH_NAME_2="SP Driver Playback Switch"
         ;;
+dra7xx-evm)
+        CAPTURE_SWITCH_NAME_1="PGA Capture Switch";
+        PLAYBACK_SWITCH_NAME_1="HP Playback Switch"
+        PLAYBACK_SWITCH_NAME_2="Line Playback Switch"
+        ;;
 esac
 
 ########################### REUSABLE TEST LOGIC ###############################
