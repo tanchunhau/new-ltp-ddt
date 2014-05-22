@@ -66,6 +66,8 @@ done
 ############# Do the work ###########################################
 if [ -z "$DRIVE_NAME" ]; then
   DRIVES=`find_all_scsi_drives "$DEVICE_TYPE"` || die "Error when calling find_all_scsi_drives: $DRIVES"
+else
+  DRIVES=$DRIVE_NAME
 fi
 
 # Do data transfter among different drives
