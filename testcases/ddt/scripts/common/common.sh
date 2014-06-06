@@ -393,6 +393,7 @@ opt_config_values=(
 "CONFIG_USB_DEBUG" \
 "CONFIG_SND_DEBUG" \
 "CONFIG_RTC_DEBUG" \
+"CONFIG_TIGON3" \
 )
 
 # $1: CONFIG option to check
