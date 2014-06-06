@@ -300,8 +300,8 @@ check_config_options()
   IFS='^';y=${y[@]}
   IFS=' '
   for option in $y; do
-    zcat /proc/config.gz | egrep "$option$check" ||  IFS=$OIFS; \
-    if is_opt_config "$option"; then skip_test "optional $option not enabled"; else die "$option is not $check"; fi
+     zcat /proc/config.gz | egrep "$option$check" ||  (IFS=$OIFS; \
+     if is_opt_config "$option"; then skip_test "optional $option not enabled"; else die "$option is not $check"; fi)
   done
   IFS=$OIFS
 }
