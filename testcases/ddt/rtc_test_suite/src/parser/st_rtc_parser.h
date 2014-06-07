@@ -36,8 +36,8 @@
  *
 */
 
-#ifndef _ST_WDT_PARSER_H_
-#define _ST_WDT_PARSER_H_
+#ifndef _ST_RTC_PARSER_H_
+#define _ST_RTC_PARSER_H_
 
 /*
  * Define Options here, so that it would be easy to add new features/options.

@@ -70,8 +70,11 @@
 #define		ST_RTC_DEFAULT_MONTH	11
 #define		ST_RTC_DEFAULT_YEAR	(100)
 
+#define		ST_RTC_LEAP_YEAR	112
+#define		ST_RTC_NONLEAP_YEAR	113
+
 static Bool st_rtc_compare_date(struct rtc_time *time1, struct rtc_time *time2);
-static void st_rtc_add_secs_todate(struct rtc_time *rtc_time, int secs);
+static void st_rtc_add_secs_todate(struct rtc_time *rtc_time, int secs, int leap);
 
 extern struct rtc_ioctl_table ioctl_table[];
 
@@ -146,6 +149,13 @@ static Bool st_rtc_compare_date(struct rtc_time *time1, struct rtc_time *time2)
  * Functionality        - This function sets the RTC time and and verifies
  *                        by getting the time and displaying it
  * Input Params         -  fileDesc,ioctlarg
+
+ * Description of ioctlarg - 
+ * 1 - 30th day of april 
+ * 2 - 28th day of february in leap year    
+ * 3 - 28th day of february in non-leap year  
+ * default - 31st day of december in default year  
+
  * Return Value         -  0: SUCCESS, -1: FAILURE
  * Note                 -  None
  ****************************************************************************/
@@ -157,6 +167,7 @@ int st_rtc_setgettime(int fileDesc, long ioctlarg)
 	struct rtc_time rtc_time2;
 	struct rtc_time rtc_time3;
 	int retVal = 0;
+	int leap_flag=0;
 
 	/* 1. Read the current time.
 	   2. Set the time.
@@ -170,9 +181,31 @@ int st_rtc_setgettime(int fileDesc, long ioctlarg)
 			result = FAILURE;
 			break;
 		}
-		rtc_time2.tm_mday = ST_RTC_DEFAULT_DAY;
-		rtc_time2.tm_mon = ST_RTC_DEFAULT_MONTH;
+           
+	switch(ioctlarg){
+	case 1:
 		rtc_time2.tm_year = ST_RTC_DEFAULT_YEAR;
+		rtc_time2.tm_mon = ST_RTC_MONAPR;
+		rtc_time2.tm_mday = ST_RTC_DAYSINAPR;
+		break;
+	case 2:
+		rtc_time2.tm_year = ST_RTC_LEAP_YEAR;
+		rtc_time2.tm_mon = ST_RTC_MONFEB;
+		rtc_time2.tm_mday = ST_RTC_DAYSINFEB;
+		leap_flag = 1;
+		break;
+	case 3:
+		rtc_time2.tm_year = ST_RTC_NONLEAP_YEAR;
+		rtc_time2.tm_mon = ST_RTC_MONFEB;
+		rtc_time2.tm_mday = ST_RTC_DAYSINFEB;
+		break;
+	default:
+		rtc_time2.tm_year = ST_RTC_DEFAULT_YEAR;
+		rtc_time2.tm_mon = ST_RTC_DEFAULT_MONTH;
+		rtc_time2.tm_mday = ST_RTC_DEFAULT_DAY;
+		break;
+	}
+
 		rtc_time2.tm_hour = ST_RTC_DEFAULT_HOUR;
 		rtc_time2.tm_min = ST_RTC_DEFAULT_MIN;
 		rtc_time2.tm_sec = ST_RTC_DEFAULT_SEC;
@@ -191,7 +224,7 @@ int st_rtc_setgettime(int fileDesc, long ioctlarg)
 			break;
 		}
 		TEST_PRINT_TRC_NOSLEEP("Setting the Time is Successful, "
-			"Please verify wheather Date and Time is changing");
+			"Please verify whether Date and Time is changing");
 		while (count) {
 
 			sleep(1);
@@ -213,9 +246,9 @@ int st_rtc_setgettime(int fileDesc, long ioctlarg)
 			}
 			count--;
 		}
-		/* Since their is 5 Sec delay, increment time2 by 5 secs 
+		/* Since there is 5 Sec delay, increment time2 by 5 secs 
 			and compare */
-		st_rtc_add_secs_todate(&rtc_time2, 5);
+		st_rtc_add_secs_todate(&rtc_time2, 5, leap_flag);
 		if (!st_rtc_compare_date(&rtc_time3, &rtc_time2)) {
 			TEST_PRINT_ERR("Date Set and Get Didn't match");
 			result = FAILURE;
@@ -320,7 +353,7 @@ int st_rtc_setgetalarm(int fileDesc, long ioctlarg)
 		     ioctlarg);
 
 		/* Add the seconds to time and set the alarm to that time */
-		st_rtc_add_secs_todate(&rtc_time1, ioctlarg);
+		st_rtc_add_secs_todate(&rtc_time1, ioctlarg, 0);
 		retVal = ioctl(fileDesc, RTC_ALM_SET, &(rtc_time1));
 		if (FAILURE == retVal) {
 			st_perror("IOCTL FAILED");
@@ -418,7 +451,7 @@ int st_rtc_gettime(int fileDesc, long ioctlarg)
  * Return Value         -  none
  * Note                 -  None
  ****************************************************************************/
-static void st_rtc_add_secs_todate(struct rtc_time *rtc_time, int secs)
+static void st_rtc_add_secs_todate(struct rtc_time *rtc_time, int secs, int leap)
 {
 
 	rtc_time->tm_sec += secs;
@@ -463,11 +496,11 @@ static void st_rtc_add_secs_todate(struct rtc_time *rtc_time, int secs)
 		}
 		break;
 	case ST_RTC_MONFEB:
-		if (rtc_time->tm_mday > ST_RTC_DAYSINFEB) {
+		if (rtc_time->tm_mday > (ST_RTC_DAYSINFEB+leap)) {
 			rtc_time->tm_mon +=
-			    (rtc_time->tm_mday / ST_RTC_DAYSINFEB);
+			    (rtc_time->tm_mday / (ST_RTC_DAYSINFEB+leap));
 			rtc_time->tm_mday =
-			    rtc_time->tm_mday % ST_RTC_DAYSINFEB;
+			    rtc_time->tm_mday % (ST_RTC_DAYSINFEB+leap);
 		}
 		break;
 	}
