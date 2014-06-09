@@ -52,6 +52,14 @@ find_scsi_node() {
          exit 0
         fi
       ;;
+      pci)
+        file=`ls /dev/disk/by-path/*-part1|grep -i 'pci'|head -1`
+        if [[ ! -z "$file" ]]; then
+          DEV_NODE="/dev/""$(basename $(readlink $file))"
+          echo $DEV_NODE
+          exit 0
+        fi
+      ;;
     esac
   # if could not find match, let user know
   echo "Could not find device node for SCSI device!"
@@ -114,6 +122,9 @@ case $DEV_TYPE in
         ;;
         usbxhci)
           DEV_NODE=`find_scsi_node "usbxhci"` || die "error getting usbxhci node: $DEV_NODE" 
+        ;;
+        pci)
+          DEV_NODE=`find_scsi_node "pci"` || die "error getting pciusb node: $DEV_NODE" 
         ;;
         ata)
           DEV_NODE="/dev/hda1"
