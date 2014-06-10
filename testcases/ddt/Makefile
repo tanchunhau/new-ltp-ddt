@@ -302,6 +302,7 @@ FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += ipc_test_suite
+FILTER_OUT_DIRS                 += gpio_test_suite
 endif
 
 ifeq ($(PLATFORM),k2l-evm)
@@ -312,6 +313,7 @@ FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += ipc_test_suite
+FILTER_OUT_DIRS                 += gpio_test_suite
 endif
 
 ifeq ($(PLATFORM),k2e-evm)
@@ -322,6 +324,7 @@ FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
 FILTER_OUT_DIRS                 += ipc_test_suite
+FILTER_OUT_DIRS                 += gpio_test_suite
 endif
 
 
