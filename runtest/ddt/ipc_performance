@@ -1,0 +1,13 @@
+# @name IPC  performance test script.
+# @desc Test does IPC Performance test.
+
+# @requires ipc 
+
+IPC_S_PERF_IPC_PERF source "common.sh"; ipc_performance.sh -t 1000 -c 1;
+
+
+
+
+
+
+

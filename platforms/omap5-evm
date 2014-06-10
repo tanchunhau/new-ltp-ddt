@@ -45,4 +45,5 @@ usb/slave/cdc
 usbxhci/slave/msc
 usbxhci/slave/cdc
 watchdog/omap_wdt
-
+iommu
+ipc
