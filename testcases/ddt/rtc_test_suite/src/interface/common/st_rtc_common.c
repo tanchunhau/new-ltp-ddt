@@ -43,6 +43,7 @@
 /* Storage structures, enums, macros defined */
 #define DEFAULT_DEVICE			"/dev/rtc0"
 #define	DEFAULT_LOOP_COUNT  		1
+#define	DEFAULT_READONLYFLAG		0
 #define DEFAULT_IOCTLTESTCASE_ARG     	20
 #define DEFAULT_IOCTL_TESTCASE		ST_RTC_READ_TIME
 /* Global Variables */
@@ -63,6 +64,7 @@ void st_init_rtc_test_params(void)
 	strcpy(testoptions.device, DEFAULT_DEVICE);
 	testoptions.ioctl_testcase = DEFAULT_IOCTL_TESTCASE;
 	testoptions.loop = DEFAULT_LOOP_COUNT;
+        testoptions.readonly = DEFAULT_READONLYFLAG;
 	testoptions.ioctl_testcasearg = DEFAULT_IOCTLTESTCASE_ARG;
 }
 
@@ -86,6 +88,8 @@ void st_display_rtc_test_suite_help(void)
 		"-loop        :  No of times to execute the test\n"
 		"-id          :  Test case id string for testers reference\n"
 		"                logging purpose\n"
+		"-readonly    :  Readonly flag to indicate\n"
+		"                use if device node is to be opened in readonly mode\n"
 		"-help        :  Displays the help/usage\n"
 		"-version     :  Version of RTC Test suite\n");
 }
@@ -105,6 +109,7 @@ void st_print_rtc_test_params(struct st_rtc_testparams *testoptions,
 	TEST_PRINT_TRC("******** RTC Testcase  parameters  ******** ");
 	TEST_PRINT_TRC("Device         : %s", testoptions->device);
 	TEST_PRINT_TRC("Loop Count     : %d", testoptions->loop);
+	TEST_PRINT_TRC("Readonly Flag  : %d", testoptions->readonly);
 	while (ioctl_table[i].ioctl_testcase != testoptions->ioctl_testcase) {
 		i++;
 		continue;

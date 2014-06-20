@@ -52,7 +52,8 @@ static void st_display_rtc_testsuite_version();
 unsigned long st_get_unsigned(const char *str);
 
 /* Macro Definations */
-#define DEFAULT_LOOP_COUNT    1
+#define DEFAULT_LOOP_COUNT	1
+#define DEFAULT_READONLY	0
 
 /****************************************************************************
  * Function		- st_process_rtc_test_options 
@@ -84,6 +85,7 @@ static int st_process_rtc_test_options(int argc, char **argv)
 			 OPTION_IOCTL_ARG},
 			{"loop", optional_argument, NULL, OPTION_LOOP},
 			{"id", optional_argument, NULL, OPTION_TESTCASE_ID},
+			{"readonly", optional_argument, NULL, OPTION_READONLY},
 			{"version", no_argument, NULL, OPTION_VERSION},
 			{"help", no_argument, NULL, OPTION_HELP},
 			{NULL, 0, NULL, 0}
@@ -110,6 +112,9 @@ static int st_process_rtc_test_options(int argc, char **argv)
 			} else if (optind < argc && ('-' != argv[optind][0])) {
 				strcpy(testcaseid, argv[optind]);
 			}
+			break;
+		case OPTION_READONLY:
+			testoptions.readonly=1;
 			break;
 		case OPTION_IOCTL:
 			if (optarg != NULL) {

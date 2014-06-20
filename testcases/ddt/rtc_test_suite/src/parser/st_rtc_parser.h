@@ -58,6 +58,9 @@
 /* Test case id string for logging purpose */
 #define OPTION_TESTCASE_ID      5
 
+/* READONLY flag for mode of opening rtc node */
+#define OPTION_READONLY		6 
+
 /* Displays the version of LFTB package */
 #define OPTION_VERSION       	'v'
 /* Displays the help */
@@ -77,4 +80,4 @@ struct rtc_ioctl_table ioctl_table[] = {
 	{"NULL", 0, 0, NULL, NULL}
 };
 
-#endif /* #ifndef _ST_WDT_PARSER_H_ */
+#endif /* #ifndef _ST_RTC_PARSER_H_ */

@@ -69,7 +69,7 @@ enum rtc_ioctl_testcase {
 	ST_RTC_READ_TIME,
 	ST_RTC_SETGET_TIME,
 	ST_RTC_UIE_ONOFF,
-	ST_RTC_ALM
+	ST_RTC_ALM,
 };
 
 /*Structure for holding the test options */
@@ -89,6 +89,9 @@ struct st_rtc_testparams {
 
 	/* Loop Count : */
 	int loop;
+
+	/* device open in readonly mode */
+        int readonly;
 };
 
 /* Structure used to define the ioctl table */

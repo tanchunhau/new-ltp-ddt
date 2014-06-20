@@ -96,16 +96,25 @@ int st_rtc_ioctl_test(struct st_rtc_testparams *info, char *test_id)
 	int i = 0;
 
 	do {
-		fileDesc = st_open(info->device, O_RDWR);
+		if(info->readonly == 1)
+			fileDesc = st_open(info->device, O_RDONLY);
+		else
+			fileDesc = st_open(info->device, O_RDWR);
+			
+
 		if (FAILURE == fileDesc) {
 			TEST_PRINT_ERR("file open failed ");
 			result = FAILURE;
 			break;
 		}
+
+
 		while ((ioctl_table[i].ioctl_testcase != info->ioctl_testcase)
 		       && (ioctl_table[i].ioctl_testcasename != NULL)) {
 			i++;
 		}
+
+
 		if (NULL == ioctl_table[i].ioctl_testcasename) {
 			TEST_PRINT_ERR("Test Case Not Found");
 			result = FAILURE;
@@ -114,13 +123,17 @@ int st_rtc_ioctl_test(struct st_rtc_testparams *info, char *test_id)
 				(fileDesc, info->ioctl_testcasearg);
 			result = retVal;
 		}
+
+
 		retVal = st_close(fileDesc);
 		if (FAILURE == retVal) {
 			TEST_PRINT_ERR("file close failed ");
 			result = FAILURE;
 			break;
 		}
+
 	} while (0);
+
 	return result;
 }
 
