@@ -394,6 +394,7 @@ opt_config_values=(
 "CONFIG_SND_DEBUG" \
 "CONFIG_RTC_DEBUG" \
 "CONFIG_TIGON3" \
+"CONFIG_AHCI" \
 )
 
 # $1: CONFIG option to check
