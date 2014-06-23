@@ -84,6 +84,14 @@ if [ -z $DEV_NODE ]; then
         test_print_trc "DEV_NODE return from get_blk_device_node is: $DEV_NODE" 
 fi
 
+# translate DEVICE_TYPE to DEV_TYPE (mtd or not)
+DEV_TYPE=`get_device_type_map.sh $DEVICE_TYPE` || die "error while translating device type"
+# erase mtd device so the test start with a good mtd device
+if [ $DEV_TYPE = 'mtd' ]; then
+  mtd_part=`get_mtd_partnum_from_devnode.sh $DEV_NODE` || die "error getting mtd part number"
+  do_cmd flash_eraseall -q "/dev/mtd${mtd_part}"
+fi
+
 ########################### REUSABLE TEST LOGIC ###############################
 # DO NOT HARDCODE any value. If you need to use a specific value for your setup
 # use user-defined Params section above.
