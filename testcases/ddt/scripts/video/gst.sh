@@ -24,7 +24,7 @@ usage()
 {
 cat <<-EOF >&2
         usage: ./${0##*/} [-d DOWNLOAD] -c <CODEC> -r <RESOLUTION>
-        -d DOWNLOAD	stream to be downloaded from smruti.india.ti.com
+        -d DOWNLOAD	stream to be downloaded from gtopentest-server.gt.design.ti.com
         -c CODEC 	codec h264, mpeg4, mpeg2, mpeg4aac
 	-r RESOLUTION	resolution of stream
         -h Help         print this usage
@@ -84,8 +84,8 @@ else
    FILE="/usr/share/ti/video/$DOWNLOAD"
    echo "Running $FILE"
    if [ ! -s "$FILE" ];then
-      echo "Downloading stream $DOWNLOAD from SMRUTI"
-      do_cmd 'wget http://smruti.india.ti.com/streams/download/"$DOWNLOAD" -O "/usr/share/ti/video/$DOWNLOAD"'\
+      echo "Downloading stream $DOWNLOAD from gtopentest-server"
+      do_cmd 'Wget http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Video/$DOWNLOAD"'\
  || die "Stream not available!"
    fi
 fi
