@@ -35,7 +35,6 @@ FILTER_OUT_DIRS                 += ipc_test_suite
 
 ifeq ($(PLATFORM),dra7xx-evm)
 FILTER_OUT_DIRS                 += mc_test_suite
-FILTER_OUT_DIRS                 += gpio_test_suite
 FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
