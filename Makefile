@@ -227,7 +227,7 @@ endif
 ## Compile Modules
 MODULES_TO_BUILD :=
 PLATFORMSwEDMA   := am180x-evm|am181x-evm|am389x-evm|am387x-evm|dm385-evm|dm813x-evm|da830-omapl137-evm|am170x-evm
-PLATFORMSwGPIO   := am335x-evm|omap5-evm|beaglebone|am437x-evm|dra7xx-evm|dra72x-evm|am57xx-evm
+PLATFORMSwGPIO   := am335x-evm|omap5-evm|beaglebone|am437x-evm|dra7xx-evm|dra72x-evm|am57xx-evm|am437x-sk
 PLATFORMSwIPC   :=  omap5-evm
 
 ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwEDMA)))
