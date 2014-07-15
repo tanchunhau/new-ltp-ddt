@@ -38,6 +38,16 @@ FILTER_OUT_DIRS                 += mc_test_suite
 FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
+ifeq ($(PLATFORM),dra72x-evm)
+FILTER_OUT_DIRS                 += mc_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
+endif
+
+ifeq ($(PLATFORM),am57xx-evm)
+FILTER_OUT_DIRS                 += mc_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
+endif
+
 ifeq ($(PLATFORM),omap5-evm)
 FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
