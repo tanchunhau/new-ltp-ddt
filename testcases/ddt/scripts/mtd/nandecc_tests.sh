@@ -164,7 +164,7 @@ hexdump_original_w_oob="$TMPDIR/original_w_oob"
 hexdump_corrupted_w_oob="$TMPDIR/corrupted_w_oob"
 do_cmd "hexdump -C $orig_nanddump_w_oob > "$hexdump_original_w_oob" "
 do_cmd "hexdump -C $corrupted_nanddump > "$hexdump_corrupted_w_oob" "
-test_print_trc "The below are the errors in the nand page" 
+test_print_trc "The below are the errors being injected in the nand page" 
 test_print_trc "diff "$hexdump_original_w_oob" "$hexdump_corrupted_w_oob" "
 diff "$hexdump_original_w_oob" "$hexdump_corrupted_w_oob"
 
