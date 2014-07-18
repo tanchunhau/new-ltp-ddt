@@ -32,5 +32,5 @@ ALSA_S_FUNC_SPEAKER_TEST_0028 source 'common.sh' ; do_cmd install_modules.sh 'so
 ALSA_S_FUNC_SPEAKER_TEST_0029 source 'common.sh' ; do_cmd install_modules.sh 'sound' ;do_cmd 'run_speaker_test.sh -c 2 -r 44100 -l 5'
 ALSA_S_FUNC_SPEAKER_TEST_0030 source 'common.sh' ; do_cmd install_modules.sh 'sound' ;do_cmd 'run_speaker_test.sh -c 2 -r 48000 -l 10'
 ALSA_S_FUNC_SPEAKER_TEST_0031 source 'common.sh' ; do_cmd install_modules.sh 'sound' ;do_cmd 'run_speaker_test.sh -c 2 -r 88200 -l 10'
-ALSA_XS_FUNC_SPEAKER_TEST_0032 source 'common.sh' ; do_cmd install_modules.sh 'sound' ;do_cmd 'run_speaker_test.sh -c 2 -r 96000 -l 10'
+ALSA_S_FUNC_SPEAKER_TEST_0032 source 'common.sh' ; do_cmd install_modules.sh 'sound' ;do_cmd 'run_speaker_test.sh -c 2 -r 96000 -l 10'
 ALSA_M_STRESS_SPEAKER_TEST_0032 source 'common.sh' ; do_cmd install_modules.sh 'sound' ;do_cmd 'run_speaker_test.sh -c 2 -t wave -l 1000'
