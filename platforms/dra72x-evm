@@ -35,6 +35,7 @@ power_mgr/cpufreq/ondemand
 power_mgr/cpuidle
 power_mgr/dynamic_ticks
 power_mgr/smartreflex
+qspi
 rtc/omap_rtc
 sata/ahci
 rtc/rtc-palmas
