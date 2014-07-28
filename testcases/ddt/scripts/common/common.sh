@@ -404,4 +404,10 @@ is_opt_config() {
   return 1
 }
 
+notify_and_wait() {
+    echo ""
+    echo $1
+    sleep $2
+}
+
 
