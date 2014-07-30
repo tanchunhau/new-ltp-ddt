@@ -84,7 +84,7 @@ am387x-evm|am389x-evm|am335x-evm|dm385-evm|am43xx-gpevm)
 am43xx-epos)
         CAPTURE_SWITCH_NAME_1="ADC Capture Switch";
         PLAYBACK_SWITCH_NAME_1="HP Driver Playback Switch"
-        PLAYBACK_SWITCH_NAME_2="SP Driver Playback Switch"
+        PLAYBACK_SWITCH_NAME_2="Speaker Driver Playback Switch"
         ;;
 dra7xx-evm)
         CAPTURE_SWITCH_NAME_1="PGA Capture Switch";
