@@ -229,6 +229,7 @@ MODULES_TO_BUILD :=
 PLATFORMSwEDMA   := am180x-evm|am181x-evm|am389x-evm|am387x-evm|dm385-evm|dm813x-evm|da830-omapl137-evm|am170x-evm
 PLATFORMSwGPIO   := am335x-evm|omap5-evm|beaglebone|am437x-evm|dra7xx-evm|dra72x-evm|am57xx-evm|am437x-sk
 PLATFORMSwIPC   :=  omap5-evm
+PLATFORMSwDEVFREQ := dra7xx-evm
 
 ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwEDMA)))
 # Disable edma modules install until appropriate tests are available
@@ -243,6 +244,10 @@ ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwIPC)))
 #	MODULES_TO_BUILD += modules_ipc
 endif
 
+ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwDEVFREQ)))
+	MODULES_TO_BUILD += modules_devfreq
+endif
+
 modules_edma:
 	@echo "Going to compile edma test kernel modules for $(PLATFORM)"
 	cd testcases/ddt/edma_test_suite/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) KERNEL_DIR=$(KERNEL_INC)/.. PLATFORM=$(PLATFORM)
@@ -254,6 +259,10 @@ modules_gpio:
 modules_ipc:
 	@echo "Going to compile IPC test kernel modules for $(PLATFORM)"
 	cd testcases/ddt/ipc_test_suite/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) KERNEL_DIR=$(KERNEL_INC)/.. PLATFORM=$(PLATFORM)
+
+modules_devfreq:
+	@echo "Going to compile devfreq test kernel modules for $(PLATFORM)"
+	cd testcases/ddt/devfreq_drivers/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) KERNEL_DIR=$(KERNEL_INC)/.. PLATFORM=$(PLATFORM)
 
 modules: $(MODULES_TO_BUILD)
 
