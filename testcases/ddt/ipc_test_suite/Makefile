@@ -12,7 +12,11 @@ UNWANTED_FILES          := Makefile
 INSTALL_MODE            := 00755
 
 
-MAKE_TARGETS    := mbox_test.ko iommu_test.ko
+MAKE_TARGETS :=
+
+ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwIPC)))
+	MAKE_TARGETS    := mbox_test.ko iommu_test.ko
+endif
 
 
 include $(top_srcdir)/include/mk/generic_leaf_target.mk
