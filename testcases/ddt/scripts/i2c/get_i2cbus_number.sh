@@ -37,7 +37,6 @@ case $SOC in
 esac
 case $MACHINE in
   am37x-evm) I2CBUS_NUM=3;;
-  am335x-evm) I2CBUS_NUM=1;;
 esac
 
 echo $I2CBUS_NUM
