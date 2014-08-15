@@ -226,6 +226,7 @@ endif
 
 ## Compile Modules
 KERNEL_PATH ?= $(KERNEL_INC)/..
+KERNEL_CC ?= $(CC)
 
 MODULES_TO_BUILD :=
 export PLATFORMSwEDMA   := am180x-evm|am181x-evm|am389x-evm|am387x-evm|dm385-evm|dm813x-evm|da830-omapl137-evm|am170x-evm
@@ -252,19 +253,19 @@ endif
 
 modules_edma:
 	@echo "Going to compile edma test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/edma_test_suite/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM)
+	cd testcases/ddt/edma_test_suite/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM)
 
 modules_gpio:
 	@echo "Going to compile gpio test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/gpio_test_suite/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM)
+	cd testcases/ddt/gpio_test_suite/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM)
 
 modules_ipc:
 	@echo "Going to compile IPC test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/ipc_test_suite/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM)
+	cd testcases/ddt/ipc_test_suite/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM)
 
 modules_devfreq:
 	@echo "Going to compile devfreq test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/devfreq_drivers/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM)
+	cd testcases/ddt/devfreq_drivers/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM)
 
 modules: $(MODULES_TO_BUILD)
 
