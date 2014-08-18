@@ -52,6 +52,11 @@ esac
 case $SOC in
 esac
 case $MACHINE in
+*dra7xx-evm)
+	CAPTURE_SWITCH_NAME_1="PGA Capture Switch";
+	PLAYBACK_SWITCH_NAME_1="Line Playback Switch";
+	PLAYBACK_SWITCH_NAME_2="HP Playback Switch"
+	;;
 am180x-evm|dm355-evm|dm365-evm|dm6446-evm|dm6467-evm|dm368-evm)
 	CAPTURE_SWITCH_NAME_1="PGA Capture Switch";
 	PLAYBACK_SWITCH_NAME_1="LineL Playback Switch"
