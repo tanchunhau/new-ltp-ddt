@@ -16,7 +16,8 @@ INSTALL_MODE            := 00755
 #INSTALL_TARGETS         := $(filter-out $(UNWANTED_FILES),$(notdir $(patsubst $(abs_srcdir)/%,%,$(wildcard $(abs_srcdir)/*))))
 
 CFLAGS          += -g -Wall -O1 -fomit-frame-pointer
-LDFLAGS         += -g -static -lpthread
+LDFLAGS         += -g -static 
+LDLIBS          += -lpthread
 INCLUDES        = -I $(KERNEL_USR_INC) -I $(KERNEL_INC) -I src/interface/common -I ../utils/user
 
 #List of source files- Update this on adding a new C file
@@ -36,7 +37,7 @@ SOURCES := \
 MAKE_TARGETS            := fbdev_tests
 
 fbdev_tests:
-	$(CC) -o fbdev_tests ${INCLUDES} ${SOURCES} ${CFLAGS} ${LDFLAGS}
+	$(CC) -o fbdev_tests ${INCLUDES} ${SOURCES} ${CFLAGS} ${LDFLAGS} $(LDLIBS)
 
 include $(top_srcdir)/include/mk/generic_leaf_target.mk
 
