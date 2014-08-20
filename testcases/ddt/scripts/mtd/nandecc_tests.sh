@@ -171,8 +171,12 @@ diff "$hexdump_original_w_oob" "$hexdump_corrupted_w_oob"
 sleep 5
 
 # Verify steps
+test_print_trc "Dumpping nand..."
 corrected_nanddump="$TMPDIR/testfile_nanddump.corrected"
-do_cmd "nanddump -l "$pagesize" -f "$corrected_nanddump" "$dev_node" " 
+do_cmd "nanddump -l "$pagesize" -f "$corrected_nanddump" "$dev_node" " > $TMPDIR/nanddump_msg 2>&1
+cat $TMPDIR/nanddump_msg
+cat $TMPDIR/nanddump_msg |grep "uncorrectable bitflip(s)" && result=1 || result=0
+echo "result is $result" 
 
 test_print_trc "Check if the errors are got corrected"
 hexdump_original="$TMPDIR/original"
@@ -182,7 +186,7 @@ do_cmd "hexdump -C $corrected_nanddump > "$hexdump_corrected" "
 test_print_trc "diff "$hexdump_original" "$hexdump_corrected" "
 diff "$hexdump_original" "$hexdump_corrected"
   
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ] || [ $result -eq 1 ]; then
   if [ $type = 'negative' ]; then
     test_print_trc "The bit error(s) are not corrected as expected, checking if dut is ok..."
     #check if dut is still stable
