@@ -188,7 +188,7 @@ exit 0
 main()
 {
     local CMDFILES=""
-    local PRETTY_PRT=""
+    local PRETTY_PRT=" -p "
     local ALT_DIR_OUT=0
     local ALT_DIR_RES=0
     local ALT_HTML_OUT=0
@@ -1040,14 +1040,11 @@ main()
       # make sure there is PASS result. sometime, there is no result.
       cat $LOGFILE | grep ' PASS ' > /dev/null
       if [ $? -eq 0 ]; then
-        rm -f $LOGFILE 
         exit $VALUE
       else
-        rm -f $LOGFILE 
         exit 1
       fi
     else
-      rm -f $LOGFILE
       exit 1
     fi
 }
@@ -1055,7 +1052,6 @@ main()
 cleanup()
 {
     rm -rf ${TMP}
-    rm -f $LOGFILE
 }
 
 check_feature_support()
