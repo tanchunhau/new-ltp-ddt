@@ -226,7 +226,9 @@ random_ne0()
 # check different kernel errors
 check_kernel_errors()
 {
-  type=$1
+  local type=$1
+  shift
+  local opts=$1
   case $type in
     kmemleak)
       check_config_options "y" DEBUG_KMEMLEAK
@@ -235,8 +237,11 @@ check_kernel_errors()
         die "kmemleak sys entry doesn't exist; perhaps need to increase CONFIG_DEBUG_KMEMLEAK_EARLY_LOG_SIZE"
       fi
 
-      # clear the list of all current possible memory leaks before scan
-      do_cmd "echo clear > ${kmemleaks}"
+      if [ "$opts" = "clear" ]; then
+        # clear the list of all current possible memory leaks before scan
+        do_cmd "echo clear > ${kmemleaks}"
+        return        
+      fi
 
       # trigger memory scan
       do_cmd "echo scan > ${kmemleaks}"
@@ -252,6 +257,12 @@ check_kernel_errors()
     ;;
     spinlock)
       check_config_options "y" DEBUG_SPINLOCK
+
+      if [ "$opts" = "clear" ]; then
+        dmesg -c
+        return
+      fi
+
       # Check dmesg to catch the error
       spinlock_errors="BUG: spinlock"
       dmesg |grep -i "${spinlock_errors}" && die "There is spinlock errors showing in dmesg" || test_print_trc "No spinlock related error found in dmesg"
