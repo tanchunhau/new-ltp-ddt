@@ -15,10 +15,13 @@
 # $USE_MEMORY_PERCENTAGE: memtester mem usage percentage
 
 source "functions.sh" 
+declare -a cpuidle_times
 
 # test idle
 test_idle()
 {
+	is_cpuidle_available
+	check_cpuidle_stats
 	report_stats "BEFORE IDLE TEST"
 	idle_random
 	resume_memtest $USE_MEMORY_PERCENTAGE
@@ -35,6 +38,7 @@ test_idle()
 	pause_memtest
 	idlebig_random
 	report_stats "AFTER IDLE TEST"
+	check_cpuidle_stats
 }
 
 # test suspend
@@ -83,7 +87,8 @@ super_pm_test()
 	report "Kernel revision"
 	cat /proc/version
 
-	report "Switching to governor $GOVERNOR"
+    is_cpufreq_available
+    report "Switching to governor $GOVERNOR"
 	echo -n "$GOVERNOR">/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 
 	start_memtest $USE_MEMORY_PERCENTAGE
@@ -122,3 +127,42 @@ super_pm_test()
 		test_iteration=`expr $test_iteration + 1`
 	done
 }
+
+is_cpufreq_available()                                                         
+{                                                                            
+	local num_cpus=`get_num_cpus`                             
+	for cpu in `seq 0 $(($num_cpus - 1))`;                    
+	do                                                        
+    cpufreqdir=/sys/devices/system/cpu/cpu$cpu/cpufreq
+    assert [ -d "$cpufreqdir" ]                           
+	done                                                       
+}                                                                     
+                                                                  
+is_cpuidle_available()                                                
+{                                                                 
+	local num_cpus=`get_num_cpus`                             
+	for cpu in `seq 0 $(($num_cpus - 1))`;                    
+	do                                                        
+    cpuidledir=/sys/devices/system/cpu/cpu$cpu/cpuidle
+    assert [ -d "$cpuidledir" ]   
+	done                             
+}               
+
+check_cpuidle_stats()                              
+{                                                                     
+    local num_cpus=`get_num_cpus`                    
+    i=0                                             
+    for cpu in `seq 0 $(($num_cpus - 1))`; do                                    
+        dirpath=/sys/devices/system/cpu/cpu$cpu/cpuidle
+        for state in $(ls -d $dirpath/state*); do      
+        	if [ ${#cpuidle_times[@]} -le $i ]; then
+        		cpuidle_times[$i]=`cat $state/time`
+        	else
+        		new_time=`cat $state/time`
+        		assert [ $new_time -gt ${cpuidle_times[$i]} ]
+        		cpuidle_times[$i]=$new_time
+        	fi
+        	i=$((i+1))
+        done
+    done
+}    
