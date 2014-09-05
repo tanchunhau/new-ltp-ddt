@@ -24,7 +24,7 @@ SATA_S_FUNC_EXT2_DD_RW_100M source "common.sh"; install_modules.sh "sata"; do_cm
 
 SATA_M_FUNC_EXT2_DD_RW_1G source "common.sh"; install_modules.sh "sata"; do_cmd blk_device_dd_readwrite_test.sh -f "ext2" -b "10M" -c "100" -d "sata"
 
-SATA_M_FUNC_EXT2_DD_RW_10G source "common.sh"; install_modules.sh "sata"; do_cmd blk_device_dd_readwrite_test.sh -f "ext2" -b "10M" -c "100" -d "sata"
+SATA_M_FUNC_EXT2_DD_RW_10G source "common.sh"; install_modules.sh "sata"; do_cmd blk_device_dd_readwrite_test.sh -f "ext2" -b "1M" -c "1024" -l 10 -w -d "sata"
 
 
 
