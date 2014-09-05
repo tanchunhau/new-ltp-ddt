@@ -229,6 +229,7 @@ for GPIO_NUM_IN_BANK in $GPIO_NUM_IN_BANKS; do
             test_print_trc "The value is ${VAL} for $GPIO_NUM" 
             ;;
           edge)
+            gpio_sysentry_set_item "$GPIO_NUM" "direction" "in" || die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to in"
             gpio_sysentry_set_item "$GPIO_NUM" "edge" "falling"
             if [ $? -ne 0 ]; then
               die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to falling"
