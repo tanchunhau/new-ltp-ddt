@@ -513,6 +513,8 @@ suspend()
       else
          check_suspend
          check_resume
+         check_suspend_stats
+         check_suspend_errors
          if [ $usb_remove = 1 ]; then
             echo "USB_REMOVE flag is $usb_remove"
             `modprobe $usb_module`
@@ -544,6 +546,18 @@ check_resume()
 {
     expect="PM: resume of devices complete"
     dmesg | grep -i "$expect" && report "resume successfully" || die "resume failed"
+}
+
+check_suspend_errors()
+{
+    expect="Could not enter target state in pm_suspend|_wait_target_disable failed"
+    dmesg | egrep -i "$expect" && die "$expect errors observed"
+}
+
+check_suspend_stats()
+{
+    local failures=`get_value_for_key_from_file /sys/kernel/debug/suspend_stats fail :`
+    [ $failures -eq 0 ] || die "/sys/kernel/debug/suspend_stats reports failures"
 }
 
 check_cpufreq_files() {
