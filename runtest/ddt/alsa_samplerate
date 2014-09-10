@@ -1,5 +1,14 @@
 # @name Testing for various sampling irates
 # @desc Do capture and loopback for various sample rates
+#       The playback tests in alsa_tests.sh will try to 
+#       fetch (if -u option is not specified) a file from server 
+#       http://gtopentest-server.gt.design.ti.com based on the
+#       sample format, rate and number of channels; if the fetch
+#       fails playback will use /dev/urandom as the source. It 
+#       is recommended to change the url to an existing server 
+#       in the test environment or to add the -u option in the 
+#       playback scenarios so that a valid audio source file is 
+#       used during playback tests.
 # @requires sound
 ALSA_S_FUNC_CAP_SMPRT_8000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t capture -r 8000 -F ALSA_M_FUNC_CAP_SMPRT_8000.snd -d 60'; do_cmd 'alsa_tests.sh -t playback -r 8000 -F ALSA_M_FUNC_CAP_SMPRT_8000.snd -d 60'
 ALSA_S_FUNC_LOOPBK_SMPRT_8000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t loopback -r 8000 -d 60'
@@ -23,14 +32,14 @@ ALSA_S_FUNC_CAP_SMPRT_88200 source 'common.sh' ; do_cmd install_modules.sh 'soun
 ALSA_S_FUNC_LOOPBK_SMPRT_88200 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t loopback -r 88200 -d 60'
 ALSA_S_FUNC_CAP_SMPRT_96000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t capture -r 96000 -F ALSA_M_FUNC_CAP_SMPRT_96000.snd -d 60'; do_cmd 'alsa_tests.sh -t playback -r 96000 -F ALSA_M_FUNC_CAP_SMPRT_96000.snd -d 60'
 ALSA_S_FUNC_LOOPBK_SMPRT_96000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t loopback -r 96000 -d 60'
-ALSA_S_FUNC_PLAYBACK_SMPRT_8000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 8000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_8000.wav -d 60 -u http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Audio/WAV/pcm_s16le/8000/stereo/test_8000_pcm_s16le_8000_stereo_201sec.wav'
-ALSA_S_FUNC_PLAYBACK_SMPRT_11025 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 11025 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_11025.wav -d 60 -u http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Audio/WAV/pcm_s16le/11025/stereo/test_8000_pcm_s16le_11025_stereo_201sec.wav'
-ALSA_S_FUNC_PLAYBACK_SMPRT_16000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 16000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_16000.wav -d 60 -u http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Audio/WAV/pcm_s16le/16000/stereo/test_8000_pcm_s16le_16000_stereo_201sec.wav'
-ALSA_S_FUNC_PLAYBACK_SMPRT_22050 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 22050 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_22050.wav -d 60 -u http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Audio/WAV/pcm_s16le/22050/stereo/test_8000_pcm_s16le_22050_stereo_201sec.wav'
-ALSA_S_FUNC_PLAYBACK_SMPRT_24000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 24000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_24000.wav -d 60 -u http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Audio/WAV/pcm_s16le/24000/stereo/test_8000_pcm_s16le_24000_stereo_201sec.wav'
-ALSA_S_FUNC_PLAYBACK_SMPRT_32000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 32000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_32000.wav -d 60 -u http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Audio/WAV/pcm_s16le/32000/stereo/test_8000_pcm_s16le_32000_stereo_201sec.wav'
-ALSA_S_FUNC_PLAYBACK_SMPRT_44100 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 44100 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_44100.wav -d 60 -u http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Audio/WAV/pcm_s16le/44100/stereo/test_8000_pcm_s16le_44100_stereo_201sec.wav'
-ALSA_S_FUNC_PLAYBACK_SMPRT_48000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 48000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_48000.wav -d 60 -u http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Audio/WAV/pcm_s16le/48000/stereo/test_8000_pcm_s16le_48000_stereo_201sec.wav'
-ALSA_S_FUNC_PLAYBACK_SMPRT_88200 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 88200 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_88200.wav -d 60 -u http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Audio/WAV/pcm_s16le/88200/stereo/test_8000_pcm_s16le_88200_stereo_201sec.wav'
-ALSA_S_FUNC_PLAYBACK_SMPRT_96000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 96000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_96000.wav -d 60 -u http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Audio/WAV/pcm_s16le/96000/stereo/test_8000_pcm_s16le_96000_stereo_201sec.wav'
+ALSA_S_FUNC_PLAYBACK_SMPRT_8000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 8000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_8000.wav -d 60'
+ALSA_S_FUNC_PLAYBACK_SMPRT_11025 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 11025 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_11025.wav -d 60'
+ALSA_S_FUNC_PLAYBACK_SMPRT_16000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 16000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_16000.wav -d 60'
+ALSA_S_FUNC_PLAYBACK_SMPRT_22050 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 22050 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_22050.wav -d 60'
+ALSA_S_FUNC_PLAYBACK_SMPRT_24000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 24000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_24000.wav -d 60'
+ALSA_S_FUNC_PLAYBACK_SMPRT_32000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 32000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_32000.wav -d 60'
+ALSA_S_FUNC_PLAYBACK_SMPRT_44100 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 44100 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_44100.wav -d 60'
+ALSA_S_FUNC_PLAYBACK_SMPRT_48000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 48000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_48000.wav -d 60'
+ALSA_S_FUNC_PLAYBACK_SMPRT_88200 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 88200 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_88200.wav -d 60'
+ALSA_S_FUNC_PLAYBACK_SMPRT_96000 source 'common.sh' ; do_cmd install_modules.sh 'sound' ; do_cmd 'alsa_tests.sh -t playback -r 96000 -F /home/root/ALSA_M_FUNC_PLAYBACK_SMPRT_96000.wav -d 60'
 
