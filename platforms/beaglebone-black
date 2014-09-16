@@ -36,4 +36,4 @@ usb/otg
 usb/slave/msc
 usb/slave/cdc
 watchdog/omap_wdt
-
+hdmi/audio/playback

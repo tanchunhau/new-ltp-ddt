@@ -12,6 +12,15 @@
 # GNU General Public License for more details.
 # 
 # @desc Captures/Plays/loopbacks the audio for given parameters
+#       The playback tests in alsa_tests.sh will try to 
+#       fetch (if -u option is not specified) a file from server 
+#       http://gtopentest-server.gt.design.ti.com based on the
+#       sample format, rate and number of channels; if the fetch
+#       fails playback will use /dev/urandom as the source. It 
+#       is recommended to change the url to an existing server 
+#       in the test environment or to add the -u option in the 
+#       playback scenarios so that a valid audio source file is 
+#       used during playback tests.
 # @params t) Test type     : Capture,playback,loopback
 #         r) Sample rate   : Sample rate (44100,48000,88200,96000 etc)
 #         f) Sample Format : Sample Format (S8,S16_LE,S24_LE,S32_LE)
@@ -37,7 +46,7 @@ usage()
 {
 	cat <<-EOF >&2
 	usage: ./${0##*/} [-t TEST_TYPE] [-D DEVICE] [-R REC_DEVICE] [-P PLAY_DEVICE] [-r SAMPLE_RATE] [-f SAMPLE_FORMAT] [-p PERIOD_SIZE] [-b BUFFER_SIZE] [-c CHANNEL] [-o OpMODE] [-a ACCESS_TYPE] [-d DURATION]
-	-t TEST_TYPE		Test Type. Possible Values are Capture,playback,loopback.
+	-t TEST_TYPE		Test Type. Possible Values are capture,playback,loopback.
 	-D DEVICE           Device Name like hw:0,0.
 	-R REC_DEVICE           Device Name like hw:0,0.
 	-P PLAY_DEVICE           Device Name like hw:0,0.
@@ -55,6 +64,23 @@ usage()
 	EOF
 	exit 0
 	
+}
+
+#Function to obtain the default value of a parameter based on the capabilities string
+#  $1 capability string to parse
+#  $2 parameter string to look for
+#  $3 (optional), if the parameter allow a value in a range, this function returns 
+#     the first value in the range, if this parameter is specified the function will
+#     return the last value in the range
+get_default_val()
+{
+  local result=`echo "$1" | grep -w "$2:" | tr -s " " | cut -d " " -f 2,3 | cut -d "[" -f 2 | cut -d "]" -f 1`
+  local value_range=($result)
+  if [ $# -gt 2 ] ; then
+    echo ${value_range[${#value_range[@]} - 1]}
+  else
+    echo ${value_range[0]}
+  fi
 }
 
 ################################ CLI Params ####################################
@@ -75,7 +101,7 @@ do case $arg in
         R)      REC_DEVICE="$OPTARG";;        
         P)      PLAY_DEVICE="$OPTARG";;        
         l)      CAPTURELOGFLAG="$OPTARG";;                
-	    u)      URL="$OPTARG";; 
+	      u)      URL="$OPTARG";; 
         h)      usage;;
         :)      die "$0: Must supply an argument to -$OPTARG.";; 
         \?)     die "Invalid Option -$OPTARG ";;
@@ -83,22 +109,35 @@ esac
 done
 
 ############################ Default Values for Params ###############################
-
 : ${TYPE:='loopback'}
 : ${FILE:='test.snd'}
-: ${SAMPLERATE:='48000'}
-: ${SAMPLEFORMAT:='S16_LE'}
-: ${PERIODSIZE:='2048'}
-: ${BUFFERSIZE:='32768'}
-: ${DURATION:='10'}
-: ${CHANNEL:='2'}
-: ${OPMODE:='0'}
-: ${ACCESSTYPE:='0'}
-: ${DEVICE:='hw:0,0'}
 : ${REC_DEVICE:='hw:0,0'}
 : ${PLAY_DEVICE:='hw:0,0'}
+: ${DEVICE:=$PLAY_DEVICE}
+
+CAP_STRING=`aplay -D $DEVICE --dump-hw-params -d 1 /dev/zero 2>&1`
+if [ "$TYPE" == "capture" ] ; then
+  CAP_STRING=`arecord -D $DEVICE --dump-hw-params -d 1 $FILE 2>&1`
+fi
+
+: ${SAMPLERATE:=$(get_default_val "$CAP_STRING" "RATE")}
+: ${SAMPLEFORMAT:=$(get_default_val "$CAP_STRING" "FORMAT")}
+: ${PERIODSIZE:=$(get_default_val "$CAP_STRING" "PERIOD_SIZE" 1)}
+: ${BUFFERSIZE:=$(get_default_val "$CAP_STRING" "BUFFER_SIZE" 1)}
+: ${DURATION:='10'}
+: ${CHANNEL:=$(get_default_val "$CAP_STRING" "CHANNELS")}
+: ${OPMODE:='0'}
+: ${ACCESSTYPE:='0'}
 : ${CAPTURELOGFLAG:='0'}
-: ${URL:=''}
+
+audio_type='stereo'
+if [ $CHANNEL -eq 1 ] ; then
+  audio_type='mono'
+fi
+fmt_type=$(echo "${SAMPLEFORMAT/_/}" | tr [:upper:] [:lower:])
+
+: ${URL:="http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Audio/WAV/pcm_${fmt_type}/${SAMPLERATE}/${audio_type}/test_8000_pcm_${fmt_type}_${SAMPLERATE}_${audio_type}_201sec.wav"}
+
 if [ $OPMODE -eq 0 ] ; then
 	OPMODEARG=""
 else
@@ -180,6 +219,7 @@ test_print_trc " *************** END OF TEST PARAMETERS ***************"
 test_print_trc " ****************** AUDIO DEV INFO ******************"
 aplay -l
 arecord -l
+echo "$CAP_STRING"
 test_print_trc " *************** END OF AUDIO DEV INFO ***************"
 
 case "$TYPE" in
@@ -188,10 +228,7 @@ case "$TYPE" in
 		do_cmd arecord -D "$DEVICE" -f "$SAMPLEFORMAT" $FILE -d "$DURATION" -r "$SAMPLERATE" -c "$CHANNEL" "$ACCESSTYPEARG" "$OPMODEARG" --buffer-size=$BUFFERSIZE --period-size $PERIODSIZE
 		;;		
 	playback)
-		if test "$URL" != ''
-		then
-			do_cmd Wget $URL -O $FILE
-		fi
+		do_cmd Wget $URL -O $FILE
 
 		if [ ! -s $FILE ]
 		then

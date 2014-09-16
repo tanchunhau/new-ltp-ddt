@@ -128,33 +128,33 @@ super_pm_test()
 	done
 }
 
-is_cpufreq_available()                                                         
-{                                                                            
-	local num_cpus=`get_num_cpus`                             
-	for cpu in `seq 0 $(($num_cpus - 1))`;                    
-	do                                                        
+is_cpufreq_available()                         
+{
+  local num_cpus=`get_num_cpus`
+	for cpu in `seq 0 $(($num_cpus - 1))`;
+	do                    
     cpufreqdir=/sys/devices/system/cpu/cpu$cpu/cpufreq
-    assert [ -d "$cpufreqdir" ]                           
-	done                                                       
-}                                                                     
-                                                                  
-is_cpuidle_available()                                                
-{                                                                 
-	local num_cpus=`get_num_cpus`                             
-	for cpu in `seq 0 $(($num_cpus - 1))`;                    
-	do                                                        
-    cpuidledir=/sys/devices/system/cpu/cpu$cpu/cpuidle
-    assert [ -d "$cpuidledir" ]   
-	done                             
-}               
+    assert [ -d "$cpufreqdir" ]
+	done                              
+}
 
-check_cpuidle_stats()                              
-{                                                                     
-    local num_cpus=`get_num_cpus`                    
-    i=0                                             
-    for cpu in `seq 0 $(($num_cpus - 1))`; do                                    
+is_cpuidle_available()
+{                                            
+	local num_cpus=`get_num_cpus`
+	for cpu in `seq 0 $(($num_cpus - 1))`;
+	do                    
+    cpuidledir=/sys/devices/system/cpu/cpu$cpu/cpuidle
+    assert [ -d "$cpuidledir" ]
+	done
+}
+
+check_cpuidle_stats()
+{                                                 
+    local num_cpus=`get_num_cpus`
+    i=0                   
+    for cpu in `seq 0 $(($num_cpus - 1))`; do
         dirpath=/sys/devices/system/cpu/cpu$cpu/cpuidle
-        for state in $(ls -d $dirpath/state*); do      
+        for state in $(ls -d $dirpath/state*); do
         	if [ ${#cpuidle_times[@]} -le $i ]; then
         		cpuidle_times[$i]=`cat $state/time`
         	else
@@ -165,4 +165,4 @@ check_cpuidle_stats()
         	i=$((i+1))
         done
     done
-}    
+}
