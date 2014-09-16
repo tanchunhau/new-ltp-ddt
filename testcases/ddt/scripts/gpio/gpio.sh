@@ -249,7 +249,7 @@ for GPIO_NUM_IN_BANK in $GPIO_NUM_IN_BANKS; do
             VAL_BEFORE=`gpio_sysentry_get_item "$GPIO_NUM" "value"` || die "gpio_sysentry_set_item failed to get the value of ${GPIO_NUM} " 
             test_print_trc "The value was ${VAL_BEFORE} for $GPIO_NUM before suspend" 
     
-            simple_suspend 1
+            simple_suspend_w_stats 'mem' 10 2
             
             # check if the value is still the same as the one before suspend
             VAL_AFTER=`gpio_sysentry_get_item "$GPIO_NUM" "value"` || die "gpio_sysentry_set_item failed to get the value of ${GPIO_NUM} " 
