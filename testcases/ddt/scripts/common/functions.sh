@@ -494,6 +494,7 @@ suspend()
       fi 
       # clear dmesg before suspend
       dmesg -c > /dev/null
+      local suspend_failures=`get_value_for_key_from_file /sys/kernel/debug/suspend_stats fail :`
       if [ -e $DEBUGFS_LOCATION/pm_debug/wakeup_timer_seconds ]; then
           report "Use wakeup_timer"
           report "suspend(sec=$sec msec=$msec off=$off bug=$bug)"
@@ -513,7 +514,7 @@ suspend()
       else
          check_suspend
          check_resume
-         check_suspend_stats
+         check_suspend_stats $suspend_failures
          check_suspend_errors
          if [ $usb_remove = 1 ]; then
             echo "USB_REMOVE flag is $usb_remove"
@@ -554,10 +555,11 @@ check_suspend_errors()
     dmesg | egrep -i "$expect" && die "$expect errors observed"
 }
 
+# $1: previous failures
 check_suspend_stats()
 {
     local failures=`get_value_for_key_from_file /sys/kernel/debug/suspend_stats fail :`
-    [ $failures -eq 0 ] || die "/sys/kernel/debug/suspend_stats reports failures"
+    [ $failures -eq $1 ] || die "/sys/kernel/debug/suspend_stats reports failures"
 }
 
 check_cpufreq_files() {
