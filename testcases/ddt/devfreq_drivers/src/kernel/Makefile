@@ -16,7 +16,6 @@ clean:
 	rm -f  .*.cmd
 	rm -rf  .tmp_versions/
 	rm -f  *.order
-	rm -f  *.c
 	rm -f  *.symvers
 	rm -f  ./testcases/*.o*
 	rm -f  ./testcases/.*.cmd
@@ -25,6 +24,4 @@ clean:
 	rm -f  ../../../utils/kernel/*.mod.*
 	rm -f  ../../../utils/kernel/.*.cmd
 	rm -f  *.o
-	rm -f *.*
-	
 
