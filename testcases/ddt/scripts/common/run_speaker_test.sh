@@ -58,6 +58,19 @@ case $MACHINE in
     *da850-omapl138-evm)
         amixer cset name='PCM Playback Volume' 127,127
 	;;
+*dra7xx-evm)
+	amixer sset 'Left DAC Mux',0 'DAC_L2'
+	amixer sset 'Right DAC Mux',0 'DAC_R2'
+	amixer cset name='HP Playback Switch' On
+	amixer cset name='Line Playback Switch' Off
+	amixer cset name='PCM Playback Volume' 127
+	amixer cset name='Left PGA Mixer Mic3L Switch' On
+	amixer cset name='Right PGA Mixer Mic3L Switch' On
+	amixer cset name='Left PGA Mixer Line1L Switch' off
+	amixer cset name='Right PGA Mixer Line1R Switch' off
+	amixer cset name='PGA Capture Switch' on
+	amixer cset name='PGA Capture Volume' 6
+	;;
 esac
 # Define default values for variables being overriden
 
