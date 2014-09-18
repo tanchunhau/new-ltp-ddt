@@ -139,7 +139,7 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 	node_ptr = of_get_property(np, "clock-initial-frequency", NULL);
 	if (!node_ptr) {
 		dev_err(dev,
-			"%s: Could not read clock-initial-frequency from device tree \n",
+			"%s: Could not read clock-initial-frequency from DT.\n",
 			__func__);
 		goto out;
 	}
