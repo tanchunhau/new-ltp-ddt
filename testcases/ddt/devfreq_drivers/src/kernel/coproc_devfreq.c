@@ -286,10 +286,9 @@ static int coproc_devfreq_resume(struct device *dev)
 }
 
 /* Device power management hooks */
-static const struct dev_pm_ops coproc_devfreq_pm = {
-	.suspend = coproc_devfreq_suspend,
-	.resume = coproc_devfreq_resume,
-};
+static SIMPLE_DEV_PM_OPS(coproc_devfreq_pm,
+			 coproc_devfreq_suspend,
+			 coproc_devfreq_resume);
 
 static struct of_device_id of_coproc_match[] = {
 	{.compatible = "ti,test-coproc"},
