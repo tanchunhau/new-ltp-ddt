@@ -319,6 +319,6 @@ static struct platform_driver coproc_devfreq_driver = {
 };
 module_platform_driver(coproc_devfreq_driver);
 
-MODULE_LICENSE("GPL");
+MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("OMAP Co-processor DEVFREQ Driver");
 MODULE_AUTHOR("Carlos Hernandez <ceh@ti.com>, Nishanth Menon <nm@ti.com>");
