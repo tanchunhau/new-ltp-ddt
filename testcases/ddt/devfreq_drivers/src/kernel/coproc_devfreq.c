@@ -272,6 +272,9 @@ static int coproc_devfreq_remove(struct platform_device *pdev)
 
 /**
  * coproc_devfreq_suspend() - dummy hook for suspend
+ * @dev: device pointer
+ *
+ * Return: 0
  */
 static int coproc_devfreq_suspend(struct device *dev)
 {
@@ -281,6 +284,9 @@ static int coproc_devfreq_suspend(struct device *dev)
 
 /**
  * coproc_devfreq_resume() - dummy hook for resume
+ * @dev: device pointer
+ *
+ * Return: 0
  */
 static int coproc_devfreq_resume(struct device *dev)
 {
