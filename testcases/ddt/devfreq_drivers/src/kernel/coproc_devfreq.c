@@ -184,7 +184,7 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 		num_available);
 	rcu_read_unlock();
 
-	d = kzalloc(sizeof(*d), GFP_KERNEL);
+	d = devm_kzalloc(dev, sizeof(*d), GFP_KERNEL);
 	if (d == NULL) {
 		dev_err(dev, "%s: Cannot allocate memory.\n", __func__);
 		err = -ENOMEM;
@@ -195,7 +195,7 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 	err = coproc_device_getrate(dev, &d->profile.initial_freq);
 	if (err) {
 		dev_err(dev, "%s: Cannot get freq(%d).\n", __func__, err);
-		goto out_mem;
+		goto out;
 	}
 
 	d->profile.target = coproc_set_target;
@@ -208,7 +208,7 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 	if (IS_ERR(d->devfreq)) {
 		err = PTR_ERR(d->devfreq);
 		dev_err(dev, "%s: Cannot add to devfreq(%d).\n", __func__, err);
-		goto out_mem;
+		goto out;
 	}
 
 	err = devfreq_register_opp_notifier(dev, d->devfreq);
@@ -243,8 +243,6 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 
 out_remove:
 	devfreq_remove_device(d->devfreq);
-out_mem:
-	kfree(d);
 out:
 	dev_info(dev, "%s result=%d", __func__, err);
 	return err;
@@ -258,7 +256,6 @@ static int coproc_devfreq_remove(struct platform_device *pdev)
 
 	of_pm_voltdm_notifier_unregister(clk_nb);
 	devfreq_remove_device(d->devfreq);
-	kfree(d);
 
 	dev_err(&pdev->dev, "%s Removed devfreq\n", __func__);
 	return 0;
