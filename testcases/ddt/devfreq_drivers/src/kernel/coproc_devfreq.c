@@ -252,15 +252,9 @@ out:
 
 static int coproc_devfreq_remove(struct platform_device *pdev)
 {
-	struct device *dev = &pdev->dev;
 	struct coproc_devfreq_data *d = platform_get_drvdata(pdev);
 
 	pr_err("remove\n");
-
-	if (dev_clk)
-		devm_clk_put(dev, dev_clk);
-	if (dpll_clk)
-		devm_clk_put(dev, dpll_clk);
 
 	of_pm_voltdm_notifier_unregister(clk_nb);
 	devfreq_remove_device(d->devfreq);
