@@ -52,47 +52,47 @@ get_hdmi_audio_devnode()
 get_video_connector_info()
 {
   assert [ ${#} -eq 1 -o ${#} -eq 2 ]
-  local info=$(modetest)
-  local dss_info
-  local conn_inf
-  local conn_ids
-  local modes_inf
-  local conn_vals
-  local val_inf
-  local mode_regex="^[0-9][0-9][0-9]"
-  local result=()
-  local c_mode
-  local c_id
-  local conn_type=$1
+  local __info=$(modetest)
+  local __dss_info
+  local __conn_inf
+  local __conn_ids
+  local __modes_inf
+  local __conn_vals
+  local __val_inf
+  local __mode_regex="^[0-9][0-9][0-9]"
+  local __result=()
+  local __c_mode
+  local __c_id
+  local __conn_type=$1
   if [ ${#} -gt 1 ]; then
-    mode_regex="$2"
+    __mode_regex="$2"
   fi
-  get_sections "^[A-Za-z]*:" "$info" "~" dss_info
-  local connectors=$(get_section_val "Connectors:" dss_info[@] "~")
-  get_sections "^[0-9].*" "$connectors" "~" conn_inf
-  get_sections_keys conn_inf[@] "~" conn_ids  
-  for conn in "${conn_ids[@]}"
+  get_sections "^[A-Za-z]*:" "$__info" "~" __dss_info
+  local connectors=$(get_section_val "Connectors:" __dss_info[@] "~")
+  get_sections "^[0-9].*" "$connectors" "~" __conn_inf
+  get_sections_keys __conn_inf[@] "~" __conn_ids  
+  for conn in "${__conn_ids[@]}"
   do
-    info=$(echo -e "$conn" | grep -i $'\t'connected$'\t'$conn_type)
+    __info=$(echo -e "$conn" | grep -i $'\t'connected$'\t'$__conn_type)
     if [ $? -eq 0 ]; then
-      c_id=$(echo "$conn" | cut -d $'\t' -f 1)
-      val_inf=$(get_section_val "$conn" conn_inf[@] "~")
-      get_sections "^  [A-Za-z].*:" "$val_inf" "~" conn_vals
-      modes_inf=$(get_section_val "  modes:" conn_vals[@] "~")
-      local old_ifs=$IFS
+      __c_id=$(echo "$conn" | cut -d $'\t' -f 1)
+      __val_inf=$(get_section_val "$conn" __conn_inf[@] "~")
+      get_sections "^  [A-Za-z].*:" "$__val_inf" "~" __conn_vals
+      __modes_inf=$(get_section_val "  modes:" __conn_vals[@] "~")
+      local __old_ifs=$IFS
       IFS=$'\n'
-      for mode in $modes_inf
+      for mode in $__modes_inf
       do
-        c_mode=$(echo $mode | cut -d ' ' -f 3,4)
-        c_mode=${c_mode/ /-}
-        if [[ "$c_mode" =~ $mode_regex ]]; then
-          result[${#result[@]}]="$c_id:$c_mode"
+        __c_mode=$(echo $mode | cut -d ' ' -f 3,4)
+        __c_mode=${__c_mode/ /-}
+        if [[ "$__c_mode" =~ $__mode_regex ]]; then
+          __result[${#__result[@]}]="$__c_id:$__c_mode"
         fi
       done
-      IFS=$old_ifs
+      IFS=$__old_ifs
     fi
   done
-  echo "${result[@]}"
+  echo "${__result[@]}"
 }
 
 #Function to run a display test with modetest with the option to
@@ -110,50 +110,119 @@ get_video_connector_info()
 disp_audio_test()
 {
   assert [ ${#} -gt 2 ]
-  local alsa_test_cmd="sleep $3"
-  local conn_type=$1
-  local modes=( $2 )
-  local expected_fr
-  local freqs
-  local result=0
-  local fr_delta
-  local alsa_rc
-  local fmt_freqs
-  local fr_length
-  assert [ ${#modes[@]} -gt 0 ]
+  local __alsa_test_cmd="sleep $3"
+  local __conn_type=$1
+  local __m_array=$2[@]
+  local __modes=( "${!__m_array}" )
+  local __expected_fr
+  local __freqs
+  local __result=0
+  local __fr_delta
+  local __alsa_rc
+  local __fmt_freqs
+  local __fr_length
+  local __freqs_detected
+  assert [ ${#__modes[@]} -gt 0 ]
   if [ ${#} -gt 3 ]; then
-    alsa_test_cmd="alsa_tests.sh -d $3 -t playback -r $4"
+    __alsa_test_cmd="alsa_tests.sh -d $3 -t playback -r $4"
   fi
   if [ ${#} -gt 4 ]; then
-    alsa_test_cmd="$alsa_test_cmd -D $5"
+    __alsa_test_cmd="$__alsa_test_cmd -D $5"
   fi
-  for mode in ${modes[@]}; do
-    expected_fr=$(echo $mode | cut -d '-' -f 2)
-    echo "Expected frequency $expected_fr"
-    echo "modetest -t -v -s $mode &>mode_test_log.txt & mt_pid=$! ; $alsa_test_cmd ; alsa_rc=$? ; kill -9 $mt_pid"
-    modetest -t -v -s $mode &>mode_test_log.txt & mt_pid=$!; $alsa_test_cmd ; alsa_rc=$? ; kill -9 $mt_pid
-    freqs=( $(cat mode_test_log.txt | grep freq: | cut -d ' ' -f 2) )
-    fmt_freqs=( $(cat mode_test_log.txt | grep freq: | cut -d ' ' -f 2 | cut -d '.' -f 1) )
-    fr_length=$((${#freqs[@]} - 2))
+  for mode in "${__modes[@]}"; do
+    __expected_fr=( $(echo "$mode" | grep -o '\-[0-9]\+' | cut -d '-' -f 2) )
+    echo "Expected frame rates: ${__expected_fr[@]}"
+    echo "modetest -t -v -s $mode &>mode_test_log.txt & mt_pid=$! ; $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid"
+    modetest -t -v -s $mode &>mode_test_log.txt & mt_pid=$!; $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid
+    __freqs=( $(cat mode_test_log.txt | grep freq: | cut -d ' ' -f 2) )
+    __fmt_freqs=( $(cat mode_test_log.txt | grep freq: | cut -d ' ' -f 2 | cut -d '.' -f 1) )
+    __fr_length=$((${#__freqs[@]} - 2))
     old_IFS=$IFS
     IFS=$'\n'
-    test_print_trc " MODE_FREQS | $conn_type-$mode = ${freqs[@]:1:$fr_length}"
+    test_print_trc " MODE_FREQS | $__conn_type-$mode = ${__freqs[@]:1:$__fr_length}"
     IFS=$old_IFS
-    if [ $fr_length -lt 1 ]; then
-      result=2
+    if [ $__fr_length -lt 1 ]; then
+      __result=2
     fi
-    for fr in ${fmt_freqs[@]:1:$fr_length}
+    __freqs_detected=()
+    for fr in ${__fmt_freqs[@]:1:$__fr_length}
     do
-      fr_delta=$((expected_fr-fr))
-      if [ $((fr_delta*fr_delta)) -gt 1 ]; then
-        echo "Display test failed for mode $mode"
-        result=1
-      fi
-      if [  $alsa_rc -ne 0 ]; then
-        echo "Audio test failed with mode $mode"
-        result=1
+      for i in `seq 0 $((${#__expected_fr[@]} - 1))`
+      do
+        __fr_delta=$((${__expected_fr[$i]}-fr))
+        if [ $((__fr_delta*__fr_delta)) -gt 1 ]; then
+          __result=1
+        else 
+          __result=0
+          __freqs_detected[$i]=${__expected_fr[$i]}
+          break
+        fi
+      done
+      if [ $__result -ne 0 ]; then
+        echo "Display test failed for mode $mode expected ${__expected_fr[@]} got $fr"
       fi
     done
+    if [ ${#__freqs_detected[@]} -ne ${#__expected_fr[@]} ]; then
+      echo "Display test failed for mode $mode expected ${__expected_fr[@]} detected freqs ${__freqs_detected[@]}"
+      __result=1
+    fi
+    if [  $__alsa_rc -ne 0 ]; then
+      echo "Audio test failed with mode $mode"
+      __result=1
+    fi
   done
-  exit $result
+  exit $__result
+}
+
+#Function to obtain an array of combined modes (<connector id>:<mode>)
+#supported by the board 
+#This function will only return information of connectors with connected
+#status
+#Inputs:
+#  $1: a variable where the array will be stored
+#  $2: (Optional) a mode regex to look for, i.e, 1920x1080, 720x480. If 
+#      this parameter is not specified the list will contain all the
+#      combined modes (<connector id>:<mode>) supported by board
+#Output:
+#an array stored on $1 whose element comply with format 
+#<connector id>:<mode>[ -s <connector id>:<mode>.... -s -s <connector id>:<mode>]
+get_multidisplay_modes()
+{
+  assert [ ${#} -eq 1 -o ${#} -eq 2 ]
+  local __modes=$(get_video_connector_info '*')
+  local __conns=( $(echo $__modes | grep -o [0-9]*: | uniq) )
+  local __max_con_modes=0
+  local __max_con
+  local __num_modes
+  local __mode_regex=".*"
+  local __result
+  local __c_modes
+  eval "$1=()"
+  if [ ${#} -gt 1 ]; then
+    __mode_regex="$2"
+  fi
+
+  for cn in ${__conns[@]}
+  do
+    __num_modes=$(echo $__modes | grep -o $cn | wc -l)
+    if [ $__num_modes -gt $__max_con_modes ]; then
+      __max_con="$cn"
+      __max_con_modes=$__num_modes
+    fi
+  done
+  __result=( $(echo $__modes | grep -o $__max_con[0-9]*x[0-9i]*-[0-9]*) )
+  for i in `seq 0 $(($__max_con_modes - 1))`
+  do
+    for con in ${__conns[@]}
+    do
+      if [ "$con" == "$__max_con" ]; then
+        continue
+      fi
+      __c_modes=( $(echo $__modes | grep -o ${con}[0-9]*x[0-9i]*-[0-9]*) )
+      __result[$i]="${__result[$i]} -s ${__c_modes[$(($i % ${#__c_modes[@]}))]}"
+    done
+    if [[ "${__result[$i]}" =~ $__mode_regex ]]; then
+      eval "$1+=(\"${__result[$i]}\")"
+    fi
+  done
 }
