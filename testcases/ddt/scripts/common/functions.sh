@@ -531,27 +531,27 @@ suspend()
 # check if suspend/standby is ok by checking the kernel messages
 check_suspend()
 {
-    expect="PM: suspend of devices complete"
+    local expect="PM: suspend of devices complete"
     dmesg | grep -i "$expect" && report "suspend successfully" || die "suspend failed"
 }
 
 # check if suspend/standby failed as expected by checking the kernel messages
 check_suspend_fail()
 {
-    expect="PM: Some devices failed to suspend"
+    local expect="PM: Some devices failed to suspend"
     dmesg | grep -i "$expect" && report "suspend failed as expected" || die "suspend did not fail as expected"
 }
 
 # check if resume is ok by checking the kernel messages
 check_resume()
 {
-    expect="PM: resume of devices complete"
+    local expect="PM: resume of devices complete"
     dmesg | grep -i "$expect" && report "resume successfully" || die "resume failed"
 }
 
 check_suspend_errors()
 {
-    expect="Could not enter target state in pm_suspend|_wait_target_disable failed"
+    local expect="Could not enter target state in pm_suspend|_wait_target_disable failed"
     dmesg | egrep -i "$expect" && die "$expect errors observed"
 }
 

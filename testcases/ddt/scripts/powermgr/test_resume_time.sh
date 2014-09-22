@@ -55,7 +55,6 @@ test_print_trc "max_stime: $max_stime"
 test_print_trc "t_iteration: $t_iteration"
 
 ############# Do the work ###########################################
-expect="PM: resume of devices complete after"
 
 # The diff between different resume time should not exceed $diff_threshold 
 diff_threshold="10"
@@ -72,6 +71,7 @@ while [ $i -lt $t_iteration ]; do
   test_print_trc "===test_resume_time iteration $i==="
   dmesg -c > /dev/null
   suspend -p "$power_state" -t "$max_stime" -i 1
+  expect="PM: resume of devices complete after"
   r_time=`dmesg |grep -i "$expect" |cut -d" " -f8`
   if (( $(echo "$r_time > $r_time_threshold" | bc -l) )); then
     die "It takes too long to resume" 
