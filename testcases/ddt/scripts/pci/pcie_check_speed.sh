@@ -39,7 +39,7 @@ get_pcie_speed()
   pci_id=$1
   item2check=$2 # 'lnkcap:' or 'lnksta:'
 
-  lnk_speed=`lspci -d "$pci_id" -vv |grep -i "$item2check" |grep -Eoi "Speed [0-9]+GT/s" |grep -Eo "[0-9]+" `
+  lnk_speed=`lspci -d "$pci_id" -vv |grep -i "$item2check" |grep -Eoi "Speed [0-9\.]+GT/s" |cut -d' ' -f2 |cut -d'G' -f1 `
   if [ -z $lnk_speed ]; then
     die "Could not get pcie speed capability or status"
   fi
@@ -75,17 +75,22 @@ is_lnksta_expected()
     die "Wrong item passed to is_lnksta_expected function"
   fi
 
-  expected=`echo $(( rc_cap < ep_cap ? rc_cap : ep_cap ))`
+  if [ $(echo "$rc_cap < $ep_cap" |bc -l) -ne 0 ]; then
+    expected=$rc_cap
+  else
+    expected=$ep_cap
+  fi
+
   if [ -z $expected ]; then
     die "Could not find the expected lnksta"
   fi
   echo "expected lnksta:$expected"
 
-  if [ $lnksta -eq $expected ]; then
+  if [ $(echo "$lnksta == $expected" |bc -l) -eq 1 ]; then
     echo "The PCIe LnkSta is at expected ${item}: ${expected}$unit "
-  elif [ $lnksta-gt $expected ]; then
+  elif [ $(echo "$lnksta > $expected" |bc -l) -eq 1 ]; then
     die "The PCIe LnkSta $item is greater than the $item capability. Maybe the reporting is wrong!"
-  elif [ $lnksta -lt $expected ]; then
+  else
     die "The PCIe LnkSta ${item} is lower than the expected $item:${expected}$unit " 
   fi
 }
