@@ -18,7 +18,7 @@ source "common.sh"
 
 get_rc_id()
 {
-  rc_id=`lspci -n |grep "00:" |cut -d" " -f3`
+  rc_id=`lspci -n |grep -E "^00:" |cut -d" " -f3`
   if [ -z $rc_id ]; then
     die "Could not get RC ID"
   fi
@@ -27,7 +27,7 @@ get_rc_id()
 
 get_ep_id()
 {
-  ep_id=`lspci -n |grep "01:" |head -1 |cut -d" " -f3`
+  ep_id=`lspci -n |grep -E "^01:" |head -1 |cut -d" " -f3`
   if [ -z $ep_id ]; then
     die "Could not get EP ID"
   fi
