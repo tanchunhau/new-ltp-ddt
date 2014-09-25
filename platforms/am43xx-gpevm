@@ -49,4 +49,4 @@ usb/host/iso/xhci-hcd
 usb/slave/msc
 usb/slave/cdc
 watchdog/omap_wdt
-
+hdmi/audio/playback
