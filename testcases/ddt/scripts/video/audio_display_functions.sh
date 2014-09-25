@@ -122,6 +122,7 @@ disp_audio_test()
   local __fmt_freqs
   local __fr_length
   local __freqs_detected
+  local __freqs_result
   assert [ ${#__modes[@]} -gt 0 ]
   if [ ${#} -gt 3 ]; then
     __alsa_test_cmd="alsa_tests.sh -d $3 -t playback -r $4"
@@ -151,16 +152,17 @@ disp_audio_test()
       do
         __fr_delta=$((${__expected_fr[$i]}-fr))
         if [ $((__fr_delta*__fr_delta)) -gt 1 ]; then
-          __result=1
+          __freqs_result=1
         else 
-          __result=0
+          __freqs_result=0
           __freqs_detected[$i]=${__expected_fr[$i]}
           break
         fi
       done
-      if [ $__result -ne 0 ]; then
+      if [ $__freqs_result -ne 0 ]; then
         echo "Display test failed for mode $mode expected ${__expected_fr[@]} got $fr"
       fi
+      let "__result|=$__freqs_result"
     done
     if [ ${#__freqs_detected[@]} -ne ${#__expected_fr[@]} ]; then
       echo "Display test failed for mode $mode expected ${__expected_fr[@]} detected freqs ${__freqs_detected[@]}"
