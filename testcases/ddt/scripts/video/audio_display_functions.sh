@@ -22,20 +22,15 @@ source "functions.sh"
 get_hdmi_audio_devnode()
 {
   # Get ALSA HDMI devices 
-  local SOUND_CARD=`aplay -l | grep -i hdmi | cut -f 2,8 -d ' ' | cut -c 1`
-  local SOUND_DEVICE=`aplay -l | grep -i hdmi | cut -f 2,8 -d ' ' | cut -c 4`
-
-  if test "$SOUND_CARD" = " "
+  local SOUND_CARD=( `aplay -l | grep -i hdmi | grep -o '[0-9]\+:' | cut -c 1` ) 
+  
+  if [ ${#SOUND_CARD[@]} -lt 2 ]
   then
 	  echo "No HDMI sound card found"
 	  exit 1
   fi
-  if test "$SOUND_DEVICE" = " "
-  then
-	  eval echo "No HDMI sound device found"
-	  exit 2
-  fi
-  echo "hw:$SOUND_CARD,$SOUND_DEVICE"
+  
+  echo "hw:${SOUND_CARD[0]},${SOUND_CARD[1]}"
 }
 
 #Function to obtain the connector ids and modes supported by a connector.
