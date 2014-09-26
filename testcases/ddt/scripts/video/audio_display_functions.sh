@@ -118,6 +118,7 @@ disp_audio_test()
   local __fr_length
   local __freqs_detected
   local __freqs_result
+  local __test_log
   assert [ ${#__modes[@]} -gt 0 ]
   if [ ${#} -gt 3 ]; then
     __alsa_test_cmd="alsa_tests.sh -d $3 -t playback -r $4"
@@ -128,10 +129,12 @@ disp_audio_test()
   for mode in "${__modes[@]}"; do
     __expected_fr=( $(echo "$mode" | grep -o '\-[0-9]\+' | cut -d '-' -f 2) )
     echo "Expected frame rates: ${__expected_fr[@]}"
-    echo "modetest -t -v -s $mode &>mode_test_log.txt & mt_pid=$! ; $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid"
-    modetest -t -v -s $mode &>mode_test_log.txt & mt_pid=$!; $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid
-    __freqs=( $(cat mode_test_log.txt | grep freq: | cut -d ' ' -f 2) )
-    __fmt_freqs=( $(cat mode_test_log.txt | grep freq: | cut -d ' ' -f 2 | cut -d '.' -f 1) )
+    echo "modetest -t -v -s $mode &>mode_test_log.txt & mt_pid=\$! ; $__alsa_test_cmd ; __alsa_rc=\$? ; kill -9 \$mt_pid"
+    __test_log=$(modetest -t -v -s $mode 2>&1 & mt_pid=$! ; $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid; echo alsa_rc=$__alsa_rc)
+    echo "$__test_log"
+    __alsa_rc=$(echo "$__test_log" | grep alsa_rc= | cut -d '=' -f 2) 
+    __freqs=( $(echo -e "$__test_log" | grep freq: | cut -d ' ' -f 2) )
+    __fmt_freqs=( $(echo -e "$__test_log" | grep freq: | cut -d ' ' -f 2 | cut -d '.' -f 1) )
     __fr_length=$((${#__freqs[@]} - 2))
     old_IFS=$IFS
     IFS=$'\n'
