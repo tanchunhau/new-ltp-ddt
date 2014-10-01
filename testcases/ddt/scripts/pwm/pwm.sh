@@ -117,8 +117,8 @@ esac
 # Set brightness value in case device is backlight
 	if [[ "$device_type" == "backlight" ]]  ;
 	then
-		#do_cmd "echo $bright_val > /sys/class/backlight/pwm-backlight/brightness" || die "setting brightness failed"
-		do_cmd "echo $bright_val > /sys/devices/backlight.8/backlight/backlight.8/brightness" || die "setting brightness failed"
+                backlight_device=`find_pwm_backlight_device.sh`
+		do_cmd "echo $bright_val > /sys/devices/$backlight_device/backlight/$backlight_device/brightness" || die "setting brightness failed"
 		sleep $time_delay
 		exit 0
 	fi
