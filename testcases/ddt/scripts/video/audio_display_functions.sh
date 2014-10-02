@@ -127,7 +127,7 @@ disp_audio_test()
     __alsa_test_cmd="$__alsa_test_cmd -D $5"
   fi
   for mode in "${__modes[@]}"; do
-    __expected_fr=( $(echo "$mode" | grep -o '\-[0-9]\+' | cut -d '-' -f 2) )
+    __expected_fr=( $(echo "$mode" | grep -o '\-[0-9]\+' | cut -d '-' -f 2 | sort | uniq) )
     echo "Expected frame rates: ${__expected_fr[@]}"
     echo "modetest -t -v -s $mode &>mode_test_log.txt & mt_pid=\$! ; $__alsa_test_cmd ; __alsa_rc=\$? ; kill -9 \$mt_pid"
     __test_log=$(modetest -t -v -s $mode 2>&1 & mt_pid=$! ; $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid; echo alsa_rc=$__alsa_rc)
