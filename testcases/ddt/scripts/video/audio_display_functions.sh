@@ -21,16 +21,7 @@ source "functions.sh"
 #Function to obtain the hw id of the hdmi audio device 
 get_hdmi_audio_devnode()
 {
-  # Get ALSA HDMI devices 
-  local SOUND_CARD=( `aplay -l | grep -i hdmi | grep -o '[0-9]\+:' | cut -c 1` ) 
-  
-  if [ ${#SOUND_CARD[@]} -lt 2 ]
-  then
-	  echo "No HDMI sound card found"
-	  exit 1
-  fi
-  
-  echo "hw:${SOUND_CARD[0]},${SOUND_CARD[1]}"
+  get_audio_devnodes.sh hdmi
 }
 
 #Function to obtain the connector ids and modes supported by a connector.
