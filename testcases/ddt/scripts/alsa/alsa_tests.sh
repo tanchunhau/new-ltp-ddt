@@ -111,8 +111,8 @@ done
 ############################ Default Values for Params ###############################
 : ${TYPE:='loopback'}
 : ${FILE:='test.snd'}
-: ${REC_DEVICE:='hw:0,0'}
-: ${PLAY_DEVICE:='hw:0,0'}
+: ${REC_DEVICE:=$(get_audio_devnodes.sh -d ${MACHINE} -t record | grep 'hw:[0-9]' || echo 'hw:0,0')}
+: ${PLAY_DEVICE:=$(get_audio_devnodes.sh -d ${MACHINE} -t play | grep 'hw:[0-9]' || echo 'hw:0,0')}
 : ${DEVICE:=$PLAY_DEVICE}
 
 CAP_STRING=`aplay -D $DEVICE --dump-hw-params -d 1 /dev/zero 2>&1`
