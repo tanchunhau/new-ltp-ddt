@@ -129,6 +129,8 @@ fi
 : ${OPMODE:='0'}
 : ${ACCESSTYPE:='0'}
 : ${CAPTURELOGFLAG:='0'}
+PLAY_CARD_ID=${PLAY_DEVICE:3:1}
+REC_CARD_ID=${REC_DEVICE:3:1}
 
 audio_type='stereo'
 if [ $CHANNEL -eq 1 ] ; then
@@ -162,44 +164,44 @@ case $SOC in
 esac
 case $MACHINE in
 *am37x-evm|omap3evm|beagleboard)
-	amixer cset name='Analog Left AUXL Capture Switch' 1
-	amixer cset name='Analog Right AUXR Capture Switch' 1
-	amixer cset name='HeadsetL Mixer AudioL1' on
-	amixer cset name='HeadsetR Mixer AudioR1' on
-	amixer cset name='Headset Playback Volume' 3
+    amixer -c ${REC_CARD_ID} cset name='Analog Left AUXL Capture Switch' 1
+    amixer -c ${REC_CARD_ID} cset name='Analog Right AUXR Capture Switch' 1
+    amixer -c ${PLAY_CARD_ID} cset name='HeadsetL Mixer AudioL1' on
+    amixer -c ${PLAY_CARD_ID} cset name='HeadsetR Mixer AudioR1' on
+    amixer -c ${PLAY_CARD_ID} cset name='Headset Playback Volume' 3
 ;;
 *da850-omapl138-evm)
-	amixer cset name='PCM Playback Volume' 127,127 
+    amixer -c ${PLAY_CARD_ID} cset name='PCM Playback Volume' 127,127 
 ;;
 *dra7xx-evm)
-	amixer sset 'Left DAC Mux',0 'DAC_L2'
-	amixer sset 'Right DAC Mux',0 'DAC_R2'
-	amixer cset name='HP Playback Switch' On
-	amixer cset name='Line Playback Switch' Off
-	amixer cset name='PCM Playback Volume' 127
-	amixer cset name='Left PGA Mixer Mic3L Switch' On
-	amixer cset name='Right PGA Mixer Mic3L Switch' On
-	amixer cset name='Left PGA Mixer Line1L Switch' off
-	amixer cset name='Right PGA Mixer Line1R Switch' off
-	amixer cset name='PGA Capture Switch' on
-	amixer cset name='PGA Capture Volume' 6
+    amixer -c ${PLAY_CARD_ID} sset 'Left DAC Mux',0 'DAC_L2'
+    amixer -c ${PLAY_CARD_ID} sset 'Right DAC Mux',0 'DAC_R2'
+    amixer -c ${PLAY_CARD_ID} cset name='HP Playback Switch' On
+    amixer -c ${PLAY_CARD_ID} cset name='Line Playback Switch' Off
+    amixer -c ${PLAY_CARD_ID} cset name='PCM Playback Volume' 127
+    amixer -c ${REC_CARD_ID} cset name='Left PGA Mixer Mic3L Switch' On
+    amixer -c ${REC_CARD_ID} cset name='Right PGA Mixer Mic3L Switch' On
+    amixer -c ${REC_CARD_ID} cset name='Left PGA Mixer Line1L Switch' off
+    amixer -c ${REC_CARD_ID} cset name='Right PGA Mixer Line1R Switch' off
+    amixer -c ${REC_CARD_ID} cset name='PGA Capture Switch' on
+    amixer -c ${REC_CARD_ID} cset name='PGA Capture Volume' 6
 ;;
 *am43xx-epos)                                                      
-        amixer sset 'DAC' 127                                                   
-        amixer sset 'HP Analog' 66                                              
-        amixer sset 'HP Driver' 0 on                                            
-        amixer sset 'HP Left' on                                                
-        amixer sset 'HP Right' on                                               
-        amixer sset 'SP Analog' 127                                             
-        amixer sset 'SP Driver' 0 on                                            
-        amixer sset 'SP Left' on                                                
-        amixer sset 'SP Right' on                                               
-        amixer sset 'Output Left From Left DAC' on                              
-        amixer sset 'Output Right From Right DAC' on                            
-        amixer sset 'MIC1RP P-Terminal' 'FFR 10 Ohm'                            
-        amixer sset 'MIC1LP P-Terminal' 'FFR 10 Ohm'                            
-        amixer sset 'ADC' 40                                                    
-        amixer cset name='ADC Capture Switch' on                                
+    amixer -c ${PLAY_CARD_ID} sset 'DAC' 127                                                   
+    amixer -c ${PLAY_CARD_ID} sset 'HP Analog' 66                                              
+    amixer -c ${PLAY_CARD_ID} sset 'HP Driver' 0 on                                            
+    amixer -c ${PLAY_CARD_ID} sset 'HP Left' on                                                
+    amixer -c ${PLAY_CARD_ID} sset 'HP Right' on                                               
+    amixer -c ${PLAY_CARD_ID} sset 'SP Analog' 127                                             
+    amixer -c ${PLAY_CARD_ID} sset 'SP Driver' 0 on                                            
+    amixer -c ${PLAY_CARD_ID} sset 'SP Left' on                                                
+    amixer -c ${PLAY_CARD_ID} sset 'SP Right' on                                               
+    amixer -c ${PLAY_CARD_ID} sset 'Output Left From Left DAC' on                              
+    amixer -c ${PLAY_CARD_ID} sset 'Output Right From Right DAC' on                            
+    amixer -c ${REC_CARD_ID} sset 'MIC1RP P-Terminal' 'FFR 10 Ohm'                            
+    amixer -c ${REC_CARD_ID} sset 'MIC1LP P-Terminal' 'FFR 10 Ohm'                            
+    amixer -c ${REC_CARD_ID} sset 'ADC' 40                                                    
+    amixer -c ${REC_CARD_ID} cset name='ADC Capture Switch' on                                
 ;;           
 esac
 
