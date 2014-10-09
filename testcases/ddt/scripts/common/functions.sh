@@ -950,3 +950,66 @@ get_sections_keys() {
   IFS=$old_IFS
 }
 
+
+#================================================================== 
+# run_memtest_var() is designed to test memory modules larger than 2000 MBytes
+# by running memtester() function multiple times in 2000 MBytes or smaller segments.  
+# All inputs variables must be integers in MBytes, except the last one for iterations.
+# Syntax: run_memtest_var [Memory_Size] [Memory_Headroom] [Iterations] 
+# $1: Memory size to test in MBytes.  
+# $2: Headroom memory for the Kernel's operation in MBytes. (Recommended >= 350 MB)
+# $3: Number of test iterations.
+# The program terminates with exit code 1 if the input variables are missing, or
+# insufficient memory is available to conduct the test based on user inputs.   
+
+run_memtest_var()
+{ 
+  declare -a procs
+  if [ -z $3 ]; then 
+  echo "ERROR: incorrect number of input parameters."
+  echo "Example: run_memtest_var 3000 350 1"
+  exit 1;
+  fi
+  Start_time=$(date "+%Y-%m-%d %H:%M:%S")
+  mem_per_proc=`expr 2000 \* 1000`
+  headroom=`expr $2 \* 1000`
+  Mem_Size=`expr $1 \* 1000`
+  iterations=$3
+  killall memtester 2>/dev/null; sleep 5;
+ 
+  mem_free=`free|cut -d ":" -f2| sed -e "s/\s\+/ /g"|head -2|tail -1|cut -d ' ' -f4`
+  mem_free=`expr $mem_free \- $headroom`   #leave memory headroom for kernel operation
+  
+  if [ $Mem_Size -gt $mem_free ]; then 
+    echo "ERROR: Insufficient free memory available for your test."
+    exit 1;
+  else  
+    # if user specifies smaller memory size than available free memory, then only run what is requested.
+    mem_free=$Mem_Size
+  fi
+  num_proc=`expr $mem_free \/ $mem_per_proc`
+  i=0
+  while [ $i -lt $num_proc ]; do
+     procs[$i]="memtester ${mem_per_proc}K $iterations  "
+     i=$((i+1))
+  done
+  left_over_mem=`expr $mem_free \- $num_proc \* $mem_per_proc`
+  CMD=`join \# "${procs[@]}"`
+  if [ $left_over_mem -gt 0 ]; then 
+  CMD+="#memtester ${left_over_mem}K $iterations"
+  fi
+  run_processes.sh -c "$CMD"
+  rc=$?
+  End_time=$(date "+%Y-%m-%d %H:%M:%S") 
+  echo "Test Start time:" $Start_time
+  echo "Test End   time:" $End_time
+  exit $rc
+}
+
+#==================================================================
+join ()
+{ 
+local IFS="$1"; shift; echo "$*";
+}
+  
+  
