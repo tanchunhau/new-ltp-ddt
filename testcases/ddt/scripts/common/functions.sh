@@ -495,15 +495,15 @@ suspend()
       # clear dmesg before suspend
       dmesg -c > /dev/null
       local suspend_failures=`get_value_for_key_from_file /sys/kernel/debug/suspend_stats fail :`
-      if [ -e $DEBUGFS_LOCATION/pm_debug/wakeup_timer_seconds ]; then
-          report "Use wakeup_timer"
-          report "suspend(sec=$sec msec=$msec off=$off bug=$bug)"
-          echo -n "$power_state" > /sys/power/state
-      elif [ -e /dev/rtc0 ]; then
+      if [ -e /dev/rtc0 ]; then
           report "Use rtc to suspend resume"
           # sending twice in case a late interrupt aborted the suspend path.
           # since this is not common, it is expected that 2 tries should be enough
           do_cmd rtcwake -d /dev/rtc0 -m ${power_state} -s ${suspend_time} || do_cmd rtcwake -d /dev/rtc0 -m ${power_state} -s ${suspend_time}
+      elif [ -e $DEBUGFS_LOCATION/pm_debug/wakeup_timer_seconds ]; then
+          report "Use wakeup_timer"
+          report "suspend(sec=$sec msec=$msec off=$off bug=$bug)"
+          echo -n "$power_state" > /sys/power/state
       else
           # Stop the test if there is no rtcwake or wakeup_timer support 
           die "There is no automated way (wakeup_timer or /dev/rtc0) to wakeup the board. No suspend!"
