@@ -496,7 +496,8 @@ suspend()
       dmesg -c > /dev/null
       local suspend_failures=`get_value_for_key_from_file /sys/kernel/debug/suspend_stats fail :`
       if [ -e /dev/rtc0 ]; then
-          report "Use rtc to suspend resume"
+          report "Use rtc to suspend resume, adding 10 secs to suspend time"
+          suspend_time=$((suspend_time+10))
           # sending twice in case a late interrupt aborted the suspend path.
           # since this is not common, it is expected that 2 tries should be enough
           do_cmd rtcwake -d /dev/rtc0 -m ${power_state} -s ${suspend_time} || do_cmd rtcwake -d /dev/rtc0 -m ${power_state} -s ${suspend_time}
