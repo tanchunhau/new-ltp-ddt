@@ -36,7 +36,12 @@ find_part_with_biggest_size() {
   fdisk -l "$DEV_BASE_NODE" > fdisklog_$$ 2>&1 
   cat fdisklog_$$ |grep -i "fdisk doesn't support" > /dev/null
   if [ $? -ne 0 ]; then
-    UTIL_TO_USE='fdisk'
+    disklabel_type=`cat fdisklog_$$ |grep 'Disklabel type' |cut -d":" -f2 |sed 's/^ *//' |sed 's/ *$//' `
+    if [ "gpt" == "$disklabel_type" ]; then
+      parted -v > /dev/null && UTIL_TO_USE='parted' || (gdisk -v > /dev/null && UTIL_TO_USE='gdisk' || die "Do not know which util to check partition")
+    else
+      UTIL_TO_USE='fdisk'
+    fi
   else
     # use parted or gdisk etc
     parted -v > /dev/null && UTIL_TO_USE='parted' || (gdisk -v > /dev/null && UTIL_TO_USE='gdisk' || die "Do not know which util to check partition")
