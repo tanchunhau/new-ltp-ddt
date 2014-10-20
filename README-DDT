@@ -88,7 +88,7 @@
         XS:  <= 1  min
         S:   <= 10 mins
         M:   <= 1  hour
-        L:   <= 4  hours
+        L:   <= 8  hours
         XL:  <= 24 hours
         XXL: <= 1  week
      TYPE TAGS:
