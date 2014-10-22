@@ -65,6 +65,7 @@ esac
 # DO NOT HARDCODE any value. If you need to use a specific value for your setup
 # use USER-DEFINED Params section above.
 
+[ -n "$IPERFHOST" ] || IPERFHOST=`get_eth_gateway.sh`
 [ -n "$IPERFHOST" ] || die "IPERF server IP address could not be determined \
 dynamically. Please specify it when calling the script. \
 (i.e. run_iperf.sh -H <host>)"
