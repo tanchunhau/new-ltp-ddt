@@ -29,6 +29,12 @@ find_irq()
 {
 	NAME=`cat /proc/interrupts  | grep $NAME | head -1 | cut -d':' -f 1`
 }
+
+find_irq_based_on_device_tree()
+{
+  index=$1 # Index of interested interrupt in case multiple interrupts per iface type
+  NAME=`cat /proc/interrupts | grep -i $NAME | head -n $index | tail -n 1| cut -d':' -f 1`
+}
 ############################ Script Variables ##################################
 # Define default valus if possible
 
@@ -55,17 +61,12 @@ NAME="$INTERFACE"
 # Map Interface name to name or irq in /proc/interrupts
 case $INTERFACE in
 eth*)
+  find_irq_based_on_device_tree 2
 	case $MACHINE in
-	am335x-evm)
-		NAME='93';;
-	beaglebone)
-		NAME='57';;
 	omap5-evm)
 		NAME='109';;
-	dra7xx-evm)
-		NAME='83';;
-    keystone-evm)
-        NAME='80';;
+	keystone-evm)
+    NAME='80';;
 	esac
 	;;
 esac
