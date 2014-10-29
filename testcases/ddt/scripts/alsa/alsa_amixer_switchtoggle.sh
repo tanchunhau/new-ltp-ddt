@@ -21,16 +21,18 @@ source "common.sh"  # Import do_cmd(), die() and other functions
 usage()
 {
 	cat <<-EOF >&2
-	usage: ./${0##*/} [-l TEST_LOOP]
+	usage: ./${0##*/} [-l TEST_LOOP]  [-D <device> ]
+  -D audio device to use during the test, i.e hw:1,0, defaults to hw:0,0
 	EOF
 	exit 0
 }
 
 ################################ CLI Params ####################################
 # Please use getopts
-while getopts  :l:h arg
+while getopts  :l:D:h arg
 do case $arg in  
         l)      TEST_LOOP="$OPTARG";;
+        D)      DEVICE="$OPTARG";;
         h)      usage;;
         :)      die "$0: Must supply an argument to -$OPTARG.";; 
         \?)     die "Invalid Option -$OPTARG ";;
@@ -39,6 +41,8 @@ done
 
 # Define default values if possible
 : ${TEST_LOOP:=3}
+: ${DEVICE:=$(get_audio_devnodes.sh -d ${MACHINE} -t play | grep 'hw:[0-9]' || echo 'hw:0,0')}
+CARD=$(echo "${DEVICE}" | cut -c 4)
 
 ############################ USER-DEFINED Params ###############################
 # Try to avoid defining values here, instead see if possible
@@ -100,32 +104,32 @@ esac
 
 ########################### REUSABLE TEST LOGIC ###############################
 
-amixer controls
-amixer contents
-arecord -f dat -d 300 | aplay -f dat -d 300&
+amixer -c ${CARD} controls
+amixer -c ${CARD} contents
+arecord -D ${DEVICE} -f dat -d 300 | aplay -D ${DEVICE} -f dat -d 300&
 
 i=0
 while [[ $i -lt $TEST_LOOP ]]
 do
-	do_cmd amixer cset name=\'$CAPTURE_SWITCH_NAME_1\' 0
+	do_cmd amixer -c ${CARD} cset name=\'$CAPTURE_SWITCH_NAME_1\' 0
 	if [ "$CAPTURE_SWITCH_NAME_2" != "" ] ; then
-		do_cmd amixer cset name=\'$CAPTURE_SWITCH_NAME_2\' 0
+		do_cmd amixer -c ${CARD} cset name=\'$CAPTURE_SWITCH_NAME_2\' 0
 	fi
 	sleep 15
-	do_cmd amixer cset name=\'$CAPTURE_SWITCH_NAME_1\' 1
+	do_cmd amixer -c ${CARD} cset name=\'$CAPTURE_SWITCH_NAME_1\' 1
 	if [ "$CAPTURE_SWITCH_NAME_2" != "" ] ; then
-		do_cmd amixer cset name=\'$CAPTURE_SWITCH_NAME_2\' 1
+		do_cmd amixer -c ${CARD} cset name=\'$CAPTURE_SWITCH_NAME_2\' 1
 	fi
 	sleep 15
 	
-	do_cmd amixer cset name=\'$PLAYBACK_SWITCH_NAME_1\' 0
+	do_cmd amixer -c ${CARD} cset name=\'$PLAYBACK_SWITCH_NAME_1\' 0
 	if [ "$PLAYBACK_SWITCH_NAME_2" != "" ] ; then
-		do_cmd amixer cset name=\'$PLAYBACK_SWITCH_NAME_2\' 0
+		do_cmd amixer -c ${CARD} cset name=\'$PLAYBACK_SWITCH_NAME_2\' 0
 	fi
 	sleep 15
-	do_cmd amixer cset name=\'$PLAYBACK_SWITCH_NAME_1\' 1
+	do_cmd amixer -c ${CARD} cset name=\'$PLAYBACK_SWITCH_NAME_1\' 1
 	if [ "$PLAYBACK_SWITCH_NAME_2" != "" ] ; then
-		do_cmd amixer cset name=\'$PLAYBACK_SWITCH_NAME_2\' 1
+		do_cmd amixer -c ${CARD} cset name=\'$PLAYBACK_SWITCH_NAME_2\' 1
 	fi
 	sleep 15	
 	let "i += 1"	

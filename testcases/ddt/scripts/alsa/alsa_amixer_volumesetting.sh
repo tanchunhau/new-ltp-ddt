@@ -21,21 +21,25 @@ source "common.sh"  # Import do_cmd(), die() and other functions
 usage()
 {
 	cat <<-EOF >&2
-	usage: ./${0##*/} 
+	usage: ./${0##*/} [-D <device> ]
+  -D audio device to use during the test, i.e hw:1,0, defaults to hw:0,0
 	EOF
 	exit 0
 }
 
 ################################ CLI Params ####################################
 # Please use getopts
-while getopts  :h arg
+while getopts  :h:D arg
 do case $arg in       
         h)      usage;;
+        D)      DEVICE="$OPTARG";;
         :)      die "$0: Must supply an argument to -$OPTARG.";; 
         \?)     die "Invalid Option -$OPTARG ";;
 esac
 done
 
+: ${DEVICE:=$(get_audio_devnodes.sh -d ${MACHINE} -t play | grep 'hw:[0-9]' || echo 'hw:0,0')}
+CARD=$(echo "${DEVICE}" | cut -c 4)
 
 ############################ USER-DEFINED Params ###############################
 # Try to avoid defining values here, instead see if possible
@@ -119,10 +123,10 @@ esac
 
 ########################### REUSABLE TEST LOGIC ###############################
 
-amixer controls
-amixer contents
-arecord -f dat -d 1000 | aplay -f dat -d 1000&
-do_cmd amixer cset name=\'$PLAYBACK_NAME\' $PLYMAXVAL,$PLYMAXVAL
+amixer -c ${CARD} controls
+amixer -c ${CARD} contents
+arecord -D ${DEVICE} -f dat -d 1000 | aplay -D {DEVICE} -f dat -d 1000&
+do_cmd amixer -c ${CARD} cset name=\'$PLAYBACK_NAME\' $PLYMAXVAL,$PLYMAXVAL
 sleep 15
 
 i=$MINVAL
@@ -132,7 +136,7 @@ do
 	j=$MINVAL
 	while [[ $j -lt $MAXVAL ]]
 	do
-		do_cmd amixer cset name=\'$PLAYBACK_NAME\' $i,$j
+		do_cmd amixer -c ${CARD} cset name=\'$PLAYBACK_NAME\' $i,$j
 		sleep 15
 		let "j += $STEP"
 	done	
@@ -148,7 +152,7 @@ do
 	j=$MINVAL
 	while [[ $j -lt $MAXVAL ]]
 	do
-		do_cmd amixer cset name=\'$CAPTURE_NAME\' $i,$j
+		do_cmd amixer -c ${CARD} cset name=\'$CAPTURE_NAME\' $i,$j
 		sleep 15		
 		let "j += $STEP"
 	done	

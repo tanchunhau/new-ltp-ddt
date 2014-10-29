@@ -37,6 +37,12 @@ do case $arg in
 esac
 done
 # Define default values if possible
+DEVICE=''
+if [[ "$*" != *-device* ]]
+then
+  DEVICE=$(get_audio_devnodes.sh -d ${MACHINE} -t play | grep 'hw:[0-9]' || echo 'hw:0,0')
+  DEVICE="-device=${DEVICE}"
+fi
 
 ############################ USER-DEFINED Params ###############################
 # Try to avoid defining values here, instead see if possible
@@ -65,5 +71,5 @@ esac
 
 test_print_trc "Starting lsa_perf_tests TEST"
 
-do_cmd "alsa_perf_tests $*"
+do_cmd "alsa_perf_tests ${DEVICE} $*"
 
