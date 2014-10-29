@@ -24,12 +24,8 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-######################### Logic here ###########################################
+instance_num=''
 device_type=$1
-dev_node=`get_blk_device_node.sh "$device_type"` || die "Failed to get device node for $device_type: "$dev_node" " 
-devnode_entry=`get_devnode_entry.sh "$dev_node" "$device_type"` || die "Failed to get dev node entry for $dev_node: $devnode_entry"
-instance_num=`get_devnode_instance_num "$devnode_entry"` || die "Failed to get instance number for $devnode_entry: $instance_num"
-
 ############################ USER-DEFINED Params ##############################
 # Try to avoid defining values here, instead see if possible
 # to determine the value dynamically
@@ -40,6 +36,20 @@ esac
 case $SOC in
 esac
 case $MACHINE in
+  dra7xx-evm) 
+    if [ "$device_type" == 'mmc' ]; then
+      instance_num=2
+    elif [ "$device_type" == 'emmc' ]; then
+      instance_num=0
+    fi
+  ;;
 esac
+
+######################### Logic here ###########################################
+if [ -z $instance_num ]; then
+  dev_node=`get_blk_device_node.sh "$device_type"` || die "Failed to get device node for $device_type: "$dev_node" " 
+  devnode_entry=`get_devnode_entry.sh "$dev_node" "$device_type"` || die "Failed to get dev node entry for $dev_node: $devnode_entry"
+  instance_num=`get_devnode_instance_num "$devnode_entry"` || die "Failed to get instance number for $devnode_entry: $instance_num"
+fi
 
 echo $instance_num
