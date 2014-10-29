@@ -27,7 +27,7 @@ usage()
 
 find_irq()
 {
-	NAME=`cat /proc/interrupts  | grep $NAME | head -1 | cut -d':' -f 1`
+	NAME=`cat /proc/interrupts  | grep -v gpio | grep $NAME | head -1 | cut -d':' -f 1`
 }
 
 find_irq_based_on_device_tree()
