@@ -1,0 +1,8 @@
+# @name Crypto plus suspend/resume
+# @desc Crypto while doing power suspend/resume operations
+# @requires crypto/crypto-omap/aes && crypto/crypto-omap/sha256 && power_mgr 
+# @setup_requires 
+
+POWERMGR_S_FUNC_AES_SUSPEND source "common.sh"; run_processes.sh -c " /opt/ltp/runltp -f ddt/crypto_aes -P $PLATFORM -s 'CRYPTO_S_PERF_AES '  # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_suspend -s 'POWERMGR_S_FUNC_SIMPLE_SUSPEND ' " 
+
+POWERMGR_S_FUNC_SHA256_SUSPEND source "common.sh"; run_processes.sh -c " /opt/ltp/runltp -f ddt/crypto_sha256 -P $PLATFORM -s 'CRYPTO_S_PERF_SHA256 '  # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_suspend -s 'POWERMGR_S_FUNC_SIMPLE_SUSPEND ' " 
