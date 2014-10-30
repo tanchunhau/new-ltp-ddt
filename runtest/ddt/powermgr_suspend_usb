@@ -1,15 +1,8 @@
-# @name suspend/standby resume tests
-# @desc Test suspend/standby resume after removing usb module
-# @requires power_mgr && usb
+# @name USB plus suspend/resume operations
+# @desc USB Read/Write tests while doing suspend/resume operations
+# @requires power_mgr && (usb || usbxhci/host)
+# @setup_requires usbhostmsc
 
-POWERMGR_S_FUNC_SIMPLE_SUSPEND_REMOVE_USB source 'functions.sh'; usbdev=`get_modular_name.sh usb`; suspend -i 2 -p "mem" -u 1 -m $usbdev
+POWERMGR_S_FUNC_USB_SUSPEND source "common.sh"; run_processes.sh -c " /opt/ltp/runltp -f ddt/usbhost_dd_rw -P $PLATFORM -s 'USBHOST_S_FUNC_DD_RW_10M '  # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_suspend -s 'POWERMGR_S_FUNC_SIMPLE_SUSPEND ' " 
 
-POWERMGR_M_FUNC_SIMPLE_SUSPEND_REMOVE_USB source 'functions.sh'; usbdev=`get_modular_name.sh usb`; suspend -i 10 -p "mem" -u 1 -m $usbdev
-
-POWERMGR_L_STRESS_SIMPLE_SUSPEND_REMOVE_USB source 'functions.sh'; usbdev=`get_modular_name.sh usb`; suspend -i 100 -p "mem" -u 1 -m $usbdev
-
-POWERMGR_S_FUNC_SIMPLE_STANDBY_REMOVE_USB source 'functions.sh'; usbdev=`get_modular_name.sh usb`; suspend -i 2 -p "standby" -u 1 -m $usbdev
-
-POWERMGR_M_FUNC_SIMPLE_STANDBY_REMOVE_USB source 'functions.sh'; usbdev=`get_modular_name.sh usb`; suspend -i 10 -p "standby" -u 1 -m $usbdev
-
-POWERMGR_L_STRESS_SIMPLE_STANDBY_REMOVE_USB source 'functions.sh'; usbdev=`get_modular_name.sh usb`; suspend -i 100 -p "standby" -u 1 -m $usbdev
+POWERMGR_M_FUNC_USB_SUSPEND source "common.sh"; run_processes.sh -c " /opt/ltp/runltp -f ddt/usbhost_dd_rw -P $PLATFORM -s 'USBHOST_M_FUNC_DD_RW_100M '  # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_suspend -s 'POWERMGR_M_STRESS_SIMPLE_SUSPEND ' " 
