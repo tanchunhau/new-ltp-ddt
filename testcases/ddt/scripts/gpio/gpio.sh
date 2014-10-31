@@ -124,6 +124,7 @@ case $MACHINE in
   ;;
   *)
     die "The gpio numbers are not specified for this platform $MACHINE"
+  ;;  
 esac
 
 OIFS=$IFS
