@@ -234,7 +234,7 @@ check_kernel_errors()
       check_config_options "y" DEBUG_KMEMLEAK
       kmemleaks="/sys/kernel/debug/kmemleak"
       if [ ! -e ${kmemleaks} ]; then
-        die "kmemleak sys entry doesn't exist; perhaps need to increase CONFIG_DEBUG_KMEMLEAK_EARLY_LOG_SIZE"
+        die "kmemleak sys entry doesn't exist; check if CONFIG_DEBUG_KMEMLEAK=y in kernel configs; perhaps need to increase CONFIG_DEBUG_KMEMLEAK_EARLY_LOG_SIZE"
       fi
 
       if [ "$opts" = "clear" ]; then
