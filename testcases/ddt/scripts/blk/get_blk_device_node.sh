@@ -90,7 +90,7 @@ create_one_partition() {
     ls ${basenode}p*
     if [ $? -ne 0 ]; then
       echo -e "p\np\nn\np\n1\n\n\np\nw\n" | fdisk $basenode
-      mkfs.vfat ${basenode}p1
+      mkfs.vfat -F32 ${basenode}p1
     fi
 }
 
