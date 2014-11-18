@@ -120,7 +120,7 @@ case $MACHINE in
     GPIO_NUM_IN_BANKS="22,29,0,0,0,14,0,0"
   ;;
   am43xx-epos|am43xx-gpevm)
-    GPIO_NUM_IN_BANKS="0,0,0,0"
+    GPIO_NUM_IN_BANKS="0,0,31"
   ;;
   *)
     die "The gpio numbers are not specified for this platform $MACHINE"
