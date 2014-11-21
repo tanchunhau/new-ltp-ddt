@@ -72,7 +72,7 @@ find_mtd_part_range() {
   while [ $PART -le $CNT ]; do
     if [ -e /dev/mtd$PART ]; then
       TYPE=`find_part_type $PART`
-      if [ $TYPE == "$DEVICE_TYPE" ]; then
+      if [ "$TYPE" == "$DEVICE_TYPE" ]; then
         # find out part range; put them in string like ":1:2:3:4"
         PART_RANGE="$PART_RANGE:$PART"
       fi

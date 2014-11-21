@@ -94,6 +94,21 @@ create_one_partition() {
     fi
 }
 
+# create two partitions on emmc if they are not mounted 
+# and mark the first partition as boot partition so the mmc test won't touch it
+# and also make initial filesystem
+#   $1: basenode like /dev/mmcblk0, /dev/mmcblk1
+create_two_partitions() {
+    basenode=$1
+    mount | grep ${basenode}p
+    #ls ${basenode}p*
+    if [ $? -ne 0 ]; then
+      echo -e "p\nn\np\n1\n\n146570\nn\np\n\n\n\na\n1\np\nw\n" | fdisk $basenode
+      mkfs.vfat -F32 ${basenode}p1
+      mkfs.vfat -F32 ${basenode}p2
+    fi
+}
+
 ############################ Default Params ##############################
 DEV_TYPE=`get_device_type_map.sh "$DEVICE_TYPE"` || die "error getting device type: $DEV_TYPE"
 case $DEV_TYPE in
@@ -113,8 +128,8 @@ case $DEV_TYPE in
           if [ -z "$emmc_basenode" ]; then
             die "Could not fine emmc basenode"
           fi
-          # create one test partition if emmc doesn't have any partition on it
-          create_one_partition $emmc_basenode > /dev/null
+          # create two partition if emmc doesn't have any partition on it
+          create_two_partitions $emmc_basenode > /dev/null
           DEV_NODE=`find_part_with_biggest_size "$emmc_basenode" "emmc"` || die "error getting partition with biggest size: $DEV_NODE"
         ;;
         usb)
