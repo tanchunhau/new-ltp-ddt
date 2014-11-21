@@ -231,7 +231,7 @@ KERNEL_CC ?= $(CC)
 MODULES_TO_BUILD :=
 export PLATFORMSwEDMA   := am180x-evm|am181x-evm|am389x-evm|am387x-evm|dm385-evm|dm813x-evm|da830-omapl137-evm|am170x-evm
 export PLATFORMSwGPIO   := am335x-evm|omap5-evm|beaglebone|am437x-evm|dra7xx-evm|dra72x-evm|am57xx-evm|am437x-sk
-export PLATFORMSwIPC   :=  omap5-evm
+export PLATFORMSwIPC   :=  omap5-evm|dra7xx-evm|dra72x-evm
 export PLATFORMSwDEVFREQ := dra7xx-evm|dra72x-evm
 
 ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwEDMA)))
