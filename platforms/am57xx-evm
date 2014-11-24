@@ -1,6 +1,6 @@
 armv7l
 j6eco
-dra7xx-evm
+am57xx-evm
 crypto/crypto-omap
 crypto/crypto-omap/aes
 crypto/crypto-omap/des
@@ -27,7 +27,6 @@ jffs2
 net/eth10M/ti_cpsw
 net/eth100M/ti_cpsw
 net/eth1G/ti_cpsw
-pcie
 power_mgr/cpufreq/userspace
 power_mgr/cpufreq/performance
 power_mgr/cpufreq/powersave
@@ -35,6 +34,7 @@ power_mgr/cpufreq/ondemand
 power_mgr/cpuidle
 power_mgr/dynamic_ticks
 power_mgr/smartreflex
+qspi
 rtc/omap_rtc
 sata/ahci
 rtc/rtc-palmas
@@ -55,3 +55,4 @@ pwm/ehrpwm
 pwm/ecap
 pwm/backlight
 ipc
+hdmi/audio/playback
