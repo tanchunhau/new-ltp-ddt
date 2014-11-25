@@ -79,6 +79,7 @@ typedef struct {
 #define FUNC_BASE "/c_function"
 #define NODE_BASE "rpc_example_"
 #define DEV_NODE_BASE "/dev/" NODE_BASE
+#define PATH_MAX (100)
 
 static int test_status = 0;
 static bool runTest = true;
@@ -91,44 +92,42 @@ int get_functions_info(int core_id, function_info** func_arr)
   long fsize;
   char *num_fns;
   int n_funcs;
-  char *file_path = (char *)malloc(strlen(SYSFS_PATH) + strlen(NUM_FILE) + 5);
-  char *func_base = (char *)malloc(strlen(SYSFS_PATH) + strlen(FUNC_BASE) + 10);
+  char file_path[PATH_MAX];
+  char func_base[PATH_MAX];
   char *func_name;
-  char *sysfs_path = (char *)malloc(strlen(SYSFS_PATH) + 5);
-  char *current_f = (char*)malloc(sizeof(int));
-  char *core_str = (char*)malloc(sizeof(int));
+  char sysfs_path[PATH_MAX];
+  char current_f[8];
   function_info *func_inf = NULL;
   function_info *c_func;
   int idx;
   
   errno = 0;
   
-  sprintf(core_str, "%d", core_id);
-  strcpy(sysfs_path, SYSFS_PATH);
-  strcat(sysfs_path, core_str);
-  strcpy(file_path, sysfs_path);
-  strcpy(func_base, sysfs_path);
-  strcat(file_path, NUM_FILE);
-  strcat(func_base, FUNC_BASE);
+  sprintf(sysfs_path, "%s%d", SYSFS_PATH, core_id);
+  sprintf(file_path, "%s%s", sysfs_path, NUM_FILE);
+  sprintf(func_base, "%s%s", sysfs_path, FUNC_BASE);
   
   fd = open(file_path, O_RDONLY);
-  if(fd > 0){
+  if (fd > 0) {
     fsize = lseek(fd, 0L, SEEK_END);
     lseek(fd, 0L, SEEK_SET);
-    num_fns=(char *)malloc(fsize);
+    num_fns = (char *)malloc(fsize);
     b_read = read(fd, num_fns, fsize);
     if(b_read < 1) {
       perror("Unable to read num_funcs");
+      free(num_fns);
       return -1;
     }
     n_funcs = atoi(num_fns);
-    for(idx = 0; idx < n_funcs; idx++){
+    free(num_fns);
+    for (idx = 0; idx < n_funcs; idx++) {
       sprintf(current_f, "%d", idx + 1);
       func_name = (char *)calloc(sizeof(char),strlen(func_base)+strlen(current_f)+1);
-      memcpy(func_name, func_base, strlen(func_base));
-      strcat(func_name, current_f);
+      sprintf(func_name, "%s%s", func_base, current_f);
       ffd = open(func_name, O_RDONLY);
-      if(ffd < 1) goto func_problem;
+      if (ffd < 1) {
+        goto func_problem;
+      }
       fsize = lseek(ffd, 0L, SEEK_END);
       lseek(ffd, 0L, SEEK_SET);
       c_func = (function_info *)malloc(sizeof(function_info));
@@ -140,17 +139,11 @@ int get_functions_info(int core_id, function_info** func_arr)
       close(ffd);
       free(func_name);
     }
-    free(num_fns);
   }
 
 *func_arr = func_inf;
 
 func_problem:
-  free(current_f);
-  free(core_str);
-  free(file_path);
-  free(func_base);
-  free(sysfs_path);
   close(fd);
   
   return errno;
@@ -160,64 +153,62 @@ int get_function(int core_id, char *f_name, function_info* result)
 {
   function_info *f_list;
   function_info *iter;
-  char *func_name = (char *)malloc(strlen(f_name)+1);
+  char func_name[PATH_MAX];
   char *cf_name;
   char *f_iter;
   
   errno = 0;
   
-  func_name = strcpy(func_name,f_name);
+  sprintf(func_name, "%s", f_name);
   f_iter = func_name;
-  for(; *f_iter; ++f_iter)*f_iter=tolower(*f_iter);
+  for (; *f_iter; ++f_iter) {
+    *f_iter = tolower(*f_iter);
+  }
   
-  if(get_functions_info(core_id, &f_list))
-  {
+  if (get_functions_info(core_id, &f_list)) {
     printf("Unable to get function information from %d for %s\n", core_id, f_name);
     return errno;
   }
   
   result->idx = -1;
   iter=f_list;
-  while(iter){
+  while (iter) {
     f_list=iter;
     cf_name = (char *)malloc(strlen(iter->name)+1);
-    strcpy(cf_name, iter->name);
+    sprintf(cf_name, "%s", iter->name);
     f_iter = cf_name;
-    for(; *f_iter; ++f_iter)*f_iter=tolower(*f_iter);
-    if(strstr(cf_name, func_name)){
+    for (; *f_iter; ++f_iter) {
+      *f_iter=tolower(*f_iter);
+    }
+    if (strstr(cf_name, func_name)) {
       result->idx = iter->idx;
       result->name=(char *)malloc(strlen(iter->name)+1);
-      strcpy(result->name, iter->name);
+      sprintf(result->name, "%s", iter->name);
     }
     iter=iter->next;
-    free(f_list->name);
     free(cf_name);
+    free(f_list);
   }
-  free(f_list);
-  free(func_name);
   
   return errno;
 }
 
 int connect_to_proc(int core_id, char *name)
 {
-  char *node_name = (char *)malloc(strlen(DEV_NODE_BASE) + 4);
-  char *req_name = (char *)malloc(strlen(NODE_BASE) + 4);
-  char *id = (char *)malloc(4);
+  char node_name[PATH_MAX];
+  char req_name[PATH_MAX];
   int fd;
   
-  sprintf(id, "%d", core_id + 1);
-  strcpy(node_name, DEV_NODE_BASE);
-  strcpy(req_name, NODE_BASE);
-  strcat(node_name, id);
-  strcat(req_name, id);
-  fd = open(node_name, O_RDWR);
-  if (fd < 0)perror("Can't open rpc_example device");
-  else strcpy(name, req_name);
+  sprintf(node_name, "%s%d", DEV_NODE_BASE, core_id + 1);
+  sprintf(req_name, "%s%d", NODE_BASE, core_id + 1);
   
-  free(node_name);
-  free(req_name);
-  free(id);
+  fd = open(node_name, O_RDWR);
+  if (fd < 0) {
+    perror("Can't open rpc_example device");
+  }
+  else {
+    sprintf(name, "%s", req_name);
+  }
   
   return fd;
 }
@@ -253,7 +244,7 @@ int send_cmd(int fd, char *msg, int len)
     ret = write(fd, msg, len);
     if (ret < 0) {
          perror("Can't write to rpc_example instance\n");
-         return errno;
+         return -1;
     }
 
     return(0);
@@ -391,6 +382,11 @@ void * test_select_thread (void * arg)
         }
         
         ret = recv_cmd(fd, sizeof(*rtn_packet), (char *)rtn_packet, &reply_len);
+        
+        if(fault_test && !ret && !rtn_packet->status) {
+            continue;
+        }
+        
         if(ret == ENXIO && fault_test)
         {
           for (i = 0; i < (int)arg; i++) {
@@ -432,10 +428,16 @@ void * test_read_thread (void * arg)
     
     while (runTest) {
         ret = recv_cmd(fd, sizeof(*rtn_packet), (char *)rtn_packet, &reply_len);
-        if(ret == ENXIO && fault_test)
-        {
-          for(i = 0; i< read_info->num_threads; i++)sem_post(&clientSems[i]);
-          break;
+        
+        if(fault_test && !ret && !rtn_packet->status) {
+            continue;
+        }
+        
+        if (ret == ENXIO && fault_test) {
+            for (i = 0; i< read_info->num_threads; i++) {
+                sem_post(&clientSems[i]);
+            }
+            break;
         }
         else if (ret) {
             test_status = -1;
@@ -919,6 +921,7 @@ int main(int argc, char *argv[])
             break;
         case 'f':
             f_name = optarg;
+            break;
         default:
             printf ("Unrecognized argument\n");
         }
