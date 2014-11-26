@@ -3,10 +3,16 @@
 
 # @requires ipc 
 
-IPC_S_PERF_IPC_PERF source "common.sh"; ipc_performance.sh -t 1000 -c 1;
 IPC_S_FUNC_RPMSG_RPC source ipc_funcs.sh; rm_ipc_mods; setup_firmware '*-fw-rpmsg-rpc-test.*'; ins_ipc_mods rpc; num_proc=$(get_num_remote_procs); rpmsg_rpc_test $num_proc
 IPC_S_FUNC_RPMSG_RPC_KILL source ipc_funcs.sh; rm_ipc_mods; setup_firmware '*-fw-rpmsg-rpc-test.*'; ins_ipc_mods rpc; num_proc=$(get_num_remote_procs); rpmsg_rpc_test $num_proc triple 5; rpmsg_rpc_test $num_proc
 IPC_S_FUNC_RPMSG_RPC_MMU_FAULT source ipc_funcs.sh; rm_ipc_mods; setup_firmware '*-fw-rpmsg-rpc-test.*'; ins_ipc_mods rpc; num_proc=$(get_num_remote_procs); rpmsg_rpc_test $num_proc fault; rpmsg_rpc_test $num_proc
+IPC_S_FUNC_RPMSG_PROTO source ipc_funcs.sh; rm_ipc_mods; setup_firmware '*-fw-rpmsg-proto-msgq-app-test.*'; ins_ipc_mods proto; start_lad  || die "lad did not start" ; num_proc=$(get_num_remote_procs); rpmsg_proto_msgqapp_test $num_proc
+IPC_S_FUNC_RPMSG_PROTO_KILL source ipc_funcs.sh; rm_ipc_mods; setup_firmware '*-fw-rpmsg-proto-msgq-app-test.*'; ins_ipc_mods proto; start_lad  || die "lad did not start" ; num_proc=$(get_num_remote_procs); rpmsg_proto_msgqapp_test $num_proc 8000 2; rpmsg_proto_msgqapp_test $num_proc
+IPC_S_PERF_RPMSG_PROTO_BENCH_8BYTES source ipc_funcs.sh; rm_ipc_mods; setup_firmware '*-fw-rpmsg-proto-msgq-app-test.*'; ins_ipc_mods proto; start_lad  || die "lad did not start" ; num_proc=$(get_num_remote_procs); rpmsg_proto_msgqbench_test $num_proc
+IPC_S_PERF_RPMSG_PROTO_BENCH_228BYTES source ipc_funcs.sh; rm_ipc_mods; setup_firmware '*-fw-rpmsg-proto-msgq-app-test.*'; ins_ipc_mods proto; start_lad  || die "lad did not start" ; num_proc=$(get_num_remote_procs); rpmsg_proto_msgqbench_test $num_proc 228
+IPC_S_PERF_RPMSG_PROTO_BENCH_456BYTES source ipc_funcs.sh; rm_ipc_mods; setup_firmware '*-fw-rpmsg-proto-msgq-app-test.*'; ins_ipc_mods proto; start_lad  || die "lad did not start" ; num_proc=$(get_num_remote_procs); rpmsg_proto_msgqbench_test $num_proc 456
+IPC_S_FUNC_RPMSG_PROTO_MULTI source ipc_funcs.sh; rm_ipc_mods; setup_firmware '*-fw-rpmsg-proto-msgq-multi-test.*'; ins_ipc_mods proto; start_lad  || die "lad did not start" ; rpmsg_proto_msgqmulti_test 55 1000
+IPC_S_FUNC_RPMSG_PROTO_MULTI_KILL source ipc_funcs.sh; rm_ipc_mods; setup_firmware '*-fw-rpmsg-proto-msgq-multi-test.*'; ins_ipc_mods proto; start_lad  || die "lad did not start" ; rpmsg_proto_msgqmulti_test 55 1000 3; rpmsg_proto_msgqmulti_test 55 1000
 
 
 
