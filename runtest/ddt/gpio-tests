@@ -10,7 +10,7 @@ GPIO_S_FUNC_EDGE_ALL_BANK source "common.sh"; gpio.sh -l "1" -t "edge"
 
 GPIO_S_FUNC_NEG_RESERVE_ALL_BANK source "common.sh"; gpio.sh -l "1" -t "neg_reserve"
 
-GPIO_S_FUNC_DIR_OUT_ALL_BANK source "common.sh"; gpio.sh -l "5" -t "out"
+GPIO_S_FUNC_DIR_OUT_ALL_BANK_5TIMES source "common.sh"; gpio.sh -l "5" -t "out"
 
 GPIO_M_STRESS_DIR_OUT_ALL_BANK source "common.sh"; gpio.sh -l "50" -t "out"
 
