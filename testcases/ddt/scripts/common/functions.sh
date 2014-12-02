@@ -434,7 +434,7 @@ no_suspend()
 #   -m usb_module   optional; usb_module to indicate the name of usb module to be removed; default to ''
 suspend()
 {
-
+    OPTIND=1 
     while getopts :p:t:i:u:m: arg
     do case $arg in
       p)  power_state="$OPTARG";;
