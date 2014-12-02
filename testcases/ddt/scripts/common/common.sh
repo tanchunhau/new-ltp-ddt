@@ -231,7 +231,7 @@ check_kernel_errors()
   local opts=$1
   case $type in
     kmemleak)
-      check_config_options "y" DEBUG_KMEMLEAK
+      check_config_options "y" CONFIG_DEBUG_KMEMLEAK
       kmemleaks="/sys/kernel/debug/kmemleak"
       if [ ! -e ${kmemleaks} ]; then
         die "kmemleak sys entry doesn't exist; check if CONFIG_DEBUG_KMEMLEAK=y in kernel configs; perhaps need to increase CONFIG_DEBUG_KMEMLEAK_EARLY_LOG_SIZE"
@@ -256,7 +256,7 @@ check_kernel_errors()
        
     ;;
     spinlock)
-      check_config_options "y" DEBUG_SPINLOCK
+      check_config_options "y" CONFIG_DEBUG_SPINLOCK
 
       if [ "$opts" = "clear" ]; then
         dmesg -c
