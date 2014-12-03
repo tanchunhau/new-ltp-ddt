@@ -1,18 +1,17 @@
-# MakeFile function     :: MakeFile for compiling IPC kernel module 
+# MakeFile function     :: MakeFile for compiling IPC kernel modules
 
+MODULES_DIR = $(PWD)/modules
 
-obj-m = mbox_test.o iommu_test.o
-mbox_test-objs = main.o
-iommu_test-objs = iommu.o
-
-MAKE_TARGETS		:= modules
-
+IPC_SUBDIRS = rpmsg_client_sample
 
 modules:
-	make -C $(KERNEL_DIR) ARCH=arm SUBDIRS=$(PWD) modules
-	cp *.ko  ../../
-
-
-
+	for dir in $(IPC_SUBDIRS); do \
+		cd $$dir; $(MAKE) modules; cp *.ko $(MODULES_DIR); cd ..;\
+	done
+	
 clean:
-	$(RM) -r *.o *.ko *.mod.c .*.cmd .tmp_versions *.symvers modules.order
+	for dir in $(IPC_SUBDIRS); do \
+		cd $$dir; $(MAKE) clean; cd ..;\
+	done
+
+.PHONY: clean modules
