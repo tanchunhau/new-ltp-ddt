@@ -253,19 +253,19 @@ endif
 
 modules_edma:
 	@echo "Going to compile edma test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/edma_test_suite/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
+	cd testcases/ddt/edma_test_suite/src/kernel; $(MAKE) CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
 
 modules_gpio:
 	@echo "Going to compile gpio test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/gpio_test_suite/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
+	cd testcases/ddt/gpio_test_suite/src/kernel; $(MAKE) CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
 
 modules_ipc:
 	@echo "Going to compile IPC test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/ipc_test_suite/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
+	cd testcases/ddt/ipc_test_suite/src/kernel; $(MAKE) CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
 
 modules_devfreq:
 	@echo "Going to compile devfreq test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/devfreq_drivers/src/kernel; make CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
+	cd testcases/ddt/devfreq_drivers/src/kernel; $(MAKE) CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
 
 modules: $(MODULES_TO_BUILD)
 
