@@ -72,7 +72,7 @@ setup_firmware()
 # be loaded in the remote processors
 rm_ipc_mods()
 {
-  local __modules=(rpmsg_rpc rpmsg_proto virtio_rpmsg_bus omap_remoteproc remoteproc)
+  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample virtio_rpmsg_bus omap_remoteproc remoteproc)
   
   kill_lad
   
@@ -82,12 +82,18 @@ rm_ipc_mods()
   done
 }
 
-# Function to insmod the modules require to run RPMSG tests.
+# Function to insmod the modules require to run RPMSG. Without parameters
 # Inputs:
-#   1$: The type of rpmsg module to load, either 'rpc' or 'proto'
+#   $*: (Optional) Additional modules to load, i.e 'rpmsg_rpc', 'rpmsg_proto', etc
 ins_ipc_mods()
 {
-  local __modules=(remoteproc omap_remoteproc virtio_rpmsg_bus rpmsg_${1})
+  
+  local __modules=(remoteproc omap_remoteproc virtio_rpmsg_bus)
+  
+  if [ $# -gt 0 ];
+  then
+    __modules+=($*)
+  fi
   
   for __mod in ${__modules[@]}
   do
@@ -405,6 +411,44 @@ rpmsg_proto_msgqmulti_test()
   else
     echo "Test passed..."
   fi
+  
+  return $__result
+}
+
+# Funtion to run the RPMSG client sample test based on the kernel's 
+# samples/rpmsg module
+# Inputs:
+#   $1: Number of remote proccessors in the SOC
+#   $2: (Optional) Number of trials. Defaults to 1 
+# Returns, 0 if succesful, 1 otherwise
+rpmsg_client_sample_test()
+{
+  local __result=0
+  local __test_log
+  local __num_goodbye
+  local __num_procs=$1
+  local __command
+  local __loops=1
+  
+  if [ $# -gt 1 ]
+  then
+    __loops=$2
+  fi
+  
+  for idx in `seq 1 $__loops`
+  do
+    __test_log=$(dmesg -c > /dev/null && insmod ddt/rpmsg_client_sample.ko && sleep 3 && dmesg)
+    __num_match=$(echo -e "$__test_log" | grep -c -i 'rpmsg[0-9]\+: incoming msg 100')
+    __num_goodbye=$(echo -e "$__test_log" | grep -c -i 'rpmsg[0-9]\+: goodbye!')
+    if [ $__num_match -ne 1 -o  $__num_goodbye -ne $(($__num_procs * 2)) ]
+    then
+      __result=$((__result + 1))
+      echo -e "${__test_log}\nTest failed..."
+    else
+      echo "Test passed..."
+    fi
+    rmmod rpmsg_client_sample
+  done
   
   return $__result
 }
