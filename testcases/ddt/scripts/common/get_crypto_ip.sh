@@ -15,7 +15,7 @@ case $MACHINE in
 am335x-evm|am335x-sk|beaglebone|beaglebone-black|am43xx-epos|am43xx-gpevm)
   CRYPTO_IP='edma';;
 *)
-  CRYPTO_IP='DMA';;
+  CRYPTO_IP='omap-dma-engine';;
 esac                                                                          
 
 echo $CRYPTO_IP
