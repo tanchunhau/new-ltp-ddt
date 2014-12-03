@@ -24,4 +24,6 @@ clean:
 	rm -f  ../../../utils/kernel/*.mod.*
 	rm -f  ../../../utils/kernel/.*.cmd
 	rm -f  *.o
+	rm -f *.ko
+	rm -f *.mod.c
 
