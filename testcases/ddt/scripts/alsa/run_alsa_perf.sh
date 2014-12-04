@@ -40,7 +40,7 @@ done
 DEVICE=''
 if [[ "$*" != *-device* ]]
 then
-  DEVICE=$(get_audio_devnodes.sh -d ${MACHINE} -t play | grep 'hw:[0-9]' || echo 'hw:0,0')
+  DEVICE=$(get_audio_devnodes.sh -d aic -t play | grep 'hw:[0-9]' || echo 'hw:0,0')
   DEVICE="-device=${DEVICE}"
 fi
 

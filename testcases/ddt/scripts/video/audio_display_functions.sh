@@ -21,7 +21,7 @@ source "functions.sh"
 #Function to obtain the hw id of the hdmi audio device 
 get_hdmi_audio_devnode()
 {
-  get_audio_devnodes.sh hdmi
+  get_audio_devnodes.sh -d hdmi
 }
 
 #Function to obtain the connector ids and modes supported by a connector.

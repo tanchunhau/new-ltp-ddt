@@ -38,7 +38,7 @@ do case $arg in
 esac
 done
 
-: ${DEVICE:=$(get_audio_devnodes.sh -d ${MACHINE} -t play | grep 'hw:[0-9]' || echo 'hw:0,0')}
+: ${DEVICE:=$(get_audio_devnodes.sh -d aic -t play | grep 'hw:[0-9]' || echo 'hw:0,0')}
 CARD=$(echo "${DEVICE}" | cut -c 4)
 
 ############################ USER-DEFINED Params ###############################
