@@ -126,7 +126,9 @@ get_num_remote_procs()
 #   $2: (Optional) The function or part of the function name to execute
 #       in the remote processor. Defaults to _triple
 #   $3: (Optional) the time in sec after which the test should be killed,
-#       this option is useful to test stability
+#       or if $4:* is specified after $4 will be sent.
+#       This option is useful to test stability, 
+#   $4:*: (Optional) command to send after time $3 seconds
 # Returns, 0 if the test passed, 1 if the single processor test failed,
 #          2 if the multiprocessors test failed, or 3 if both single and
 #          multiprocessor test fails
@@ -162,7 +164,13 @@ rpmsg_rpc_test()
       __command="$__rpc_cmd -t $__t_type -c $__rproc -x $__instances -l $__instances -f $__f_name"
       if [ $__kill_time -gt 0 ]
       then
-        __command="${__command} & sleep $__kill_time; killall $__rpc_cmd"
+        __command="${__command} & sleep $__kill_time; "
+        if [ $# -gt 3 ]
+        then
+          __command="${__command} ${@:4}"
+        else
+          __command="${__command} killall $__rpc_cmd"
+        fi 
       fi
       echo $__command
       __test_log=$(eval $__command)
@@ -183,7 +191,13 @@ rpmsg_rpc_test()
     do
       if [ $__kill_time -gt 0 ]
       then
-        __cmd="${__cmd} & sleep $__kill_time; killall $__rpc_cmd"
+        __cmd="${__cmd} & sleep $__kill_time;"
+        if [ $# -gt 3 ]
+        then
+          __cmd="${__cmd} ${@:4}"
+        else
+          __cmd="${__cmd} killall $__rpc_cmd" 
+        fi
       fi
       echo ${__cmd:3}
       __test_log=$(eval ${__cmd:3})
@@ -237,7 +251,9 @@ start_lad()
 #   $1: The number of remote processor to use in the test
 #   $2: (Optional) number of loops. Default 5000
 #   $3: (Optional) the time in sec after which the test should be killed,
-#       this option is useful to test stability
+#       or if $4:* is specified after $4 will be sent.
+#       This option is useful to test stability, 
+#   $4:*: (Optional) command to send after time $3 seconds
 # Returns, 0 if the test passed, 1 if the single processor test failed,
 #          2 if the multiprocessors test failed, or 3 if both single and
 #          multiprocessor test fails
@@ -268,7 +284,13 @@ rpmsg_proto_msgqapp_test()
     __command="$__ipc_cmd $__loops $__rproc"
     if [ $__kill_time -gt 0 ]
     then
-      __command="${__command} & sleep $__kill_time; killall $__ipc_cmd"
+      __command="${__command} & sleep $__kill_time; "
+      if [ $# -gt 3 ]
+      then
+        __command="${__command} ${@:4}"
+      else
+        __command="${__command} killall $__ipc_cmd"
+      fi 
     fi
     echo $__command
     __test_log=$(eval $__command)
@@ -286,7 +308,13 @@ rpmsg_proto_msgqapp_test()
   then
     if [ $__kill_time -gt 0 ]
     then
-      __multiproc_cmd="$__multiproc_cmd & sleep $__kill_time; killall $__ipc_cmd"
+      __multiproc_cmd="${__multiproc_cmd} & sleep $__kill_time; "
+      if [ $# -gt 3 ]
+      then
+        __multiproc_cmd="${__multiproc_cmd} ${@:4}"
+      else
+        __multiproc_cmd="${__multiproc_cmd} killall $__ipc_cmd"
+      fi
     fi
     echo ${__multiproc_cmd:3}
     __test_log=$(eval ${__multiproc_cmd:3})
@@ -372,6 +400,9 @@ rpmsg_proto_msgqbench_test()
 #       Default 10
 #   $2: (Optional) number of loops. Default 5000
 #   $3: (Optional) the time in sec after which the test should be killed,
+#       or if $4:* is specified after $4 will be sent.
+#       This option is useful to test stability, 
+#   $4:*: (Optional) command to send after time $3 seconds
 # Returns, 0 if succesful, 1 otherwise
 rpmsg_proto_msgqmulti_test()
 {
@@ -399,7 +430,13 @@ rpmsg_proto_msgqmulti_test()
   __command="$__ipc_cmd $__num_threads $__loops"
   if [ $__kill_time -gt 0 ]
   then
-    __command="${__command} & sleep $__kill_time; killall $__ipc_cmd"
+    __command="${__command} & sleep $__kill_time; "
+    if [ $# -gt 3 ]
+    then
+      __command="${__command} ${@:4}"
+    else
+      __command="${__command} killall $__ipc_cmd"
+    fi 
   fi
   echo $__command
   __test_log=$(eval $__command)
@@ -451,5 +488,33 @@ rpmsg_client_sample_test()
   done
   
   return $__result
+}
+
+# Funtion obtain the command that may be used to trigger a recovery
+# event
+# Returns:
+#   A string containing the command to trigger the driver's crash
+#   recovery mechanism 
+rpmsg_recovery_event()
+{
+  local __mbox_q_addr
+  local __command=""
+  
+  case $MACHINE in
+    *dra7xx-evm)
+      __mbox_q_addr=('0x48840044' '0x48840050' '0x48842044' '0x48842050')
+      ;;
+    *)
+      echo "Machine ${MACHINE} not supported"
+      return 1
+      ;;           
+  esac
+  
+  for __mb_addr in ${__mbox_q_addr[@]}
+  do
+    __command="$__command && devmem2 $__mb_addr w 0xffffff02"
+  done
+  
+  echo ${__command:3}
 }
 
