@@ -286,7 +286,6 @@ static char **clientPackets = NULL;
 static bool *readMsg = NULL;
 static int *fds;
 static function_info func_inf;
-char *fault_test;
 
 void * test_exec_call(void * arg)
 {
@@ -383,11 +382,11 @@ void * test_select_thread (void * arg)
         
         ret = recv_cmd(fd, sizeof(*rtn_packet), (char *)rtn_packet, &reply_len);
         
-        if(fault_test && !ret && !rtn_packet->status) {
+        if(!ret && !rtn_packet->status) {
             continue;
         }
         
-        if(ret == ENXIO && fault_test)
+        if(ret == ENXIO)
         {
           for (i = 0; i < (int)arg; i++) {
             sem_post(&clientSems[i]);
@@ -429,11 +428,11 @@ void * test_read_thread (void * arg)
     while (runTest) {
         ret = recv_cmd(fd, sizeof(*rtn_packet), (char *)rtn_packet, &reply_len);
         
-        if(fault_test && !ret && !rtn_packet->status) {
+        if(!ret && !rtn_packet->status) {
             continue;
         }
         
-        if (ret == ENXIO && fault_test) {
+        if (ret == ENXIO) {
             for (i = 0; i< read_info->num_threads; i++) {
                 sem_post(&clientSems[i]);
             }
@@ -942,8 +941,6 @@ int main(int argc, char *argv[])
     
     n_iter = func_inf.name;
     for ( ; *n_iter; ++n_iter)*n_iter = tolower(*n_iter);
-    
-    fault_test = strstr(func_inf.name, "fault");
     
     switch (test_id) {
         case 1:
