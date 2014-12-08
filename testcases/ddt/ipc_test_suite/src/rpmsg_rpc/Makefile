@@ -22,7 +22,8 @@ INSTALL_MODE            := 00755
 CFLAGS          += -g -Wall -O1 -fomit-frame-pointer
 LDFLAGS         += -g 
 LDLIBS          += -lpthread
-INCLUDES        = -I $(KERNEL_USR_INC)
+#INCLUDES        = -I $(KERNEL_USR_INC) #changing to kernel headers to workaround uapi header export bug
+INCLUDES        = -I $(KERNEL_INC)
 
 MAKE_TARGETS            := test_rpmsg_rpc
 
