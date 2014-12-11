@@ -107,6 +107,19 @@ do
       eval "$w" > $tmp_dir/log$i.$j.tmp 2>&1 &
     fi
     process_id=$!
+    if [[ $AFFINITY_SET = 1 ]]
+    then
+	echo "$(eval taskset -p $p_mask $process_id)"
+        affinity_observed=`echo "$(eval taskset -p $process_id)"`
+        affinity_observed=`echo $affinity_observed | awk 'BEGIN {FS=": "}{print $2}'`
+        printf -v affinity_observed_decimal "%d" "$affinity_observed"
+        printf -v affinity_expected_decimal "%d" "$p_mask"
+        echo "OBSERVED AFFINITY is $affinity_observed_decimal and EXPECTED AFFINITY is $affinity_expected_decimal"
+        if [ "$affinity_observed_decimal" -ne "$affinity_expected_decimal" ]
+        then
+           die "OBSERVED AFFINITY $affinity_observed_decimal and EXPECTED AFFINITY $affinity_expected_decimal do not match"
+        fi
+    fi
     typeset hash_${process_id}=$p_priority
     echo "$(eval echo \$hash_${process_id})"
     echo "PROCESS ID is $process_id"
