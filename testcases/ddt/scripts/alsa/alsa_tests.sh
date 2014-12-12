@@ -243,7 +243,7 @@ case "$TYPE" in
 		do_cmd arecord -D "$DEVICE" -f "$SAMPLEFORMAT" $FILE -d "$DURATION" -r "$SAMPLERATE" -c "$CHANNEL" "$ACCESSTYPEARG" "$OPMODEARG" --buffer-size=$BUFFERSIZE --period-size $PERIODSIZE
 		;;		
 	playback)
-		do_cmd Wget $URL -O $FILE
+		Wget $URL -O $FILE
 
 		if [ ! -s $FILE ]
 		then
