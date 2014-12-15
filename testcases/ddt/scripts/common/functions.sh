@@ -435,11 +435,12 @@ no_suspend()
 suspend()
 {
     OPTIND=1 
+    local _iterations
     while getopts :p:t:i:u:m: arg
     do case $arg in
       p)  power_state="$OPTARG";;
       t)  max_stime="$OPTARG";;
-      i)  iterations="$OPTARG";;
+      i)  _iterations="$OPTARG";;
       u)  usb_remove="$OPTARG";;
       m)  usb_module="$OPTARG";;
 
@@ -452,7 +453,7 @@ suspend()
     # for backward compatible
     : ${power_state:='mem'}
     : ${max_stime:='10'}
-    : ${iterations:='1'}
+    : ${_iterations:='1'}
     # for am335x-based soc force the usb_remove flag to be set i
     # if not explicitly mentioned in test case and take care of
     # module name also
@@ -469,7 +470,7 @@ suspend()
 
     test_print_trc "suspend function: power_state: $power_state"
     test_print_trc "suspend function: max_stime: $max_stime"
-    test_print_trc "suspend function: iterations: $iterations"
+    test_print_trc "suspend function: iterations: $_iterations"
     test_print_trc "suspend function: usb_remove: $usb_remove"
     test_print_trc "suspend function: usb_module: $usb_module"
 
@@ -479,7 +480,7 @@ suspend()
     fi
 
     local i=0
-    while [ $i -lt $iterations ]; do
+    while [ $i -lt $_iterations ]; do
       test_print_trc "===suspend iteration $i==="
 
       wakeup_time_random $max_stime
