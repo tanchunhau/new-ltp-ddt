@@ -21,3 +21,5 @@ MULTIDISP_S_FUNC_PLAYBACK_720x576  source 'audio_display_functions.sh' ; get_mul
 MULTIDISP_S_FUNC_PLAYBACK_720x480  source 'audio_display_functions.sh' ; get_multidisplay_modes modes "720x480"; do_cmd 'disp_audio_test all modes 10'
 
 MULTIDISP_S_FUNC_PLAYBACK_640x480  source 'audio_display_functions.sh' ; get_multidisplay_modes modes "640x480"; do_cmd 'disp_audio_test all modes 10'
+
+MULTIDISP_S_FUNC_PLAYBACK_ANY  source 'audio_display_functions.sh' ; get_multidisplay_modes modes; do_cmd 'disp_audio_test all modes 10'
