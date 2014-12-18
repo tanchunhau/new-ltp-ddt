@@ -2,6 +2,7 @@
 # @desc Test various drivers while the OPP is changed to cover all possible vallues
 # @requires graphics
 
-SYSTEM_S_FUNC_OPP_LCD source 'common.sh'; run_processes.sh -c "/opt/ltp/runltp -f ddt/fbdev_disp -P $PLATFORM -s FBDEV_XS_FUNC # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_cpufreq -s POWERMGR_S_FUNC_CPUFREQ_BASIC"
-SYSTEM_L_STRESS_OPP_LCD source 'common.sh'; run_processes.sh -c "/opt/ltp/runltp -P $PLATFORM -f ddt/fbdev_disp -s FBDEV_M_FUNC # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_cpufreq -s POWERMGR_L_STRESS_CPUFREQ_RELIABILITY"
+SYSTEM_S_FUNC_OPP_LCD source 'common.sh'; run_processes.sh -c "/opt/ltp/runltp -P $PLATFORM -f ddt/multi_display -s MULTIDISP_S_FUNC_PLAYBACK_ANY # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_cpufreq -s POWERMGR_S_FUNC_CPUFREQ_BASIC"
+
+SYSTEM_L_STRESS_OPP_LCD source 'common.sh'; run_processes.sh -c "/opt/ltp/runltp -P $PLATFORM -f ddt/multi_display -s MULTIDISP_S_FUNC_PLAYBACK_ANY -T 100 # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_cpufreq -s POWERMGR_L_STRESS_CPUFREQ_RELIABILITY"
 
