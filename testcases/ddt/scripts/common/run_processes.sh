@@ -2,10 +2,12 @@
 # Execute multiple processes in parallel
 # returns 1 if any process returns non-zero value
 # returns 0 otherwise
-# usage: run_processes.sh -c <"#-separated commands"> -n <num_of_instances> 
-#                                                  -a <cpu_affinity_mask>
-#                                                  -d <delay_in_sec> 
-#                                                  -p <priority> 
+# usage: run_processes.sh -c <"#-separated commands">
+#                  [-n <num_of_instances> ]
+#                  [-a <cpu_affinity_mask>]
+#                  [-d <delay_in_sec> ]
+#                  [-p <priority> ]
+#                  [-w] On first failure, wait for all processes
 # if cpu affinity is set, then taskset is used to spawn the processes
 source "common.sh"  # Import do_cmd(), die() and other functions
 pids=''
@@ -14,6 +16,7 @@ OFS=$IFS
 IFS="#"
 tmp_dir=`mktemp -d`
 i=0
+_run_processes_kill=1 # Kill remaining process on first failure
 
 COMMANDS_SET=0
 INSTANCE_SET=0
@@ -26,7 +29,8 @@ p_instances=1
 p_mask='0xFFFFFFFF'
 p_delay=1
 p_priority=0
-while getopts ":c:n:a:d:p:" opt; do
+OPTIND=1
+while getopts ":c:n:a:d:p:w" opt; do
   #echo "Opt is "$opt
   case $opt in
    c)
@@ -83,6 +87,9 @@ while getopts ":c:n:a:d:p:" opt; do
       echo "Option -task_priority was already used."
       exit 1
     fi
+    ;;
+   w) 
+    _run_processes_kill=0
     ;;
    \?)
     echo "Invalid option: -$OPTARG" >&2
@@ -149,7 +156,11 @@ do
       echo "*****************From run_processes.sh***********************"
       echo "Process $p exit with non-zero value at time " `date`                    
       echo ""
-      break
+      if [ _run_processes_kill ]; then
+        echo "Going to kill ${pids[@]//:/ }"
+        kill -9 ${pids[@]:1}
+        break
+      fi
     fi
   fi
 done
