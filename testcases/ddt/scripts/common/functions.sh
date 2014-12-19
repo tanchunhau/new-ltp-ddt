@@ -454,15 +454,7 @@ suspend()
     : ${power_state:='mem'}
     : ${max_stime:='10'}
     : ${_iterations:='1'}
-    # for am335x-based soc force the usb_remove flag to be set i
-    # if not explicitly mentioned in test case and take care of
-    # module name also
     case $MACHINE in                                                  
-        am335x-evm|am335x-sk|beaglebone|beaglebone-black)                 
-                : ${usb_remove:='1'}
-                modname=`get_modular_name.sh usb`
-                : ${usb_module:=$modname}
-                ;;
         *)                                                              
                 : ${usb_remove:='0'}
                 : ${usb_module:=''};;
