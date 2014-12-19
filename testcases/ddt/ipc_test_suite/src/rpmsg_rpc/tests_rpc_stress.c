@@ -74,143 +74,163 @@ typedef struct {
 
 #define max(a, b)  ((a) > (b) ? (a) : (b))
 
-#define SYSFS_PATH "/sys/class/rpmsg_rpc/rpc_example_"
+#define SYSFS_PATH "/sys/class/rpmsg_rpc/"
 #define NUM_FILE "/num_funcs"
 #define FUNC_BASE "/c_function"
 #define NODE_BASE "rpc_example_"
-#define DEV_NODE_BASE "/dev/" NODE_BASE
+#define DEV_NODE_BASE "/dev/"
 #define PATH_MAX (100)
+#define NODES_CT (10)
+#define NODES_MAX_LENGTH (20)
 
 static int test_status = 0;
 static bool runTest = true;
+char nodes[NODES_CT][NODES_MAX_LENGTH];
 
+int get_nodes(void)
+{
+    int fd;
+    int i;
+    int count=0;
+    char node_name[NODES_MAX_LENGTH];
+    
+    for (i=0; i< NODES_CT; i++) {
+        sprintf(node_name, "%s%s%d", DEV_NODE_BASE, NODE_BASE, i + 1);
+        fd = open(node_name, O_RDWR);
+        if (fd > 0) {
+            close(fd);
+            sprintf(nodes[count], "%s%d", NODE_BASE, i + 1);
+            count++;
+        }
+    }
+    
+    return count;
+}
 
 int get_functions_info(int core_id, function_info** func_arr)
 {
-  int fd,ffd;
-  ssize_t b_read;
-  long fsize;
-  char *num_fns;
-  int n_funcs;
-  char file_path[PATH_MAX];
-  char func_base[PATH_MAX];
-  char *func_name;
-  char sysfs_path[PATH_MAX];
-  char current_f[8];
-  function_info *func_inf = NULL;
-  function_info *c_func;
-  int idx;
-  
-  errno = 0;
-  
-  sprintf(sysfs_path, "%s%d", SYSFS_PATH, core_id);
-  sprintf(file_path, "%s%s", sysfs_path, NUM_FILE);
-  sprintf(func_base, "%s%s", sysfs_path, FUNC_BASE);
-  
-  fd = open(file_path, O_RDONLY);
-  if (fd > 0) {
-    fsize = lseek(fd, 0L, SEEK_END);
-    lseek(fd, 0L, SEEK_SET);
-    num_fns = (char *)malloc(fsize);
-    b_read = read(fd, num_fns, fsize);
-    if(b_read < 1) {
-      perror("Unable to read num_funcs");
-      free(num_fns);
-      return -1;
+    int fd,ffd;
+    ssize_t b_read;
+    long fsize;
+    char *num_fns;
+    int n_funcs;
+    char file_path[PATH_MAX];
+    char func_base[PATH_MAX];
+    char *func_name;
+    char sysfs_path[PATH_MAX];
+    char current_f[8];
+    function_info *func_inf = NULL;
+    function_info *c_func;
+    int idx;
+    
+    errno = 0;
+    
+    sprintf(sysfs_path, "%s%s", SYSFS_PATH, nodes[core_id]);
+    sprintf(file_path, "%s%s", sysfs_path, NUM_FILE);
+    sprintf(func_base, "%s%s", sysfs_path, FUNC_BASE);
+    
+    fd = open(file_path, O_RDONLY);
+    if (fd > 0) {
+        fsize = lseek(fd, 0L, SEEK_END);
+        lseek(fd, 0L, SEEK_SET);
+        num_fns = (char *)malloc(fsize);
+        b_read = read(fd, num_fns, fsize);
+        if(b_read < 1) {
+            perror("Unable to read num_funcs");
+            free(num_fns);
+            return -1;
+        }
+        n_funcs = atoi(num_fns);
+        free(num_fns);
+        for (idx = 0; idx < n_funcs; idx++) {
+            sprintf(current_f, "%d", idx + 1);
+            func_name = (char *)calloc(sizeof(char),strlen(func_base)+strlen(current_f)+1);
+            sprintf(func_name, "%s%s", func_base, current_f);
+            ffd = open(func_name, O_RDONLY);
+            if (ffd < 1) {
+              goto func_problem;
+            }
+            fsize = lseek(ffd, 0L, SEEK_END);
+            lseek(ffd, 0L, SEEK_SET);
+            c_func = (function_info *)malloc(sizeof(function_info));
+            c_func->idx = (idx | 0x80000000);
+            c_func->name = (char *)malloc(fsize);
+            read(ffd, c_func->name, fsize);
+            c_func->next = func_inf;
+            func_inf = c_func;
+            close(ffd);
+            free(func_name);
+        }
     }
-    n_funcs = atoi(num_fns);
-    free(num_fns);
-    for (idx = 0; idx < n_funcs; idx++) {
-      sprintf(current_f, "%d", idx + 1);
-      func_name = (char *)calloc(sizeof(char),strlen(func_base)+strlen(current_f)+1);
-      sprintf(func_name, "%s%s", func_base, current_f);
-      ffd = open(func_name, O_RDONLY);
-      if (ffd < 1) {
-        goto func_problem;
-      }
-      fsize = lseek(ffd, 0L, SEEK_END);
-      lseek(ffd, 0L, SEEK_SET);
-      c_func = (function_info *)malloc(sizeof(function_info));
-      c_func->idx = (idx | 0x80000000);
-      c_func->name = (char *)malloc(fsize);
-      read(ffd, c_func->name, fsize);
-      c_func->next = func_inf;
-      func_inf = c_func;
-      close(ffd);
-      free(func_name);
-    }
-  }
 
-*func_arr = func_inf;
+    *func_arr = func_inf;
 
-func_problem:
-  close(fd);
-  
-  return errno;
+    func_problem:
+        close(fd);
+      
+      return errno;
 }
 
 int get_function(int core_id, char *f_name, function_info* result)
 {
-  function_info *f_list;
-  function_info *iter;
-  char func_name[PATH_MAX];
-  char *cf_name;
-  char *f_iter;
-  
-  errno = 0;
-  
-  sprintf(func_name, "%s", f_name);
-  f_iter = func_name;
-  for (; *f_iter; ++f_iter) {
-    *f_iter = tolower(*f_iter);
-  }
-  
-  if (get_functions_info(core_id, &f_list)) {
-    printf("Unable to get function information from %d for %s\n", core_id, f_name);
-    return errno;
-  }
-  
-  result->idx = -1;
-  iter=f_list;
-  while (iter) {
-    f_list=iter;
-    cf_name = (char *)malloc(strlen(iter->name)+1);
-    sprintf(cf_name, "%s", iter->name);
-    f_iter = cf_name;
+    function_info *f_list;
+    function_info *iter;
+    char func_name[PATH_MAX];
+    char *cf_name;
+    char *f_iter;
+    
+    errno = 0;
+    
+    sprintf(func_name, "%s", f_name);
+    f_iter = func_name;
     for (; *f_iter; ++f_iter) {
-      *f_iter=tolower(*f_iter);
+        *f_iter = tolower(*f_iter);
     }
-    if (strstr(cf_name, func_name)) {
-      result->idx = iter->idx;
-      result->name=(char *)malloc(strlen(iter->name)+1);
-      sprintf(result->name, "%s", iter->name);
+    
+    if (get_functions_info(core_id, &f_list)) {
+        printf("Unable to get function information from %d for %s\n", core_id, f_name);
+        return errno;
     }
-    iter=iter->next;
-    free(cf_name);
-    free(f_list);
-  }
-  
-  return errno;
+    
+    result->idx = -1;
+    iter=f_list;
+    while (iter) {
+        f_list=iter;
+        cf_name = (char *)malloc(strlen(iter->name)+1);
+        sprintf(cf_name, "%s", iter->name);
+        f_iter = cf_name;
+        for (; *f_iter; ++f_iter) {
+            *f_iter=tolower(*f_iter);
+        }
+        if (strstr(cf_name, func_name)) {
+            result->idx = iter->idx;
+            result->name=(char *)malloc(strlen(iter->name)+1);
+            sprintf(result->name, "%s", iter->name);
+        }
+        iter=iter->next;
+        free(cf_name);
+        free(f_list);
+    }
+    
+    return errno;
 }
 
 int connect_to_proc(int core_id, char *name)
 {
-  char node_name[PATH_MAX];
-  char req_name[PATH_MAX];
-  int fd;
-  
-  sprintf(node_name, "%s%d", DEV_NODE_BASE, core_id + 1);
-  sprintf(req_name, "%s%d", NODE_BASE, core_id + 1);
-  
-  fd = open(node_name, O_RDWR);
-  if (fd < 0) {
-    perror("Can't open rpc_example device");
-  }
-  else {
-    sprintf(name, "%s", req_name);
-  }
-  
-  return fd;
+    char node_name[PATH_MAX];
+    int fd;
+    
+    sprintf(node_name, "%s%s", DEV_NODE_BASE, nodes[core_id]);
+    
+    fd = open(node_name, O_RDWR);
+    if (fd < 0) {
+        perror("Can't open rpc_example device");
+    }
+    else {
+        sprintf(name, "%s", nodes[core_id]);
+    }
+    
+    return fd;
 }
 
 int exec_cmd(int fd, char *msg, size_t len, char *reply_msg, int *reply_len)
@@ -931,10 +951,15 @@ int main(int argc, char *argv[])
         return 1;
     }
     
-    if(get_function(core_id + 1, f_name, &func_inf) || 
+    if (get_nodes() < 1) {
+        printf("No rpmsg nodes found\n");
+        return 1;
+    }
+    
+    if (get_function(core_id, f_name, &func_inf) || 
         func_inf.idx == -1){
-      printf("Function matching %s not found for core %d\n", f_name, core_id);
-      return 1;
+        printf("Function matching %s not found for core %d\n", f_name, core_id);
+        return 1;
     }
     
     printf("Using function:\n%s\n for the test\n", func_inf.name);
