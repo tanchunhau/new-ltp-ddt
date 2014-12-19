@@ -268,6 +268,7 @@ rpmsg_proto_msgqapp_test()
   local __test_log
   local __num_match
   local __command
+  local __rproc_ids=$(get_rpmsg_proto_rproc_ids $__num_procs)
   
   if [ $# -gt 1 ]
   then
@@ -278,7 +279,7 @@ rpmsg_proto_msgqapp_test()
     __kill_time=$3
   fi
   
-  for __rproc in `seq 1 $__num_procs`
+  for __rproc in $__rproc_ids
   do
     __multiproc_cmd="$__multiproc_cmd & $__ipc_cmd $__loops $__rproc"
     __command="$__ipc_cmd $__loops $__rproc"
@@ -349,6 +350,8 @@ rpmsg_proto_msgqbench_test()
   local __test_log
   local __num_match
   local __command
+  local __rproc_ids=$(get_rpmsg_proto_rproc_ids $__num_procs)
+  
   if [ $# -gt 1 ]
   then
     __loops=$2
@@ -358,7 +361,7 @@ rpmsg_proto_msgqbench_test()
     __payload_sz=$3
   fi
   
-  for __rproc in `seq 1 $__num_procs`
+  for __rproc in $__rproc_ids
   do
     __multiproc_cmd="$__multiproc_cmd & $__ipc_cmd $__loops $__payload_sz $__rproc"
     __command="$__ipc_cmd $__loops  $__payload_sz $__rproc"
@@ -516,5 +519,24 @@ rpmsg_recovery_event()
   done
   
   echo ${__command:3}
+}
+
+# Function to obtain the ids of the remote processor for rpmsg-proto
+# tests
+# Inputs:
+#   $1: Number of remote proccessors in the SOC 
+# Returns, a space separated string containing the ids of the remote
+# processors
+get_rpmsg_proto_rproc_ids()
+{
+  case $SOC in
+    *j6eco)
+      local __rproc_ids=( 1 2 4 )
+      echo "${__rproc_ids[@]::$1}"
+      ;;
+    *)
+      echo `seq 1 $1`
+      ;;           
+  esac
 }
 
