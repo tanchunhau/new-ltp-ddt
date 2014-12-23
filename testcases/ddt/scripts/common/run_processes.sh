@@ -119,8 +119,20 @@ do
 	echo "$(eval taskset -p $p_mask $process_id)"
         affinity_observed=`echo "$(eval taskset -p $process_id)"`
         affinity_observed=`echo $affinity_observed | awk 'BEGIN {FS=": "}{print $2}'`
+	echo "OBSERVED affinity is $affinity_observed"
+	affinity_observed=`echo '0x'$affinity_observed`
+	echo "OBSERVED affinity is $affinity_observed"
         printf -v affinity_observed_decimal "%d" "$affinity_observed"
         printf -v affinity_expected_decimal "%d" "$p_mask"
+        if [ $p_mask == 0xFFFFFFFF ]                                           
+        then                                                                   
+                if [ `grep -c processor /proc/cpuinfo` == 2 ]                  
+                then                                                           
+                        affinity_expected_decimal=3                            
+		else
+			affinity_expected_decimal=15
+                fi                                                             
+        fi 
         echo "OBSERVED AFFINITY is $affinity_observed_decimal and EXPECTED AFFINITY is $affinity_expected_decimal"
         if [ "$affinity_observed_decimal" -ne "$affinity_expected_decimal" ]
         then
