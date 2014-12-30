@@ -63,15 +63,15 @@ struct coproc_devfreq_data {
  *
  * };
  */
-static char *dev_clk_name = "fclk";
-static char *dpll_clk_name = "dpll";
+#define DEV_CLK_NAME "fclk"
+#define DPLL_CLK_NAME "dpll"
 
 static int coproc_device_getrate(struct device *dev, unsigned long *rate)
 {
 	struct coproc_devfreq_data *d = dev_get_drvdata(dev);
 
 	if (!d->dev_clk)
-		d->dev_clk = devm_clk_get(dev, dev_clk_name);
+		d->dev_clk = devm_clk_get(dev, DEV_CLK_NAME);
 	*rate = clk_get_rate(d->dev_clk);
 	return 0;
 }
@@ -159,13 +159,13 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 	}
 	platform_set_drvdata(pdev, d);
 
-	d->dpll_clk = devm_clk_get(dev, dpll_clk_name);
+	d->dpll_clk = devm_clk_get(dev, DPLL_CLK_NAME);
 	if (IS_ERR(d->dpll_clk)) {
 		dev_err(dev, "%s: Cannot get dpll clk.\n", __func__);
 		goto out;
 	}
 
-	d->dev_clk = devm_clk_get(dev, dev_clk_name);
+	d->dev_clk = devm_clk_get(dev, DEV_CLK_NAME);
 	if (IS_ERR(d->dev_clk)) {
 		dev_err(dev, "%s: Cannot get func clk.\n", __func__);
 		goto out;
