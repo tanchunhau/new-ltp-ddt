@@ -158,13 +158,15 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 
 	d->dpll_clk = devm_clk_get(dev, DPLL_CLK_NAME);
 	if (IS_ERR(d->dpll_clk)) {
-		dev_err(dev, "%s: Cannot get dpll clk.\n", __func__);
+		err = PTR_ERR(d->dpll_clk);
+		dev_err(dev, "%s: Cannot get dpll clk(%d).\n", __func__, err);
 		d->dpll_clk = NULL;
 	}
 
 	d->dev_clk = devm_clk_get(dev, DEV_CLK_NAME);
 	if (IS_ERR(d->dev_clk)) {
-		dev_err(dev, "%s: Cannot get func clk.\n", __func__);
+		err = PTR_ERR(d->dpll_clk);
+		dev_err(dev, "%s: Cannot get func clk(%d).\n", __func__, err);
 		goto out;
 	}
 
