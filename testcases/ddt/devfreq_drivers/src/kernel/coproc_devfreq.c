@@ -140,10 +140,12 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 	int err = 0;
 	struct device *dev = &pdev->dev;
 	struct device_node *np = of_node_get(dev->of_node);
+	bool noset_dpll_as_rate;
 
 	pr_err("probe\n");
 
 	of_property_read_u32(np, "clock-initial-frequency", &initial_freq);
+	noset_dpll_as_rate = of_property_read_bool(np, "noset-dpll-rate");
 
 	d = devm_kzalloc(dev, sizeof(*d), GFP_KERNEL);
 	if (d == NULL) {
@@ -182,6 +184,9 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 			goto out;
 		}
 	}
+
+	if (noset_dpll_as_rate)
+		d->dpll_clk = NULL;
 
 	err = of_init_opp_table(dev);
 	if (err) {
