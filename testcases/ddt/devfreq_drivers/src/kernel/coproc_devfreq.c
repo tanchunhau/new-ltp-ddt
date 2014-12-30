@@ -31,17 +31,19 @@
  * @dev:  device pointer
  * @devfreq:  devfreq for this device
  * @stat: my current statistics
+ * @dev_clk: my device clk
+ * @dpll_clk: my dpll clk
+ * @nb:	my notifier block
  */
 struct coproc_devfreq_data {
 	struct devfreq_dev_profile profile;
 	struct device *dev;
 	struct devfreq *devfreq;
 	struct devfreq_dev_status stat;
+	struct clk *dev_clk;
+	struct clk *dpll_clk;
+	struct notifier_block *clk_nb;
 };
-
-static struct clk *dev_clk;
-static struct clk *dpll_clk;
-static struct notifier_block *clk_nb;
 
 /**
  * DOC:
@@ -66,25 +68,29 @@ static char *dpll_clk_name = "my_dpll";
 
 static int coproc_device_getrate(struct device *dev, unsigned long *rate)
 {
-	if (!dev_clk)
-		dev_clk = devm_clk_get(dev, dev_clk_name);
-	*rate = clk_get_rate(dev_clk);
+	struct coproc_devfreq_data *d = dev_get_drvdata(dev);
+
+	if (!d->dev_clk)
+		d->dev_clk = devm_clk_get(dev, dev_clk_name);
+	*rate = clk_get_rate(d->dev_clk);
 	return 0;
 }
 
 static int coproc_device_scale(struct device *dev, unsigned long rate)
 {
 	int err;
+	struct coproc_devfreq_data *d = dev_get_drvdata(dev);
+
 	pr_err("coproc_device_scale:%lu\n", rate);
 
-	err = clk_set_rate(dpll_clk, rate);
+	err = clk_set_rate(d->dpll_clk, rate);
 	if (err) {
 		dev_err(dev, "%s: Cannot scale dpll clock(%d).\n", __func__,
 			err);
 		goto scale_out;
 	}
 
-	err = clk_set_rate(dev_clk, rate);
+	err = clk_set_rate(d->dev_clk, rate);
 	if (err)
 		dev_err(dev, "%s: Cannot scale functional clock(%d).\n",
 			__func__, err);
@@ -145,26 +151,34 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 	}
 	initial_freq = be32_to_cpup(node_ptr);
 
-	dpll_clk = devm_clk_get(dev, dpll_clk_name);
-	if (IS_ERR(dpll_clk)) {
+	d = devm_kzalloc(dev, sizeof(*d), GFP_KERNEL);
+	if (d == NULL) {
+		dev_err(dev, "%s: Cannot allocate memory.\n", __func__);
+		err = -ENOMEM;
+		goto out;
+	}
+	platform_set_drvdata(pdev, d);
+
+	d->dpll_clk = devm_clk_get(dev, dpll_clk_name);
+	if (IS_ERR(d->dpll_clk)) {
 		dev_err(dev, "%s: Cannot get dpll clk.\n", __func__);
 		goto out;
 	}
 
-	dev_clk = devm_clk_get(dev, dev_clk_name);
-	if (IS_ERR(dev_clk)) {
+	d->dev_clk = devm_clk_get(dev, dev_clk_name);
+	if (IS_ERR(d->dev_clk)) {
 		dev_err(dev, "%s: Cannot get func clk.\n", __func__);
 		goto out;
 	}
 
-	err = clk_set_rate(dpll_clk, initial_freq);
+	err = clk_set_rate(d->dpll_clk, initial_freq);
 	if (err) {
 		dev_err(dev, "%s: Cannot set dpll clock rate(%d).\n", __func__,
 			err);
 		goto out;
 	}
 
-	err = clk_set_rate(dev_clk, initial_freq);
+	err = clk_set_rate(d->dev_clk, initial_freq);
 	if (err) {
 		dev_err(dev, "%s: Cannot set func clock rate(%d).\n", __func__,
 			err);
@@ -183,13 +197,6 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 	dev_err(dev, "%s: Number of OPP availables:%d.\n", __func__,
 		num_available);
 	rcu_read_unlock();
-
-	d = devm_kzalloc(dev, sizeof(*d), GFP_KERNEL);
-	if (d == NULL) {
-		dev_err(dev, "%s: Cannot allocate memory.\n", __func__);
-		err = -ENOMEM;
-		goto out;
-	}
 
 	d->dev = dev;
 	err = coproc_device_getrate(dev, &d->profile.initial_freq);
@@ -219,11 +226,11 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 	}
 
 	/* Register voltage domain notifier */
-	clk_nb = of_pm_voltdm_notifier_register(dev, np, dev_clk, "coproc0",
-						&voltage_latency);
-
-	if (IS_ERR(clk_nb)) {
-		err = PTR_ERR(clk_nb);
+	d->clk_nb = of_pm_voltdm_notifier_register(dev, np, d->dev_clk,
+						   "coproc0",
+						   &voltage_latency);
+	if (IS_ERR(d->clk_nb)) {
+		err = PTR_ERR(d->clk_nb);
 		/* defer probe if regulator is not yet registered */
 		if (err == -EPROBE_DEFER) {
 			dev_err(dev,
@@ -235,8 +242,6 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 		}
 		goto out_remove;
 	}
-
-	platform_set_drvdata(pdev, d);
 
 	/* All good.. */
 	goto out;
@@ -254,7 +259,7 @@ static int coproc_devfreq_remove(struct platform_device *pdev)
 
 	pr_err("remove\n");
 
-	of_pm_voltdm_notifier_unregister(clk_nb);
+	of_pm_voltdm_notifier_unregister(d->clk_nb);
 	devfreq_remove_device(d->devfreq);
 
 	dev_err(&pdev->dev, "%s Removed devfreq\n", __func__);
