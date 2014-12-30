@@ -81,7 +81,7 @@ static int coproc_device_scale(struct device *dev, unsigned long rate)
 	int err;
 	struct coproc_devfreq_data *d = dev_get_drvdata(dev);
 
-	pr_err("coproc_device_scale:%lu\n", rate);
+	dev_info(dev, "coproc_device_scale:%lu\n", rate);
 
 	if (d->dpll_clk) {
 		err = clk_set_rate(d->dpll_clk, rate);
@@ -106,7 +106,8 @@ static int coproc_set_target(struct device *dev, unsigned long *_freq,
 {
 	struct dev_pm_opp *opp;
 	unsigned long rate;
-	pr_err("set_target:%lu\n", *_freq);
+
+	dev_info(dev, "set_target:%lu\n", *_freq);
 
 	rcu_read_lock();
 	opp = devfreq_recommended_opp(dev, _freq, flags);
@@ -142,7 +143,7 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 	struct device_node *np = of_node_get(dev->of_node);
 	bool noset_dpll_as_rate;
 
-	pr_err("probe\n");
+	dev_info(dev, "probe\n");
 
 	of_property_read_u32(np, "clock-initial-frequency", &initial_freq);
 	noset_dpll_as_rate = of_property_read_bool(np, "noset-dpll-rate");
@@ -197,8 +198,8 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 
 	rcu_read_lock();
 	num_available = dev_pm_opp_get_opp_count(dev);
-	dev_err(dev, "%s: Number of OPP availables:%d.\n", __func__,
-		num_available);
+	dev_info(dev, "%s: Number of OPP availables:%d.\n", __func__,
+		 num_available);
 	rcu_read_unlock();
 
 	d->dev = dev;
@@ -259,13 +260,14 @@ out:
 static int coproc_devfreq_remove(struct platform_device *pdev)
 {
 	struct coproc_devfreq_data *d = platform_get_drvdata(pdev);
+	struct device *dev = &pdev->dev;
 
-	pr_err("remove\n");
+	dev_info(dev, "remove\n");
 
 	of_pm_voltdm_notifier_unregister(d->clk_nb);
 	devfreq_remove_device(d->devfreq);
 
-	dev_err(&pdev->dev, "%s Removed devfreq\n", __func__);
+	dev_info(dev, "%s Removed devfreq\n", __func__);
 	return 0;
 }
 
@@ -277,7 +279,7 @@ static int coproc_devfreq_remove(struct platform_device *pdev)
  */
 static int coproc_devfreq_suspend(struct device *dev)
 {
-	pr_err("suspend\n");
+	dev_info(dev, "suspend\n");
 	return 0;
 }
 
@@ -289,7 +291,7 @@ static int coproc_devfreq_suspend(struct device *dev)
  */
 static int coproc_devfreq_resume(struct device *dev)
 {
-	pr_err("resume\n");
+	dev_info(dev, "resume\n");
 	return 0;
 }
 
