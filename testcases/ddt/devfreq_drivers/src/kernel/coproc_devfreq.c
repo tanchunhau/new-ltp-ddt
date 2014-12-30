@@ -135,23 +135,15 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 {
 	struct coproc_devfreq_data *d;
 	unsigned int voltage_latency;
-	unsigned long initial_freq;
+	u32 initial_freq = 0;
 	int num_available;
 	int err = 0;
 	struct device *dev = &pdev->dev;
 	struct device_node *np = of_node_get(dev->of_node);
-	const u32 *node_ptr;
 
 	pr_err("probe\n");
 
-	node_ptr = of_get_property(np, "clock-initial-frequency", NULL);
-	if (!node_ptr) {
-		dev_err(dev,
-			"%s: Could not read clock-initial-frequency from DT.\n",
-			__func__);
-		goto out;
-	}
-	initial_freq = be32_to_cpup(node_ptr);
+	of_property_read_u32(np, "clock-initial-frequency", &initial_freq);
 
 	d = devm_kzalloc(dev, sizeof(*d), GFP_KERNEL);
 	if (d == NULL) {
@@ -173,20 +165,22 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 		goto out;
 	}
 
-	if (d->dpll_clk) {
-		err = clk_set_rate(d->dpll_clk, initial_freq);
+	if (initial_freq) {
+		if (d->dpll_clk) {
+			err = clk_set_rate(d->dpll_clk, initial_freq);
+			if (err) {
+				dev_err(dev, "%s: Cannot set dpll clock rate(%d).\n",
+					__func__, err);
+				goto out;
+			}
+		}
+
+		err = clk_set_rate(d->dev_clk, initial_freq);
 		if (err) {
-			dev_err(dev, "%s: Cannot set dpll clock rate(%d).\n",
+			dev_err(dev, "%s: Cannot set func clock rate(%d).\n",
 				__func__, err);
 			goto out;
 		}
-	}
-
-	err = clk_set_rate(d->dev_clk, initial_freq);
-	if (err) {
-		dev_err(dev, "%s: Cannot set func clock rate(%d).\n", __func__,
-			err);
-		goto out;
 	}
 
 	err = of_init_opp_table(dev);
