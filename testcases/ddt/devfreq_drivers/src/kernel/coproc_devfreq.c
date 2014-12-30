@@ -52,7 +52,7 @@ struct coproc_devfreq_data {
  *
  *  compatible = "ti,test-coproc";
  *  clocks = <&dpll_gpu_m2_ck>, <&dpll_gpu_ck>;
- *  clock-names = "my_fclk", "my_dpll";
+ *  clock-names = "fclk", "dpll";
  *  clock-initial-frequency = <425600000>;
  *  operating-points = <
  *    425600  1090000
@@ -63,8 +63,8 @@ struct coproc_devfreq_data {
  *
  * };
  */
-static char *dev_clk_name = "my_fclk";
-static char *dpll_clk_name = "my_dpll";
+static char *dev_clk_name = "fclk";
+static char *dpll_clk_name = "dpll";
 
 static int coproc_device_getrate(struct device *dev, unsigned long *rate)
 {
