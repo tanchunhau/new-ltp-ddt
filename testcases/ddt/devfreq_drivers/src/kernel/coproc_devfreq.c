@@ -83,11 +83,13 @@ static int coproc_device_scale(struct device *dev, unsigned long rate)
 
 	pr_err("coproc_device_scale:%lu\n", rate);
 
-	err = clk_set_rate(d->dpll_clk, rate);
-	if (err) {
-		dev_err(dev, "%s: Cannot scale dpll clock(%d).\n", __func__,
-			err);
-		goto scale_out;
+	if (d->dpll_clk) {
+		err = clk_set_rate(d->dpll_clk, rate);
+		if (err) {
+			dev_err(dev, "%s: Cannot scale dpll clock(%d).\n",
+				__func__, err);
+			goto scale_out;
+		}
 	}
 
 	err = clk_set_rate(d->dev_clk, rate);
@@ -162,7 +164,7 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 	d->dpll_clk = devm_clk_get(dev, DPLL_CLK_NAME);
 	if (IS_ERR(d->dpll_clk)) {
 		dev_err(dev, "%s: Cannot get dpll clk.\n", __func__);
-		goto out;
+		d->dpll_clk = NULL;
 	}
 
 	d->dev_clk = devm_clk_get(dev, DEV_CLK_NAME);
@@ -171,11 +173,13 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 		goto out;
 	}
 
-	err = clk_set_rate(d->dpll_clk, initial_freq);
-	if (err) {
-		dev_err(dev, "%s: Cannot set dpll clock rate(%d).\n", __func__,
-			err);
-		goto out;
+	if (d->dpll_clk) {
+		err = clk_set_rate(d->dpll_clk, initial_freq);
+		if (err) {
+			dev_err(dev, "%s: Cannot set dpll clock rate(%d).\n",
+				__func__, err);
+			goto out;
+		}
 	}
 
 	err = clk_set_rate(d->dev_clk, initial_freq);
