@@ -48,7 +48,7 @@ struct coproc_devfreq_data {
 /**
  * DOC:
  * clock-names should be defined in dts file, e.g.
- * coproc0 {
+ * coproc {
  *
  *  compatible = "ti,test-coproc";
  *  clocks = <&dpll_gpu_m2_ck>, <&dpll_gpu_ck>;
@@ -58,7 +58,7 @@ struct coproc_devfreq_data {
  *    425600  1090000
  *    532000  1280000
  *  >;
- *  coproc0-voltdm = <&voltdm_gpu>;
+ *  coproc-voltdm = <&voltdm_gpu>;
  *  voltage-tolerance = <1>;
  *
  * };
@@ -233,17 +233,17 @@ static int coproc_devfreq_probe(struct platform_device *pdev)
 
 	/* Register voltage domain notifier */
 	d->clk_nb = of_pm_voltdm_notifier_register(dev, np, d->dev_clk,
-						   "coproc0",
+						   "coproc",
 						   &voltage_latency);
 	if (IS_ERR(d->clk_nb)) {
 		err = PTR_ERR(d->clk_nb);
 		/* defer probe if regulator is not yet registered */
 		if (err == -EPROBE_DEFER) {
 			dev_err(dev,
-				"coproc0 clock notifier not ready, retry\n");
+				"coproc clock notifier not ready, retry\n");
 		} else {
 			dev_err(dev,
-				"Failed to register coproc0 clk notifier: %d\n",
+				"Failed to register coproc clk notifier: %d\n",
 				err);
 		}
 		goto out_remove;
