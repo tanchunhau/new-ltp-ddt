@@ -5,4 +5,4 @@
 
 POWERMGR_S_FUNC_USB_SUSPEND source "common.sh"; run_processes.sh -c " /opt/ltp/runltp -f ddt/usbhost_dd_rw -P $PLATFORM -s 'USBHOST_S_FUNC_DD_RW_10M '  # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_suspend -s 'POWERMGR_S_FUNC_SIMPLE_SUSPEND ' " 
 
-POWERMGR_M_FUNC_USB_SUSPEND source "common.sh"; run_processes.sh -c " /opt/ltp/runltp -f ddt/usbhost_dd_rw -P $PLATFORM -s 'USBHOST_M_FUNC_DD_RW_100M '  # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_suspend -s 'POWERMGR_M_STRESS_SIMPLE_SUSPEND ' " 
+POWERMGR_L_FUNC_USB_SUSPEND source "common.sh"; run_processes.sh -c " /opt/ltp/runltp -f ddt/usbhost_dd_rw -P $PLATFORM -s 'USBHOST_M_FUNC_DD_RW_100M '  # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_suspend -s 'POWERMGR_M_STRESS_SIMPLE_SUSPEND ' " 
