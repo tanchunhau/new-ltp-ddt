@@ -311,7 +311,7 @@ check_config_options()
   IFS='^';y=${y[@]}
   IFS=' '
   for option in $y; do
-     zcat /proc/config.gz | egrep "$option$check" ||  (IFS=$OIFS; \
+     zcat /proc/config.gz | egrep "$option$check" && continue ||  (IFS=$OIFS; \
      if is_opt_config "$option"; then skip_test "optional $option not enabled"; else die "$option is not $check"; fi); exit $?
   done
   IFS=$OIFS
