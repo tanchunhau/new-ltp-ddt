@@ -74,7 +74,7 @@ usage()
 #     return the last value in the range
 get_default_val()
 {
-  local result=`echo "$1" | grep -w "$2:" | tr -s " " | cut -d " " -f 2,3 | cut -d "[" -f 2 | cut -d "]" -f 1`
+  local result=`echo "$1" | grep -w "$2:" | tr -s " " | cut -d " " -f 2,3 | cut -d "[" -f 2 | cut -d "(" -f 2 | cut -d "]" -f 1 | cut -d ")" -f 1`
   local value_range=($result)
   if [ $# -gt 2 ] ; then
     echo ${value_range[${#value_range[@]} - 1]}
