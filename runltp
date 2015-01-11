@@ -120,7 +120,7 @@ usage()
     usage: ${0##*/} [ -a EMAIL_TO ] [ -c NUM_PROCS ] [ -C FAILCMDFILE ] [ -d TMPDIR ]
     [ -D NUM_PROCS,NUM_FILES,NUM_BYTES,CLEAN_FLAG ] -e [ -f CMDFILES(,...) ] [ -g HTMLFILE]
     [ -i NUM_PROCS ] [ -l LOGFILE ] [ -m NUM_PROCS,CHUNKS,BYTES,HANGUP_FLAG ] 
-    -N -n [ -o OUTPUTFILE ] -p [-P platform] -q [ -r LTPROOT ] [ -s PATTERN ] [ -t DURATION ]
+    -N -n [ -o OUTPUTFILE ] -p [-P platform] -q [ -r LTPROOT ] [ -s PATTERNS ] [ -t DURATION ]
     -v [ -w CMDFILEADDR ] [ -x INSTANCES ] [ -b DEVICE ] [-B DEVICE_FS_TYPE]
 	[ -F LOOPS,PERCENTAGE ]
                 
@@ -163,7 +163,7 @@ usage()
     -P PLATFORM     Platform to run tests on. Used to filter device driver tests (ddt)
     -q              Print less verbose output to screen.
     -r LTPROOT      Fully qualified path where testsuite is installed.
-    -s PATTERN      Only run test cases which match PATTERN.
+    -s PATTERNS      Only run test cases which match PATTERNS(separate with ',')
     -S SKIPFILE     Skip tests specified in SKIPFILE
     -t DURATION     Execute the testsuite for given duration. Examples:
                       -t 60s = 60 seconds
@@ -723,12 +723,13 @@ main()
          }
     }
 
-    # If enabled, execute only test cases that match the PATTERN
+    # If enabled, execute only test cases that match the PATTERNS
     if [ -n "$TAG_RESTRICT_STRING" ]
     then
+      TAG_RESTRICT_STRING_LIST=`echo "$TAG_RESTRICT_STRING" | tr ',' '|'`
       mv -f ${TMP}/alltests ${TMP}/alltests.orig
       sed -i s'/\t/ /' ${TMP}/alltests.orig
-	    grep -E "$TAG_RESTRICT_STRING" ${TMP}/alltests.orig > ${TMP}/alltests #Not worth checking return codes for this case
+        grep -E "$TAG_RESTRICT_STRING_LIST" ${TMP}/alltests.orig > ${TMP}/alltests #Not worth checking return codes for this case
     fi
 
     # Blacklist or skip tests if a SKIPFILE was specified with -S
