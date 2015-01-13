@@ -318,6 +318,7 @@ remove_cpuloadgen()
 cpu_load_random()
 {
     if [ `which cpuloadgen` ]; then
+        trap on_exit EXIT
         local cpus_load=''
         local num_cpu=`get_num_cpus`
         i=0
@@ -341,6 +342,7 @@ cpu_load_random()
 # $2: number of iterations
 run_memtest()
 {
+    trap on_exit EXIT
     export m1=`free|cut -d ":" -f2|sed -e "s/^\s\s*//g"|head -2|tail -1|cut -d ' ' -f1`
     export m2=M
     export m=`expr $m1 \* $1 / 100 / 1024`
@@ -353,6 +355,7 @@ run_memtest()
 # $1: use memory percentage
 start_memtest()
 {
+    trap on_exit EXIT
     # Step 1- start up memtest
     export m1=`free|cut -d ":" -f2|sed -e "s/^\s\s*//g"|head -2|tail -1|cut -d ' ' -f1`
     export m2=M
@@ -807,9 +810,6 @@ on_exit()
     kill_memtest
 }
 
-trap on_exit EXIT
-
-
 #Function to validate a condition, takes the
 # following parameters
 #    $1: Condition to assert, i.e [ 1 -ne 2 ]
@@ -958,6 +958,7 @@ get_sections_keys() {
 run_memtest_var()
 { 
   declare -a procs
+  trap on_exit EXIT
   if [ -z $3 ]; then 
   echo "ERROR: incorrect number of input parameters."
   echo "Example: run_memtest_var 3000 350 1"
