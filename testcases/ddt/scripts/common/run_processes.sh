@@ -126,12 +126,8 @@ do
         printf -v affinity_expected_decimal "%d" "$p_mask"
         if [ $p_mask == 0xFFFFFFFF ]                                           
         then                                                                   
-                if [ `grep -c processor /proc/cpuinfo` == 2 ]                  
-                then                                                           
-                        affinity_expected_decimal=3                            
-		else
-			affinity_expected_decimal=15
-                fi                                                             
+                cpu_count=`grep -c processor /proc/cpuinfo`
+		affinity_expected_decimal=$((2**cpu_count-1))  
         fi 
         echo "OBSERVED AFFINITY is $affinity_observed_decimal and EXPECTED AFFINITY is $affinity_expected_decimal"
         if [ "$affinity_observed_decimal" -ne "$affinity_expected_decimal" ]
