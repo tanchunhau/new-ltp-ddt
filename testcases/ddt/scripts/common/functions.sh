@@ -435,6 +435,7 @@ no_suspend()
 #   -u usb_remove   optional; usb_state to indicate if usb module needs to be removed prior to suspend; default to '0'
 #                              0 indicates 'dont care'; 1 indicates 'remove usb module'; 2 indicates 'do not remove usb module'
 #   -m usb_module   optional; usb_module to indicate the name of usb module to be removed; default to ''
+#   -a max_atime    optional; maximum active time between suspend calls; default to 5s; it will be a random number
 suspend()
 {
     OPTIND=1 
@@ -443,6 +444,7 @@ suspend()
     do case $arg in
       p)  power_state="$OPTARG";;
       t)  max_stime="$OPTARG";;
+      a)  max_atime="$OPTARG";;
       i)  _iterations="$OPTARG";;
       u)  usb_remove="$OPTARG";;
       m)  usb_module="$OPTARG";;
@@ -456,6 +458,7 @@ suspend()
     # for backward compatible
     : ${power_state:='mem'}
     : ${max_stime:='10'}
+    : ${max_atime:='5'}
     : ${_iterations:='1'}
     case $MACHINE in                                                  
         *)                                                              
@@ -465,6 +468,7 @@ suspend()
 
     test_print_trc "suspend function: power_state: $power_state"
     test_print_trc "suspend function: max_stime: $max_stime"
+    test_print_trc "suspend function: max_atime: $max_atime"
     test_print_trc "suspend function: iterations: $_iterations"
     test_print_trc "suspend function: usb_remove: $usb_remove"
     test_print_trc "suspend function: usb_module: $usb_module"
@@ -492,8 +496,8 @@ suspend()
       dmesg -c > /dev/null
       local suspend_failures=`get_value_for_key_from_file /sys/kernel/debug/suspend_stats fail :`
       if [ -e /dev/rtc0 ]; then
-          report "Use rtc to suspend resume, adding 10 secs to suspend time"
-          suspend_time=$((suspend_time+10))
+          report "Use rtc to suspend resume, adding 2 secs to suspend time"
+          suspend_time=$((suspend_time+2))
           # sending twice in case a late interrupt aborted the suspend path.
           # since this is not common, it is expected that 2 tries should be enough
           do_cmd rtcwake -d /dev/rtc0 -m ${power_state} -s ${suspend_time} || do_cmd rtcwake -d /dev/rtc0 -m ${power_state} -s ${suspend_time}
@@ -518,6 +522,7 @@ suspend()
             `modprobe $usb_module`
          fi 
       fi
+      sleep `random_ne0 $max_atime`
 
       i=`expr $i + 1`
     done
