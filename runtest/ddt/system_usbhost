@@ -1,6 +1,6 @@
 # @name System USB Host test
 # @desc Exercise USB Host while other interfaces are being used.
-# @requires usb/host usb/host/iso
+# @requires usb/host && usb/host/iso
 # @setup_requires usbhostmsc_usbhostvideo_usbhostaudio
 
 SYSTEM_L_FUNC_USB-MSC-USB-AUDIO-PLAYBACK-0001 source 'common.sh';run_processes.sh -c "/opt/ltp/runltp -f ddt/usbhost_perf_ext2 -P $PLATFORM -s USBHOST_L_PERF_EXT2_0001# /opt/ltp/runltp -f ddt/usbhost_audio -P $PLATFORM -s USBHOST_M_FUNC_AUDIO_PLAYBACK_ACCESSTYPE_MMAP_01"
