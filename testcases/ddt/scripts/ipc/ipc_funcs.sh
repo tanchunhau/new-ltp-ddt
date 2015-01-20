@@ -122,13 +122,16 @@ get_num_remote_procs()
 
 # Funtion to run the RPMSG-RPC test
 # Inputs:
-#   $1: The number of remote processor to use in the test
-#   $2: (Optional) The function or part of the function name to execute
+#   -p: The number of remote processor to use in the test
+#   -f: (Optional) The function or part of the function name to execute
 #       in the remote processor. Defaults to _triple
-#   $3: (Optional) the time in sec after which the test should be killed,
-#       or if $4:* is specified after $4 will be sent.
+#   -m: (Optional) int used to trigger an MMU fault while running the test.
+#       0:Fault on first message, 1: Fault on middle messsage 
+#       2: Fault on last message 
+#   -s: (Optional) the time in sec after which the test should be killed,
+#       or if -a is specified after -c command will be sent.
 #       This option is useful to test stability, 
-#   $4:*: (Optional) command to send after time $3 seconds
+#   -c: (Optional) command to send after time -s seconds
 # Returns, 0 if the test passed, 1 if the single processor test failed,
 #          2 if the multiprocessors test failed, or 3 if both single and
 #          multiprocessor test fails
@@ -139,35 +142,44 @@ rpmsg_rpc_test()
   local __result=0
   local __instances=10
   local __f_name='_triple'
+  local __msg_num=''
   local __multiproc_cmds=("" "" "" "")
   local __rpc_cmd='test_rpmsg_rpc'
   local __test_log
   local __num_match
   local __command
-  if [ $# -gt 1 ]
-  then
-    __f_name=$2
-  fi
-  if [ $# -gt 2 ]
-  then
-    __kill_time=$3
-  fi
+  local __add_cmd=''
+  OPTIND=1 
+  local _iterations
+  while getopts :p:c:f:s:m: arg
+  do case $arg in
+    p)  __num_procs="$OPTARG";;
+    s)  __kill_time="$OPTARG";;
+    f)  __f_name="$OPTARG";;
+    m)  __msg_num="-m $OPTARG";;
+    c)  __add_cmd="$OPTARG";;
+
+    \?)  test_print_trc "Invalid Option -$OPTARG ignored." >&2
+    return 1
+    ;;
+  esac
+  done
   
   for __rproc in `seq 0 $((__num_procs - 1))`
   do
-    __multiproc_cmds[0]="${__multiproc_cmds[0]} & $__rpc_cmd -t $((__rproc % 3 + 1)) -c $__rproc -x $__instances -l $__instances -f $__f_name"
-    __multiproc_cmds[1]="${__multiproc_cmds[1]} & $__rpc_cmd -t 1 -c $__rproc -x $__instances -l $__instances -f $__f_name"
-    __multiproc_cmds[2]="${__multiproc_cmds[2]} & $__rpc_cmd -t 2 -c $__rproc -x $__instances -l $__instances -f $__f_name"
-    __multiproc_cmds[3]="${__multiproc_cmds[3]} & $__rpc_cmd -t 3 -c $__rproc -x $__instances -l $__instances -f $__f_name"
+    __multiproc_cmds[0]="${__multiproc_cmds[0]} & $__rpc_cmd -t $((__rproc % 3 + 1)) -c $__rproc -x $__instances -l $__instances -f $__f_name $__msg_num"
+    __multiproc_cmds[1]="${__multiproc_cmds[1]} & $__rpc_cmd -t 1 -c $__rproc -x $__instances -l $__instances -f $__f_name $__msg_num"
+    __multiproc_cmds[2]="${__multiproc_cmds[2]} & $__rpc_cmd -t 2 -c $__rproc -x $__instances -l $__instances -f $__f_name $__msg_num"
+    __multiproc_cmds[3]="${__multiproc_cmds[3]} & $__rpc_cmd -t 3 -c $__rproc -x $__instances -l $__instances -f $__f_name $__msg_num"
     for __t_type in `seq 1 3`
     do
-      __command="$__rpc_cmd -t $__t_type -c $__rproc -x $__instances -l $__instances -f $__f_name"
+      __command="$__rpc_cmd -t $__t_type -c $__rproc -x $__instances -l $__instances -f $__f_name $__msg_num"
       if [ $__kill_time -gt 0 ]
       then
         __command="${__command} & sleep $__kill_time; "
-        if [ $# -gt 3 ]
+        if [ "$__add_cmd" != '' ]
         then
-          __command="${__command} ${@:4}"
+          __command="${__command} $__add_cmd"
         else
           __command="${__command} killall $__rpc_cmd"
         fi 
@@ -192,9 +204,9 @@ rpmsg_rpc_test()
       if [ $__kill_time -gt 0 ]
       then
         __cmd="${__cmd} & sleep $__kill_time;"
-        if [ $# -gt 3 ]
+        if [ "$__add_cmd" != '' ]
         then
-          __cmd="${__cmd} ${@:4}"
+          __cmd="${__cmd} $__add_cmd"
         else
           __cmd="${__cmd} killall $__rpc_cmd" 
         fi
