@@ -306,6 +306,8 @@ static char **clientPackets = NULL;
 static bool *readMsg = NULL;
 static int *fds;
 static function_info func_inf;
+static function_info fault_func_inf;
+int flt_msg_num=NUM_ITERATIONS;
 
 void * test_exec_call(void * arg)
 {
@@ -321,8 +323,8 @@ void * test_exec_call(void * arg)
 
     for (i = args->start_num; i < args->start_num + NUM_ITERATIONS; i++) {
         function = (struct rppc_function *)packet_buf;
-        function->fxn_id = func_inf.idx;
-        function->num_params = 1; //hard coded at the moment, should be based on f_inf->name
+        function->fxn_id = i - args->start_num != flt_msg_num ? func_inf.idx : fault_func_inf.idx;
+        function->num_params = 1; //hard coded at the moment, should be based on func_inf->name
         function->params[0].type = RPPC_PARAM_TYPE_ATOMIC;
         function->params[0].size = sizeof(int);
         function->params[0].data = i;
@@ -378,7 +380,8 @@ void * test_select_thread (void * arg)
     fd_set rfd;
     int max_fd = -1;
     int ret;
-
+    int sem_val;
+    
     while (runTest) {
         FD_ZERO(&rfd);
         for (i = 0; i < (int)arg; i++) {
@@ -403,6 +406,10 @@ void * test_select_thread (void * arg)
         ret = recv_cmd(fd, sizeof(*rtn_packet), (char *)rtn_packet, &reply_len);
         
         if(!ret && !rtn_packet->status) {
+            for (i = 0; i < (int)arg; i++) {
+                sem_getvalue(&clientSems[i], &sem_val); 
+                if(sem_val < 1)sem_post(&clientSems[i]);
+            }
             continue;
         }
         
@@ -444,11 +451,16 @@ void * test_read_thread (void * arg)
                                (struct rppc_function_return *)return_buf;
     int               packet_id;
     int ret;
+    int sem_val;
     
     while (runTest) {
         ret = recv_cmd(fd, sizeof(*rtn_packet), (char *)rtn_packet, &reply_len);
         
         if(!ret && !rtn_packet->status) {
+            for (i = 0; i< read_info->num_threads; i++) {
+                sem_getvalue(&clientSems[i], &sem_val); 
+                if(sem_val < 1)sem_post(&clientSems[i]);
+            }
             continue;
         }
         
@@ -920,7 +932,7 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        c = getopt (argc, argv, "t:c:x:l:f:");
+        c = getopt (argc, argv, "t:c:x:l:f:m:");
         if (c == -1)
             break;
 
@@ -941,6 +953,22 @@ int main(int argc, char *argv[])
         case 'f':
             f_name = optarg;
             break;
+        case 'm':
+            switch(atoi(optarg)){
+              case 0:
+                flt_msg_num = 0;
+                break;
+              case 1:
+                flt_msg_num = NUM_ITERATIONS/2;
+                break;
+              case 2:
+                flt_msg_num = NUM_ITERATIONS - 1;
+                break;
+              default:
+                printf("Warning: Unsupported -m value %s, MMU fault will not be triggered", optarg);
+                break;
+            }
+            break;
         default:
             printf ("Unrecognized argument\n");
         }
@@ -959,6 +987,12 @@ int main(int argc, char *argv[])
     if (get_function(core_id, f_name, &func_inf) || 
         func_inf.idx == -1){
         printf("Function matching %s not found for core %d\n", f_name, core_id);
+        return 1;
+    }
+    
+    if (flt_msg_num > -1 && (get_function(core_id, "fault", &fault_func_inf) || 
+        fault_func_inf.idx == -1)){
+        printf("Unable to get MMU fault function information for core %d\n", core_id);
         return 1;
     }
     
