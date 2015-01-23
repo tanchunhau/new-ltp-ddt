@@ -15,6 +15,7 @@
 #	This script does: mount->write->umount->mount->read for different buffer size.
 # @params d) device type: nand, nor, spi 
 #         f) Filesystem type (i.e. jffs2)
+#	  e) extra parameters such as speed for usb nodes
 # @history 2011-03-05: First version
 
 source "st_log.sh"
@@ -31,6 +32,7 @@ cat <<-EOF >&2
   -m MNT_POINT	optional param, mount point like /mnt/mmc
   -B BUFFER_SIZES	optional param, buffer sizes for perf test like '102400 262144 524288 1048576 5242880'
   -s FILE SIZE 	optional param, file size in MB for perf test
+  -e EXTRA_PARAM      optional param, example superspeed for usb
   -c SRCFILE SIZE 	optional param, srcfile size in MB for writing to device
   -d DEVICE_TYPE	device type like 'nand', 'mmc', 'usb' etc
   -o MNT_MODE     mount mode: sync or async. default is async
@@ -49,7 +51,7 @@ if [ $# == 0 ]; then
 	exit 1
 fi
 
-while getopts  :f:n:m:B:s:c:d:o:t:h arg
+while getopts  :f:n:m:B:s:c:d:o:t:e:h arg
 do case $arg in
   f)  FS_TYPE="$OPTARG";;
   n)  DEV_NODE="$OPTARG";;
@@ -60,6 +62,7 @@ do case $arg in
   d)  DEVICE_TYPE="$OPTARG";;
   o)  MNT_MODE="$OPTARG";;
   t)  TIME_OUT="$OPTARG";;
+  e)  EXTRA_PARAM="$OPTARG";;
   h)  usage;;
   :)  test_print_trc "$0: Must supply an argument to -$OPTARG." >&2
   exit 1 
@@ -80,7 +83,7 @@ done
 : ${TIME_OUT:='30'}
 : ${MNT_POINT:=/mnt/partition_$DEVICE_TYPE}
 if [ -z $DEV_NODE ]; then
-        DEV_NODE=`get_blk_device_node.sh "$DEVICE_TYPE"` || die "error while getting device node: $DEV_NODE"
+        DEV_NODE=`get_blk_device_node.sh "$DEVICE_TYPE" "$EXTRA_PARAM"` || die "error while getting device node: $DEV_NODE"
         test_print_trc "DEV_NODE return from get_blk_device_node is: $DEV_NODE" 
 fi
 

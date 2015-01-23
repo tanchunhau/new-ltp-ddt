@@ -50,6 +50,7 @@ spi_master/mtd/spi-ti-qspi
 usb/host/msc/xhci-hcd
 usb/host/hid/xhci-hcd
 usb/host/iso/xhci-hcd
+usb/host/superspeed
 usb/slave/msc
 usb/slave/cdc
 watchdog/omap_wdt

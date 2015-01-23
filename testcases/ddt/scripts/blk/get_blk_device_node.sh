@@ -14,20 +14,20 @@
 
 # Get devnode for non mtd device like 'mmc', 'usb', 'usbxhci', 'sata'
 # Input: DEVICE_TYPE like 'mmc', 'usb', 'usbxhci', 'sata'
+# Optional Input: DEVICE PROPERTIES like 'superspeed'
 # Output: DEV_NODE like /dev/mmcblk0p1 
 
 source "common.sh"
 source "mtd_common.sh"
 source "blk_device_common.sh"
 
-
-if [ $# -ne 1 ]; then
+if [ $# -le 1 ]; then
     echo "Error: Invalid Argument Count"
-    echo "Syntax: $0 <device_type>"
+    echo "Syntax: $0 <device_type> <optional_param>"
     exit 1
 fi
 DEVICE_TYPE=$1
-
+EXTRA_PARAM=$2
 ############################ Functions ################################
 # this function is to get SCSI device usb or sata node based on by-id
 # input is either 'sata' or 'usb' or 'usbxhci'
@@ -44,14 +44,38 @@ find_scsi_node() {
         fi
       ;;
       usb|usbxhci)
-        usb_cnt_interface=`get_usb_controller_name.sh "$SCSI_DEVICE"` 
-        file=`ls /dev/disk/by-path/*-part1|grep -i "$usb_cnt_interface"|head -1`
-        if [[ ! -z "$file" ]]; then
-        DEV_NODE="/dev/""$(basename $(readlink $file))"
-         echo $DEV_NODE
-         exit 0
-        fi
+        usb_cnt_interface=`get_usb_controller_name.sh "$SCSI_DEVICE"`
+	usb_speed_found=1
+	# in USB case, extra param is used to indicate usb speed
+	DEVICE_SPEED=$EXTRA_PARAM
+	for file in `ls /dev/disk/by-path/*-part1|grep -i "$usb_cnt_interface"`
+	do
+        	if [[ ! -z "$file" ]]; then
+        		DEV_NODE="/dev/""$(basename $(readlink $file))"
+			if [[ ! -z "$DEVICE_SPEED" ]]; then
+				usb_speed=`find_usbhost_speed.sh "$DEVICE_SPEED"`
+                                speed=`udevadm info -a -n $DEV_NODE|grep speed`
+                                for speed in `udevadm info -a -n $DEV_NODE|grep speed`
+                                do
+                                        if [[ "${speed}" == *$usb_speed* ]]; then
+                                                echo $DEV_NODE
+                                                exit 0
+					else
+						usb_speed_found=0
+                                        fi
+                                done
+			fi
+        	fi
+	done
+	if [[ ! -z "$usb_speed_found" ]]; then
+		echo $DEV_NODE
+       		exit 0
+	else
+		echo "Could not find USB device or USB device with specified speed"
+		exit 1
+	fi
       ;;
+
       pci)
         file=`ls /dev/disk/by-path/*-part1|grep -i 'pci'|head -1`
         if [[ ! -z "$file" ]]; then
