@@ -15,6 +15,7 @@ edma
 emmc
 gpio
 graphics/fb0/DA8xx_FB_Drv
+hwrng
 i2c/non_eeprom
 i2c/eeprom
 mmc_host/mmc/mmci-omap-hs
