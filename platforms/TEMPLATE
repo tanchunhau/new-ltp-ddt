@@ -20,6 +20,7 @@ nor/<drivername>
 net/eth10M/<drivername (i.e.davinci_emac)>
 net/eth100M/<drivername>
 net/eth1G/<drivername>
+net/dual_mac
 pci/<drivername>
 pcie/<drivername>
 power_mgr/cpufreq/userspace/<drivername>

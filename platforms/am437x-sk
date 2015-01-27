@@ -28,6 +28,7 @@ jffs2
 net/eth10M
 net/eth100M
 net/eth1G
+net/dual_mac
 power_mgr/cpufreq/userspace
 power_mgr/cpufreq/performance
 power_mgr/cpufreq/powersave
