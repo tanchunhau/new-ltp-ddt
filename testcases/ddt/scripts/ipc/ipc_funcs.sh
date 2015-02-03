@@ -14,6 +14,19 @@
 
 source "common.sh"  # Import do_cmd(), die() and other functions
 
+# This function saves the existing firmware (if any) to <fw name>.orig
+# Inputs:
+#    $*: names of all the firmware files to be saved
+save_firmware()
+{
+  for __fw in $*
+  do
+    if [ -f ${__fw} -a ! -h ${__fw} ]
+    then
+      mv $__fw ${__fw}.orig
+    fi
+  done
+}
 
 # This fucntion sets up the appropriate firmware that will be loaded on the
 # remote processor for IPC related test
@@ -28,14 +41,8 @@ setup_firmware()
   local __fw_files=$(find $__fw_dir -type f -name "${__fw_pattern}" -exec basename {} \;)
   echo "Found $__fw_files fw files..."
   case $MACHINE in
-    *dra7xx-evm)
-      for __fw in dra7-dsp1-fw.xe66 dra7-dsp2-fw.xe66 dra7-ipu2-fw.xem4 dra7-ipu1-fw.xem4
-      do
-        if [ -f ${__fw} ]
-        then
-          mv $__fw ${__fw}.orig
-        fi
-      done
+    dra7xx-evm)
+      save_firmware dra7-dsp1-fw.xe66 dra7-dsp2-fw.xe66 dra7-ipu2-fw.xem4 dra7-ipu1-fw.xem4
       for __fw in $__fw_files
       do
         echo "Setting up $__fw ..."
@@ -57,7 +64,45 @@ setup_firmware()
             ;;
         esac
       done
-      ;;
+    ;;
+    am43xx*|am335x*)
+      save_firmware rproc-pru0-fw rproc-pru1-fw
+      for __fw in $__fw_files
+      do
+        echo "Setting up $__fw ..."
+        case $__fw in
+          *pru0*)
+            ln -sf $__fw rproc-pru0-fw
+            ;;
+          *pru1*)
+            ln -sf $__fw rproc-pru1-fw
+            ;;
+          *)
+            echo "File $__fw did not contain processor tag"
+            ;;
+        esac
+      done
+    ;;
+    am57xx*)
+      save_firmware am57xx-pru1_0-fw am57xx-pru1_1-fw am57xx-pru2_0-fw am57xx-pru2_1-fw
+      for __fw in $__fw_files
+      do
+        echo "Setting up $__fw ..."
+        case $__fw in
+          *pru0*)
+            ln -sf $__fw am57xx-pru1_0-fw
+            ln -sf $__fw am57xx-pru2_0-fw
+            ;;
+          *pru1*)
+            ln -sf $__fw am57xx-pru1_1-fw
+            ln -sf $__fw am57xx-pru2_1-fw
+            ;;
+          *)
+            echo "File $__fw did not contain processor tag"
+            ;;
+        esac
+      done
+    ;;
     *)
       echo "Machine ${MACHINE} not supported"
       popd
@@ -533,22 +578,37 @@ rpmsg_recovery_event()
   echo ${__command:3}
 }
 
-# Function to obtain the ids of the remote processor for rpmsg-proto
-# tests
+# Function to bind/unbind the prus
 # Inputs:
-#   $1: Number of remote proccessors in the SOC 
-# Returns, a space separated string containing the ids of the remote
-# processors
-get_rpmsg_proto_rproc_ids()
+#   $1: action to perform, either "bind" or "unbind"
+#   $2:* devices to bind/unbind
+toggle_prus()
 {
-  case $SOC in
-    *j6eco)
-      local __rproc_ids=( 1 2 4 )
-      echo "${__rproc_ids[@]::$1}"
-      ;;
-    *)
-      echo `seq 1 $1`
-      ;;           
-  esac
+  local __driver_sysfs='/sys/bus/platform/drivers/pru-rproc'
+
+  for __pru in ${@:2}
+  do
+    echo "${1}ing $__pru ..."
+    echo "$__pru" > ${__driver_sysfs}/$1
+  done
 }
 
+# Funtion to obtain the list of pru devices
+# Returns the list of PRU devices based on the MACHINE var value
+list_prus()
+{
+  case $MACHINE in
+    am43xx*)
+      echo "54434000.pru0 54438000.pru1"
+    ;;
+    am335x*)
+      echo "4a334000.pru0 4a338000.pru1"
+    ;;
+    am57xx*)
+      echo "4b234000.pru0 4b238000.pru1 4b2b4000.pru0 4b2b8000.pru1"
+    ;;
+    *)
+      echo "Machine ${MACHINE} not supported"
+    ;;
+  esac
+}
