@@ -46,4 +46,4 @@ pwm/ehrpwm
 pwm/ecap
 pwm/backlight
 gpio
-
+ipc
