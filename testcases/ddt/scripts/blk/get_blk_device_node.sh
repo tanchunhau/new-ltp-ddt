@@ -21,7 +21,7 @@ source "common.sh"
 source "mtd_common.sh"
 source "blk_device_common.sh"
 
-if [ $# -le 1 ]; then
+if [ $# -lt 1 ]; then
     echo "Error: Invalid Argument Count"
     echo "Syntax: $0 <device_type> <optional_param>"
     exit 1
