@@ -69,8 +69,9 @@
 #include "test.h"
 #include "usctest.h"
 #include <errno.h>
+#include "compat_16.h"
 
-char *TCID = "setresuid01";
+TCID_DEFINE(setresuid01);
 
 uid_t nobody_pw_uid, root_pw_uid, bin_pw_uid;
 uid_t neg_one = -1;
@@ -112,11 +113,10 @@ struct test_data_t {
 &root_pw_uid, &neg_one, &root_pw_uid, &root, &root, &root,
 		    "After setresuid(root, -1, -1),"},};
 
-/* Total number of test cases. */
 int TST_TOTAL = sizeof(test_data) / sizeof(test_data[0]);
 
-void setup(void);		/* Setup function for the test */
-void cleanup(void);		/* Cleanup function for the test */
+void setup(void);
+void cleanup(void);
 
 void
 uid_verify(struct passwd *ru, struct passwd *eu, struct passwd *su, char *when);
@@ -124,7 +124,7 @@ uid_verify(struct passwd *ru, struct passwd *eu, struct passwd *su, char *when);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -136,12 +136,12 @@ int main(int ac, char **av)
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		int i;
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			/* Set the real, effective or user id */
-			TEST(setresuid(*test_data[i].real_uid,
+			TEST(SETRESUID(cleanup, *test_data[i].real_uid,
 				       *test_data[i].eff_uid,
 				       *test_data[i].sav_uid));
 
@@ -152,21 +152,14 @@ int main(int ac, char **av)
 					 *test_data[i].eff_uid,
 					 *test_data[i].sav_uid);
 			} else {
-				/*
-				 * Perform functional verification if test
-				 * executed without (-f) option.
-				 */
-				if (STD_FUNCTIONAL_TEST) {
-					uid_verify(test_data[i].exp_real_usr,
-						   test_data[i].exp_eff_usr,
-						   test_data[i].exp_sav_usr,
-						   test_data[i].test_msg);
-				} else {
-					tst_resm(TPASS, "Call succeeded.");
-				}
+				uid_verify(test_data[i].exp_real_usr,
+					   test_data[i].exp_eff_usr,
+					   test_data[i].exp_sav_usr,
+					   test_data[i].test_msg);
 			}
 		}
 	}
+
 	cleanup();
 	tst_exit();
 }
@@ -177,36 +170,29 @@ int main(int ac, char **av)
  */
 void setup(void)
 {
+	tst_require_root(NULL);
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	/* Check that the test process id is root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be root for this test!");
-		tst_exit();
-	}
-
 	if (getpwnam("nobody") == NULL) {
 		tst_brkm(TBROK, NULL, "nobody must be a valid user.");
-		tst_exit();
 	}
 
 	if (getpwnam("bin") == NULL) {
 		tst_brkm(TBROK, NULL, "bin must be a valid user.");
-		tst_exit();
 	}
 
 	/* set the expected errnos... */
 	TEST_EXP_ENOS(exp_enos);
 
 	root = *(getpwnam("root"));
-	root_pw_uid = root.pw_uid;
+	UID16_CHECK((root_pw_uid = root.pw_uid), "setresuid", cleanup)
 
 	nobody = *(getpwnam("nobody"));
-	nobody_pw_uid = nobody.pw_uid;
+	UID16_CHECK((nobody_pw_uid = nobody.pw_uid), "setresuid", cleanup)
 
 	bin = *(getpwnam("bin"));
-	bin_pw_uid = bin.pw_uid;
+	UID16_CHECK((bin_pw_uid = bin.pw_uid), "setresuid", cleanup)
 
 	/* Pause if that option was specified
 	 * TEST_PAUSE contains the code to fork the test with the -c option.

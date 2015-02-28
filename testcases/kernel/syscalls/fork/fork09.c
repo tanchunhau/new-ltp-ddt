@@ -67,7 +67,7 @@ int main(int ac, char **av)
 	int pid, status, nf;
 
 	int lc;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL)
@@ -75,12 +75,12 @@ int main(int ac, char **av)
 
 	setup();
 
-	fildeses = (FILE **) malloc((OPEN_MAX + 10) * sizeof(FILE *));
+	fildeses = malloc((OPEN_MAX + 10) * sizeof(FILE *));
 	if (fildeses == NULL)
 		tst_brkm(TBROK, cleanup, "malloc failed");
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		mypid = getpid();
 
 		tst_resm(TINFO, "OPEN_MAX is %ld", OPEN_MAX);
@@ -165,7 +165,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-static void setup()
+static void setup(void)
 {
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	umask(0);
@@ -174,7 +174,7 @@ static void setup()
 	tst_tmpdir();
 }
 
-static void cleanup()
+static void cleanup(void)
 {
 	TEST_CLEANUP;
 	tst_rmdir();

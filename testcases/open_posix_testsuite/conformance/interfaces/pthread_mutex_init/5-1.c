@@ -82,7 +82,7 @@
 /***********************************    Test case   *****************************************/
 /********************************************************************************************/
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	pid_t child;
 
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 	if (ret) {
 		UNRESOLVED(ret, "Mutex attribute init failed");
 	}
-	pma[4] = (pthread_mutexattr_t *) NULL;
+	pma[4] = NULL;
 
 	if ((ret = pthread_mutexattr_settype(pma[0], PTHREAD_MUTEX_NORMAL))) {
 		UNRESOLVED(ret, "Mutex attribute NORMAL failed");
@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
 }
 
 #else /* WITHOUT_XOPEN */
-int main(int argc, char *argv[])
+int main(void)
 {
 	output_init();
 	UNTESTED("This test requires XSI features");

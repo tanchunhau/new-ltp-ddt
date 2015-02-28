@@ -1,7 +1,6 @@
 /cpuset/cpuset01
 /hugetlb/hugemmap/hugemmap01
 /hugetlb/hugemmap/hugemmap02
-/hugetlb/hugemmap/hugemmap03
 /hugetlb/hugemmap/hugemmap04
 /hugetlb/hugemmap/hugemmap05
 /hugetlb/hugeshmat/hugeshmat01
@@ -20,6 +19,7 @@
 /ksm/ksm03
 /ksm/ksm04
 /ksm/ksm05
+/ksm/ksm06
 /mem/mem01
 /mem/mem02
 /mmapstress/mmap-corruption01
@@ -34,7 +34,7 @@
 /mmapstress/mmapstress09
 /mmapstress/mmapstress10
 /mtest01/mtest01
-/mtest05/dummy
+/mtest05/mmstress_dummy
 /mtest05/mmstress
 /mtest06/mmap1
 /mtest06/mmap2
@@ -46,6 +46,7 @@
 /oom/oom02
 /oom/oom03
 /oom/oom04
+/oom/oom05
 /page/page01
 /page/page02
 /shmt/shmt02
@@ -60,6 +61,9 @@
 /swapping/swapping01
 /thp/thp01
 /thp/thp02
+/thp/thp03
+/thp/thp04
+/thp/thp05
 /tunable/max_map_count
 /tunable/min_free_kbytes
 /tunable/overcommit_memory

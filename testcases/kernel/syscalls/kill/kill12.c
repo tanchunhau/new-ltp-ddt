@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 	void chsig();
 
 #ifdef UCLINUX
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -119,10 +119,8 @@ int main(int argc, char **argv)
 		if (pid == 0) {
 #ifdef UCLINUX
 			if (self_exec(argv[0], "dd", temp, sig) < 0) {
-				tst_resm(TBROK, "self_exec FAILED - "
+				tst_brkm(TBROK, NULL, "self_exec FAILED - "
 					 "terminating test.");
-				tst_exit();
-				tst_exit();
 			}
 #else
 			do_child();
@@ -209,22 +207,21 @@ int main(int argc, char **argv)
 
 /*--------------------------------------------------------------------*/
 
-void chsig()
+void chsig(void)
 {
 	chflag++;
 }
 
 /****** LTP Port        *****/
-int anyfail()
+int anyfail(void)
 {
 	(local_flag == FAILED) ? tst_resm(TFAIL,
 					  "Test failed") : tst_resm(TPASS,
 								    "Test passed");
 	tst_exit();
-	return 0;
 }
 
-void do_child()
+void do_child(void)
 {
 	int exno = 1;
 
@@ -243,12 +240,12 @@ void do_child()
 	exit(exno);
 }
 
-void setup()
+void setup(void)
 {
 	temp = stderr;
 }
 
-int blenter()
+int blenter(void)
 {
 	//tst_resm(TINFO, "Enter block %d", block_number);
 	local_flag = PASSED;
@@ -260,18 +257,16 @@ void terror(char *message)
 	tst_resm(TBROK, "Reason: %s:%s", message, strerror(errno));
 }
 
-void fail_exit()
+void fail_exit(void)
 {
 	local_flag = FAILED;
 	anyfail();
 
 }
 
-int forkfail()
+int forkfail(void)
 {
-	tst_resm(TBROK, "FORK FAILED - terminating test.");
-	tst_exit();
-	return 0;
+	tst_brkm(TBROK, NULL, "FORK FAILED - terminating test.");
 }
 
 /****** ** **   *******/

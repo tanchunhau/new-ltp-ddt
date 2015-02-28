@@ -69,11 +69,10 @@ struct msqid_ds qs_buf;
 
 int main(int ac, char **av)
 {
-	char *msg;
+	const char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
+	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
 
 	setup();		/* global setup */
 
@@ -86,29 +85,24 @@ int main(int ac, char **av)
 	if (TEST_RETURN == -1) {
 		tst_brkm(TFAIL | TTERRNO, cleanup, "msgctl() call failed");
 	} else {
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * if the queue is gone, then an IPC_STAT msgctl()
-			 * call should generate an EINVAL error.
-			 */
-			if ((msgctl(msg_q_1, IPC_STAT, &qs_buf) == -1)) {
-				if (errno == EINVAL) {
-					tst_resm(TPASS, "The queue is gone");
-				} else {
-					tst_resm(TFAIL, "IPC_RMID succeeded ,"
-						 " but functional test did not"
-						 " get expected EINVAL error");
-				}
+		/*
+		 * if the queue is gone, then an IPC_STAT msgctl()
+		 * call should generate an EINVAL error.
+		 */
+		if ((msgctl(msg_q_1, IPC_STAT, &qs_buf) == -1)) {
+			if (errno == EINVAL) {
+				tst_resm(TPASS, "The queue is gone");
+			} else {
+				tst_resm(TFAIL, "IPC_RMID succeeded ,"
+					 " but functional test did not"
+					 " get expected EINVAL error");
 			}
-		} else {
-			tst_resm(TPASS, "msgctl() call succeeded");
 		}
 	}
 
 	msg_q_1 = -1;
 
 	cleanup();
-
 	tst_exit();
 }
 

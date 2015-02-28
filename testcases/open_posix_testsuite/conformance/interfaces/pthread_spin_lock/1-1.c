@@ -29,7 +29,7 @@
 #include "posixtest.h"
 
 static pthread_spinlock_t spinlock;
-volatile static int thread_state;
+static volatile int thread_state;
 
 #define NOT_CREATED_THREAD 1
 #define ENTERED_THREAD 2
@@ -51,6 +51,8 @@ static void *fn_chld(void *arg)
 	struct timespec ts;
 	thread_state = ENTERED_THREAD;
 	int cnt = 0;
+
+	(void) arg;
 
 	/* Unblock the SIGALRM signal for the thread */
 	sigemptyset(&act.sa_mask);
@@ -95,7 +97,7 @@ static void *fn_chld(void *arg)
 	return NULL;
 }
 
-int main()
+int main(void)
 {
 	pthread_t child_thread;
 	void *value_ptr;

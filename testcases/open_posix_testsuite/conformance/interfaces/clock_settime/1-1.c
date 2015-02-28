@@ -26,7 +26,7 @@
 #define TESTTIME 1037128358
 #define ACCEPTABLEDELTA 1
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec tpset, tpget, tpreset, tpres;
 	int delta, nsdelta;
@@ -67,13 +67,9 @@ int main(int argc, char *argv[])
 			setBackTime(tpreset);
 			return PTS_FAIL;
 		}
-	} else {
-		printf("clock_settime() failed\n");
-		setBackTime(tpreset);
-		return PTS_UNRESOLVED;
 	}
 
-	printf("This code should not be executed.\n");
+	printf("clock_settime() failed\n");
 	setBackTime(tpreset);
 	return PTS_UNRESOLVED;
 }

@@ -77,7 +77,7 @@ void setup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;		/* parse_opts() return message */
+	const char *msg;		/* parse_opts() return message */
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -89,7 +89,7 @@ int main(int ac, char **av)
 	 * The following loop checks looping state if -c option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(sendfile(out_fd, in_fd, NULL, 1));
 
@@ -112,14 +112,13 @@ int main(int ac, char **av)
 
 	cleanup();
 	tst_exit();
-	tst_exit();
 
 }
 
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	char buf[100];
 	int p[2];
@@ -184,7 +183,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

@@ -73,7 +73,7 @@ int exp_enos[] = { EPERM, 0 };
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int new_val = 2;
 	int init_val = 1;	/* the init process = id 1 */
 
@@ -86,8 +86,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Try to access the init process.
@@ -126,10 +126,9 @@ int main(int ac, char **av)
  */
 void setup(void)
 {
+	tst_require_root(NULL);
+
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	ltpuser = getpwnam(nobody_uid);
 	if (setuid(ltpuser->pw_uid) == -1) {
 		tst_resm(TINFO, "setuid failed to "
@@ -139,7 +138,6 @@ void setup(void)
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	/* Set up the expected error numbers */
 	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;

@@ -26,27 +26,35 @@
 #include "posixtest.h"
 
 /* Keeps track of how many times the init function has been called. */
-int init_flag;
+static int init_flag;
 
 /* The init function that pthread_once calls */
-void *an_init_func()
+void an_init_func(void)
 {
 	init_flag++;
-	return NULL;
 }
 
-int main()
+int main(void)
 {
+	int ret;
+
 	pthread_once_t once_control = PTHREAD_ONCE_INIT;
 
 	init_flag = 0;
 
 	/* Call pthread_once, passing it the once_control */
-	pthread_once(&once_control, (void *)an_init_func);
-
+	ret = pthread_once(&once_control, an_init_func);
+	if (ret != 0) {
+		printf("pthread_once failed\n");
+		return PTS_UNRESOLVED;
+	}
 	/* Call pthread_once again. The init function should not be
 	 * called. */
-	pthread_once(&once_control, (void *)an_init_func);
+	ret = pthread_once(&once_control, an_init_func);
+	if (ret != 0) {
+		printf("pthread_once failed\n");
+		return PTS_UNRESOLVED;
+	}
 
 	if (init_flag != 1) {
 		printf("Test FAILED\n");

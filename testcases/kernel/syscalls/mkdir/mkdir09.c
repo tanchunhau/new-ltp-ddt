@@ -73,47 +73,45 @@ int errflg;
  *  * These globals must be defined in the test.
  *   */
 
-char *TCID = "mkdir09";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "mkdir09";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { EFAULT, 0 };	/* List must end with 0 */
 
 int child_groups, test_time, nfiles;
 char testdir[MAXPATHLEN];
 int parent_pid, sigchld, sigterm, jump;
-void term();
-void chld();
+void term(int sig);
+void chld(int sig);
 int *pidlist, child_count;
 jmp_buf env_buf;
 
 int getchild(int group, int child, int children);
-int dochild1();
-int dochild2();
+int dochild1(void);
+int dochild2(void);
 int dochild3(int group);
-int massmurder();
-int runtest();
-void setup();
-void cleanup();
+int massmurder(void);
+int runtest(void);
+void setup(void);
+void cleanup(void);
 
 #ifdef UCLINUX
 static char *argv0;
-void dochild1_uclinux();
-void dochild2_uclinux();
-void dochild3_uclinux();
+void dochild1_uclinux(void);
+void dochild2_uclinux(void);
+void dochild3_uclinux(void);
 static int group_uclinux;
 #endif
 
 /*--------------------------------------------------------------*/
 /*--------------------------------------------------------------*/
 /*--------------------------------------------------------------*/
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 	int c;
 
 #ifdef UCLINUX
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -182,7 +180,7 @@ char *argv[];
 
 /*--------------------------------------------------------------*/
 
-int runtest()
+int runtest(void)
 {
 	int i, j;
 	int count, child, status;
@@ -198,14 +196,12 @@ int runtest()
 			tst_brkm(TFAIL, cleanup,
 				 "Error creating permanent directories, ERRNO = %d",
 				 TEST_ERRNO);
-			tst_exit();
 		}
 		if ((j % NCHILD) != 0) {
 			if (rmdir(tmpdir) < 0) {
 				tst_brkm(TFAIL, cleanup,
 					 "Error removing directory, ERRNO = %d",
 					 errno);
-				tst_exit();
 			}
 		}
 	}
@@ -214,11 +210,10 @@ int runtest()
 
 	/* allocate space for list of child pid's */
 
-	if ((pidlist =
-	     (int *)malloc((child_groups * NCHILD) * sizeof(int))) ==
-	    (int *)0) {
-		tst_resm(TWARN, "\tMalloc failed (may be OK if under stress)");
-		tst_exit();
+	if ((pidlist = malloc((child_groups * NCHILD) * sizeof(int))) ==
+	    NULL) {
+		tst_brkm(TWARN, NULL,
+			 "\tMalloc failed (may be OK if under stress)");
 	}
 
 	child_count = 0;
@@ -250,12 +245,10 @@ int runtest()
 	if (signal(SIGTERM, SIG_IGN) == SIG_ERR) {
 		tst_brkm(TFAIL, cleanup,
 			 "Error resetting SIGTERM signal, ERRNO = %d", errno);
-		tst_exit();
 	}
 	if (signal(SIGCLD, SIG_DFL) == SIG_ERR) {
 		tst_brkm(TFAIL, cleanup,
 			 "Error resetting SIGCLD signal, ERRNO = %d", errno);
-		tst_exit();
 	}
 
 	if (test_time) {
@@ -272,10 +265,10 @@ int runtest()
 	while (1) {
 		if ((child = wait(&status)) > 0) {
 			if (status != 0) {
-				tst_resm(TWARN,
+				tst_brkm(TWARN,
+					 NULL,
 					 "\tChild{%d} exited status = %0x",
 					 child, status);
-				tst_exit();
 			}
 			count++;
 		} else {
@@ -292,15 +285,14 @@ int runtest()
 
 	if (count != child_count) {
 		tst_resm(TWARN, "\tWrong number of children waited on!");
-		tst_resm(TWARN, "\tSaw %d, expected %d", count, NCHILD);
-		tst_exit();
+		tst_brkm(TWARN, NULL, "\tSaw %d, expected %d", count,
+			 NCHILD);
 	}
 
 	/* Check for core file in test directory. */
 
 	if (access("core", 0) == 0) {
-		tst_resm(TWARN, "\tCore file found in test directory.");
-		tst_exit();
+		tst_brkm(TWARN, NULL, "\tCore file found in test directory.");
 	}
 
 	/* Remove expected files */
@@ -308,10 +300,10 @@ int runtest()
 	for (j = 0; j < nfiles; j += NCHILD) {
 		sprintf(tmpdir, DIR_NAME, j);
 		if (rmdir(tmpdir) < 0) {
-			tst_resm(TWARN,
+			tst_brkm(TWARN,
+				 NULL,
 				 "\tError removing expected directory, ERRNO = %d",
 				 errno);
-			tst_exit();
 		}
 	}
 
@@ -320,8 +312,7 @@ int runtest()
 	return 0;
 }
 
-int getchild(group, child, children)
-int group, child, children;
+int getchild(int group, int child, int children)
 {
 	int pid;
 
@@ -332,7 +323,6 @@ int group, child, children;
 		massmurder();	/* kill the kids */
 		tst_brkm(TBROK, cleanup,
 			 "\tFork failed (may be OK if under stress)");
-		tst_exit();
 	} else if (pid == 0) {	/* child does this */
 		switch (children % NCHILD) {
 		case 0:
@@ -340,7 +330,6 @@ int group, child, children;
 			if (self_exec(argv0, "nd", 1, nfiles) < 0) {
 				massmurder();
 				tst_brkm(TBROK, cleanup, "\tself_exec failed");
-				tst_exit();
 			}
 #else
 			dochild1();	/* create existing directories */
@@ -351,7 +340,6 @@ int group, child, children;
 			if (self_exec(argv0, "n", 2) < 0) {
 				massmurder();
 				tst_brkm(TBROK, cleanup, "\tself_exec failed");
-				tst_exit();
 			}
 #else
 			dochild2();	/* remove nonexistant directories */
@@ -362,7 +350,6 @@ int group, child, children;
 			if (self_exec(argv0, "nd", 3, group) < 0) {
 				massmurder();
 				tst_brkm(TBROK, cleanup, "\tself_exec failed");
-				tst_exit();
 			}
 #else
 			dochild3(group);	/* create/delete directories */
@@ -380,13 +367,12 @@ int group, child, children;
 	return 0;
 }
 
-void term()
+void term(int sig)
 {
 	/* Routine to handle SIGTERM signal. */
 
 	if (parent_pid == getpid()) {
-		tst_resm(TWARN, "\tsignal SIGTERM received by parent.");
-		tst_exit();
+		tst_brkm(TWARN, NULL, "\tsignal SIGTERM received by parent.");
 	}
 	sigterm++;
 	if (jump) {
@@ -394,7 +380,7 @@ void term()
 	}
 }
 
-void chld()
+void chld(int sig)
 {
 	/* Routine to handle SIGCLD signal. */
 
@@ -404,7 +390,7 @@ void chld()
 	}
 }
 
-int dochild1()
+int dochild1(void)
 {
 	/* Child routine which attempts to create directories in the test
 	 * directory that already exist. Runs until a SIGTERM signal is
@@ -440,20 +426,19 @@ int dochild1()
 }
 
 #ifdef UCLINUX
-void dochild1_uclinux()
+void dochild1_uclinux(void)
 {
 	/* Set up to catch SIGTERM signal */
 	if (signal(SIGTERM, term) == SIG_ERR) {
 		tst_brkm(TFAIL, cleanup,
 			 "Error setting up SIGTERM signal, ERRNO = %d", errno);
-		tst_exit();
 	}
 
 	dochild1();
 }
 #endif
 
-int dochild2()
+int dochild2(void)
 {
 	/* Child routine which attempts to remove directories from the
 	 * test directory which do not exist. Runs until a SIGTERM
@@ -488,21 +473,19 @@ int dochild2()
 }
 
 #ifdef UCLINUX
-void dochild2_uclinux()
+void dochild2_uclinux(void)
 {
 	/* Set up to catch SIGTERM signal */
 	if (signal(SIGTERM, term) == SIG_ERR) {
 		tst_brkm(TFAIL, cleanup,
 			 "Error setting up SIGTERM signal, ERRNO = %d", errno);
-		tst_exit();
 	}
 
 	dochild2();
 }
 #endif
 
-int dochild3(group)
-int group;
+int dochild3(int group)
 {
 	/* Child routine which creates and deletes directories in the
 	 * test directory. Runs until a SIGTERM signal is received, then
@@ -546,20 +529,19 @@ int group;
 }
 
 #ifdef UCLINUX
-void dochild3_uclinux()
+void dochild3_uclinux(void)
 {
 	/* Set up to catch SIGTERM signal */
 	if (signal(SIGTERM, term) == SIG_ERR) {
 		tst_brkm(TFAIL, cleanup,
 			 "Error setting up SIGTERM signal, ERRNO = %d", errno);
-		tst_exit();
 	}
 
 	dochild3(group_uclinux);
 }
 #endif
 
-int massmurder()
+int massmurder(void)
 {
 	register int j;
 	for (j = 0; j < child_count; j++) {
@@ -568,7 +550,6 @@ int massmurder()
 				tst_brkm(TFAIL, cleanup,
 					 "Error killing child %d, ERRNO = %d",
 					 j, errno);
-				tst_exit();
 			}
 		}
 	}
@@ -578,7 +559,7 @@ int massmurder()
 /***************************************************************
  *  * setup() - performs all ONE TIME setup for this test.
  *   ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -594,7 +575,7 @@ void setup()
  *  * cleanup() - performs all ONE TIME cleanup for this test at
  *   *              completion or premature exit.
  *    ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 *      * print timing stats if that option was specified.

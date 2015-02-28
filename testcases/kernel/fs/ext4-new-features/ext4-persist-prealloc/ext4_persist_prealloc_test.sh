@@ -15,29 +15,18 @@
 ## for more details.                                                          ##
 ##                                                                            ##
 ## You should have received a copy of the GNU General Public License          ##
-## along with this program;  if not, write to the Free Software               ##
-## Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA    ##
+## along with this program;  if not, write to the Free Software Foundation,   ##
+## Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA           ##
 ##                                                                            ##
 ## Author: Li Zefan <lizf@cn.fujitsu.com>                                     ##
 ##         Miao Xie <miaox@cn.fujitsu.com>                                    ##
 ##                                                                            ##
 ################################################################################
 
-cd $LTPROOT/testcases/bin
-
-. ./ext4_funcs.sh
-
 export TCID="ext4-persistent-preallocation"
 export TST_TOTAL=2
-export TST_COUNT=1
 
-export TEST_DIR=$PWD
-
-# $1: the test config
-read_config $1
-
-# The test path of fallocate
-export TDIRECTORY=$PWD/mnt_point/
+. ext4_funcs.sh
 
 # Use ltp's syscall/fallocate to test this feature
 # $1: 1024 or 4096
@@ -46,45 +35,47 @@ ext4_test_persist_prealloc()
 	mkfs.ext4 -I 256 -b $1 $EXT4_DEV &> /dev/null
 	if [ $? -ne 0 ]; then
 		tst_resm TFAIL "failed to create ext4 filesystem"
-		return 1
+		return
 	fi
 
 	mount -t ext4 $EXT4_DEV mnt_point
 	if [ $? -ne 0 ]; then
 		tst_resm TFAIL "failed to mount ext4 filesystem"
-		return 1
+		return
 	fi
-
-	ret=1
 
 	for ((i = 1; i <= 3; i++))
 	{
-		if [ ! -f fallocate0${i} ];  then
+		if ! command -v fallocate0${i} > /dev/null 2>&1; then
 			tst_resm TFAIL "file - fallocate0${i} doesn't exist. Please \
 				check whether it was compiled and installed.\
 				(Path: LTPROOT/testcases/kernel/syscalls/fallocate)"
 			umount mnt_point
-			return 1
+			return
 		fi
 
-		./fallocate0${i} | grep -q "CONF"
-		if [ $? -ne $ret ]; then
+		temp_tmpdir=$TMPDIR
+		TMPDIR=${PWD}/mnt_point; fallocate0${i} > /dev/null 2>&1
+		ret=$?
+		TMPDIR=$temp_tmpdir
+
+		if [ $ret -ne 0 ]; then
 			tst_resm TFAIL "fallocate's return value is not expected"
 			umount mnt_point
-			return 1
+			return
 		fi
 	}
 
 	umount mnt_point
 	if [ $? -ne 0 ]; then
 		tst_resm TFAIL "failed to umount ext4 filesystem"
-		return 1
+		return
 	fi
 
 	e2fsck -p $EXT4_DEV &> /dev/null
 	if [ $? -ne 0 ]; then
 		tst_resm TFAIL "fsck returned failure"
-		return 1
+		return
 	fi
 
 	tst_resm TPASS "ext4 persistent preallocation test pass"
@@ -93,21 +84,7 @@ ext4_test_persist_prealloc()
 # main
 ext4_setup
 
-RET=0
-
 ext4_test_persist_prealloc 1024
-if [ $? -ne 0 ]; then
-	RET=1;
-fi
-: $((TST_COUNT++))
-
 ext4_test_persist_prealloc 4096
-if [ $? -ne 0 ]; then
-	RET=1;
-fi
-: $((TST_COUNT++))
 
-ext4_cleanup
-
-exit $RET
-
+tst_exit

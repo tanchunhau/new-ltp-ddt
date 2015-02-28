@@ -107,14 +107,12 @@ int main(int argc, char *argv[])
 					  "Test failed") : tst_resm(TPASS,
 								    "Test passed");
 	tst_exit();
-	/* THIS CALL DOES NOT RETURN - EXITS!!  */
-	tst_exit();
 }
 
 /*--------------------------------------------------------------*/
 /* FUNCTIONS GO HERE */
 
-void fill()
+void fill(void)
 {
 	register int i;
 	for (i = 0; i < BSIZE; i++)

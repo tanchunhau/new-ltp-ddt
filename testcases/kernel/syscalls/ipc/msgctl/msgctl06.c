@@ -78,8 +78,7 @@ int main(int argc, char *argv[])
 	TEST(msgget(key, IPC_CREAT | IPC_EXCL));
 	msqid = TEST_RETURN;
 	if (TEST_RETURN == -1) {
-		tst_resm(TFAIL | TTERRNO, "msgget() failed");
-		tst_exit();
+		tst_brkm(TFAIL | TTERRNO, NULL, "msgget() failed");
 	}
 
 	TEST(msgctl(msqid, IPC_STAT, &buf));
@@ -96,25 +95,24 @@ int main(int argc, char *argv[])
 	 */
 
 	if (buf.msg_qnum != 0) {
-		tst_resm(TFAIL, "error: unexpected nbr of messages %ld",
+		tst_brkm(TFAIL, NULL, "error: unexpected nbr of messages %ld",
 			 buf.msg_qnum);
-		tst_exit();
 	}
 	if (buf.msg_perm.uid != getuid()) {
-		tst_resm(TFAIL, "error: unexpected uid %d", buf.msg_perm.uid);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "error: unexpected uid %d",
+			 buf.msg_perm.uid);
 	}
 	if (buf.msg_perm.gid != getgid()) {
-		tst_resm(TFAIL, "error: unexpected gid %d", buf.msg_perm.gid);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "error: unexpected gid %d",
+			 buf.msg_perm.gid);
 	}
 	if (buf.msg_perm.cuid != getuid()) {
-		tst_resm(TFAIL, "error: unexpected cuid %d", buf.msg_perm.cuid);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "error: unexpected cuid %d",
+			 buf.msg_perm.cuid);
 	}
 	if (buf.msg_perm.cgid != getgid()) {
-		tst_resm(TFAIL, "error: unexpected cgid %d", buf.msg_perm.cgid);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "error: unexpected cgid %d",
+			 buf.msg_perm.cgid);
 	}
 
 	tst_resm(TPASS, "msgctl06 ran successfully!");
@@ -129,7 +127,7 @@ int main(int argc, char *argv[])
 /***************************************************************
  *  * setup() - performs all ONE TIME setup for this test.
  *   ****************************************************************/
-void setup()
+void setup(void)
 {
 	/* You will want to enable some signal handling so you can capture
 	 * unexpected signals like SIGSEGV.
@@ -154,7 +152,7 @@ void setup()
  *  *  * cleanup() - performs all ONE TIME cleanup for this test at
  *   *   *              completion or premature exit.
  *    *    ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	int status;
 

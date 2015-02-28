@@ -62,17 +62,13 @@
 #include "../utils/include_j_h.h"
 #include "../utils/common_j_h.c"
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "mq_ulink01";	/* Test program identifier. */
+char *TCID = "mq_ulink01";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -92,7 +88,7 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*	      On success - Exits calling tst_exit(). With '0' return code.  */
 /*									    */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -117,9 +113,9 @@ extern void cleanup()
 /*	      On success - returns 0.				       */
 /*									    */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
-	tst_require_root(tst_exit);
+	tst_require_root(NULL);
 	/* Capture signals if any */
 	/* Create temporary directories */
 	TEST_PAUSE;
@@ -272,7 +268,7 @@ int main(int ac, char **av)
 {
 	int i;
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -280,7 +276,7 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 
 			int ret;

@@ -19,7 +19,7 @@
 
 #if defined(_POSIX_SPORADIC_SERVER)&&(_POSIX_SPORADIC_SERVER != -1)||defined(_POSIX_THREAD_SPORADIC_SERVER)&&(_POSIX_THREAD_SPORADIC_SERVER != -1)
 
-int main(int argc, char **argv)
+int main(void)
 {
 	int result = -1;
 
@@ -31,16 +31,13 @@ int main(int argc, char **argv)
 		     result);
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		perror("An error occurs");
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	perror("An error occurs");
+	return PTS_FAIL;
 }
 #else
-int main()
+int main(void)
 {
 	printf("Does not support SS (SPORADIC SERVER)\n");
 	return PTS_UNSUPPORTED;

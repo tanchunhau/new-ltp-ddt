@@ -91,7 +91,7 @@ struct passwd *ltpuser1;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int status, retval = 0;
 	pid_t pid;
 
@@ -108,7 +108,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		if (chmod(test_app, 0700) != 0)
 			tst_resm(TFAIL | TERRNO, "chmod failed");
@@ -157,7 +157,7 @@ int main(int ac, char **av)
  * help() - Prints out the help message for the -F option defined
  *          by this test.
  */
-void help()
+void help(void)
 {
 	printf("  -F <test file> : for example, 'execve02 -F test3'\n");
 }
@@ -181,8 +181,7 @@ void setup(char *argv0)
 		free(pwd);
 	}
 
-	cmd = malloc(strlen(test_path) + strlen("cp -p \"") + strlen("\" .") +
-		     1);
+	cmd = malloc(strlen(test_path) + strlen("cp -p \"") + strlen("\" .") + 1);
 	if (cmd == NULL)
 		tst_brkm(TBROK | TERRNO, NULL, "Cannot alloc command string");
 
@@ -200,7 +199,7 @@ void setup(char *argv0)
 	ltpuser1 = my_getpwnam(user1name);
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

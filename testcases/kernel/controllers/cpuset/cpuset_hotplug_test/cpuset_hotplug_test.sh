@@ -22,13 +22,13 @@
 #                                                                              #
 ################################################################################
 
-cd $LTPROOT/testcases/bin
-
-. ./cpuset_funcs.sh
-
-export TCID="cpuset08"
+export TCID="cpuset_hotplug"
 export TST_TOTAL=13
 export TST_COUNT=1
+
+. cpuset_funcs.sh
+
+check
 
 exit_status=0
 
@@ -36,7 +36,7 @@ nr_cpus=$NR_CPUS
 nr_mems=$N_NODES
 
 cpus_all="$(seq -s, 0 $((nr_cpus-1)))"
-cpus_all="`./cpuset_list_compute $cpus_all`"
+cpus_all="`cpuset_list_compute $cpus_all`"
 mems_all="$(seq -s, 0 $((nr_mems-1)))"
 
 # check_result <result> <expect>
@@ -150,7 +150,7 @@ general_cpu_hotplug_test()
 	cpu_hotplug $HOTPLUG_CPU $cpuhotplug 2> $CPUSET_TMP/stderr
 	if [ $? -ne 0 ]; then
 		cpuset_log_error $CPUSET_TMP/stderr
-		tst_resm TFAIL ignored "$cpuoffline CPU#$HOTPLUG_CPU failed."
+		tst_resm TFAIL "$cpuoffline CPU#$HOTPLUG_CPU failed."
 		/bin/kill -s SIGKILL $tst_pid
 		return 1
 	fi
@@ -218,13 +218,13 @@ base_test()
 
 		cpu_hotplug_cleanup
 	fi
-	: $((TST_COUNT++))
+	TST_COUNT=$(($TST_COUNT + 1))
 }
 
 # Test Case 1-2
 test_root_cpu_hotplug()
 {
-	local tmp_cpus="`./cpuset_list_compute -s $cpus_all $HOTPLUG_CPU`"
+	local tmp_cpus="`cpuset_list_compute -s $cpus_all $HOTPLUG_CPU`"
 
 	test_function="root_cpu_hotplug_test"
 	while read hotplug cpus_expect task_expect
@@ -240,7 +240,7 @@ test_root_cpu_hotplug()
 # Test Case 3-6
 test_general_cpu_hotplug()
 {
-	local tmp_cpus="`./cpuset_list_compute -s $cpus_all $HOTPLUG_CPU`"
+	local tmp_cpus="`cpuset_list_compute -s $cpus_all $HOTPLUG_CPU`"
 
 	test_function="general_cpu_hotplug_test"
 	while read hotplug cpus cpus_expect task_expect

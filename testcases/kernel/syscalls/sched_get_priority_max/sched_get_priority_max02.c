@@ -74,7 +74,7 @@
 static void setup();
 static void cleanup();
 
-char *TCID = "sched_get_priority_max02";	/* Test program identifier.    */
+char *TCID = "sched_get_priority_max02";
 
 int TST_TOTAL = 1;
 
@@ -82,7 +82,7 @@ int main(int ac, char **av)
 {
 
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -91,7 +91,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call sched_get_priority_max(2)
@@ -114,7 +114,7 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -127,7 +127,7 @@ void setup()
  *cleanup() -  performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 
 	/*

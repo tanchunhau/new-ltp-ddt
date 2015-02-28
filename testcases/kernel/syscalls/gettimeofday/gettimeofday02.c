@@ -54,8 +54,8 @@
 
 #define gettimeofday(a,b)  syscall(__NR_gettimeofday,a,b)
 
-char *TCID = "gettimeofday02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "gettimeofday02";
+int TST_TOTAL = 1;
 
 int Tflag;
 char *tlen = "30";
@@ -75,7 +75,7 @@ void cleanup(void)
 
 }
 
-void help()
+void help(void)
 {
 	printf("  -T len  seconds to test gettimeofday (default %s)\n", tlen);
 }
@@ -83,7 +83,7 @@ void help()
 int main(int ac, char **av)
 {
 	struct timeval tv1, tv2;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, opts, help)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);

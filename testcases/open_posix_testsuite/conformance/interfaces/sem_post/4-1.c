@@ -22,7 +22,7 @@
 #define FUNCTION "sem_post"
 #define ERROR_PREFIX "unexpected error: " FUNCTION " " TEST ": "
 
-int main()
+int main(void)
 {
 	sem_t *mysemp;
 	char semname[28];
@@ -41,10 +41,8 @@ int main()
 		sem_close(mysemp);
 		sem_unlink(semname);
 		return PTS_PASS;
-	} else {
-		puts("TEST FAILED: value of sem_post is not returning zero");
-		return PTS_FAIL;
 	}
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+
+	puts("TEST FAILED: value of sem_post is not returning zero");
+	return PTS_FAIL;
 }

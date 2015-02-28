@@ -98,7 +98,7 @@ void cleanup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	char *test_desc;	/* test specific error message */
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
@@ -119,8 +119,8 @@ int main(int ac, char **av)
 		test_desc = "EAGAIN";
 #endif
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* duplicate process */
 		if ((child_pid = FORK_OR_VFORK()) == 0) {
@@ -171,7 +171,7 @@ int main(int ac, char **av)
  * setup
  *		 performs all ONE TIME setup for this test
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -205,7 +205,7 @@ void setup()
  *		 performs all ONE TIME cleanup for this test at completion or
  *		 premature exit
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified

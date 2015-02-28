@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 	 * Calculate number of seconds to run, then print out start info
 	 */
 	runseconds = (long)(execution_time * 60.0 * 60.0);
-	start_time = time((long *)0);
+	start_time = time(NULL);
 
 	startup(start_time);
 
@@ -374,7 +374,7 @@ int process_slots_in_use()
 	/*
 	 * Open the output file
 	 */
-	if ((psfile = fopen("ps.out", "r")) == (FILE *) NULL) {
+	if ((psfile = fopen("ps.out", "r")) == NULL) {
 		exit(-1);
 	}
 
@@ -446,13 +446,13 @@ float *t2;			/* if sched_tc6:  second time returned from testcase */
 	 */
 	if (debug)
 		printf("waiting on child %d\n", saved_pid);
-	while (wait((void *)0) != saved_pid) ;
+	while (wait(NULL) != saved_pid) ;
 
 	/*
 	 * Open the temporary file to get the returned number of seconds
 	 */
 
-	if ((datafile = fopen("sch.measure", "r")) == (FILE *) NULL) {
+	if ((datafile = fopen("sch.measure", "r")) == NULL) {
 		sys_error("cannot open sch.measure", __FILE__, __LINE__);
 	}
 
@@ -739,7 +739,7 @@ long start_time;		/* starting time to calculate elapsed time */
 	/*
 	 * Get the end time and calculate elapsed time; write all this out
 	 */
-	end_time = time((long *)0);
+	end_time = time(NULL);
 
 	printf("\nend time = %s\n", ctime(&end_time));
 

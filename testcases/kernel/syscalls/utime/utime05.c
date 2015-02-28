@@ -89,8 +89,8 @@
 #define FILE_MODE	S_IRUSR | S_IRGRP | S_IROTH
 #define NEW_TIME	10000
 
-char *TCID = "utime05";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "utime05";
+int TST_TOTAL = 1;
 int exp_enos[] = { 0 };
 
 char nobody_uid[] = "nobody";
@@ -105,11 +105,10 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* struct buffer to hold file info. */
 	int lc;
-	char *msg;
+	const char *msg;
 	time_t modf_time, access_time;
 	/* file modification/access time */
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -123,7 +122,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Invoke utime(2) to set TEMP_FILE access and
@@ -138,43 +137,34 @@ int main(int ac, char **av)
 				 TEMP_FILE, TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
 			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
+			 * Get the modification and access times of
+			 * temporary file using stat(2).
 			 */
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Get the modification and access times of
-				 * temporary file using stat(2).
-				 */
-				if (stat(TEMP_FILE, &stat_buf) < 0) {
-					tst_brkm(TFAIL, cleanup, "stat(2) of "
-						 "%s failed, error:%d",
-						 TEMP_FILE, TEST_ERRNO);
-				}
-				modf_time = stat_buf.st_mtime;
-				access_time = stat_buf.st_atime;
+			if (stat(TEMP_FILE, &stat_buf) < 0) {
+				tst_brkm(TFAIL, cleanup, "stat(2) of "
+					 "%s failed, error:%d",
+					 TEMP_FILE, TEST_ERRNO);
+			}
+			modf_time = stat_buf.st_mtime;
+			access_time = stat_buf.st_atime;
 
-				/* Now do the actual verification */
-				if ((modf_time != NEW_TIME) ||
-				    (access_time != NEW_TIME)) {
-					tst_resm(TFAIL, "%s access and "
-						 "modification times not set",
-						 TEMP_FILE);
-				} else {
-					tst_resm(TPASS, "Functionality of "
-						 "utime(%s, &times) successful",
-						 TEMP_FILE);
-				}
+			/* Now do the actual verification */
+			if ((modf_time != NEW_TIME) ||
+			    (access_time != NEW_TIME)) {
+				tst_resm(TFAIL, "%s access and "
+					 "modification times not set",
+					 TEMP_FILE);
 			} else {
-				tst_resm(TPASS, "%s call succeeded", TCID);
+				tst_resm(TPASS, "Functionality of "
+					 "utime(%s, &times) successful",
+					 TEMP_FILE);
 			}
 		}
-		Tst_count++;	/* incr TEST_LOOP counter */
+		tst_count++;	/* incr TEST_LOOP counter */
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -183,16 +173,15 @@ int main(int ac, char **av)
  *  Create a temporary directory and change directory to it.
  *  Create a test file under temporary directory and close it
  */
-void setup()
+void setup(void)
 {
 	int fildes;		/* file handle for temp file */
+
+	tst_require_root(NULL);
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	ltpuser = getpwnam(nobody_uid);
 	if (setuid(ltpuser->pw_uid) == -1) {
 		tst_resm(TINFO, "setuid failed to "
@@ -230,7 +219,7 @@ void setup()
  *		completion or premature exit.
  *		Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

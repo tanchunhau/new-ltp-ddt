@@ -25,8 +25,6 @@
  *	test_func.c - nftw() calls these functions.
  */
 
-#define _USC_LIB_
-
 #include "nftw.h"
 
 extern pathdata pathdat[];
@@ -48,7 +46,7 @@ test_func1(const char *path_name, const struct stat *stat_pointer,
 
 	temp = stderr;
 
-	if ((s = (char *)malloc((size_t) (strlen((char *)path_name) + 1)))
+	if ((s = malloc((size_t)(strlen((char *)path_name) + 1)))
 	    == NULL) {
 		perror("malloc in test_func1");
 		return 999;

@@ -84,7 +84,7 @@ static char hname[MAX_LENGTH];	/* host name */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	char ltphost[] = "ltphost";	/* temporary host name to set */
 
@@ -99,7 +99,7 @@ int main(int ac, char **av)
 	/* check -c option for looping. */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* Call sethostname(2) */
 		TEST(sethostname(ltphost, sizeof(ltphost)));
@@ -125,16 +125,13 @@ int main(int ac, char **av)
 /*
  * setup() - performs all one time setup for this test.
  */
-void setup()
+void setup(void)
 {
 	int ret;
 
-	tst_sig(NOFORK, DEF_HANDLER, cleanup);
+	tst_require_root(NULL);
 
-	/* Test should be executed as root user */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
+	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	/* Store the existing hostname to retain it before exiting */
 	if ((ret = gethostname(hname, sizeof(hname))) < 0) {
@@ -150,7 +147,7 @@ void setup()
  * cleanup() -	performs all one time cleanup for this test
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	int ret;
 

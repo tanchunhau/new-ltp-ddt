@@ -49,7 +49,7 @@ static void cleanup(void);
 int main(int argc, char **argv)
 {
 	int lc, status;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL)
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		len = strlen(tst_string);
 
 		if (pipe(pipe_fd) < 0)

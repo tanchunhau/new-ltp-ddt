@@ -89,8 +89,8 @@
 #define TEMP_FILE	"tmp_file"
 #define FILE_MODE	0644
 
-char *TCID = "llseek01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "llseek01";
+int TST_TOTAL = 1;
 char write_buff[BUFSIZ];	/* buffer to hold data */
 int fildes;			/* file handle for temp file */
 
@@ -102,7 +102,7 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	loff_t offset;		/* Ret value from llseek */
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
@@ -114,7 +114,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * set file size limit, seek to a file using llseek.
@@ -127,59 +127,55 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			if (TEST_RETURN != (loff_t) (80 * BUFSIZ)) {
-				tst_resm(TFAIL, "llseek() returned incorrect "
-					 "value %" PRId64 ", expected %d",
-					 (int64_t) offset, BUFSIZ);
-				continue;
-			}
+		if (TEST_RETURN != (loff_t) (80 * BUFSIZ)) {
+			tst_resm(TFAIL, "llseek() returned incorrect "
+				 "value %" PRId64 ", expected %d",
+				 (int64_t) offset, BUFSIZ);
+			continue;
+		}
 
-			/*
-			 * llseek() successful.  Now attempt to write past
-			 * file size limit.
-			 */
-			if (write(fildes, write_buff, BUFSIZ) != -1) {
-				tst_brkm(TFAIL, cleanup, "write successful "
-					 "after file size limit");
-			}
+		/*
+		 * llseek() successful.  Now attempt to write past
+		 * file size limit.
+		 */
+		if (write(fildes, write_buff, BUFSIZ) != -1) {
+			tst_brkm(TFAIL, cleanup, "write successful "
+				 "after file size limit");
+		}
 
-			/* Seeking to end of last valid write */
-			offset = lseek64(fildes, (loff_t) BUFSIZ, SEEK_SET);
-			if (offset != (loff_t) BUFSIZ) {
-				tst_brkm(TFAIL, cleanup,
-					 "llseek under file size limit");
-			}
+		/* Seeking to end of last valid write */
+		offset = lseek64(fildes, (loff_t) BUFSIZ, SEEK_SET);
+		if (offset != (loff_t) BUFSIZ) {
+			tst_brkm(TFAIL, cleanup,
+				 "llseek under file size limit");
+		}
 
-			/*
-			 * llseek() successful.  Now, attempt to write to
-			 * file size limit.
-			 */
-			if (write(fildes, write_buff, BUFSIZ) != BUFSIZ) {
-				tst_brkm(TFAIL, cleanup, "write failed to "
-					 "write to file size limit");
-			}
+		/*
+		 * llseek() successful.  Now, attempt to write to
+		 * file size limit.
+		 */
+		if (write(fildes, write_buff, BUFSIZ) != BUFSIZ) {
+			tst_brkm(TFAIL, cleanup, "write failed to "
+				 "write to file size limit");
+		}
 
-			/*
-			 * Again, attempt to write past file size limit.
-			 */
-			if (write(fildes, write_buff, BUFSIZ) != -1) {
-				tst_brkm(TFAIL, cleanup, "write past file "
-					 "size limit successful");
-			}
+		/*
+		 * Again, attempt to write past file size limit.
+		 */
+		if (write(fildes, write_buff, BUFSIZ) != -1) {
+			tst_brkm(TFAIL, cleanup, "write past file "
+				 "size limit successful");
+		}
 
-			tst_resm(TPASS, "Functionality of llseek() on %s "
-				 "successful", TEMP_FILE);
-		} else
-			tst_resm(TPASS, "call succeeded");
+		tst_resm(TPASS, "Functionality of llseek() on %s "
+			 "successful", TEMP_FILE);
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	struct sigaction act;	/* struct. to hold signal */
 	struct rlimit rlp;	/* resource for file size limit */
@@ -189,9 +185,10 @@ void setup()
 	TEST_PAUSE;
 
 	act.sa_handler = SIG_IGN;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
 	if (sigaction(SIGXFSZ, &act, NULL) == -1) {
 		tst_brkm(TFAIL, NULL, "sigaction() Failed to ignore SIGXFSZ");
-		tst_exit();
 	}
 
 	tst_tmpdir();
@@ -218,7 +215,7 @@ void setup()
 	SAFE_WRITE(cleanup, 1, fildes, write_buff, BUFSIZ);
 }
 
-void cleanup()
+void cleanup(void)
 {
 	SAFE_CLOSE(NULL, fildes);
 

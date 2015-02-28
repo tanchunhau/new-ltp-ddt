@@ -56,7 +56,7 @@ static int testlist[NUMTESTS][4] = {
 	{1, 0, -1073743192, 0},	// value.it_interval.tv_sec < 0
 };
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct sigevent ev;
 	timer_t tid;
@@ -98,11 +98,8 @@ int main(int argc, char *argv[])
 	if (failure) {
 		printf("At least one test FAILED\n");
 		return PTS_FAIL;
-	} else {
-		printf("All tests PASSED\n");
-		return PTS_PASS;
 	}
 
-	printf("This code could not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("All tests PASSED\n");
+	return PTS_PASS;
 }

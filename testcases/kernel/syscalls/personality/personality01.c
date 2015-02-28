@@ -77,7 +77,7 @@ int pers[] = { PER_LINUX, PER_LINUX_32BIT, PER_SVR4, PER_SVR3, PER_SCOSVR3,
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int i, start_pers;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
@@ -94,8 +94,8 @@ int main(int ac, char **av)
 	/* The following checks the looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Start looping through our series of personalities and
@@ -113,23 +113,19 @@ int main(int ac, char **av)
 				continue;
 			}
 
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * check to make sure that the return value
-				 * is the previous personality in our list.
-				 *
-				 * i == 0 is a special case since the return
-				 * value should equal pers[0].
-				 */
-				if (TEST_RETURN == pers[i == 0 ? 0 : i - 1]) {
-					tst_resm(TPASS, "personality set "
-						 "correctly");
-				} else {
-					tst_resm(TFAIL, "returned persona "
-						 "was not expected");
-				}
+			/*
+			 * check to make sure that the return value
+			 * is the previous personality in our list.
+			 *
+			 * i == 0 is a special case since the return
+			 * value should equal pers[0].
+			 */
+			if (TEST_RETURN == pers[i == 0 ? 0 : i - 1]) {
+				tst_resm(TPASS, "personality set "
+					 "correctly");
 			} else {
-				tst_resm(TPASS, "call succeeded");
+				tst_resm(TFAIL, "returned persona "
+					 "was not expected");
 			}
 		}
 		/*
@@ -139,8 +135,8 @@ int main(int ac, char **av)
 			tst_brkm(TBROK, cleanup, "failed personality reset");
 		}
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 

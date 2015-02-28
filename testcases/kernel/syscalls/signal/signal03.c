@@ -91,7 +91,7 @@ int siglist[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGTRAP, SIGABRT, SIGIOT,
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t pid;
 	int i, rval;
 
@@ -104,8 +104,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * loop through the list of signals and test each one
@@ -122,37 +122,31 @@ int main(int ac, char **av)
 					 TEST_ERRNO, strerror(TEST_ERRNO));
 			}
 
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Send the signal.  If the signal is truly set
-				 * to be ignored, then the signal handler will
-				 * never be invoked and the test will pass.
-				 */
-				pid = getpid();
+			/*
+			 * Send the signal.  If the signal is truly set
+			 * to be ignored, then the signal handler will
+			 * never be invoked and the test will pass.
+			 */
+			pid = getpid();
 
-				if ((rval = kill(pid, siglist[i])) != 0) {
-					tst_brkm(TBROK, cleanup, "call to "
-						 "kill failed");
-				}
+			if ((rval = kill(pid, siglist[i])) != 0) {
+				tst_brkm(TBROK, cleanup, "call to "
+					 "kill failed");
+			}
 
-				if (fail == 0) {
-					tst_resm(TPASS, "%s call succeeded",
-						 TCID);
-				} else {
-					/* the signal was caught so we fail */
-					tst_resm(TFAIL, "signal caught when "
-						 "suppose to be ignored");
-				}
+			if (fail == 0) {
+				tst_resm(TPASS, "%s call succeeded",
+					 TCID);
 			} else {
-				tst_resm(TPASS, "Call succeeded");
+				/* the signal was caught so we fail */
+				tst_resm(TFAIL, "signal caught when "
+					 "suppose to be ignored");
 			}
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
-
 }
 
 /*

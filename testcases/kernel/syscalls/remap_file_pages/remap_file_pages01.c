@@ -103,8 +103,8 @@ static void setup();
 static void cleanup();
 static void test_nonlinear(int fd);
 
-char *TCID = "remap_file_pages01";	/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "remap_file_pages01";
+int TST_TOTAL = 2;
 
 static char *cache_contents;
 int fd1, fd2;			/* File descriptors used at the test */
@@ -113,7 +113,7 @@ char fname[255];
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 #if defined (__s390__) || (__s390x__) || (__ia64__)
 	/* Disables the test in case the kernel version is lower than 2.6.12 and arch is s390 */
@@ -132,7 +132,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		test_nonlinear(fd1);
 		tst_resm(TPASS, "Non-Linear shm file OK");
@@ -219,7 +219,7 @@ again:
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -239,7 +239,7 @@ void setup()
 	/* Set the cache size */
 	cache_pages = 1024;
 	cache_sz = cache_pages * page_sz;
-	cache_contents = (char *)malloc(cache_sz * sizeof(char));
+	cache_contents = malloc(cache_sz * sizeof(char));
 
 	/* Set the window size */
 	window_pages = 16;

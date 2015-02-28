@@ -72,13 +72,12 @@ char *ltp_user = "nobody";
 
 int main(int ac, char **av)
 {
-	char *msg;
+	const char *msg;
 	int pid;
 	void do_child(void);
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
+	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
 
 	setup();		/* global setup */
 
@@ -114,15 +113,15 @@ int main(int ac, char **av)
 /*
  * do_child - make the TEST call as the child process
  */
-void do_child()
+void do_child(void)
 {
 	int lc;
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Look for a failure ...
@@ -156,8 +155,7 @@ void do_child()
  */
 void setup(void)
 {
-	/* check for root as process owner */
-	check_root();
+	tst_require_root(NULL);
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 

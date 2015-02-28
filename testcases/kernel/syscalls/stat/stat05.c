@@ -121,8 +121,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "stat05";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "stat05";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0, 0 };
 
@@ -133,7 +133,7 @@ struct stat statter;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -145,7 +145,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call stat(2) with F_CLRALF argument on fname
@@ -157,26 +157,21 @@ int main(int ac, char **av)
 			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL, "stat(%s, &statter) failed", fname);
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS,
-					 "stat(%s, &statter) returned %ld",
-					 fname, TEST_RETURN);
-			}
+			tst_resm(TPASS,
+				 "stat(%s, &statter) returned %ld",
+				 fname, TEST_RETURN);
 		}
 
 	}
 
 	cleanup();
 	tst_exit();
-	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -201,7 +196,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

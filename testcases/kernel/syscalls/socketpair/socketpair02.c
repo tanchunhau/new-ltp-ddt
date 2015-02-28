@@ -53,7 +53,6 @@
 #include <sys/socket.h>
 #include <sys/syscall.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 
@@ -62,8 +61,7 @@
 #endif
 
 int TST_TOTAL = 2;
-/* Global Variables */
-char *TCID = "socketpair02";	/* test program identifier.              */
+char *TCID = "socketpair02";
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -83,7 +81,7 @@ char *TCID = "socketpair02";	/* test program identifier.              */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -108,7 +106,7 @@ void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */

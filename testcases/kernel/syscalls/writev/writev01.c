@@ -103,8 +103,8 @@ struct iovec wr_iovec[MAX_IOVEC] = {
 	{(buf1 + CHUNK * 13), 0},
 
 	/* testcase# 7 */
-	{(caddr_t) NULL, 0},
-	{(caddr_t) NULL, 0}
+	{NULL, 0},
+	{NULL, 0}
 };
 
 char name[K_1], f_name[K_1];
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 	int nbytes, ret;
 
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		buf_list[0] = buf1;
 		buf_list[1] = buf2;

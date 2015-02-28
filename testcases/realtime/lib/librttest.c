@@ -242,7 +242,7 @@ int rt_init(const char *options, int (*parse_arg) (int option, char *value),
 
 void buffer_init(void)
 {
-	_print_buffer = (char *)malloc(PRINT_BUFFER_SIZE);
+	_print_buffer = malloc(PRINT_BUFFER_SIZE);
 	if (!_print_buffer)
 		fprintf(stderr,
 			"insufficient memory for print buffer - printing directly to stderr\n");
@@ -586,7 +586,7 @@ void *busy_work_us(int us)
 
 void init_pi_mutex(pthread_mutex_t * m)
 {
-#if HAVE_DECL_PTHREAD_PRIO_INHERIT
+#if HAS_PRIORITY_INHERIT
 	pthread_mutexattr_t attr;
 	int ret;
 	int protocol;

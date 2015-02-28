@@ -119,15 +119,15 @@
 void setup();
 void cleanup();
 
-char *TCID = "time01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "time01";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0, 0 };
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -139,7 +139,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call time(2)
@@ -152,23 +152,19 @@ int main(int ac, char **av)
 			tst_resm(TFAIL, "time(0) Failed, errno=%d : %s",
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS, "time(0) returned %ld",
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS, "time(0) returned %ld",
+				 TEST_RETURN);
 		}
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 	void trapper();
 
@@ -181,7 +177,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

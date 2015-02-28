@@ -1,46 +1,40 @@
-/******************************************************************************
+/*
+ * Copyright (c) International Business Machines  Corp., 2006
+ *  Author: Yi Yang <yyangcdl@cn.ibm.com>
  *
- *   Copyright (c) International Business Machines  Corp., 2006
+ * This program is free software;  you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   This program is free software;  you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ * the GNU General Public License for more details.
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * NAME
- *      renameat01.c
- *
- * DESCRIPTION
- *	This test case will verify basic function of renameat
- *	added by kernel 2.6.16 or up.
- *
- * USAGE:  <for command-line>
- * renameat01 [-c n] [-e] [-i n] [-I x] [-P x] [-t] [-p]
- * where:
- *      -c n : Run n copies simultaneously.
- *      -e   : Turn on errno logging.
- *      -i n : Execute test n times.
- *      -I x : Execute test for x seconds.
- *      -p   : Pause for SIGUSR1 before starting
- *      -P x : Pause for x seconds between iterations.
- *      -t   : Turn on syscall timing.
- *
- * Author
- *	Yi Yang <yyangcdl@cn.ibm.com>
- *
- * History
- *      08/24/2006      Created first by Yi Yang <yyangcdl@cn.ibm.com>
- *
- *****************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program;  if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ */
+/*
+ * Description:
+ *   Verify that,
+ *   1) renameat(2) returns -1 and sets errno to EBADF if olddirfd
+ *      or newdirfd is not a valid file descriptor.
+ *   2) renameat(2) returns -1 and sets errno to ENOTDIR if oldpath
+ *      is relative and olddirfd is a file descriptor referring to
+ *      a file other than a directory, or similar for newpath and
+ *      newdirfd.
+ *   3) renameat(2) returns -1 and sets errno to ELOOP if too many
+ *      symbolic links were encountered in resolving oldpath or
+ *      newpath.
+ *   4) renameat(2) returns -1 and sets errno to EROFS if the file
+ *      is on a read-only file system.
+ *   5) renameat(2) returns -1 and sets errno to EMLINK if oldpath
+ *      already has the maximum number of links to it, or it is a
+ *      directory and the directory containing newpath has the
+ *      maximum number of links.
+ */
 
 #define _GNU_SOURCE
 
@@ -53,193 +47,224 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/mount.h>
+
 #include "test.h"
 #include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "safe_macros.h"
+#include "lapi/fcntl.h"
+#include "lapi/renameat.h"
 
-#define TEST_CASES 5
-#ifndef AT_FDCWD
-#define AT_FDCWD -100
-#endif
-#ifndef AT_REMOVEDIR
-#define AT_REMOVEDIR 0x200
-#endif
+#define MNTPOINT "mntpoint"
+#define TESTDIR "testdir"
+#define NEW_TESTDIR "new_testdir"
+#define TESTDIR2 "/loopdir"
+#define NEW_TESTDIR2 "newloopdir"
+#define TESTDIR3 "emlinkdir"
+#define NEW_TESTDIR3 "testemlinkdir/new_emlinkdir"
+#define TESTFILE "testfile"
+#define NEW_TESTFILE "new_testfile"
+#define TESTFILE2 "testfile2"
+#define NEW_TESTFILE2 "new_testfile2"
+#define TESTFILE3 "testdir/testfile"
+#define TESTFILE4 "testfile4"
+#define TESTFILE5 "mntpoint/rofile"
+#define NEW_TESTFILE5 "mntpoint/newrofile"
 
-void setup();
-void cleanup();
-void setup_every_copy();
+#define DIRMODE (S_IRWXU | S_IRWXG | S_IRWXO)
+#define FILEMODE (S_IRWXU | S_IRWXG | S_IRWXO)
 
-char *TCID = "renameat01";	/* Test program identifier.    */
-int TST_TOTAL = TEST_CASES;	/* Total number of test cases. */
-char pathname[256];
-char dpathname[256];
-char testfile[256];
-char dtestfile[256];
-char testfile2[256];
-char dtestfile2[256];
-char testfile3[256];
-char dtestfile3[256];
-int olddirfd, newdirfd, fd, ret;
-int oldfds[TEST_CASES], newfds[TEST_CASES];
-char *oldfilenames[TEST_CASES], *newfilenames[TEST_CASES];
-int expected_errno[TEST_CASES] = { 0, 0, ENOTDIR, EBADF, 0 };
+static int curfd = AT_FDCWD;
+static int olddirfd;
+static int newdirfd;
+static int badfd = 100;
+static int filefd;
+static char absoldpath[256];
+static char absnewpath[256];
+static char looppathname[sizeof(TESTDIR2) * 43] = ".";
+static int max_subdirs;
 
-int myrenameat(int olddirfd, const char *oldfilename, int newdirfd,
-	       const char *newfilename)
-{
-	return syscall(__NR_renameat, olddirfd, oldfilename, newdirfd,
-		       newfilename);
-}
+static int mount_flag;
+static const char *device;
+
+static struct test_case_t {
+	int *oldfdptr;
+	const char *oldpath;
+	int *newfdptr;
+	const char *newpath;
+	int exp_errno;
+} test_cases[] = {
+	{ &curfd, TESTFILE, &curfd, NEW_TESTFILE, 0 },
+	{ &olddirfd, TESTFILE, &newdirfd, NEW_TESTFILE, 0 },
+	{ &olddirfd, absoldpath, &newdirfd, absnewpath, 0 },
+	{ &badfd, TESTFILE, &badfd, NEW_TESTFILE, EBADF },
+	{ &filefd, TESTFILE, &filefd, NEW_TESTFILE, ENOTDIR },
+	{ &curfd, looppathname, &curfd, NEW_TESTDIR2, ELOOP },
+	{ &curfd, TESTFILE5, &curfd, NEW_TESTFILE5, EROFS },
+	{ &curfd, TESTDIR3, &curfd, NEW_TESTDIR3, EMLINK },
+};
+
+static void setup(void);
+static void cleanup(void);
+static void renameat_verify(const struct test_case_t *);
+
+char *TCID = "renameat01";
+int TST_TOTAL = ARRAY_SIZE(test_cases);
+static int exp_enos[] = { EBADF, ENOTDIR, ELOOP, EROFS,
+							EMLINK, 0 };
 
 int main(int ac, char **av)
 {
-	int lc;
-	char *msg;
-	int i;
+	int i, lc;
+	const char *msg;
 
-	/* Disable test if the version of the kernel is less than 2.6.16 */
-	if ((tst_kvercmp(2, 6, 16)) < 0) {
-		tst_brkm(TCONF, NULL,
-			 "This test can only run on kernels that are 2.6.16 and higher");
-	}
-
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
+	msg = parse_opts(ac, av, NULL, NULL);
+	if (msg != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
 	setup();
 
+	TEST_EXP_ENOS(exp_enos);
+
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		setup_every_copy();
+		tst_count = 0;
 
-		Tst_count = 0;
-
-		/*
-		 * Call renameat
-		 */
-		for (i = 0; i < TST_TOTAL; i++) {
-			TEST(myrenameat
-			     (oldfds[i], oldfilenames[i], newfds[i],
-			      newfilenames[i]));
-
-			/* check return code */
-			if (TEST_ERRNO == expected_errno[i]) {
-
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS | TTERRNO,
-						 "renameat failed as expected");
-				}
-			} else {
-				tst_resm(TFAIL | TTERRNO,
-					 "renameat failed unexpectedly");
-			}
-		}
-
+		for (i = 0; i < TST_TOTAL; i++)
+			renameat_verify(&test_cases[i]);
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup_every_copy()
+static void setup(void)
 {
-	/* Initialize test dir and file names */
-	sprintf(pathname, "renameattestdir%d", getpid());
-	sprintf(dpathname, "drenameattestdir%d", getpid());
-	sprintf(testfile, "renameattestfile%d.txt", getpid());
-	sprintf(dtestfile, "drenameattestfile%d.txt", getpid());
-	sprintf(testfile2, "renameattestdir%d/renameattestfile%d.txt", getpid(),
-		getpid());
-	sprintf(dtestfile2, "drenameattestdir%d/drenameattestfile%d.txt",
-		getpid(), getpid());
-	sprintf(testfile3, "/tmp/renameattestfile%d.txt", getpid());
-	sprintf(dtestfile3, "/tmp/drenameattestfile%d.txt", getpid());
+	char *tmpdir;
+	const char *fs_type;
+	int i;
 
-	ret = mkdir(pathname, 0700);
-	if (ret < 0) {
-		perror("mkdir: ");
-		exit(-1);
+	if ((tst_kvercmp(2, 6, 16)) < 0) {
+		tst_brkm(TCONF, NULL,
+			"This test can only run on kernels that are "
+			"2.6.16 and higher");
 	}
 
-	ret = mkdir(dpathname, 0700);
-	if (ret < 0) {
-		perror("mkdir: ");
-		exit(-1);
-	}
-
-	olddirfd = open(pathname, O_DIRECTORY);
-	if (olddirfd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
-
-	newdirfd = open(dpathname, O_DIRECTORY);
-	if (newdirfd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
-
-	fd = open(testfile, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
-
-	fd = open(testfile2, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
-
-	fd = open(testfile3, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
-
-	oldfds[0] = oldfds[1] = olddirfd;
-	oldfds[2] = fd;
-	oldfds[3] = 100;
-	oldfds[4] = AT_FDCWD;
-
-	newfds[0] = newfds[1] = newdirfd;
-	newfds[2] = fd;
-	newfds[3] = 100;
-	newfds[4] = AT_FDCWD;
-
-	oldfilenames[0] = oldfilenames[2] = oldfilenames[3] = oldfilenames[4] =
-	    testfile;
-	oldfilenames[1] = testfile3;
-
-	newfilenames[0] = newfilenames[2] = newfilenames[3] = newfilenames[4] =
-	    dtestfile;
-	newfilenames[1] = dtestfile3;
-}
-
-void setup()
-{
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	TEST_PAUSE;
-}
+	tst_tmpdir();
 
-void cleanup()
-{
-	/* Remove them */
-	unlink(testfile2);
-	unlink(dtestfile2);
-	unlink(testfile3);
-	unlink(dtestfile3);
-	unlink(testfile);
-	unlink(dtestfile);
-	rmdir(pathname);
-	rmdir(dpathname);
+	fs_type = tst_dev_fs_type();
+	device = tst_acquire_device(cleanup);
+
+	if (!device)
+		tst_brkm(TCONF, cleanup, "Failed to obtain block device");
+
+	TEST_PAUSE;
+
+	SAFE_TOUCH(cleanup, TESTFILE, FILEMODE, NULL);
+
+	SAFE_TOUCH(cleanup, TESTFILE2, FILEMODE, NULL);
+	tmpdir = tst_get_tmpdir();
+	sprintf(absoldpath, "%s/%s", tmpdir, TESTFILE2);
+	sprintf(absnewpath, "%s/%s", tmpdir, NEW_TESTFILE2);
+	free(tmpdir);
+
+	SAFE_MKDIR(cleanup, TESTDIR, DIRMODE);
+	SAFE_TOUCH(cleanup, TESTFILE3, FILEMODE, NULL);
+	SAFE_MKDIR(cleanup, NEW_TESTDIR, DIRMODE);
+
+	olddirfd = SAFE_OPEN(cleanup, TESTDIR, O_DIRECTORY);
+	newdirfd = SAFE_OPEN(cleanup, NEW_TESTDIR, O_DIRECTORY);
+
+	filefd = SAFE_OPEN(cleanup, TESTFILE4,
+				O_RDWR | O_CREAT, FILEMODE);
 
 	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
+	 * NOTE: the ELOOP test is written based on that the
+	 * consecutive symlinks limit in kernel is hardwired
+	 * to 40.
 	 */
+	SAFE_MKDIR(cleanup, "loopdir", DIRMODE);
+	SAFE_SYMLINK(cleanup, "../loopdir", "loopdir/loopdir");
+	for (i = 0; i < 43; i++)
+		strcat(looppathname, TESTDIR2);
+
+	tst_mkfs(cleanup, device, fs_type, NULL);
+	SAFE_MKDIR(cleanup, MNTPOINT, DIRMODE);
+	if (mount(device, MNTPOINT, fs_type, 0, NULL) < 0) {
+		tst_brkm(TBROK | TERRNO, cleanup,
+			"mount device:%s failed", device);
+	}
+	mount_flag = 1;
+	SAFE_TOUCH(cleanup, TESTFILE5, FILEMODE, NULL);
+	if (mount(device, MNTPOINT, fs_type,
+			MS_REMOUNT | MS_RDONLY, NULL) < 0) {
+		tst_brkm(TBROK | TERRNO, cleanup,
+			"mount device:%s failed", device);
+	}
+
+	SAFE_MKDIR(cleanup, TESTDIR3, DIRMODE);
+	max_subdirs = tst_fs_fill_subdirs(cleanup, "testemlinkdir");
+}
+
+static void renameat_verify(const struct test_case_t *tc)
+{
+	if (tc->exp_errno == EMLINK && max_subdirs == 0) {
+		tst_resm(TCONF, "EMLINK test is not appropriate");
+		return;
+	}
+
+	TEST(renameat(*(tc->oldfdptr), tc->oldpath,
+			*(tc->newfdptr), tc->newpath));
+
+	if (tc->exp_errno && TEST_RETURN != -1) {
+		tst_resm(TFAIL, "renameat() succeeded unexpectedly");
+		return;
+	}
+
+	if (tc->exp_errno == 0 && TEST_RETURN != 0) {
+		tst_resm(TFAIL | TTERRNO, "renameat() failed unexpectedly");
+		return;
+	}
+
+	if (TEST_ERRNO == tc->exp_errno) {
+		tst_resm(TPASS | TTERRNO,
+		"renameat() returned the expected value");
+	} else {
+		tst_resm(TFAIL | TTERRNO,
+			"renameat() got unexpected return value; expected: "
+			"%d - %s", tc->exp_errno,
+			strerror(tc->exp_errno));
+	}
+
+	if (TEST_ERRNO == 0 && renameat(*(tc->newfdptr), tc->newpath,
+		*(tc->oldfdptr), tc->oldpath) < 0) {
+		tst_brkm(TBROK | TERRNO, cleanup, "renameat(%d, %s, "
+			"%d, %s) failed.", *(tc->newfdptr), tc->newpath,
+			*(tc->oldfdptr), tc->oldpath);
+	}
+}
+
+static void cleanup(void)
+{
 	TEST_CLEANUP;
+
+	if (olddirfd > 0 && close(olddirfd) < 0)
+		tst_resm(TWARN | TERRNO, "close olddirfd failed");
+
+	if (newdirfd > 0 && close(newdirfd) < 0)
+		tst_resm(TWARN | TERRNO, "close newdirfd failed");
+
+	if (filefd > 0 && close(filefd) < 0)
+		tst_resm(TWARN | TERRNO, "close filefd failed");
+
+	if (mount_flag && umount(MNTPOINT) < 0)
+		tst_resm(TWARN | TERRNO, "umount %s failed", MNTPOINT);
+
+	if (device)
+		tst_release_device(NULL, device);
+
+	tst_rmdir();
 }

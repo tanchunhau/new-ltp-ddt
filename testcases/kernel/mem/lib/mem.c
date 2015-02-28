@@ -20,131 +20,183 @@
 #include "test.h"
 #include "usctest.h"
 #include "safe_macros.h"
-#include "_private.h"
+#include "safe_file_ops.h"
 #include "mem.h"
 #include "numa_helper.h"
 
 /* OOM */
 
-static int _alloc_mem(long int length, int testcase)
+static int alloc_mem(long int length, int testcase)
 {
-	void *s;
+	char *s;
+	long i, pagesz = getpagesize();
 
 	tst_resm(TINFO, "allocating %ld bytes.", length);
+
 	s = mmap(NULL, length, PROT_READ | PROT_WRITE,
 		 MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-	if (s == MAP_FAILED) {
-		if (testcase == OVERCOMMIT && errno == ENOMEM)
-			return 1;
-		else
-			tst_brkm(TBROK | TERRNO, cleanup, "mmap");
-	}
+	if (s == MAP_FAILED)
+		return errno;
+
 	if (testcase == MLOCK && mlock(s, length) == -1)
-		tst_brkm(TINFO | TERRNO, cleanup, "mlock");
+		return errno;
 #ifdef HAVE_MADV_MERGEABLE
 	if (testcase == KSM && madvise(s, length, MADV_MERGEABLE) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "madvise");
+		return errno;
 #endif
-	memset(s, '\a', length);
+	for (i = 0; i < length; i += pagesz)
+		s[i] = '\a';
 
 	return 0;
 }
 
-static void _test_alloc(int testcase, int lite)
+static void test_alloc(int testcase, int lite)
 {
-	if (lite)
-		_alloc_mem(TESTMEM + MB, testcase);
-	else
-		while (1)
-			if (_alloc_mem(LENGTH, testcase))
-				return;
+	int ret;
+
+	if (lite) {
+		ret = alloc_mem(TESTMEM + MB, testcase);
+	} else {
+		ret = 0;
+		while (!ret)
+			ret = alloc_mem(LENGTH, testcase);
+	}
+	exit(ret);
 }
 
-void oom(int testcase, int mempolicy, int lite)
+/*
+ * oom - allocates memory according to specified testcase and checks
+ *       desired outcome (e.g. child killed, operation failed with ENOMEM)
+ * @testcase: selects how child allocates memory
+ *            valid choices are: OVERCOMMIT, NORMAL, MLOCK and KSM
+ * @lite: if non-zero, child makes only single TESTMEM+MB allocation
+ *        if zero, child keeps allocating memory until it gets killed
+ *        or some operation fails
+ * @retcode: expected return code of child process
+ *           if matches child ret code, this function reports PASS,
+ *           otherwise it reports FAIL
+ * @allow_sigkill: if zero and child is killed, this function reports FAIL
+ *                 if non-zero, then if child is killed by SIGKILL
+ *                 it is considered as PASS
+ */
+void oom(int testcase, int lite, int retcode, int allow_sigkill)
 {
 	pid_t pid;
 	int status;
-#if HAVE_NUMA_H && HAVE_LINUX_MEMPOLICY_H && HAVE_NUMAIF_H \
-	&& HAVE_MPOL_CONSTANTS
-	unsigned long nmask = 0;
-	unsigned int node;
-
-	if (mempolicy)
-		node = get_a_numa_node(cleanup);
-	nmask += 1 << node;
-#endif
 
 	switch (pid = fork()) {
 	case -1:
 		tst_brkm(TBROK | TERRNO, cleanup, "fork");
 	case 0:
-#if HAVE_NUMA_H && HAVE_LINUX_MEMPOLICY_H && HAVE_NUMAIF_H \
-	&& HAVE_MPOL_CONSTANTS
-		if (mempolicy)
-			if (set_mempolicy(MPOL_BIND, &nmask, MAXNODES) == -1)
-				tst_brkm(TBROK | TERRNO, cleanup,
-					 "set_mempolicy");
-#endif
-		_test_alloc(testcase, lite);
-		exit(0);
+		test_alloc(testcase, lite);
 	default:
 		break;
 	}
+
 	tst_resm(TINFO, "expected victim is %d.", pid);
 	if (waitpid(-1, &status, 0) == -1)
 		tst_brkm(TBROK | TERRNO, cleanup, "waitpid");
 
-	if (testcase == OVERCOMMIT) {
-		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
-			tst_resm(TFAIL, "the victim unexpectedly failed: %d",
-				 status);
+	if (WIFSIGNALED(status)) {
+		if (allow_sigkill && WTERMSIG(status) == SIGKILL) {
+			tst_resm(TPASS, "victim signalled: (%d) %s",
+				SIGKILL,
+				tst_strsig(SIGKILL));
+		} else {
+			tst_resm(TFAIL, "victim signalled: (%d) %s",
+				WTERMSIG(status),
+				tst_strsig(WTERMSIG(status)));
+		}
+	} else	if (WIFEXITED(status) && WEXITSTATUS(status) == retcode) {
+		tst_resm(TPASS, "victim retcode: (%d) %s",
+				retcode, strerror(retcode));
 	} else {
-		if (!WIFSIGNALED(status) || WTERMSIG(status) != SIGKILL)
-			tst_resm(TFAIL, "the victim unexpectedly failed: %d",
-				 status);
+		tst_resm(TFAIL, "victim unexpectedly ended with retcode: %d, "
+				"expected: %d", WEXITSTATUS(status), retcode);
 	}
 }
 
-void testoom(int mempolicy, int lite, int numa)
+static void set_global_mempolicy(int mempolicy)
 {
-	long nodes[MAXNODES];
+#if HAVE_NUMA_H && HAVE_LINUX_MEMPOLICY_H && HAVE_NUMAIF_H \
+	&& HAVE_MPOL_CONSTANTS
+	unsigned long nmask[MAXNODES / BITS_PER_LONG] = { 0 };
+	int num_nodes, *nodes;
+	int ret;
 
-	if (numa && !mempolicy)
-		write_cpusets(get_a_numa_node(cleanup));
+	if (mempolicy) {
+		ret = get_allowed_nodes_arr(NH_MEMS|NH_CPUS, &num_nodes, &nodes);
+		if (ret != 0)
+			tst_brkm(TBROK|TERRNO, cleanup,
+				 "get_allowed_nodes_arr");
+		if (num_nodes < 2) {
+			tst_resm(TINFO, "mempolicy need NUMA system support");
+			free(nodes);
+			return;
+		}
+		switch(mempolicy) {
+		case MPOL_BIND:
+			/* bind the second node */
+			set_node(nmask, nodes[1]);
+			break;
+		case MPOL_INTERLEAVE:
+		case MPOL_PREFERRED:
+			if (num_nodes == 2) {
+				tst_resm(TINFO, "The mempolicy need "
+					 "more than 2 numa nodes");
+				free(nodes);
+				return;
+			} else {
+				/* Using the 2nd,3rd node */
+				set_node(nmask, nodes[1]);
+				set_node(nmask, nodes[2]);
+			}
+			break;
+		default:
+			tst_brkm(TBROK|TERRNO, cleanup, "Bad mempolicy mode");
+		}
+		if (set_mempolicy(mempolicy, nmask, MAXNODES) == -1)
+			tst_brkm(TBROK|TERRNO, cleanup, "set_mempolicy");
+	}
+#endif
+}
+
+void testoom(int mempolicy, int lite, int retcode, int allow_sigkill)
+{
+	set_global_mempolicy(mempolicy);
 
 	tst_resm(TINFO, "start normal OOM testing.");
-	oom(NORMAL, mempolicy, lite);
+	oom(NORMAL, lite, retcode, allow_sigkill);
 
 	tst_resm(TINFO, "start OOM testing for mlocked pages.");
-	oom(MLOCK, mempolicy, lite);
+	oom(MLOCK, lite, retcode, allow_sigkill);
 
-	if (access(PATH_KSM, F_OK) == -1)
-		tst_brkm(TCONF, NULL, "KSM configuration is not enabled");
-
-	tst_resm(TINFO, "start OOM testing for KSM pages.");
-	oom(KSM, mempolicy, lite);
+	if (access(PATH_KSM, F_OK) == -1) {
+		tst_resm(TINFO, "KSM configuration is not enabled, "
+			 "skip OOM test for KSM pags");
+	} else {
+		tst_resm(TINFO, "start OOM testing for KSM pages.");
+		oom(KSM, lite, retcode, allow_sigkill);
+	}
 }
 
 /* KSM */
 
-static void _check(char *path, long int value)
+static void check(char *path, long int value)
 {
-	FILE *fp;
-	char buf[BUFSIZ], fullpath[BUFSIZ];
+	char fullpath[BUFSIZ];
 	long actual_val;
 
-	snprintf(fullpath, BUFSIZ, "%s%s", PATH_KSM, path);
-	read_file(fullpath, buf);
-	actual_val = SAFE_STRTOL(cleanup, buf, 0, LONG_MAX);
+	snprintf(fullpath, BUFSIZ, PATH_KSM "%s", path);
+	SAFE_FILE_SCANF(cleanup, fullpath, "%ld", &actual_val);
 
 	tst_resm(TINFO, "%s is %ld.", path, actual_val);
 	if (actual_val != value)
 		tst_resm(TFAIL, "%s is not %ld.", path, value);
 }
 
-static void _wait_ksmd_done(void)
+static void wait_ksmd_done(void)
 {
-	char buf[BUFSIZ];
 	long pages_shared, pages_sharing, pages_volatile, pages_unshared;
 	long old_pages_shared = 0, old_pages_sharing = 0;
 	long old_pages_volatile = 0, old_pages_unshared = 0;
@@ -154,17 +206,17 @@ static void _wait_ksmd_done(void)
 		sleep(10);
 		count++;
 
-		read_file(PATH_KSM "pages_shared", buf);
-		pages_shared = SAFE_STRTOL(cleanup, buf, 0, LONG_MAX);
+		SAFE_FILE_SCANF(cleanup, PATH_KSM "pages_shared",
+				"%ld", &pages_shared);
 
-		read_file(PATH_KSM "pages_sharing", buf);
-		pages_sharing = SAFE_STRTOL(cleanup, buf, 0, LONG_MAX);
+		SAFE_FILE_SCANF(cleanup, PATH_KSM "pages_sharing",
+				"%ld", &pages_sharing);
 
-		read_file(PATH_KSM "pages_volatile", buf);
-		pages_volatile = SAFE_STRTOL(cleanup, buf, 0, LONG_MAX);
+		SAFE_FILE_SCANF(cleanup, PATH_KSM "pages_volatile",
+				"%ld", &pages_volatile);
 
-		read_file(PATH_KSM "pages_unshared", buf);
-		pages_unshared = SAFE_STRTOL(cleanup, buf, 0, LONG_MAX);
+		SAFE_FILE_SCANF(cleanup, PATH_KSM "pages_unshared",
+				"%ld", &pages_unshared);
 
 		if (pages_shared != old_pages_shared ||
 		    pages_sharing != old_pages_sharing ||
@@ -183,25 +235,25 @@ static void _wait_ksmd_done(void)
 		 count * 10);
 }
 
-static void _group_check(int run, int pages_shared, int pages_sharing,
+static void group_check(int run, int pages_shared, int pages_sharing,
 			 int pages_volatile, int pages_unshared,
 			 int sleep_millisecs, int pages_to_scan)
 {
 	/* wait for ksm daemon to scan all mergeable pages. */
-	_wait_ksmd_done();
+	wait_ksmd_done();
 
 	tst_resm(TINFO, "check!");
-	_check("run", run);
-	_check("pages_shared", pages_shared);
-	_check("pages_sharing", pages_sharing);
-	_check("pages_volatile", pages_volatile);
-	_check("pages_unshared", pages_unshared);
-	_check("sleep_millisecs", sleep_millisecs);
-	_check("pages_to_scan", pages_to_scan);
+	check("run", run);
+	check("pages_shared", pages_shared);
+	check("pages_sharing", pages_sharing);
+	check("pages_volatile", pages_volatile);
+	check("pages_unshared", pages_unshared);
+	check("sleep_millisecs", sleep_millisecs);
+	check("pages_to_scan", pages_to_scan);
 }
 
-static void _verify(char value, int proc, int start, int end,
-		    int start2, int end2)
+static void verify(char **memory, char value, int proc,
+		    int start, int end, int start2, int end2)
 {
 	int i, j;
 	void *s = NULL;
@@ -212,326 +264,313 @@ static void _verify(char value, int proc, int start, int end,
 
 	tst_resm(TINFO, "child %d verifies memory content.", proc);
 	memset(s, value, (end - start) * (end2 - start2));
-	if (memcmp(memory[proc][start], s, (end - start) * (end2 - start2))
+	if (memcmp(memory[start], s, (end - start) * (end2 - start2))
 	    != 0)
 		for (j = start; j < end; j++)
 			for (i = start2; i < end2; i++)
-				if (memory[proc][j][i] != value)
+				if (memory[j][i] != value)
 					tst_resm(TFAIL, "child %d has %c at "
 						 "%d,%d,%d.",
-						 proc, memory[proc][j][i], proc,
+						 proc, memory[j][i], proc,
 						 j, i);
 	free(s);
 }
 
 void write_memcg(void)
 {
-	char buf[BUFSIZ], mem[BUFSIZ];
+	SAFE_FILE_PRINTF(NULL, MEMCG_LIMIT, "%ld", TESTMEM);
 
-	snprintf(mem, BUFSIZ, "%ld", TESTMEM);
-	write_file(MEMCG_PATH_NEW "/memory.limit_in_bytes", mem);
+	SAFE_FILE_PRINTF(NULL, MEMCG_PATH_NEW "/tasks", "%d", getpid());
+}
 
-	snprintf(buf, BUFSIZ, "%d", getpid());
-	write_file(MEMCG_PATH_NEW "/tasks", buf);
+struct ksm_merge_data {
+	char data;
+	unsigned int mergeable_size;
+};
+
+static void ksm_child_memset(int child_num, int size, int total_unit,
+		 struct ksm_merge_data ksm_merge_data, char **memory)
+{
+	int i = 0, j;
+	int unit = size / total_unit;
+
+	tst_resm(TINFO, "child %d continues...", child_num);
+
+	if (ksm_merge_data.mergeable_size == size * MB) {
+		tst_resm(TINFO, "child %d allocates %d MB filled with '%c'",
+			child_num, size, ksm_merge_data.data);
+
+	} else {
+		tst_resm(TINFO, "child %d allocates %d MB filled with '%c'"
+				" except one page with 'e'",
+				child_num, size, ksm_merge_data.data);
+	}
+
+	for (j = 0; j < total_unit; j++) {
+		for (i = 0; (unsigned int)i < unit * MB; i++)
+			memory[j][i] = ksm_merge_data.data;
+	}
+
+	/* if it contains unshared page, then set 'e' char
+	 * at the end of the last page
+	 */
+	if (ksm_merge_data.mergeable_size < size * MB)
+		memory[j-1][i-1] = 'e';
+}
+
+static void create_ksm_child(int child_num, int size, int unit,
+		       struct ksm_merge_data *ksm_merge_data)
+{
+	int j, total_unit;
+	char **memory;
+
+	/* The total units in all */
+	total_unit = size / unit;
+
+	/* Apply for the space for memory */
+	memory = malloc(total_unit * sizeof(char *));
+	for (j = 0; j < total_unit; j++) {
+		memory[j] = mmap(NULL, unit * MB, PROT_READ|PROT_WRITE,
+			MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+		if (memory[j] == MAP_FAILED)
+			tst_brkm(TBROK|TERRNO, tst_exit, "mmap");
+#ifdef HAVE_MADV_MERGEABLE
+		if (madvise(memory[j], unit * MB, MADV_MERGEABLE) == -1)
+			tst_brkm(TBROK|TERRNO, tst_exit, "madvise");
+#endif
+	}
+
+	tst_resm(TINFO, "child %d stops.", child_num);
+	if (raise(SIGSTOP) == -1)
+		tst_brkm(TBROK|TERRNO, tst_exit, "kill");
+	fflush(stdout);
+
+	for (j = 0; j < 4; j++) {
+
+		ksm_child_memset(child_num, size, total_unit,
+				  ksm_merge_data[j], memory);
+
+		fflush(stdout);
+
+		tst_resm(TINFO, "child %d stops.", child_num);
+		if (raise(SIGSTOP) == -1)
+			tst_brkm(TBROK|TERRNO, tst_exit, "kill");
+
+		if (ksm_merge_data[j].mergeable_size < size * MB) {
+			verify(memory, 'e', child_num, total_unit - 1,
+				total_unit, unit * MB - 1, unit * MB);
+			verify(memory, ksm_merge_data[j].data, child_num,
+				0, total_unit, 0, unit * MB - 1);
+		} else {
+			verify(memory, ksm_merge_data[j].data, child_num,
+				0, total_unit, 0, unit * MB);
+		}
+	}
+
+	tst_resm(TINFO, "child %d finished.", child_num);
+}
+
+static void stop_ksm_children(int *child, int num)
+{
+	int k, status;
+
+	tst_resm(TINFO, "wait for all children to stop.");
+	for (k = 0; k < num; k++) {
+		if (waitpid(child[k], &status, WUNTRACED) == -1)
+			tst_brkm(TBROK|TERRNO, cleanup, "waitpid");
+		if (!WIFSTOPPED(status))
+			tst_brkm(TBROK, cleanup, "child %d was not stopped", k);
+	}
+}
+
+static void resume_ksm_children(int *child, int num)
+{
+	int k;
+
+	tst_resm(TINFO, "resume all children.");
+	for (k = 0; k < num; k++) {
+		if (kill(child[k], SIGCONT) == -1)
+			tst_brkm(TBROK|TERRNO, cleanup, "kill child[%d]", k);
+	}
+	fflush(stdout);
 }
 
 void create_same_memory(int size, int num, int unit)
 {
-	char buf[BUFSIZ];
-	int i, j, k;
-	int status;
-	int *child;
-	long ps, pages;
+	int i, j, status, *child;
+	unsigned long ps, pages;
+	struct ksm_merge_data **ksm_data;
+
+	struct ksm_merge_data ksm_data0[] = {
+	       {'c', size*MB}, {'c', size*MB}, {'d', size*MB}, {'d', size*MB},
+	};
+	struct ksm_merge_data ksm_data1[] = {
+	       {'a', size*MB}, {'b', size*MB}, {'d', size*MB}, {'d', size*MB-1},
+	};
+	struct ksm_merge_data ksm_data2[] = {
+	       {'a', size*MB}, {'a', size*MB}, {'d', size*MB}, {'d', size*MB},
+	};
 
 	ps = sysconf(_SC_PAGE_SIZE);
-	pages = 1024 * 1024 / ps;
+	pages = MB / ps;
 
-	child = malloc(num);
+	ksm_data = malloc((num - 3) * sizeof(struct ksm_merge_data *));
+	/* Since from third child, the data is same with the first child's */
+	for (i = 0; i < num - 3; i++) {
+		ksm_data[i] = malloc(4 * sizeof(struct ksm_merge_data));
+		for (j = 0; j < 4; j++) {
+			ksm_data[i][j].data = ksm_data0[j].data;
+			ksm_data[i][j].mergeable_size =
+				ksm_data0[j].mergeable_size;
+		}
+	}
+
+	child = malloc(num * sizeof(int));
 	if (child == NULL)
 		tst_brkm(TBROK | TERRNO, cleanup, "malloc");
 
-	memory = malloc(num * sizeof(**memory));
-	if (memory == NULL)
-		tst_brkm(TBROK | TERRNO, cleanup, "malloc");
-
-	/* Don't call cleanup in those children. Instead, do a cleanup from the
-	   parent after fetched children's status. */
-	switch (child[0] = fork()) {
-	case -1:
-		tst_brkm(TBROK | TERRNO, cleanup, "fork");
-	case 0:
-		tst_resm(TINFO, "child 0 stops.");
-		if (raise(SIGSTOP) == -1)
-			tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-
-		tst_resm(TINFO, "child 0 continues...");
-		tst_resm(TINFO, "child 0 allocates %d MB filled with 'c'.",
-			 size);
-		memory[0] = malloc(size / unit * sizeof(*memory));
-		if (memory[0] == NULL)
-			tst_brkm(TBROK | TERRNO, tst_exit, "malloc");
-		for (j = 0; j * unit < size; j++) {
-			memory[0][j] = mmap(NULL, unit * MB,
-					    PROT_READ | PROT_WRITE,
-					    MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-			if (memory[0][j] == MAP_FAILED)
-				tst_brkm(TBROK | TERRNO, tst_exit, "mmap");
-
-#ifdef HAVE_MADV_MERGEABLE
-			if (madvise(memory[0][j], unit * MB, MADV_MERGEABLE)
-			    == -1)
-				tst_brkm(TBROK | TERRNO, tst_exit, "madvise");
-#endif
-			for (i = 0; i < unit * MB; i++)
-				memory[0][j][i] = 'c';
-		}
-		tst_resm(TINFO, "child 0 stops.");
-		if (raise(SIGSTOP) == -1)
-			tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-
-		tst_resm(TINFO, "child 0 continues...");
-		_verify('c', 0, 0, size / unit, 0, unit * MB);
-		tst_resm(TINFO, "child 0 changes memory content to 'd'.");
-		for (j = 0; j < size / unit; j++) {
-			for (i = 0; i < unit * MB; i++)
-				memory[0][j][i] = 'd';
-		}
-		/* Unmerge. */
-		tst_resm(TINFO, "child 0 stops.");
-		if (raise(SIGSTOP) == -1)
-			tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-
-		tst_resm(TINFO, "child 0 continues...");
-		_verify('d', 0, 0, size / unit, 0, unit * MB);
-		/* Stop. */
-		tst_resm(TINFO, "child 0 stops.");
-		if (raise(SIGSTOP) == -1)
-			tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-		tst_resm(TINFO, "child 0 continues...");
-		exit(0);
-	}
-	switch (child[1] = fork()) {
-	case -1:
-		tst_brkm(TBROK | TERRNO, cleanup, "fork");
-	case 0:
-		tst_resm(TINFO, "child 1 stops.");
-		if (raise(SIGSTOP) == -1)
-			tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-		tst_resm(TINFO, "child 1 continues...");
-		tst_resm(TINFO, "child 1 allocates %d MB filled with 'a'.",
-			 size);
-		memory[1] = malloc(size / unit * sizeof(*memory));
-		if (memory[1] == NULL)
-			tst_brkm(TBROK | TERRNO, tst_exit, "malloc");
-		for (j = 0; j < size / unit; j++) {
-			memory[1][j] = mmap(NULL, unit * MB,
-					    PROT_READ | PROT_WRITE,
-					    MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-			if (memory[1][j] == MAP_FAILED)
-				tst_brkm(TBROK | TERRNO, tst_exit, "mmap");
-#ifdef HAVE_MADV_MERGEABLE
-			if (madvise(memory[1][j], unit * MB, MADV_MERGEABLE)
-			    == -1)
-				tst_brkm(TBROK | TERRNO, tst_exit, "madvise");
-#endif
-			for (i = 0; i < unit * MB; i++)
-				memory[1][j][i] = 'a';
-		}
-		tst_resm(TINFO, "child 1 stops.");
-		if (raise(SIGSTOP) == -1)
-			tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-		tst_resm(TINFO, "child 1 continues...");
-		_verify('a', 1, 0, size / unit, 0, unit * MB);
-		tst_resm(TINFO, "child 1 changes memory content to 'b'.");
-		for (j = 0; j < size / unit; j++) {
-			for (i = 0; i < unit * MB; i++)
-				memory[1][j][i] = 'b';
-		}
-		tst_resm(TINFO, "child 1 stops.");
-		if (raise(SIGSTOP) == -1)
-			tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-		tst_resm(TINFO, "child 1 continues...");
-		_verify('b', 1, 0, size / unit, 0, unit * MB);
-		tst_resm(TINFO, "child 1 changes memory content to 'd'");
-		for (j = 0; j < size / unit; j++) {
-			for (i = 0; i < unit * MB; i++)
-				memory[1][j][i] = 'd';
-		}
-		if (raise(SIGSTOP) == -1)
-			tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-
-		tst_resm(TINFO, "child 1 continues...");
-		_verify('d', 1, 0, size / unit, 0, unit * MB);
-		tst_resm(TINFO, "child 1 changes one page to 'e'.");
-		memory[1][size / unit - 1][unit * MB - 1] = 'e';
-
-		/* Unmerge. */
-		tst_resm(TINFO, "child 1 stops.");
-		if (raise(SIGSTOP) == -1)
-			tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-		tst_resm(TINFO, "child 1 continues...");
-		_verify('e', 1, size / unit - 1, size / unit,
-			unit * MB - 1, unit * MB);
-		_verify('d', 1, 0, size / unit - 1, 0, unit * MB - 1);
-
-		/* Stop. */
-		tst_resm(TINFO, "child 1 stops.");
-		if (raise(SIGSTOP) == -1)
-			tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-		tst_resm(TINFO, "child 1 continues...");
-		exit(0);
-	}
-	for (k = 2; k < num; k++) {
-		switch (child[k] = fork()) {
+	for (i = 0; i < num; i++) {
+		fflush(stdout);
+		switch (child[i] = fork()) {
 		case -1:
-			tst_brkm(TBROK | TERRNO, cleanup, "fork");
+			tst_brkm(TBROK|TERRNO, cleanup, "fork");
 		case 0:
-			tst_resm(TINFO, "child %d stops.", k);
-			if (raise(SIGSTOP) == -1)
-				tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-			tst_resm(TINFO, "child %d continues...", k);
-			tst_resm(TINFO, "child %d allocates %d "
-				 "MB filled with 'a'.", k, size);
-			memory[k] = malloc(size / unit * sizeof(*memory));
-			if (memory[k] == NULL)
-				tst_brkm(TBROK | TERRNO, tst_exit, "malloc");
-			for (j = 0; j < size / unit; j++) {
-				memory[k][j] = mmap(NULL, unit * MB,
-						    PROT_READ | PROT_WRITE,
-						    MAP_ANONYMOUS
-						    | MAP_PRIVATE, -1, 0);
-				if (memory[k][j] == MAP_FAILED)
-					tst_brkm(TBROK | TERRNO, cleanup,
-						 "mmap");
-#ifdef HAVE_MADV_MERGEABLE
-				if (madvise(memory[k][j], unit * MB,
-					    MADV_MERGEABLE) == -1)
-					tst_brkm(TBROK | TERRNO, cleanup,
-						 "madvise");
-#endif
-				for (i = 0; i < unit * MB; i++)
-					memory[k][j][i] = 'a';
+			if (i == 0) {
+				create_ksm_child(i, size, unit, ksm_data0);
+				exit(0);
+			} else if (i == 1) {
+				create_ksm_child(i, size, unit, ksm_data1);
+				exit(0);
+			} else if (i == 2) {
+				create_ksm_child(i, size, unit, ksm_data2);
+				exit(0);
+			} else {
+				create_ksm_child(i, size, unit, ksm_data[i-3]);
+				exit(0);
 			}
-			tst_resm(TINFO, "child %d stops.", k);
-			if (raise(SIGSTOP) == -1)
-				tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-			tst_resm(TINFO, "child %d continues...", k);
-			tst_resm(TINFO, "child %d changes memory content to "
-				 "'d'", k);
-			for (j = 0; j < size / unit; j++) {
-				for (i = 0; i < unit * MB; i++)
-					memory[k][j][i] = 'd';
-			}
-			/* Unmerge. */
-			tst_resm(TINFO, "child %d stops.", k);
-			if (raise(SIGSTOP) == -1)
-				tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-			tst_resm(TINFO, "child %d continues...", k);
-
-			/* Stop. */
-			tst_resm(TINFO, "child %d stops.", k);
-			if (raise(SIGSTOP) == -1)
-				tst_brkm(TBROK | TERRNO, tst_exit, "kill");
-			tst_resm(TINFO, "child %d continues...", k);
-			exit(0);
 		}
 	}
+
+	stop_ksm_children(child, num);
+
 	tst_resm(TINFO, "KSM merging...");
-	write_file(PATH_KSM "run", "1");
-	snprintf(buf, BUFSIZ, "%ld", size * pages * num);
-	write_file(PATH_KSM "pages_to_scan", buf);
-	write_file(PATH_KSM "sleep_millisecs", "0");
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "run", "1");
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "pages_to_scan", "%ld",
+			 size * pages *num);
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "sleep_millisecs", "0");
 
-	tst_resm(TINFO, "wait for all children to stop.");
-	for (k = 0; k < num; k++) {
-		if (waitpid(child[k], &status, WUNTRACED) == -1)
-			tst_brkm(TBROK | TERRNO, cleanup, "waitpid");
-		if (!WIFSTOPPED(status))
-			tst_brkm(TBROK, cleanup, "child %d was not stopped.",
-				 k);
-	}
-	tst_resm(TINFO, "resume all children.");
-	for (k = 0; k < num; k++) {
-		if (kill(child[k], SIGCONT) == -1)
-			tst_brkm(TBROK | TERRNO, cleanup, "kill child[%d]", k);
-	}
-	_group_check(1, 2, size * num * pages - 2, 0, 0, 0, size * pages * num);
+	resume_ksm_children(child, num);
+	group_check(1, 2, size * num * pages - 2, 0, 0, 0, size * pages * num);
 
-	tst_resm(TINFO, "wait for child 1 to stop.");
-	if (waitpid(child[1], &status, WUNTRACED) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "waitpid");
-	if (!WIFSTOPPED(status))
-		tst_brkm(TBROK, cleanup, "child 1 was not stopped.");
+	stop_ksm_children(child, num);
+	resume_ksm_children(child, num);
+	group_check(1, 3, size * num * pages - 3, 0, 0, 0, size * pages * num);
 
-	/* Child 1 changes all pages to 'b'. */
-	tst_resm(TINFO, "resume child 1.");
-	if (kill(child[1], SIGCONT) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "kill");
-	_group_check(1, 3, size * num * pages - 3, 0, 0, 0, size * pages * num);
+	stop_ksm_children(child, num);
+	resume_ksm_children(child, num);
+	group_check(1, 1, size * num * pages - 1, 0, 0, 0, size * pages * num);
 
-	tst_resm(TINFO, "wait for child 1 to stop.");
-	if (waitpid(child[1], &status, WUNTRACED) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "waitpid");
-	if (!WIFSTOPPED(status))
-		tst_brkm(TBROK, cleanup, "child 1 was not stopped.");
+	stop_ksm_children(child, num);
+	resume_ksm_children(child, num);
+	group_check(1, 1, size * num * pages - 2, 0, 1, 0, size * pages * num);
 
-	/* All children change pages to 'd'. */
-	tst_resm(TINFO, "resume all children.");
-	for (k = 0; k < num; k++) {
-		if (kill(child[k], SIGCONT) == -1)
-			tst_brkm(TBROK | TERRNO, cleanup, "kill child[%d]", k);
-	}
-	_group_check(1, 1, size * num * pages - 1, 0, 0, 0, size * pages * num);
+	stop_ksm_children(child, num);
 
-	tst_resm(TINFO, "wait for all children to stop.");
-	for (k = 0; k < num; k++) {
-		if (waitpid(child[k], &status, WUNTRACED) == -1)
-			tst_brkm(TBROK | TERRNO, cleanup, "waitpid");
-		if (!WIFSTOPPED(status))
-			tst_brkm(TBROK, cleanup, "child %d was not stopped.",
-				 k);
-	}
-	/* Child 1 changes pages to 'e'. */
-	tst_resm(TINFO, "resume child 1.");
-	if (kill(child[1], SIGCONT) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "kill");
-	_group_check(1, 1, size * num * pages - 2, 0, 1, 0, size * pages * num);
-
-	tst_resm(TINFO, "wait for child 1 to stop.");
-	if (waitpid(child[1], &status, WUNTRACED) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "waitpid");
-	if (!WIFSTOPPED(status))
-		tst_brkm(TBROK, cleanup, "child 1 was not stopped.");
-
-	tst_resm(TINFO, "resume all children.");
-	for (k = 0; k < num; k++) {
-		if (kill(child[k], SIGCONT) == -1)
-			tst_brkm(TBROK | TERRNO, cleanup, "kill child[%d]", k);
-	}
 	tst_resm(TINFO, "KSM unmerging...");
-	write_file(PATH_KSM "run", "2");
-	_group_check(2, 0, 0, 0, 0, 0, size * pages * num);
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "run", "2");
 
-	tst_resm(TINFO, "wait for all children to stop.");
-	for (k = 0; k < num; k++) {
-		if (waitpid(child[k], &status, WUNTRACED) == -1)
-			tst_brkm(TBROK | TERRNO, cleanup, "waitpid");
-		if (!WIFSTOPPED(status))
-			tst_brkm(TBROK, cleanup, "child %d was not stopped.",
-				 k);
-	}
-	tst_resm(TINFO, "resume all children.");
-	for (k = 0; k < num; k++) {
-		if (kill(child[k], SIGCONT) == -1)
-			tst_brkm(TBROK | TERRNO, cleanup, "kill child[%d]", k);
-	}
+	resume_ksm_children(child, num);
+	group_check(2, 0, 0, 0, 0, 0, size * pages * num);
+
 	tst_resm(TINFO, "stop KSM.");
-	write_file(PATH_KSM "run", "0");
-	_group_check(0, 0, 0, 0, 0, 0, size * pages * num);
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "run", "0");
+	group_check(0, 0, 0, 0, 0, 0, size * pages * num);
+
 	while (waitpid(-1, &status, WUNTRACED | WCONTINUED) > 0)
 		if (WEXITSTATUS(status) != 0)
 			tst_resm(TFAIL, "child exit status is %d",
 				 WEXITSTATUS(status));
+}
+
+void test_ksm_merge_across_nodes(unsigned long nr_pages)
+{
+	char **memory;
+	int i, ret;
+	int num_nodes, *nodes;
+	unsigned long length;
+	unsigned long pagesize;
+
+#if HAVE_NUMA_H && HAVE_LINUX_MEMPOLICY_H && HAVE_NUMAIF_H \
+	&& HAVE_MPOL_CONSTANTS
+	unsigned long nmask[MAXNODES / BITS_PER_LONG] = { 0 };
+#endif
+
+	ret = get_allowed_nodes_arr(NH_MEMS|NH_CPUS, &num_nodes, &nodes);
+	if (ret != 0)
+		tst_brkm(TBROK|TERRNO, cleanup, "get_allowed_nodes_arr");
+	if (num_nodes < 2) {
+		tst_resm(TINFO, "need NUMA system support");
+		free(nodes);
+		return;
+	}
+
+	pagesize = sysconf(_SC_PAGE_SIZE);
+	length = nr_pages * pagesize;
+
+	memory = malloc(num_nodes * sizeof(char *));
+	for (i = 0; i < num_nodes; i++) {
+		memory[i] = mmap(NULL, length, PROT_READ|PROT_WRITE,
+			    MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+		if (memory[i] == MAP_FAILED)
+			tst_brkm(TBROK|TERRNO, tst_exit, "mmap");
+#ifdef HAVE_MADV_MERGEABLE
+		if (madvise(memory[i], length, MADV_MERGEABLE) == -1)
+			tst_brkm(TBROK|TERRNO, tst_exit, "madvise");
+#endif
+
+#if HAVE_NUMA_H && HAVE_LINUX_MEMPOLICY_H && HAVE_NUMAIF_H \
+	&& HAVE_MPOL_CONSTANTS
+		clean_node(nmask);
+		set_node(nmask, nodes[i]);
+		/*
+		 * Use mbind() to make sure each node contains
+		 * length size memory.
+		 */
+		ret = mbind(memory[i], length, MPOL_BIND, nmask, MAXNODES, 0);
+		if (ret == -1)
+			tst_brkm(TBROK|TERRNO, tst_exit, "mbind");
+#endif
+
+		memset(memory[i], 10, length);
+	}
+
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "sleep_millisecs", "0");
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "pages_to_scan", "%ld",
+			 nr_pages * num_nodes);
+	/*
+	 * merge_across_nodes setting can be changed only when there
+	 * are no ksm shared pages in system, so set run 2 to unmerge
+	 * pages first, then to 1 after changing merge_across_nodes,
+	 * to remerge according to the new setting.
+	 */
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "run", "2");
+	wait_ksmd_done();
+	tst_resm(TINFO, "Start to test KSM with merge_across_nodes=1");
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "merge_across_nodes", "1");
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "run", "1");
+	group_check(1, 1, nr_pages * num_nodes - 1, 0, 0, 0,
+		    nr_pages * num_nodes);
+
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "run", "2");
+	wait_ksmd_done();
+	tst_resm(TINFO, "Start to test KSM with merge_across_nodes=0");
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "merge_across_nodes", "0");
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "run", "1");
+	group_check(1, num_nodes, nr_pages * num_nodes - num_nodes,
+		    0, 0, 0, nr_pages * num_nodes);
+
+	SAFE_FILE_PRINTF(cleanup, PATH_KSM "run", "2");
+	wait_ksmd_done();
 }
 
 void check_ksm_options(int *size, int *num, int *unit)
@@ -566,22 +605,230 @@ void ksm_usage(void)
 	printf("  -u      Memory allocation unit in MB\n");
 }
 
+/* THP */
+
+static int alloc_transparent_hugepages(int nr_thps, int hg_aligned)
+{
+	unsigned long hugepagesize, size;
+	void *addr;
+	int ret;
+
+	hugepagesize = read_meminfo("Hugepagesize:") * KB;
+	size = nr_thps * hugepagesize;
+
+	if (hg_aligned) {
+		ret = posix_memalign(&addr, hugepagesize, size);
+		if (ret != 0) {
+			printf("posix_memalign failed\n");
+			return -1;
+		}
+	} else {
+		addr = mmap(NULL, size, PROT_READ|PROT_WRITE,
+			    MAP_PRIVATE|MAP_ANON, -1, 0);
+		if (addr == MAP_FAILED) {
+			perror("mmap");
+			return -1;
+		}
+	}
+
+	memset(addr, 10, size);
+
+	tst_resm(TINFO, "child[%d] stop here", getpid());
+	/*
+	 * stop here, until the father finish to calculate
+	 * all the transparent hugepages.
+	 */
+	if (raise(SIGSTOP) == -1) {
+		perror("kill");
+		return -1;
+	}
+
+	return 0;
+}
+
+static void khugepaged_scan_done(void)
+{
+	int changing = 1, count = 0, interval;
+	long old_pages_collapsed = 0, old_max_ptes_none = 0,
+		old_pages_to_scan = 0;
+	long pages_collapsed = 0, max_ptes_none = 0, pages_to_scan = 0;
+
+	/*
+	 * as 'khugepaged' run 100% during testing, so 5s is an
+	 * enough interval for us to recognize if 'khugepaged'
+	 * finish scanning proceses' anonymous hugepages or not.
+	 */
+	interval = 5;
+
+	while (changing) {
+		sleep(interval);
+		count++;
+
+		SAFE_FILE_SCANF(cleanup, PATH_KHPD "pages_collapsed",
+			       "%ld", &pages_collapsed);
+		SAFE_FILE_SCANF(cleanup, PATH_KHPD "max_ptes_none",
+			       "%ld", &max_ptes_none);
+		SAFE_FILE_SCANF(cleanup, PATH_KHPD "pages_to_scan",
+			       "%ld", &pages_to_scan);
+
+		if (pages_collapsed != old_pages_collapsed ||
+		    max_ptes_none != old_max_ptes_none ||
+		    pages_to_scan != old_pages_to_scan) {
+			old_pages_collapsed = pages_collapsed;
+			old_max_ptes_none = max_ptes_none;
+			old_pages_to_scan = pages_to_scan;
+		} else {
+			changing = 0;
+		}
+	}
+
+	tst_resm(TINFO, "khugepaged daemon takes %ds to scan all thp pages",
+		 count * interval);
+}
+
+static void verify_thp_size(int *children, int nr_children, int nr_thps)
+{
+	FILE *fp;
+	char path[BUFSIZ], buf[BUFSIZ], line[BUFSIZ];
+	int i, ret;
+	long expect_thps; /* the amount of per child's transparent hugepages */
+	long val, actual_thps;
+	long hugepagesize;
+
+	hugepagesize = read_meminfo("Hugepagesize:");
+	expect_thps = nr_thps * hugepagesize;
+
+	for (i = 0; i < nr_children; i++) {
+		actual_thps = 0;
+
+		snprintf(path, BUFSIZ, "/proc/%d/smaps", children[i]);
+		fp = fopen(path, "r");
+		while (fgets(line, BUFSIZ, fp) != NULL) {
+			ret = sscanf(line, "%64s %ld", buf, &val);
+			if (ret == 2 && val != 0) {
+				if (strcmp(buf, "AnonHugePages:") == 0)
+					actual_thps += val;
+			}
+		}
+
+		if (actual_thps != expect_thps)
+			tst_resm(TFAIL, "child[%d] got %ldKB thps - expect %ld"
+				"KB thps", getpid(), actual_thps, expect_thps);
+		fclose(fp);
+	}
+}
+
+void test_transparent_hugepage(int nr_children, int nr_thps,
+			       int hg_aligned, int mempolicy)
+{
+	unsigned long hugepagesize, memfree;
+	int i, *pids, ret, status;
+
+	if (mempolicy)
+		set_global_mempolicy(mempolicy);
+
+	memfree = read_meminfo("MemFree:");
+	tst_resm(TINFO, "The current MemFree is %luMB", memfree / KB);
+	if (memfree < MB)
+		tst_resm(TCONF, "Not enough memory for testing");
+
+	hugepagesize = read_meminfo("Hugepagesize:");
+	tst_resm(TINFO, "The current Hugepagesize is %luMB", hugepagesize / KB);
+
+	pids = malloc(nr_children * sizeof(int));
+	if (pids == NULL)
+		tst_brkm(TBROK | TERRNO, cleanup, "malloc");
+
+	for (i = 0; i < nr_children; i++) {
+		switch (pids[i] = fork()) {
+		case -1:
+			tst_brkm(TBROK | TERRNO, cleanup, "fork");
+
+		case 0:
+			ret = alloc_transparent_hugepages(nr_thps, hg_aligned);
+			exit(ret);
+		}
+	}
+
+	tst_resm(TINFO, "Stop all children...");
+	for (i = 0; i < nr_children; i++) {
+		if (waitpid(pids[i], &status, WUNTRACED) == -1)
+			tst_brkm(TBROK|TERRNO, cleanup, "waitpid");
+		if (!WIFSTOPPED(status))
+			tst_brkm(TBROK, cleanup,
+				 "child[%d] was not stoppted", pids[i]);
+	}
+
+	tst_resm(TINFO, "Start to scan all transparent hugepages...");
+	khugepaged_scan_done();
+
+	tst_resm(TINFO, "Start to verify transparent hugepage size...");
+	verify_thp_size(pids, nr_children, nr_thps);
+
+	tst_resm(TINFO, "Wake up all children...");
+	for (i = 0; i < nr_children; i++) {
+		if (kill(pids[i], SIGCONT) == -1)
+			tst_brkm(TBROK | TERRNO, cleanup,
+				 "signal continue child[%d]", pids[i]);
+	}
+
+	/* wait all children finish their task */
+	for (i = 0; i < nr_children; i++) {
+		if (waitpid(pids[i], &status, 0) == -1)
+			tst_brkm(TBROK|TERRNO, cleanup, "waitpid %d", pids[i]);
+
+		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+			tst_resm(TFAIL, "the child[%d] unexpectedly failed:"
+				 " %d", pids[i], status);
+	}
+}
+
+void check_thp_options(int *nr_children, int *nr_thps)
+{
+	if (opt_nr_children)
+		*nr_children = SAFE_STRTOL(NULL, opt_nr_children_str,
+					   0, LONG_MAX);
+	if (opt_nr_thps)
+		*nr_thps = SAFE_STRTOL(NULL, opt_nr_thps_str, 0, LONG_MAX);
+}
+
+void thp_usage(void)
+{
+	printf("  -n      Number of processes\n");
+	printf("  -N      Number of transparent hugepages\n");
+}
+
 /* cpuset/memcg */
 
-static void _gather_cpus(char *cpus, long nd)
+static void gather_node_cpus(char *cpus, long nd)
 {
 	int ncpus = 0;
 	int i;
+	long online;
 	char buf[BUFSIZ];
+	char path[BUFSIZ], path1[BUFSIZ];
 
 	while (path_exist(PATH_SYS_SYSTEM "/cpu/cpu%d", ncpus))
 		ncpus++;
 
-	for (i = 0; i < ncpus; i++)
-		if (path_exist(PATH_SYS_SYSTEM "/node/node%ld/cpu%d", nd, i)) {
+	for (i = 0; i < ncpus; i++) {
+		snprintf(path, BUFSIZ,
+			 PATH_SYS_SYSTEM "/node/node%ld/cpu%d", nd, i);
+		if (path_exist(path)) {
+			snprintf(path1, BUFSIZ, "%s/online", path);
+			/*
+			 * if there is no online knob, then the cpu cannot
+			 * be taken offline
+			 */
+			if (path_exist(path1)) {
+				SAFE_FILE_SCANF(cleanup, path1, "%ld", &online);
+				if (online == 0)
+					continue;
+			}
 			sprintf(buf, "%d,", i);
 			strcat(cpus, buf);
 		}
+	}
 	/* Remove the trailing comma. */
 	cpus[strlen(cpus) - 1] = '\0';
 }
@@ -637,7 +884,7 @@ void write_cpuset_files(char *prefix, char *filename, char *buf)
 		} else
 			tst_brkm(TBROK | TERRNO, cleanup, "open %s", path);
 	}
-	if (write(fd, buf, strlen(buf)) != strlen(buf))
+	if (write(fd, buf, strlen(buf)) != (ssize_t)strlen(buf))
 		tst_brkm(TBROK | TERRNO, cleanup, "write %s", path);
 	close(fd);
 }
@@ -650,11 +897,21 @@ void write_cpusets(long nd)
 	snprintf(buf, BUFSIZ, "%ld", nd);
 	write_cpuset_files(CPATH_NEW, "mems", buf);
 
-	_gather_cpus(cpus, nd);
-	write_cpuset_files(CPATH_NEW, "cpus", cpus);
+	gather_node_cpus(cpus, nd);
+	/*
+	 * If the 'nd' node doesn't contain any CPUs,
+	 * the first ID of CPU '0' will be used as
+	 * the value of cpuset.cpus.
+	 */
+	if (strlen(cpus) != 0) {
+		write_cpuset_files(CPATH_NEW, "cpus", cpus);
+	} else {
+		tst_resm(TINFO, "No CPUs in the node%ld; "
+				"using only CPU0", nd);
+		write_cpuset_files(CPATH_NEW, "cpus", "0");
+	}
 
-	snprintf(buf, BUFSIZ, "%d", getpid());
-	write_file(CPATH_NEW "/tasks", buf);
+	SAFE_FILE_PRINTF(NULL, CPATH_NEW "/tasks", "%d", getpid());
 }
 
 void umount_mem(char *path, char *path_new)
@@ -676,7 +933,7 @@ void umount_mem(char *path, char *path_new)
 	if ((fd != -1) && (fp != NULL)) {
 		while (fgets(value, BUFSIZ, fp) != NULL)
 			if (write(fd, value, strlen(value) - 1)
-			    != strlen(value) - 1)
+			    != (ssize_t)strlen(value) - 1)
 				tst_resm(TWARN | TERRNO, "write %s", s);
 	}
 	if (fd != -1)
@@ -731,7 +988,7 @@ unsigned int get_a_numa_node(void (*cleanup_fn) (void))
 	ret = get_allowed_nodes(NH_MEMS | NH_CPUS, 1, &nd1);
 	switch (ret) {
 	case 0:
-		tst_resm(TINFO, "get node%lu.", nd1);
+		tst_resm(TINFO, "get node%u.", nd1);
 		return nd1;
 	case -3:
 		tst_brkm(TCONF, cleanup_fn, "requires a NUMA system that has "
@@ -782,13 +1039,12 @@ long read_meminfo(char *item)
 void set_sys_tune(char *sys_file, long tune, int check)
 {
 	long val;
-	char buf[BUFSIZ], path[BUFSIZ];
+	char path[BUFSIZ];
 
 	tst_resm(TINFO, "set %s to %ld", sys_file, tune);
 
-	snprintf(path, BUFSIZ, "%s%s", PATH_SYSVM, sys_file);
-	snprintf(buf, BUFSIZ, "%ld", tune);
-	write_file(path, buf);
+	snprintf(path, BUFSIZ, PATH_SYSVM "%s", sys_file);
+	SAFE_FILE_PRINTF(NULL, path, "%ld", tune);
 
 	if (check) {
 		val = get_sys_tune(sys_file);
@@ -800,44 +1056,20 @@ void set_sys_tune(char *sys_file, long tune, int check)
 
 long get_sys_tune(char *sys_file)
 {
-	char buf[BUFSIZ], path[BUFSIZ];
+	char path[BUFSIZ];
+	long tune;
 
-	snprintf(path, BUFSIZ, "%s%s", PATH_SYSVM, sys_file);
-	read_file(path, buf);
-	return SAFE_STRTOL(cleanup, buf, LONG_MIN, LONG_MAX);
-}
+	snprintf(path, BUFSIZ, PATH_SYSVM "%s", sys_file);
+	SAFE_FILE_SCANF(NULL, path, "%ld", &tune);
 
-void write_file(char *filename, char *buf)
-{
-	int fd;
-
-	fd = open(filename, O_WRONLY);
-	if (fd == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "open %s", filename);
-	if (write(fd, buf, strlen(buf)) != strlen(buf))
-		tst_brkm(TBROK | TERRNO, cleanup, "write %s", filename);
-	close(fd);
-}
-
-void read_file(char *filename, char *retbuf)
-{
-	int fd;
-
-	fd = open(filename, O_RDONLY);
-	if (fd == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "open %s", filename);
-	if (read(fd, retbuf, BUFSIZ) < 0)
-		tst_brkm(TBROK | TERRNO, cleanup, "read %s", filename);
-	close(fd);
+	return tune;
 }
 
 void update_shm_size(size_t * shm_size)
 {
-	char buf[BUFSIZ];
 	size_t shmmax;
 
-	read_file(PATH_SHMMAX, buf);
-	shmmax = SAFE_STRTOUL(cleanup, buf, 0, ULONG_MAX);
+	SAFE_FILE_SCANF(cleanup, PATH_SHMMAX, "%ld", &shmmax);
 	if (*shm_size > shmmax) {
 		tst_resm(TINFO, "Set shm_size to shmmax: %ld", shmmax);
 		*shm_size = shmmax;

@@ -61,7 +61,7 @@ int main(int ac, char **av)
 	FILE *rea, *writ;
 
 	int lc;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL)
@@ -70,7 +70,7 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		writ = fopen(fnamebuf, "w");
 		if (writ == NULL)
@@ -158,7 +158,7 @@ forkone:
 	tst_exit();
 }
 
-static void setup()
+static void setup(void)
 {
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	umask(0);
@@ -170,7 +170,7 @@ static void setup()
 	strcat(fnamebuf, pbuf);
 }
 
-static void cleanup()
+static void cleanup(void)
 {
 	TEST_CLEANUP;
 	tst_rmdir();

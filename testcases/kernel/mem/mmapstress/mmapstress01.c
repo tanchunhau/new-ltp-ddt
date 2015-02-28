@@ -164,8 +164,7 @@ int main(int argc, char *argv[])
 	progname = *argv;
 	tst_tmpdir();
 	if (argc < 2) {
-		tst_resm(TBROK, "usage: %s %s\n", progname, usage);
-		tst_exit();
+		tst_brkm(TBROK, NULL, "usage: %s %s\n", progname, usage);
 	}
 
 	while ((c = getopt(argc, argv, "S:omdlrf:p:t:")) != -1) {
@@ -291,8 +290,8 @@ int main(int argc, char *argv[])
 		anyfail();
 	}
 
-	if ((buf = (uchar_t *) malloc(pagesize)) == NULL
-	    || (pidarray = (pid_t *) malloc(nprocs * sizeof(pid_t))) == NULL) {
+	if ((buf = malloc(pagesize)) == NULL
+	    || (pidarray = malloc(nprocs * sizeof(pid_t))) == NULL) {
 		perror("malloc error");
 		anyfail();
 	}
@@ -643,7 +642,7 @@ int fileokay(char *file, uchar_t * expbuf)
 		perror("lseek");
 		anyfail();
 	}
-	readbuf = (uchar_t *) malloc(pagesize);
+	readbuf = malloc(pagesize);
 
 	if (statbuf.st_size - sparseoffset > SIZE_MAX) {
 		fprintf(stderr, "size_t overflow when setting up map\n");
@@ -719,7 +718,7 @@ unsigned int initrand(void)
 	 */
 	srand((unsigned int)getpid());
 	seed = rand();
-	srand((unsigned int)time((time_t *) 0));
+	srand((unsigned int)time(NULL));
 	seed = (seed ^ rand()) % 100000;
 	srand48((long int)seed);
 	return (seed);
@@ -735,10 +734,7 @@ void ok_exit()
 
 int anyfail()
 {
-	tst_resm(TFAIL, "Test failed");
-	tst_rmdir();
-	tst_exit();
-	return 0;
+	tst_brkm(TFAIL, tst_rmdir, "Test failed");
 }
 
 /*****  **      **      *****/

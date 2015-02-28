@@ -91,15 +91,13 @@
 #include <sys/param.h>
 #include <stdio.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 #include "config.h"
 
-/* Global Variables */
-char *TCID = "unshare01";	/* Test program identifier. */
+char *TCID = "unshare01";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 #ifdef HAVE_UNSHARE
 
@@ -121,7 +119,7 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*	      On success - Exits calling tst_exit(). With '0' return code.  */
 /*									    */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -146,7 +144,7 @@ extern void cleanup()
 /*	      On success - returns 0.				       */
 /*									    */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -159,7 +157,7 @@ int main(int ac, char **av)
 	pid_t pid1;
 	int lc;
 	int rval;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -167,7 +165,7 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 
 			pid1 = fork();	//call to fork()
@@ -295,7 +293,6 @@ int main(int ac, char **av)
 #else
 int main(void)
 {
-	tst_resm(TCONF, "unshare is undefined.");
-	tst_exit();
+	tst_brkm(TCONF, NULL, "unshare is undefined.");
 }
 #endif

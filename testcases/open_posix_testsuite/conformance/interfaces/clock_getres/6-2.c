@@ -28,7 +28,7 @@
 
 #define NUMINVALIDTESTS 8
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec res;
 	int invalid_tests[NUMINVALIDTESTS] = {
@@ -54,11 +54,8 @@ int main(int argc, char *argv[])
 	if (failure) {
 		printf("At least one test FAILED -- see above\n");
 		return PTS_FAIL;
-	} else {
-		printf("All tests PASSED\n");
-		return PTS_PASS;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("All tests PASSED\n");
+	return PTS_PASS;
 }

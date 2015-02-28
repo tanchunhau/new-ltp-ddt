@@ -54,8 +54,8 @@
 #include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-char *TCID = "get_robust_list01";	/* test program identifier.              */
-int TST_TOTAL = 5;		/* total number of tests in this file.   */
+char *TCID = "get_robust_list01";
+int TST_TOTAL = 5;
 
 struct robust_list {
 	struct robust_list *next;
@@ -68,6 +68,7 @@ struct robust_list_head {
 };
 
 int exp_enos[] = { ESRCH, EPERM, EFAULT, 0 };
+static pid_t unused_pid;
 
 void setup(void);
 void cleanup(void);
@@ -75,10 +76,9 @@ void cleanup(void);
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	struct robust_list_head head;
 	size_t len_ptr;		/* size of structure struct robust_list_head */
-	int retval;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 	len_ptr = sizeof(struct robust_list_head);
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * The get_robust_list function fails with EFAULT if the size of the
@@ -98,9 +98,9 @@ int main(int argc, char **argv)
 		 * argument.
 		 */
 
-		TEST(retval = syscall(__NR_get_robust_list, 0,
+		TEST(ltp_syscall(__NR_get_robust_list, 0,
 				      (struct robust_list_head *)&head,
-				      (size_t *) NULL));
+				      NULL));
 
 		if (TEST_RETURN == -1) {
 			if (TEST_ERRNO == EFAULT)
@@ -114,8 +114,8 @@ int main(int argc, char **argv)
 			tst_resm(TFAIL,
 				 "get_robust_list succeeded unexpectedly");
 
-		TEST(retval = syscall(__NR_get_robust_list, 0,
-				      (struct robust_list_head **)NULL,
+		TEST(ltp_syscall(__NR_get_robust_list, 0,
+				      NULL,
 				      &len_ptr));
 
 		if (TEST_RETURN) {
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
 		 * find the task specified by the pid argument.
 		 */
 
-		TEST(retval = syscall(__NR_get_robust_list, UINT16_MAX,
+		TEST(ltp_syscall(__NR_get_robust_list, unused_pid,
 				      (struct robust_list_head *)&head,
 				      &len_ptr));
 
@@ -151,7 +151,7 @@ int main(int argc, char **argv)
 			tst_resm(TFAIL,
 				 "get_robust_list succeeded unexpectedly");
 
-		TEST(retval = syscall(__NR_get_robust_list, 0,
+		TEST(ltp_syscall(__NR_get_robust_list, 0,
 				      (struct robust_list_head **)&head,
 				      &len_ptr));
 
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 		if (setuid(1) == -1)
 			tst_brkm(TBROK | TERRNO, cleanup, "setuid(1) failed");
 
-		TEST(retval = syscall(__NR_get_robust_list, 1,
+		TEST(ltp_syscall(__NR_get_robust_list, 1,
 				      (struct robust_list_head *)&head,
 				      &len_ptr));
 
@@ -191,6 +191,8 @@ void setup(void)
 	tst_require_root(NULL);
 
 	TEST_EXP_ENOS(exp_enos);
+
+	unused_pid = tst_get_unused_pid(cleanup);
 
 	TEST_PAUSE;
 }

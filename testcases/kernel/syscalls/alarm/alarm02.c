@@ -93,12 +93,12 @@
 #include "test.h"
 #include "usctest.h"
 
-void setup();
-void cleanup();
-void alarm_received();
+void setup(void);
+void cleanup(void);
+void alarm_received(int sig);
 
-char *TCID = "alarm02";		/* Test program identifier.    */
-int TST_TOTAL = 3;		/* Total number of test cases. */
+char *TCID = "alarm02";
+int TST_TOTAL = 3;
 
 int received_alarm = 0;		/* Indicates a SIGALRM was received */
 
@@ -107,7 +107,7 @@ int main(int ac, char **av)
 
 	/* Parameters for usc code  */
 	int lc;
-	char *msg;
+	const char *msg;
 
 	/* Parameters for alarm test */
 	char *buf[] = { "-1", "ULONG_MAX", "ULONG_MAX+1" };
@@ -122,7 +122,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -131,12 +131,12 @@ int main(int ac, char **av)
 
 			TEST(alarm(sec[i]));
 			alarm(0);
-			if (TEST_RETURN != 0)
+			if (TEST_RETURN != 0) {
 				tst_resm(TFAIL,
 					 "alarm(%lu) returned %ld, when %u was "
 					 "expected for value %s",
 					 sec[i], TEST_RETURN, exp[i], buf[i]);
-			else if (STD_FUNCTIONAL_TEST) {
+			} else {
 				if (received_alarm == 1) {
 					tst_resm(TFAIL,
 						 "alarm(%lu) returned %ldu but an "
@@ -162,10 +162,9 @@ int main(int ac, char **av)
 
 	cleanup();
 	tst_exit();
-
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -174,12 +173,12 @@ void setup()
 
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 }
 
-void alarm_received()
+void alarm_received(int sig)
 {
 	received_alarm = 1;
 }

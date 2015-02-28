@@ -100,7 +100,7 @@ static void check_functionality(int i);
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(ac, av, options, &help);
 	if (msg != NULL)
@@ -111,17 +111,14 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			addr = shmat(*(TC[i].shmid), TC[i].addr, TC[i].flags);
 			if (addr == (void *)-1) {
 				tst_brkm(TFAIL | TERRNO, cleanup, "shmat");
 			} else {
-				if (STD_FUNCTIONAL_TEST)
-					check_functionality(i);
-				else
-					tst_resm(TPASS, "shmat call succeeded");
+				check_functionality(i);
 			}
 
 			/*

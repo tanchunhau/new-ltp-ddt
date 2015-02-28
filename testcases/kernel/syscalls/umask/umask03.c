@@ -65,7 +65,7 @@ void cleanup(void);
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	struct stat statbuf;
 	int mskval = 0000;
@@ -80,8 +80,8 @@ int main(int argc, char **argv)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (umask(mskval = 0077), i = 1; mskval < 01000;
 		     i++, umask(++mskval)) {
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
  * setup
  *	performs all ONE TIME setup for this test
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -142,7 +142,7 @@ void setup()
  *	performs all ONE TIME cleanup for this test at completion or
  *	premature exit
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified

@@ -296,7 +296,7 @@ static void children_number(void)
 }
 #endif
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	int ret;
 
@@ -340,6 +340,7 @@ int main(int argc, char *argv[])
 		output("Process-shared attributes won't be tested\n");
 	if ((cs < 0) || (monotonic < 0))
 		output("Alternative clock won't be tested\n");
+	fflush(stdout);
 #endif
 
 	if (monotonic < 0)
@@ -517,8 +518,8 @@ int main(int argc, char *argv[])
 		/* Create all the children */
 		if (td->fork == 0) {
 			do {
-				tmp = (children_t *) malloc(sizeof(children_t));
-				if (tmp != (children_t *) NULL) {
+				tmp = malloc(sizeof(children_t));
+				if (tmp != NULL) {
 					ret = pthread_create(&(tmp->data.t),
 							     &ta, child, NULL);
 					if (ret != 0) {
@@ -542,8 +543,8 @@ int main(int argc, char *argv[])
 				UNRESOLVED(ret, "Unable to create any thread");
 		} else {
 			do {
-				tmp = (children_t *) malloc(sizeof(children_t));
-				if (tmp != (children_t *) NULL) {
+				tmp = malloc(sizeof(children_t));
+				if (tmp != NULL) {
 					tmp->data.p = fork();
 					if (tmp->data.p == 0) {
 						child(NULL);

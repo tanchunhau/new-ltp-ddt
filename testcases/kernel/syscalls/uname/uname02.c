@@ -70,7 +70,7 @@ int exp_enos[] = { 14, 0 };	/* 0 terminated list of expected errnos */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -78,7 +78,7 @@ int main(int ac, char **av)
 	setup();		/* global setup */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * call the system call with the TEST() macro
@@ -123,7 +123,7 @@ void cleanup(void)
 
 }
 #else
-int main()
+int main(void)
 {
 	tst_resm(TCONF, NULL, "test is not available on uClinux");
 }

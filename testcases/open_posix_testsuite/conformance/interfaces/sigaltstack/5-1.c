@@ -19,12 +19,12 @@
 
 #define SIGTOTEST SIGUSR1
 
-void handler(int signo)
+void handler()
 {
 	printf("Do nothing useful\n");
 }
 
-int main()
+int main(void)
 {
 
 	stack_t alternate_s, current_s;
@@ -39,7 +39,7 @@ int main()
 		return PTS_UNRESOLVED;
 	}
 
-	if ((alternate_s.ss_sp = (void *)malloc(SIGSTKSZ)) == NULL) {
+	if ((alternate_s.ss_sp = malloc(SIGSTKSZ)) == NULL) {
 		perror
 		    ("Unexpected error while attempting to setup test pre-conditions");
 		return PTS_UNRESOLVED;
@@ -48,13 +48,13 @@ int main()
 	alternate_s.ss_flags = 0;
 	alternate_s.ss_size = SIGSTKSZ;
 
-	if (sigaltstack(&alternate_s, (stack_t *) 0) == -1) {
+	if (sigaltstack(&alternate_s, NULL) == -1) {
 		perror
 		    ("Unexpected error while attempting to setup test pre-conditions");
 		return PTS_UNRESOLVED;
 	}
 
-	if (sigaltstack((stack_t *) 0, &current_s) == -1) {
+	if (sigaltstack(NULL, &current_s) == -1) {
 		perror
 		    ("Unexpected error while attempting to setup test pre-conditions");
 		return PTS_UNRESOLVED;

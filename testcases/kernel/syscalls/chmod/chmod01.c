@@ -93,7 +93,7 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;
 	int lc;
-	char *msg;
+	const char *msg;
 	int i;
 	int mode;
 
@@ -107,7 +107,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			mode = modes[i];
@@ -120,33 +120,28 @@ int main(int ac, char **av)
 					 mode);
 				continue;
 			}
-			if (STD_FUNCTIONAL_TEST) {
-				if (stat(TESTFILE, &stat_buf) < 0)
-					tst_brkm(TFAIL | TERRNO, cleanup,
-						 "stat(%s) failed", TESTFILE);
-				stat_buf.st_mode &= ~S_IFREG;
+			if (stat(TESTFILE, &stat_buf) < 0)
+				tst_brkm(TFAIL | TERRNO, cleanup,
+					 "stat(%s) failed", TESTFILE);
+			stat_buf.st_mode &= ~S_IFREG;
 
-				if (stat_buf.st_mode == mode)
-					tst_resm(TPASS, "Functionality of "
-						 "chmod(%s, %#o) successful",
-						 TESTFILE, mode);
-				else
-					tst_resm(TFAIL, "%s: Incorrect "
-						 "modes 0%03o, Expected 0%03o",
-						 TESTFILE, stat_buf.st_mode,
-						 mode);
-			} else
-				tst_resm(TPASS, "call succeeded");
+			if (stat_buf.st_mode == mode)
+				tst_resm(TPASS, "Functionality of "
+					 "chmod(%s, %#o) successful",
+					 TESTFILE, mode);
+			else
+				tst_resm(TFAIL, "%s: Incorrect "
+					 "modes 0%03o, Expected 0%03o",
+					 TESTFILE, stat_buf.st_mode,
+					 mode);
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
-
 }
 
-void setup()
+void setup(void)
 {
 	int fd;
 
@@ -166,7 +161,7 @@ void setup()
 
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

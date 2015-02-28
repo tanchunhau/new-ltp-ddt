@@ -116,23 +116,24 @@
 #include <signal.h>
 #include "test.h"
 #include "usctest.h"
+#include "safe_macros.h"
+#include "compat_16.h"
 
-void setup();
-void cleanup();
-
-char *TCID = "chown01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+TCID_DEFINE(chown01);
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0, 0 };
 
 char fname[255];
-int fd, uid, gid;
-char *buf = "davef";
+int uid, gid;
+
+static void setup(void);
+static void cleanup(void);
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -143,27 +144,25 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
-		TEST(chown(fname, uid, gid));
+		TEST(CHOWN(cleanup, fname, uid, gid));
 
-		if (TEST_RETURN == -1)
+		if (TEST_RETURN == -1) {
 			tst_resm(TFAIL | TTERRNO, "chown(%s, %d,%d) failed",
 				 fname, uid, gid);
-		else {
-			if (STD_FUNCTIONAL_TEST)
-				tst_resm(TPASS, "chown(%s, %d,%d) returned %ld",
-					 fname, uid, gid, TEST_RETURN);
+		} else {
+			tst_resm(TPASS, "chown(%s, %d,%d) returned %ld",
+				 fname, uid, gid, TEST_RETURN);
 		}
 
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
-void setup()
+static void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -172,21 +171,15 @@ void setup()
 
 	tst_tmpdir();
 
-	uid = geteuid();
-	gid = getegid();
+	UID16_CHECK((uid = geteuid()), "chown", cleanup)
+	GID16_CHECK((gid = getegid()), "chown", cleanup)
 
 	sprintf(fname, "t_%d", getpid());
-	if ((fd = open(fname, O_RDWR | O_CREAT, 0700)) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup,
-			 "open(%s, O_RDWR|O_CREAT,0700) failed", fname);
-	else if (write(fd, &buf, strlen(buf)) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup,
-			 "write(%s, &buf, strlen(buf)) failed", fname);
-	else if (close(fd) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "close(%s) failed", fname);
+
+	SAFE_FILE_PRINTF(cleanup, fname, "davef");
 }
 
-void cleanup()
+static void cleanup(void)
 {
 	TEST_CLEANUP;
 

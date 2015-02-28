@@ -124,8 +124,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "dup04";		/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "dup04";
+int TST_TOTAL = 2;
 
 int exp_enos[] = { 0, 0 };
 
@@ -134,7 +134,7 @@ int fd[2];
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -145,7 +145,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(dup(fd[0]));
 
@@ -153,13 +153,9 @@ int main(int ac, char **av)
 			tst_resm(TFAIL | TERRNO,
 				 "dup of read side of pipe failed");
 		else {
-			if (STD_FUNCTIONAL_TEST) {
-				tst_resm(TPASS,
-					 "dup(%d) read side of syspipe returned %ld",
-					 fd[0], TEST_RETURN);
-
-			} else
-				Tst_count++;
+			tst_resm(TPASS,
+				 "dup(%d) read side of syspipe returned %ld",
+				 fd[0], TEST_RETURN);
 
 			if (close(TEST_RETURN) == -1)
 				tst_brkm(TBROK, cleanup, "close failed");
@@ -167,18 +163,14 @@ int main(int ac, char **av)
 
 		TEST(dup(fd[1]));
 
-		if (TEST_RETURN == -1)
+		if (TEST_RETURN == -1) {
 			tst_resm(TFAIL | TTERRNO,
 				 "dup of write side of pipe failed");
-		else {
+		} else {
+			tst_resm(TPASS,
+				 "dup(%d) write side of syspipe returned %ld",
+				 fd[1], TEST_RETURN);
 
-			if (STD_FUNCTIONAL_TEST) {
-				tst_resm(TPASS,
-					 "dup(%d) write side of syspipe returned %ld",
-					 fd[1], TEST_RETURN);
-
-			} else
-				Tst_count++;
 
 			if (close(TEST_RETURN) == -1)
 				tst_brkm(TBROK | TTERRNO, cleanup,
@@ -191,7 +183,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	fd[0] = -1;
 
@@ -205,7 +197,7 @@ void setup()
 		tst_brkm(TBROK | TERRNO, cleanup, "pipe failed");
 }
 
-void cleanup()
+void cleanup(void)
 {
 	int i;
 

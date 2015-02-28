@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2000 Silicon Graphics, Inc.  All Rights Reserved.
+ *               Author: William Roske
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -30,65 +31,8 @@
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  */
 
-/* $Id: usctest.h,v 1.14 2009/08/28 10:03:01 vapier Exp $ */
-
-/**********************************************************
- *
- *    IRIX/Linux Feature Test and Evaluation - Silicon Graphics, Inc.
- *
- *    FUNCTION NAME 	: usctest.h
- *
- *    FUNCTION TITLE	: System Call Test Macros
- *
- *    SYNOPSIS:
- *	See DESCRIPTION below.
- *
- *    AUTHOR		: William Roske
- *
- *    INITIAL RELEASE	: UNICOS 7.0
- *
- *    DESCRIPTION
- * 	TEST(SCALL) - calls a system call
- *	TEST_VOID(SCALL) - same as TEST() but for syscalls with no return value.
- *	TEST_CLEANUP - print the log of errno return counts if STD_ERRNO_LOG
- *		       is set.
- *	TEST_PAUSEF(HAND) - Pause for SIGUSR1 if the pause flag is set.
- *		      Use "hand" as the interrupt handling function
- *	TEST_PAUSE -  Pause for SIGUSR1 if the pause flag is set.
- *		      Use internal function to do nothing on signal and go on.
- *	TEST_LOOPING(COUNTER) - Conditional to check if test should
- *		      loop.  Evaluates to TRUE (1) or FALSE (0).
- *	TEST_ERROR_LOG(eno) - log that this errno was received,
- *		      if STD_ERRNO_LOG is set.
- *	TEST_EXP_ENOS(array) - set the bits in TEST_VALID_ENO array at
- *		      positions specified in integer "array"
- *
- *    RETURN VALUE
- * 	TEST(SCALL) - Global Variables set:
- *			long TEST_RETURN=return code from SCALL
- *			int TEST_ERRNO=value of errno at return from SCALL
- * 	TEST_VOID(SCALL) - Global Variables set:
- *			int TEST_ERRNO=value of errno at return from SCALL
- *	TEST_CLEANUP - None.
- *	TEST_PAUSEF(HAND) -  None.
- *	TEST_PAUSE -  None.
- *	TEST_LOOPING(COUNTER) - True if COUNTER < STD_LOOP_COUNT or
- *			STD_INFINITE is set.
- *	TEST_ERROR_LOG(eno) - None
- *	TEST_EXP_ENOS(array) - None
- *
- *    KNOWN BUGS
- *      If you use the TEST_PAUSE or TEST_LOOPING macros, you must
- *	link in parse_opts.o, which contains the code for those functions.
- *
- *#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#**/
-
-#ifndef  __USCTEST_H__
-#define __USCTEST_H__ 1
-
-#ifndef _SC_CLK_TCK
-#include <unistd.h>
-#endif
+#ifndef __USCTEST_H__
+#define __USCTEST_H__
 
 #include <sys/param.h>
 
@@ -103,81 +47,42 @@
 #endif
 #endif
 
-#ifndef CRAY
-#ifndef BSIZE
-#define BSIZE BBSIZE
-#endif
-#endif
-
-/***********************************************************************
- * Define option_t structure type.
- * Entries in this struct are used by the parse_opts routine
- * to indicate valid options and return option arguments
- ***********************************************************************/
-typedef struct {
-  char *option;      	/* Valid option string (one option only) like "a:" */
-  int  *flag;		/* pointer to location to set true if option given */
-  char **arg;		/* pointer to location to place argument, if needed */
-} option_t;
-
 /***********************************************************************
  * The following globals are defined in parse_opts.c but must be
  * externed here because they are used in the macros defined below.
  ***********************************************************************/
-extern int STD_FUNCTIONAL_TEST,	/* turned off by -f to not do functional test */
-           STD_TIMING_ON,	/* turned on by -t to print timing stats */
-           STD_PAUSE,		/* turned on by -p to pause before loop */
-           STD_INFINITE,	/* turned on by -i0 to loop forever */
+extern int STD_TIMING_ON,	/* turned on by -t to print timing stats */
            STD_LOOP_COUNT,	/* changed by -in to set loop count to n */
            STD_ERRNO_LOG,	/* turned on by -e to log errnos returned */
-           STD_ERRNO_LIST[],	/* counts of errnos returned.  indexed by errno */
-	   STD_COPIES,
-	   STD_argind;
-
-extern float STD_LOOP_DURATION, /* wall clock time to iterate */
-	     STD_LOOP_DELAY;    /* delay time after each iteration */
+           STD_ERRNO_LIST[];	/* counts of errnos returned.  indexed by errno */
 
 #define USC_MAX_ERRNO	2000
 
-/**********************************************************************
- * Prototype for parse_opts routine
- **********************************************************************/
-extern char *parse_opts(int ac, char **av, const option_t *user_optarr, void (*uhf)());
-
+typedef struct {
+	char *option;	/* Valid option string (one option only) like "a:"  */
+	int  *flag;	/* Pointer to location to set true if option given  */
+	char **arg;	/* Pointer to location to place argument, if needed */
+} option_t;
 
 /*
- * define a structure
+ * The parse_opts library routine takes that argc and argv parameters recevied
+ * by main() and an array of structures defining user options. It parses the
+ * command line setting flag and argument locations associated with the
+ * options. The uhf() is a function called to print user defined help.
+ *
+ * The function returns a pointer to an error message if an error occurs or in
+ * case of success NULL.
  */
+const char *parse_opts(int ac, char **av, const option_t *user_optarr, void
+                       (*uhf)(void));
+
 struct usc_errno_t {
     int flag;
 };
 
-/***********************************************************************
- ****
- ****
- ****
- **********************************************************************/
-#ifdef  _USC_LIB_
-
 extern long TEST_RETURN;
 extern int TEST_ERRNO;
 extern struct usc_errno_t TEST_VALID_ENO[USC_MAX_ERRNO];
-
-#else
-/***********************************************************************
- * Global array of bit masks to indicate errnos that are expected.
- * Bits set by TEST_EXP_ENOS() macro and used by TEST_CLEANUP() macro.
- ***********************************************************************/
-struct usc_errno_t TEST_VALID_ENO[USC_MAX_ERRNO];
-
-/***********************************************************************
- * Globals for returning the return code and errno from the system call
- * test macros.
- ***********************************************************************/
-long TEST_RETURN;
-int TEST_ERRNO;
-
-#endif  /* _USC_LIB_ */
 
 /***********************************************************************
  * structure for timing accumulator and counters
@@ -194,10 +99,6 @@ struct tblock {
  * in the macros that follow.
  ***********************************************************************/
 extern struct tblock tblock;
-extern void STD_go();
-extern int (*_TMP_FUNC)(void);
-extern void STD_opts_help();
-
 
 /***********************************************************************
  * TEST: calls a system call
@@ -247,24 +148,6 @@ do { \
 		tst_resm(TINFO, "ERRNO %d:\tReceived %d Times%s", \
 			i, STD_ERRNO_LIST[i], \
 			TEST_VALID_ENO[i].flag ? "" : " ** UNEXPECTED **"); \
-	} \
-} while (0)
-
-/***********************************************************************
- * TEST_PAUSEF: Pause for SIGUSR1 if the pause flag is set.
- * 		 Set the user specified function as the interrupt
- *		 handler instead of "STD_go"
- *
- * parameters:
- *	none
- *
- ***********************************************************************/
-#define TEST_PAUSEF(HANDLER) \
-do { \
-	if (STD_PAUSE) { \
-		_TMP_FUNC = (int (*)())signal(SIGUSR1, HANDLER); \
-		pause(); \
-		signal(SIGUSR1, (void (*)())_TMP_FUNC); \
 	} \
 } while (0)
 
@@ -320,4 +203,4 @@ do { \
 	} \
 } while (0)
 
-#endif  /* end of __USCTEST_H__ */
+#endif /* __USCTEST_H__ */

@@ -194,7 +194,7 @@ CASE_UNK(0, 1, 1, 1, 0, 0, 0, 0, "Explicit FIFO max param"),
 void scenar_init(void)
 {
 	int ret = 0;
-	int i;
+	unsigned int i;
 	int old;
 	long pagesize, minstacksize;
 	long tsa, tss, tps;
@@ -384,8 +384,7 @@ void scenar_init(void)
 				 * it upon test termination.
 				 * We will alloc with a simulated guardsize
 				 * of 1 pagesize */
-				scenarii[i].bottom = malloc(minstacksize +
-							    pagesize);
+				scenarii[i].bottom = malloc(minstacksize + pagesize);
 				if (scenarii[i].bottom == NULL)
 					UNRESOLVED(errno, "Unable to alloc"
 						   " enough memory for"
@@ -465,7 +464,8 @@ void scenar_init(void)
  */
 void scenar_fini(void)
 {
-	int ret = 0, i;
+	int ret = 0;
+	unsigned int i;
 
 	for (i = 0; i < NSCENAR; i++) {
 		if (scenarii[i].bottom != NULL)
@@ -482,13 +482,13 @@ void scenar_fini(void)
 	}
 }
 
-int sc;
+unsigned int sc;
 
 #ifdef STD_MAIN
 
 extern void *threaded(void *arg);
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	int ret = 0;
 	pthread_t child;

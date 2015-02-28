@@ -49,7 +49,7 @@ static struct tst_checkpoint checkpoint;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t pid;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
@@ -61,7 +61,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		if ((pid = FORK_OR_VFORK()) == -1)
 			tst_brkm(TBROK|TERRNO, cleanup, "fork #1 failed");
@@ -108,7 +108,7 @@ static void setup(char *app)
 
 	TST_RESOURCE_COPY(cleanup, TEST_APP, NULL);
 	
-	TST_CHECKPOINT_INIT(&checkpoint);
+	TST_CHECKPOINT_CREATE(&checkpoint);
 
 	TEST_PAUSE;
 }

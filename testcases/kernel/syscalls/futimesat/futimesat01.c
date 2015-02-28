@@ -23,17 +23,6 @@
  *	This test case will verify basic function of futimesat
  *	added by kernel 2.6.16 or up.
  *
- * USAGE:  <for command-line>
- * futimesat01 [-c n] [-e] [-i n] [-I x] [-P x] [-t] [-p]
- * where:
- *      -c n : Run n copies simultaneously.
- *      -e   : Turn on errno logging.
- *      -i n : Execute test n times.
- *      -I x : Execute test for x seconds.
- *      -p   : Pause for SIGUSR1 before starting
- *      -P x : Pause for x seconds between iterations.
- *      -t   : Turn on syscall timing.
- *
  * Author
  *	Yi Yang <yyangcdl@cn.ibm.com>
  *
@@ -65,8 +54,8 @@ void setup();
 void cleanup();
 void setup_every_copy();
 
-char *TCID = "futimesat01";	/* Test program identifier.    */
-int TST_TOTAL = TEST_CASES;	/* Total number of test cases. */
+char *TCID = "futimesat01";
+int TST_TOTAL = TEST_CASES;
 char pathname[256];
 char testfile[256];
 char testfile2[256];
@@ -80,13 +69,13 @@ struct timeval times[2];
 
 int myfutimesat(int dirfd, const char *filename, struct timeval *times)
 {
-	return syscall(__NR_futimesat, dirfd, filename, times);
+	return ltp_syscall(__NR_futimesat, dirfd, filename, times);
 }
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int i;
 
 	/* Disable test if the version of the kernel is less than 2.6.16 */
@@ -96,46 +85,26 @@ int main(int ac, char **av)
 		exit(0);
 	}
 
-	/***************************************************************
-	 * parse standard options
-	 ***************************************************************/
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
-	/***************************************************************
-	 * perform global setup for test
-	 ***************************************************************/
 	setup();
 
-	/***************************************************************
-	 * check looping state if -c option given
-	 ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		setup_every_copy();
 
-		Tst_count = 0;
+		tst_count = 0;
 
-		/*
-		 * Call futimesat
-		 */
 		for (i = 0; i < TST_TOTAL; i++) {
 			gettimeofday(&times[0], NULL);
 			gettimeofday(&times[1], NULL);
 			TEST(myfutimesat(fds[i], filenames[i], times));
 
-			/* check return code */
 			if (TEST_ERRNO == expected_errno[i]) {
-
-			/***************************************************************
-			 * only perform functional verification if flag set (-f not given)
-			 ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "futimesat() returned the expected  errno %d: %s",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO));
-				}
+				tst_resm(TPASS,
+					 "futimesat() returned the expected  errno %d: %s",
+					 TEST_ERRNO,
+					 strerror(TEST_ERRNO));
 			} else {
 				TEST_ERROR_LOG(TEST_ERRNO);
 				tst_resm(TFAIL,
@@ -146,15 +115,11 @@ int main(int ac, char **av)
 
 	}
 
-	/***************************************************************
-	 * cleanup and exit
-	 ***************************************************************/
 	cleanup();
-
-	return (0);
+	tst_exit();
 }
 
-void setup_every_copy()
+void setup_every_copy(void)
 {
 	/* Initialize test dir and file names */
 	sprintf(pathname, "futimesattestdir%d", getpid());
@@ -202,33 +167,18 @@ void setup_every_copy()
 	filenames[1] = testfile3;
 }
 
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- ***************************************************************/
-void setup()
+void setup(void)
 {
-
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
 	TEST_PAUSE;
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- *		completion or premature exit.
- ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/* Remove them */
 	unlink(testfile2);
 	unlink(testfile3);
 	unlink(testfile);
 	rmdir(pathname);
 
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
 	TEST_CLEANUP;
-
 }

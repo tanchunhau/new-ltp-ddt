@@ -29,12 +29,12 @@
 
 stack_t altstack1;
 
-void handler(int signo)
+void handler()
 {
 	printf("Just a dummy handler\n");
 }
 
-int main()
+int main(void)
 {
 
 	struct sigaction act;
@@ -48,7 +48,7 @@ int main()
 		return PTS_UNRESOLVED;
 	}
 
-	if ((altstack1.ss_sp = (void *)malloc(SIGSTKSZ)) == NULL) {
+	if ((altstack1.ss_sp = malloc(SIGSTKSZ)) == NULL) {
 		perror
 		    ("Unexpected error while attempting to setup test pre-conditions");
 		return PTS_UNRESOLVED;
@@ -57,7 +57,7 @@ int main()
 	altstack1.ss_flags = SS_DISABLE + 1;
 	altstack1.ss_size = SIGSTKSZ;
 
-	if (sigaltstack(&altstack1, (stack_t *) 0) != -1) {
+	if (sigaltstack(&altstack1, NULL) != -1) {
 		printf("Test FAILED: Expected return value of -1.\n");
 		return PTS_FAIL;
 	}

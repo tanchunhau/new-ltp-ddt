@@ -92,8 +92,8 @@
 				 */
 #define TESTFILE	"testfile"
 
-char *TCID = "chmod07";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "chmod07";
+int TST_TOTAL = 1;
 
 void setup();			/* Main setup function for the test */
 void cleanup();			/* Main cleanup function for the test */
@@ -102,7 +102,7 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat(2) struct contents */
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -111,7 +111,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call chmod(2) with specified mode argument
@@ -125,33 +125,25 @@ int main(int ac, char **av)
 			continue;
 		}
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Get the testfile information using
+		 * stat(2).
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Get the testfile information using
-			 * stat(2).
-			 */
-			if (stat(TESTFILE, &stat_buf) == -1)
-				tst_brkm(TFAIL | TTERRNO, cleanup,
-					 "stat failed");
+		if (stat(TESTFILE, &stat_buf) == -1)
+			tst_brkm(TFAIL | TTERRNO, cleanup,
+				 "stat failed");
 
-			/* Check for expected mode permissions */
-			if ((stat_buf.st_mode & PERMS) == PERMS)
-				tst_resm(TPASS, "Functionality of "
-					 "chmod(%s, %#o) successful",
-					 TESTFILE, PERMS);
-			else
-				tst_resm(TFAIL, "%s: Incorrect modes 0%03o; "
-					 "expected 0%03o", TESTFILE,
-					 stat_buf.st_mode, PERMS);
-		} else
-			tst_resm(TPASS, "call succeeded");
+		/* Check for expected mode permissions */
+		if ((stat_buf.st_mode & PERMS) == PERMS)
+			tst_resm(TPASS, "Functionality of "
+				 "chmod(%s, %#o) successful",
+				 TESTFILE, PERMS);
+		else
+			tst_resm(TFAIL, "%s: Incorrect modes 0%03o; "
+				 "expected 0%03o", TESTFILE,
+				 stat_buf.st_mode, PERMS);
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -162,7 +154,7 @@ int main(int ac, char **av)
  *  Create a test file under temporary directory and close it
  *  Change the ownership of test file to that of "ltpuser1" user.
  */
-void setup()
+void setup(void)
 {
 	struct passwd *ltpuser;	/* password struct for ltpuser1 */
 	struct group *ltpgroup;	/* group struct for ltpuser1 */
@@ -203,7 +195,7 @@ void setup()
 			 group1_gid);
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

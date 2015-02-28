@@ -65,8 +65,8 @@ void setup();
 void cleanup();
 void setup_every_copy();
 
-char *TCID = "fstatat01";	/* Test program identifier.    */
-int TST_TOTAL = TEST_CASES;	/* Total number of test cases. */
+char *TCID = "fstatat01";
+int TST_TOTAL = TEST_CASES;
 char pathname[256];
 char testfile[256];
 char testfile2[256];
@@ -93,25 +93,25 @@ struct stat statbuf;
 int myfstatat(int dirfd, const char *filename, struct stat64 *statbuf,
 	      int flags)
 {
-	return syscall(__NR_fstatat64, dirfd, filename, statbuf, flags);
+	return ltp_syscall(__NR_fstatat64, dirfd, filename, statbuf, flags);
 }
 #elif (defined __NR_newfstatat) && (__NR_newfstatat != 0)
 int myfstatat(int dirfd, const char *filename, struct stat *statbuf, int flags)
 {
-	return syscall(__NR_newfstatat, dirfd, filename, statbuf, flags);
+	return ltp_syscall(__NR_newfstatat, dirfd, filename, statbuf, flags);
 }
 #else
 /* stub - will never run */
 int myfstatat(int dirfd, const char *filename, struct stat *statbuf, int flags)
 {
-	return syscall(0, dirfd, filename, statbuf, flags);
+	return ltp_syscall(0, dirfd, filename, statbuf, flags);
 }
 #endif
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int i;
 
 	if ((tst_kvercmp(2, 6, 16)) < 0)
@@ -127,17 +127,15 @@ int main(int ac, char **av)
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		setup_every_copy();
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			TEST(myfstatat
 			     (fds[i], filenames[i], &statbuf, flags[i]));
 
 			if (TEST_ERRNO == expected_errno[i]) {
-
-				if (STD_FUNCTIONAL_TEST)
-					tst_resm(TPASS | TTERRNO,
-						 "fstatat failed as expected");
+				tst_resm(TPASS | TTERRNO,
+					 "fstatat failed as expected");
 			} else
 				tst_resm(TFAIL | TTERRNO, "fstatat failed");
 		}
@@ -148,7 +146,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void setup_every_copy()
+void setup_every_copy(void)
 {
 	/* Initialize test dir and file names */
 	sprintf(pathname, "fstatattestdir%d", getpid());
@@ -198,7 +196,7 @@ void setup_every_copy()
 	filenames[1] = testfile3;
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -206,7 +204,7 @@ void setup()
 	TEST_PAUSE;
 }
 
-void cleanup()
+void cleanup(void)
 {
 	unlink(testfile2);
 	unlink(testfile3);

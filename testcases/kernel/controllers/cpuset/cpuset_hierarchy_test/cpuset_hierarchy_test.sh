@@ -22,13 +22,13 @@
 #                                                                              #
 ################################################################################
 
-cd $LTPROOT/testcases/bin
-
-. ./cpuset_funcs.sh
-
-export TCID="cpuset04"
+export TCID="cpuset_hierarchy"
 export TST_TOTAL=32
 export TST_COUNT=1
+
+. cpuset_funcs.sh
+
+check
 
 nr_cpus=$NR_CPUS
 nr_mems=$N_NODES
@@ -463,7 +463,7 @@ do
 			exit_status=1
 		fi
 	fi
-	: $((TST_COUNT++))
+	TST_COUNT=$(($TST_COUNT + 1))
 done
 
 exit $exit_status

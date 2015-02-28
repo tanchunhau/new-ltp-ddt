@@ -68,8 +68,8 @@ struct robust_list_head {
 #include "test.h"
 #include "usctest.h"
 
-char *TCID = "set_robust_list01";	/* test program identifier.              */
-int TST_TOTAL = 2;		/* total number of tests in this file.   */
+char *TCID = "set_robust_list01";
+int TST_TOTAL = 2;
 
 int exp_enos[] = { EINVAL, 0 };
 
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 #ifdef __NR_set_robust_list
 	int lc;
 #endif
-	char *msg;
+	const char *msg;
 #ifdef __NR_set_robust_list
 	struct robust_list_head head;
 	size_t len;		/* size of structure struct robust_list_head */
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 	len = sizeof(struct robust_list_head);
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * The set_robust_list function fails with EINVAL if the len argument

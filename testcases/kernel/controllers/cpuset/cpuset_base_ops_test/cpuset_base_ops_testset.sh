@@ -22,13 +22,13 @@
 #                                                                              #
 ################################################################################
 
-cd $LTPROOT/testcases/bin
-
-. ./cpuset_funcs.sh
-
-export TCID="cpuset01"
+export TCID="cpuset_base_ops"
 export TST_TOTAL=97
 export TST_COUNT=1
+
+. cpuset_funcs.sh
+
+check
 
 nr_cpus=$NR_CPUS
 nr_mems=$N_NODES
@@ -97,7 +97,7 @@ base_op_test()
 			exit_status=1
 		fi
 	fi
-	: $((TST_COUNT++))
+	TST_COUNT=$(($TST_COUNT + 1))
 }
 
 test_cpus()
@@ -117,14 +117,23 @@ test_cpus()
 		0-$((nr_cpus-1))			0-$((nr_cpus-1))
 		-1					WRITE_ERROR
 		0-$nr_cpus				WRITE_ERROR
-		0-					WRITE_ERROR
 		0--$((nr_cpus-1))			WRITE_ERROR
-		0,1-$((nr_cpus-2)),$((nr_cpus-1))	0-$((nr_cpus-1))
-		0,1-$((nr_cpus-2)),			0-$((nr_cpus-2))
 		0AAA					WRITE_ERROR
 		AAA					WRITE_ERROR
 	EOF
 	# while read cpus result
+
+	if [ $nr_cpus -ge 3 ]; then
+		base_op_test "$CPUSET/1/cpus" "0,1-$((nr_cpus-2)),$((nr_cpus-1))" "0-$((nr_cpus-1))"
+		base_op_test "$CPUSET/1/cpus" "0,1-$((nr_cpus-2))," "0-$((nr_cpus-2))"
+	fi
+
+	tst_kvercmp2 3 0 0 "RHEL6:2.6.32"
+	if [ $? -eq 0 ]; then
+		base_op_test "$CPUSET/1/cpus" "0-" "WRITE_ERROR"
+	else
+		base_op_test "$CPUSET/1/cpus" "0-" "0"
+	fi
 }
 
 test_mems()
@@ -144,14 +153,23 @@ test_mems()
 		0-$((nr_mems-1))			0-$((nr_mems-1))
 		-1					WRITE_ERROR
 		0-$nr_mems				WRITE_ERROR
-		0-					WRITE_ERROR
 		0--$((nr_mems-1))			WRITE_ERROR
-		0,1-$((nr_mems-2)),$((nr_mems-1))	0-$((nr_mems-1))
-		0,1-$((nr_mems-2)),			0-$((nr_mems-2))
 		0AAA					WRITE_ERROR
 		AAA					WRITE_ERROR
 	EOF
 	# while read mems result
+
+	if [ $nr_mems -ge 3 ]; then
+		base_op_test "$CPUSET/1/mems" "0,1-$((nr_mems-2)),$((nr_mems-1))" "0-$((nr_mems-1))"
+		base_op_test "$CPUSET/1/mems" "0,1-$((nr_mems-2))," "0-$((nr_mems-2))"
+	fi
+
+	tst_kvercmp2 3 0 0 "RHEL6:2.6.32"
+	if [ $? -eq 0 ]; then
+		base_op_test "$CPUSET/1/mems" "0-" "WRITE_ERROR"
+	else
+		base_op_test "$CPUSET/1/mems" "0-" "0"
+	fi
 }
 
 test_flags()
@@ -190,7 +208,7 @@ attach_task_test()
 	if [ $? -ne 0 ]; then
 		exit_status=1
 		cleanup
-		: $((TST_COUNT++))
+		TST_COUNT=$(($TST_COUNT + 1))
 		return
 	fi
 
@@ -199,7 +217,7 @@ attach_task_test()
 	if [ $? -ne 0 ]; then
 		exit_status=1
 		cleanup
-		: $((TST_COUNT++))
+		TST_COUNT=$(($TST_COUNT + 1))
 		return
 	fi
 
@@ -227,7 +245,7 @@ attach_task_test()
 	if [ $? -ne 0 ]; then
 		exit_status=1
 	fi
-	: $((TST_COUNT++))
+	TST_COUNT=$(($TST_COUNT + 1))
 }
 
 

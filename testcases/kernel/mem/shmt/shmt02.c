@@ -67,16 +67,16 @@ int main()
 
 	if ((shmid = shmget(key, 16 * K_1, IPC_CREAT | 0666)) < 0) {
 		perror("shmget");
-		tst_resm(TFAIL, "shmget Failed: shmid = %d, errno = %d\n",
+		tst_brkm(TFAIL, NULL,
+			 "shmget Failed: shmid = %d, errno = %d\n",
 			 shmid, errno);
-		tst_exit();
 	}
 
 	tst_resm(TPASS, "shmget");
 
 /*----------------------------------------------------------------*/
 
-	cp = (char *)shmat(shmid, NULL, 0);
+	cp = shmat(shmid, NULL, 0);
 
 	if (cp == (char *)-1) {
 		perror("shmat");
@@ -106,9 +106,6 @@ int main()
 /*------------------------------------------------------------------*/
 
 	tst_exit();
-
-/*-------------------- THIS LINE IS NOT REACHED -------------------*/
-	return (0);
 }
 
 int rm_shm(shmid)
@@ -116,10 +113,10 @@ int shmid;
 {
 	if (shmctl(shmid, IPC_RMID, NULL) == -1) {
 		perror("shmctl");
-		tst_resm(TFAIL,
+		tst_brkm(TFAIL,
+			 NULL,
 			 "shmctl Failed to remove: shmid = %d, errno = %d\n",
 			 shmid, errno);
-		tst_exit();
 	}
 	return (0);
 }

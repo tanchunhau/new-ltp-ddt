@@ -69,7 +69,7 @@ static void setup(void)
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	io_context_t ctx;
 
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(io_cancel(ctx, NULL, NULL));
 
@@ -113,6 +113,5 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	tst_brkm(TCONF, NULL, "System doesn't have libaio support");
-	tst_exit();
 }
 #endif

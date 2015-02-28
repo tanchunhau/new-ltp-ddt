@@ -14,7 +14,7 @@
 #include "posixtest.h"
 
 #define NUMINTERVALS 13
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec tssleepfor, tsstorage, tsbefore, tsafter;
 	int sleepnsec[NUMINTERVALS] = { 1, 2, 10, 100, 1000, 10000, 1000000,
@@ -66,10 +66,8 @@ int main(int argc, char *argv[])
 	if (failure) {
 		printf("At least one test FAILED\n");
 		return PTS_FAIL;
-	} else {
-		printf("All tests PASSED\n");
-		return PTS_PASS;
 	}
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+
+	printf("All tests PASSED\n");
+	return PTS_PASS;
 }

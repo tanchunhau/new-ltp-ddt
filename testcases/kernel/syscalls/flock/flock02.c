@@ -85,15 +85,15 @@ void cleanup(void);
 
 int exp_enos[] = { EBADF, EINVAL, 0 };
 
-char *TCID = "flock02";		/* Test program identifier */
-int TST_TOTAL = 3;		/* Total number of test cases */
+char *TCID = "flock02";
+int TST_TOTAL = 3;
 char filename[100];
 int fd;
 
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(flock(-1, LOCK_SH));
 

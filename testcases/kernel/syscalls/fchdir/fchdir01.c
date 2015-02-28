@@ -79,7 +79,7 @@ const char *TEST_DIR = "alpha";
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	void check_functionality(void);
 	int r_val;
 
@@ -89,7 +89,7 @@ int main(int ac, char **av)
 	setup();		/* global setup */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* get the name of the test dirctory */
 		if ((temp_dir = (getcwd(temp_dir, 0))) == NULL)
@@ -107,14 +107,11 @@ int main(int ac, char **av)
 
 		TEST(fchdir(fd));
 
-		if (TEST_RETURN == -1)
+		if (TEST_RETURN == -1) {
 			tst_brkm(TFAIL | TTERRNO, cleanup,
 				 "fchdir call failed");
-		else {
-			if (STD_FUNCTIONAL_TEST)
+		} else {
 				check_functionality();
-			else
-				tst_resm(TPASS, "call succeeded");
 		}
 
 		/*
@@ -140,7 +137,6 @@ int main(int ac, char **av)
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 

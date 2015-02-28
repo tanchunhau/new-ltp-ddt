@@ -66,8 +66,7 @@ int TST_TOTAL = 4;
 
 struct event_t {
 	char name[BUF_SIZE];
-	int mask;
-	size_t len;
+	unsigned int mask;
 };
 
 #define	TEST_DIR	"test_dir"
@@ -78,6 +77,11 @@ struct event_t event_set[EVENT_MAX];
 char event_buf[EVENT_BUF_LEN];
 
 int fd_notify, reap_wd_file, reap_wd_dir, wd_dir, wd_file;
+
+static struct tst_kern_exv kvers[] = {
+	{ "RHEL5", "2.6.18-132" },
+	{ NULL, NULL },
+};
 
 static void cleanup(void)
 {
@@ -92,13 +96,13 @@ static void cleanup(void)
 			 "inotify_rm_watch(%d, %d) [2] failed", fd_notify,
 			 wd_file);
 
-	if (close(fd_notify) == -1)
+	if (fd_notify > 0 && close(fd_notify))
 		tst_resm(TWARN, "close(%d) [1] failed", fd_notify);
 
-	if (close(wd_dir) == -1)
+	if (wd_dir > 0 && close(wd_dir))
 		tst_resm(TWARN, "close(%d) [2] failed", wd_dir);
 
-	if (close(wd_file) == -1)
+	if (wd_file > 0 && close(wd_file))
 		tst_resm(TWARN, "close(%d) [3] failed", wd_file);
 
 	TEST_CLEANUP;
@@ -116,8 +120,15 @@ static void setup(void)
 	tst_tmpdir();
 
 	fd_notify = myinotify_init();
-	if (fd_notify == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "inotify_init() failed");
+	if (fd_notify == -1) {
+		if (errno == ENOSYS) {
+			tst_brkm(TCONF, cleanup,
+				 "inotify is not configured in this kernel.");
+		} else {
+			tst_brkm(TBROK | TERRNO, cleanup,
+				 "inotify_init failed");
+		}
+	}
 
 	SAFE_MKDIR(cleanup, TEST_DIR, 00700);
 
@@ -141,9 +152,8 @@ static void setup(void)
 
 int main(int argc, char **argv)
 {
-	char *msg;
-	size_t len;
-	int i, test_num;
+	const char *msg;
+	int i, test_num, len;
 
 	i = 0;
 	test_num = 0;
@@ -154,15 +164,15 @@ int main(int argc, char **argv)
 
 	setup();
 
-	Tst_count = 0;
+	tst_count = 0;
 
 	rmdir(TEST_DIR);
-	event_set[Tst_count].mask = IN_DELETE_SELF;
-	strcpy(event_set[Tst_count].name, "");
-	Tst_count++;
-	event_set[Tst_count].mask = IN_IGNORED;
-	strcpy(event_set[Tst_count].name, "");
-	Tst_count++;
+	event_set[tst_count].mask = IN_DELETE_SELF;
+	strcpy(event_set[tst_count].name, "");
+	tst_count++;
+	event_set[tst_count].mask = IN_IGNORED;
+	strcpy(event_set[tst_count].name, "");
+	tst_count++;
 
 	unlink(TEST_FILE);
 	/*
@@ -172,24 +182,24 @@ int main(int argc, char **argv)
 	 * This isn't well documented in inotify(7), but it's intuitive if you
 	 * understand how Unix works.
 	 */
-	if (0 <= tst_kvercmp(2, 6, 25)) {
-		event_set[Tst_count].mask = IN_ATTRIB;
-		strcpy(event_set[Tst_count].name, "");
-		Tst_count++;
+	if (tst_kvercmp2(2, 6, 25, kvers) >= 0) {
+		event_set[tst_count].mask = IN_ATTRIB;
+		strcpy(event_set[tst_count].name, "");
+		tst_count++;
 		TST_TOTAL++;
 	}
-	event_set[Tst_count].mask = IN_DELETE_SELF;
-	strcpy(event_set[Tst_count].name, TEST_FILE);
-	Tst_count++;
-	event_set[Tst_count].mask = IN_IGNORED;
-	strcpy(event_set[Tst_count].name, "");
-	Tst_count++;
+	event_set[tst_count].mask = IN_DELETE_SELF;
+	strcpy(event_set[tst_count].name, TEST_FILE);
+	tst_count++;
+	event_set[tst_count].mask = IN_IGNORED;
+	strcpy(event_set[tst_count].name, "");
+	tst_count++;
 
-	if (Tst_count != TST_TOTAL)
+	if (tst_count != TST_TOTAL)
 		tst_brkm(TBROK, cleanup,
-			 "Tst_count and TST_TOTAL are not equal");
+			 "tst_count and TST_TOTAL are not equal");
 
-	Tst_count = 0;
+	tst_count = 0;
 
 	len = read(fd_notify, event_buf, EVENT_BUF_LEN);
 	if (len == -1)
@@ -219,8 +229,8 @@ int main(int argc, char **argv)
 			tst_resm(TFAIL,
 				 "got unnecessary event: "
 				 "wd=%d mask=%x cookie=%u len=%u "
-				 "name=\"%s\"", event->wd, event->mask,
-				 event->cookie, event->len, event->name);
+				 "name=\"%.*s\"", event->wd, event->mask,
+				 event->cookie, event->len, event->len, event->name);
 
 		} else if ((event_set[test_num].mask == event->mask)
 			   &&
@@ -229,19 +239,20 @@ int main(int argc, char **argv)
 			     event->len))) {
 			tst_resm(TPASS,
 				 "got event: wd=%d mask=%x "
-				 "cookie=%u len=%u name=\"%s\"",
+				 "cookie=%u len=%u name=\"%.*s\"",
 				 event->wd, event->mask, event->cookie,
-				 event->len, event->name);
+				 event->len, event->len, event->name);
 
 		} else {
 			tst_resm(TFAIL, "got event: wd=%d mask=%x "
 				 "(expected %x) cookie=%u len=%u "
-				 "name=\"%s\" (expected \"%s\") %d",
+				 "name=\"%.*s\" (expected \"%s\") %d",
 				 event->wd, event->mask,
 				 event_set[test_num].mask,
-				 event->cookie, event->len, event->name,
+				 event->cookie, event->len,
+				 event->len, event->name,
 				 event_set[test_num].name,
-				 strcmp(event_set[test_num].name, event->name));
+				 strncmp(event_set[test_num].name, event->name, event->len));
 		}
 		test_num++;
 		i += EVENT_SIZE + event->len;

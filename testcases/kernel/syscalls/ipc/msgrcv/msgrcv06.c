@@ -89,11 +89,11 @@ pid_t c_pid;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
+	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+
 #ifdef UCLINUX
 	maybe_run_child(&do_child_uclinux, "d", &msg_q_1);
 #endif
@@ -106,8 +106,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * set up the queue here so that multiple test iterations
@@ -167,7 +167,7 @@ int main(int ac, char **av)
 /*
  * do_child()
  */
-void do_child()
+void do_child(void)
 {
 	if (sync_pipe_notify(sync_pipes) == -1)
 		tst_brkm(TBROK, cleanup, "sync_pipe_notify failed");
@@ -209,7 +209,7 @@ void do_child()
 /*
  * do_child_uclinux() - capture signals again, then run do_child()
  */
-void do_child_uclinux()
+void do_child_uclinux(void)
 {
 	if (sync_pipe_create(sync_pipes, PIPE_NAME) == -1)
 		tst_brkm(TBROK, cleanup, "sync_pipe_create failed");

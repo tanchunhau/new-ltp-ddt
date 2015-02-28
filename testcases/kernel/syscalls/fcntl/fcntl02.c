@@ -122,8 +122,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "fcntl02";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fcntl02";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0, 0 };
 
@@ -133,7 +133,7 @@ int fd;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -144,7 +144,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(fcntl(fd, F_DUPFD, 0));
 
@@ -152,10 +152,9 @@ int main(int ac, char **av)
 			tst_resm(TFAIL | TTERRNO,
 				 "fcntl(%s, F_DUPFD, 0) failed", fname);
 		else {
-			if (STD_FUNCTIONAL_TEST)
-				tst_resm(TPASS,
-					 "fcntl(%s, F_DUPFD, 0) returned %ld",
-					 fname, TEST_RETURN);
+			tst_resm(TPASS,
+				 "fcntl(%s, F_DUPFD, 0) returned %ld",
+				 fname, TEST_RETURN);
 			if (close(TEST_RETURN) == -1)
 				tst_resm(TWARN | TERRNO, "close failed");
 		}
@@ -163,11 +162,10 @@ int main(int ac, char **av)
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -181,7 +179,7 @@ void setup()
 		tst_brkm(TBROK, cleanup, "open failed");
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

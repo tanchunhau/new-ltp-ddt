@@ -73,8 +73,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "mlockall01";	/* Test program identifier.    */
-int TST_TOTAL = 3;		/* Total number of test cases. */
+char *TCID = "mlockall01";
+int TST_TOTAL = 3;
 
 int exp_enos[] = { 0 };
 
@@ -96,18 +96,17 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -137,7 +136,7 @@ int main(int ac, char **av)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -149,18 +148,13 @@ int main()
  * setup() - performs all ONE TIME setup for this test.
  */
 
-void setup()
+void setup(void)
 {
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	/* Check whether we are root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
-
 	/* set the expected errnos... */
-
 	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
@@ -170,7 +164,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

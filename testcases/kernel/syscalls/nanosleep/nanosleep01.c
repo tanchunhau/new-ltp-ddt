@@ -74,8 +74,8 @@
 #include "test.h"
 #include "usctest.h"
 
-char *TCID = "nanosleep01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "nanosleep01";
+int TST_TOTAL = 1;
 
 struct timespec timereq;	/* time struct. buffer for nanosleep() */
 
@@ -85,13 +85,12 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t cpid;		/* Child process id */
 	struct timeval otime;	/* time before child execution suspended */
 	struct timeval ntime;	/* time after child resumes execution */
 	int retval = 0, e_code, status;
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -102,7 +101,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Creat a child process and suspend it till
@@ -135,34 +134,26 @@ int main(int ac, char **av)
 			}
 
 			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
+			 * Verify whether child execution was
+			 * actually suspended to desired interval.
 			 */
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Verify whether child execution was
-				 * actually suspended to desired interval.
-				 */
-				long want_ms, got_ms;
-				want_ms =
-				    timereq.tv_sec * 1000 +
-				    timereq.tv_nsec / 1000000;
-				got_ms =
-				    ntime.tv_sec * 1000 + ntime.tv_usec / 1000;
-				got_ms -=
-				    otime.tv_sec * 1000 + otime.tv_usec / 1000;
-				if (got_ms < want_ms) {
-					retval = 1;
-					tst_resm(TFAIL, "Child execution not "
-						 "suspended for %jd seconds.  (Wanted %ld ms, got %ld ms)",
-						 (intmax_t) timereq.tv_sec,
-						 want_ms, got_ms);
-				} else {
-					tst_resm(TPASS, "nanosleep "
-						 "functionality is correct");
-				}
+			long want_ms, got_ms;
+			want_ms =
+			    timereq.tv_sec * 1000 +
+			    timereq.tv_nsec / 1000000;
+			got_ms =
+			    ntime.tv_sec * 1000 + ntime.tv_usec / 1000;
+			got_ms -=
+			    otime.tv_sec * 1000 + otime.tv_usec / 1000;
+			if (got_ms < want_ms) {
+				retval = 1;
+				tst_resm(TFAIL, "Child execution not "
+					 "suspended for %jd seconds.  (Wanted %ld ms, got %ld ms)",
+					 (intmax_t) timereq.tv_sec,
+					 want_ms, got_ms);
 			} else {
-				tst_resm(TPASS, "call succeeded");
+				tst_resm(TPASS, "nanosleep "
+					 "functionality is correct");
 			}
 			exit(retval);
 		} else {	/* parent process */
@@ -185,7 +176,7 @@ int main(int ac, char **av)
  * setup() - performs all ONE TIME setup for this test.
  *        Initialize time structure elements.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -201,7 +192,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

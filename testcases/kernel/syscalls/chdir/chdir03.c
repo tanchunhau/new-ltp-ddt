@@ -80,7 +80,7 @@ extern struct passwd *my_getpwnam(char *);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	pid_t pid, pid1;
 	int status;
@@ -93,7 +93,7 @@ int main(int ac, char **av)
 	TEST_EXP_ENOS(exp_enos);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		if ((pid = FORK_OR_VFORK()) < 0) {
 			tst_brkm(TBROK, cleanup, "first fork failed");
@@ -168,7 +168,7 @@ int main(int ac, char **av)
 
 }
 
-void setup()
+void setup(void)
 {
 	char *cur_dir = NULL;
 
@@ -189,7 +189,7 @@ void setup()
 	ltpuser2 = my_getpwnam(user2name);
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

@@ -60,7 +60,7 @@ void adatft(void);
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
@@ -104,19 +104,19 @@ struct etent {
 	"sizeof(struct iovec *)"}}, {
 		"msghdr msg_iovlen", EXISTS, SOCKET_H, "msghdr",
 		    "msg_iovlen", NULL, {
-	"sizeof(struct iovec *)"}}, {
+	"sizeof(size_t)"}}, {
 		"msghdr msg_control", EXISTS, SOCKET_H, "msghdr",
 		    "msg_control", NULL, {
 	"sizeof(void *)"}}, {
 		"msghdr msg_controllen", EXISTS, SOCKET_H, "msghdr",
 		    "msg_controllen", NULL, {
-	"sizeof(socklen_t)"}}, {
+	"sizeof(size_t)"}}, {
 		"msghdr msg_flags", EXISTS, SOCKET_H, "msghdr",
 		    "msg_flags", NULL, {
 	"sizeof(int)"}}, {
 		"cmsghdr cmsg_len", EXISTS, SOCKET_H, "cmsghdr",
 		    "cmsg_len", NULL, {
-	"sizeof(socklen_t)"}}, {
+	"sizeof(size_t)"}}, {
 		"cmsghdr cmsg_level", EXISTS, SOCKET_H, "cmsghdr",
 		    "cmsg_level", NULL, {
 	"sizeof(int)"}}, {

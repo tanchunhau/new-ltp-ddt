@@ -52,17 +52,13 @@
 #include <stdio.h>
 #include <errno.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "sgetmask01";	/* Test program identifier. */
+char *TCID = "sgetmask01";
 int testno;
-int TST_TOTAL = 2;		/* total number of tests in this file.   */
+int TST_TOTAL = 2;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -82,7 +78,7 @@ int TST_TOTAL = 2;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -109,7 +105,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -121,23 +117,24 @@ int main(int ac, char **av)
 {
 	int sig;
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 
 			for (sig = -3; sig <= SIGRTMAX + 1; sig++) {
-				TEST(syscall(__NR_ssetmask, sig));
-				tst_resm(TINFO, "Setting signal : %d -- return of setmask : %ld", sig, TEST_RETURN);	//call sgetmask()
-				TEST(syscall(__NR_sgetmask));	//call sgetmask()
+				TEST(ltp_syscall(__NR_ssetmask, sig));
+				tst_resm(TINFO, "Setting signal : %d -- "
+					"return of setmask : %ld",
+					sig, TEST_RETURN);
+				TEST(ltp_syscall(__NR_sgetmask));
 				if (TEST_RETURN != sig) {
 					tst_resm(TINFO,
 						 "Oops,setting sig %d, got %ld",

@@ -14,7 +14,7 @@
 #include "posixtest.h"
 
 #define INVALIDCLOCK 9999
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec tp;
 
@@ -27,11 +27,8 @@ int main(int argc, char *argv[])
 			printf("Test FAILED\n");
 			return PTS_FAIL;
 		}
-	} else {
-		printf("clock_gettime() did not return failure\n");
-		return PTS_UNRESOLVED;
 	}
 
-	printf("This code should not be executed.\n");
+	printf("clock_gettime() did not return failure\n");
 	return PTS_UNRESOLVED;
 }

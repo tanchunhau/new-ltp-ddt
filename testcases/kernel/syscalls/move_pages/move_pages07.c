@@ -69,7 +69,7 @@ int TST_TOTAL = 1;
 
 int main(int argc, char **argv)
 {
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL) {
@@ -95,10 +95,10 @@ int main(int argc, char **argv)
 		void *pages[TEST_PAGES] = { 0 };
 		int nodes[TEST_PAGES];
 		int status[TEST_PAGES];
-		int ipid;
+		pid_t ipid;
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		ret = alloc_pages_on_node(pages, TEST_PAGES, from_node);
 		if (ret == -1)
@@ -107,27 +107,17 @@ int main(int argc, char **argv)
 		for (i = 0; i < TEST_PAGES; i++)
 			nodes[i] = to_node;
 
-		ipid = fork();
-		if (ipid == -1) {
-			tst_resm(TBROK | TERRNO, "fork failed");
-			goto err_free_pages;
-		}
-		if (ipid == 0)
-			exit(0);
-
-		wait(NULL);
+		ipid = tst_get_unused_pid(cleanup);
 
 		ret = numa_move_pages(ipid, TEST_PAGES, pages, nodes,
 				      status, MPOL_MF_MOVE);
-		TEST_ERRNO = errno;
 		if (ret == -1 && errno == ESRCH)
 			tst_resm(TPASS, "move_pages failed with "
 				 "ESRCH as expected");
 		else
-			tst_resm(TFAIL, "move pages did not fail "
-				 "with ESRCH");
+			tst_resm(TFAIL|TERRNO, "move pages did not fail "
+				 "with ESRCH ret: %d", ret);
 
-err_free_pages:
 		free_pages(pages, TEST_PAGES);
 	}
 #else

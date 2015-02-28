@@ -86,8 +86,8 @@ static void setup();
 static void cleanup();
 static int setup_test();
 
-char *TCID = "reboot02";	/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "reboot02";
+int TST_TOTAL = 2;
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
 static int exp_enos[] = { EINVAL, EPERM, 0 };
@@ -106,7 +106,7 @@ int main(int ac, char **av)
 {
 
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -117,7 +117,7 @@ int main(int ac, char **av)
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
-			Tst_count = 0;
+			tst_count = 0;
 			if (i == 0) {
 				TEST(reboot(INVALID_PARAMETER));
 			} else {
@@ -166,7 +166,7 @@ int main(int ac, char **av)
 /*
  * setup_test() - This function sets the user as nobdy
  */
-int setup_test()
+int setup_test(void)
 {
 	if ((ltpuser = getpwnam(nobody_uid)) == NULL) {
 		tst_resm(TWARN, "\"nobody\" user not present. skipping test");
@@ -182,18 +182,14 @@ int setup_test()
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	/* set the expected errnos... */
 	TEST_EXP_ENOS(exp_enos);
-
-	/* Check whether we are root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 
 	TEST_PAUSE;
 
@@ -203,7 +199,7 @@ void setup()
 * cleanup() - Performs one time cleanup for this test at
 * completion or premature exit
 */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

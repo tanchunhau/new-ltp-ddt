@@ -51,12 +51,11 @@
 #include <string.h>
 #include <signal.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 
 /* Extern Global Variables */
-extern int Tst_count;
+extern int tst_count;
 
 /* Global Variables */
 char *TCID = "mmap-corruption01";	/* test program identifier.          */
@@ -69,9 +68,7 @@ char *usage = "-h hours -m minutes -s secs\n";
 
 int anyfail()
 {
-	tst_resm(TFAIL, "Test failed\n");
-	tst_rmdir();
-	tst_exit();
+	tst_brkm(TFAIL, tst_rmdir, "Test failed\n");
 }
 
 int main(int argc, char **argv)

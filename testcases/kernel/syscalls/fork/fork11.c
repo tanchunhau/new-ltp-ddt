@@ -55,7 +55,7 @@ int main(int ac, char **av)
 	int i, pid, cpid, status;
 	int fail = 0;
 	int lc;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL)
@@ -64,7 +64,7 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < NUMFORKS; i++) {
 			pid = fork();
@@ -90,13 +90,13 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-static void setup()
+static void setup(void)
 {
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	TEST_PAUSE;
 }
 
-static void cleanup()
+static void cleanup(void)
 {
 	TEST_CLEANUP;
 }

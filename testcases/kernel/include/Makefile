@@ -28,7 +28,7 @@ INSTALL_DIR		:= $(includedir)
 
 MAKE_TARGETS		:= linux_syscall_numbers.h
 
-linux_syscall_numbers.h: $(wildcard $(srcdir)/*.sh)
-	$(SHELL) "$(abs_srcdir)/regen.sh"
+linux_syscall_numbers.h: $(abs_srcdir)/regen.sh $(wildcard $(abs_srcdir)/*.in)
+	$(SHELL) "$<"
 
 include $(top_srcdir)/include/mk/generic_leaf_target.mk

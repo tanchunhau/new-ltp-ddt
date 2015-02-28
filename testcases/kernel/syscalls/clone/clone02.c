@@ -115,7 +115,7 @@ int main(int ac, char **av)
 {
 
 	int lc;
-	char *msg;
+	const char *msg;
 	void *child_stack;
 	int status, i;
 
@@ -130,7 +130,7 @@ int main(int ac, char **av)
 		tst_brkm(TBROK, cleanup, "Cannot allocate stack for child");
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 			if (test_setup() != 0) {
@@ -242,6 +242,7 @@ static int test_setup(void)
 	/* Setup signal handler for SIGUSR2 */
 	def_act.sa_handler = sig_default_handler;
 	def_act.sa_flags = SA_RESTART;
+	sigemptyset(&def_act.sa_mask);
 
 	if (sigaction(SIGUSR2, &def_act, NULL) == -1) {
 		tst_resm(TWARN | TERRNO, "sigaction() failed in test_setup()");
@@ -267,7 +268,7 @@ static void test_cleanup(void)
 
 }
 
-static int child_fn()
+static int child_fn(void)
 {
 
 	/* save child pid */
@@ -349,9 +350,9 @@ static int test_FS(void)
 	char *test_tmpdir;
 	int rval;
 
-	test_tmpdir = get_tst_tmpdir();
+	test_tmpdir = tst_get_tmpdir();
 	if (test_tmpdir == NULL) {
-		tst_resm(TWARN | TERRNO, "get_tst_tmpdir failed");
+		tst_resm(TWARN | TERRNO, "tst_get_tmpdir failed");
 		rval = -1;
 	} else if (chdir(test_tmpdir) == -1) {
 		tst_resm(TWARN | TERRNO, "chdir failed in test_FS");
@@ -376,6 +377,7 @@ static int test_SIG(void)
 
 	new_act.sa_handler = sig_child_defined_handler;
 	new_act.sa_flags = SA_RESTART;
+	sigemptyset(&new_act.sa_mask);
 
 	/* Set signal handler to sig_child_defined_handler */
 	if (sigaction(SIGUSR2, &new_act, NULL) == -1) {
@@ -475,6 +477,6 @@ static void sig_child_defined_handler(int pid)
 }
 
 /* sig_default_handler() - Default handler for parent */
-static void sig_default_handler()
+static void sig_default_handler(void)
 {
 }

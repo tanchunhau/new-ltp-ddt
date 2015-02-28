@@ -109,8 +109,8 @@ static int migrate_to_node(pid_t pid, int node)
 
 	tst_resm(TINFO, "pid(%d) migrate pid %d to node -> %d",
 		 getpid(), pid, node);
-	max_node = get_max_node();
-	nodemask_size = max_node / 8 + 1;
+	max_node = LTP_ALIGN(get_max_node(), sizeof(unsigned long)*8);
+	nodemask_size = max_node / 8;
 	old_nodes = SAFE_MALLOC(NULL, nodemask_size);
 	new_nodes = SAFE_MALLOC(NULL, nodemask_size);
 
@@ -120,7 +120,8 @@ static int migrate_to_node(pid_t pid, int node)
 		set_bit(old_nodes, nodes[i], 1);
 	set_bit(new_nodes, node, 1);
 
-	TEST(syscall(__NR_migrate_pages, pid, max_node, old_nodes, new_nodes));
+	TEST(ltp_syscall(__NR_migrate_pages, pid, max_node, old_nodes,
+		new_nodes));
 	if (TEST_RETURN != 0) {
 		if (TEST_RETURN < 0)
 			tst_resm(TFAIL | TERRNO, "migrate_pages failed "
@@ -140,7 +141,7 @@ static int addr_on_node(void *addr)
 	int node;
 	int ret;
 
-	ret = syscall(__NR_get_mempolicy, &node, NULL, (unsigned long)0,
+	ret = ltp_syscall(__NR_get_mempolicy, &node, NULL, (unsigned long)0,
 		      (unsigned long)addr, MPOL_F_NODE | MPOL_F_ADDR);
 	if (ret == -1) {
 		tst_resm(TBROK | TERRNO, "error getting memory policy "
@@ -318,7 +319,7 @@ static void test_migrate_other_process(int node1, int node2, int cap_sys_nice)
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, options, NULL);
 	if (msg != NULL)
@@ -326,7 +327,7 @@ int main(int argc, char *argv[])
 
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		test_migrate_current_process(nodeA, nodeB, 1);
 		test_migrate_current_process(nodeA, nodeB, 0);
 		test_migrate_other_process(nodeA, nodeB, 1);
@@ -343,7 +344,7 @@ static void setup(void)
 	void *p;
 
 	tst_require_root(NULL);
-	TEST(syscall(__NR_migrate_pages, 0, 0, NULL, NULL));
+	TEST(ltp_syscall(__NR_migrate_pages, 0, 0, NULL, NULL));
 
 	if (numa_available() == -1)
 		tst_brkm(TCONF, NULL, "NUMA not available");

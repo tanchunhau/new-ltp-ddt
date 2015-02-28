@@ -86,7 +86,7 @@ static void help(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int Hflag = 0;
 	int sflag = 0;
 	int huge_pagesize = 0;
@@ -104,7 +104,7 @@ int main(int ac, char **av)
 
 	if (!Hflag) {
 		tst_tmpdir();
-		Hopt = get_tst_tmpdir();
+		Hopt = tst_get_tmpdir();
 	}
 	if (sflag)
 		hugepages = SAFE_STRTOL(NULL, nr_opt, 0, LONG_MAX);
@@ -118,7 +118,7 @@ int main(int ac, char **av)
 			tst_brkm(TFAIL | TERRNO, cleanup, "open %s failed",
 				 TEMPFILE);
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* Note the number of free huge pages BEFORE testing */
 		freepages = read_meminfo("HugePages_Free:");

@@ -122,8 +122,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "fcntl10";		/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "fcntl10";
+int TST_TOTAL = 2;
 
 int exp_enos[] = { 0, 0 };
 
@@ -134,7 +134,7 @@ struct flock flocks;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
     /***************************************************************
      * parse standard options
@@ -157,7 +157,7 @@ int main(int ac, char **av)
 		int type;
 		for (type = 0; type < 2; type++) {
 
-			Tst_count = 0;
+			tst_count = 0;
 
 			flocks.l_type = type ? F_RDLCK : F_WRLCK;
 
@@ -174,18 +174,10 @@ int main(int ac, char **av)
 					 fname, type ? "F_RDLCK" : "F_WRLCK",
 					 TEST_ERRNO, strerror(TEST_ERRNO));
 			} else {
-
-	    /***************************************************************
-	     * only perform functional verification if flag set (-f not given)
-	     ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "fcntl(%s, F_SETLKW, &flocks) flocks.l_type = %s returned %ld",
-						 fname,
-						 type ? "F_RDLCK" : "F_WRLCK",
-						 TEST_RETURN);
-				}
+				tst_resm(TPASS,
+					 "fcntl(%s, F_SETLKW, &flocks) flocks.l_type = %s returned %ld",
+					 fname, type ? "F_RDLCK" : "F_WRLCK",
+					 TEST_RETURN);
 			}
 
 			flocks.l_type = F_UNLCK;
@@ -203,32 +195,22 @@ int main(int ac, char **av)
 					 strerror(TEST_ERRNO));
 			} else {
 
-	    /***************************************************************
-	     * only perform functional verification if flag set (-f not given)
-	     ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "fcntl(%s, F_SETLKW, &flocks) flocks.l_type = F_UNLCK returned %ld",
-						 fname, TEST_RETURN);
-				}
+				tst_resm(TPASS,
+					 "fcntl(%s, F_SETLKW, &flocks) flocks.l_type = F_UNLCK returned %ld",
+					 fname, TEST_RETURN);
 			}
 
 		}
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -262,7 +244,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

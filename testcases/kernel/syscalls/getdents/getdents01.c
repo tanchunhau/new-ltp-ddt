@@ -1,118 +1,127 @@
 /*
+ * Copyright (c) International Business Machines  Corp., 2001
+ *	         written by Wayne Boyer
+ * Copyright (c) 2013 Markos Chandras
+ * Copyright (c) 2013 Cyril Hrubis <chrubis@suse.cz>
  *
- *   Copyright (c) International Business Machines  Corp., 2001
+ * This program is free software;  you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   This program is free software;  you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ * the GNU General Public License for more details.
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program;  if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-/*
- * NAME
- *	getdents01.c
- *
- * DESCRIPTION
- *	getdents01 - get a directory entry
- *
- * ALGORITHM
- *	loop if that option was specified
- *	issue the system call
- *	check the errno value
- *	  if failure, log the errno and issue a FAIL message
- *	otherwise,
- *	  if doing functionality testing,
- *	    if the directory name of the first entry is "."
- *	      issue a PASS message
- *	    otherwise,
- *	      issue a FAIL message
- *	      break any remaining tests
- *	call cleanup
- *
- * USAGE:  <for command-line>
- *  getdents01 [-c n] [-f] [-i n] [-I x] [-p x] [-t]
- *     where,  -c n : Run n copies concurrently.
- *             -f   : Turn off functionality Testing.
- *	       -i n : Execute test n times.
- *	       -I x : Execute test for x seconds.
- *	       -P x : Pause for x seconds between iterations.
- *	       -t   : Turn on syscall timing.
- *
- * HISTORY
- *	03/2001 - Written by Wayne Boyer
- *
- * RESTRICTIONS
- *	Any restrictions
- */
+#include <stdio.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-#include "getdents.h"
 #include "test.h"
 #include "usctest.h"
+#include "safe_macros.h"
+#include "getdents.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <linux/types.h>
-#include <dirent.h>
-#include <linux/unistd.h>
-#include <unistd.h>
+static void cleanup(void);
+static void setup(void);
 
-void cleanup(void);
-void setup(void);
+static void reset_flags(void);
+static void check_flags(void);
+static void set_flag(const char *name);
 
 char *TCID = "getdents01";
 int TST_TOTAL = 1;
 
+static int longsyscall;
+
+static option_t options[] = {
+		/* -l long option. Tests getdents64 */
+		{"l", &longsyscall, NULL},
+		{NULL, NULL, NULL}
+};
+
+static void help(void)
+{
+	printf("  -l      Test the getdents64 system call\n");
+}
+
+enum entry_type {
+	ENTRY_DIR,
+	ENTRY_FILE,
+	ENTRY_SYMLINK,
+};
+
+struct testcase {
+	const char *name;
+	enum entry_type type;
+	int create:1;
+	int found:1;
+};
+
+struct testcase testcases[] = {
+	{.name = ".",       .create = 0, .type = ENTRY_DIR},
+	{.name = "..",      .create = 0, .type = ENTRY_DIR},
+	{.name = "dir",     .create = 1, .type = ENTRY_DIR},
+	{.name = "file",    .create = 1, .type = ENTRY_FILE},
+	{.name = "symlink", .create = 1, .type = ENTRY_SYMLINK},
+};
+
+/*
+ * Big enough for dirp entires + data, the current size returned
+ * by kernel is 128 bytes.
+ */
+#define BUFSIZE 512
+
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int rval, fd;
-	int count;
-	size_t size = 0;
-	char *dir_name = NULL;
-	struct dirent *dirp;
+	struct linux_dirent64 *dirp64;
+	struct linux_dirent *dirp;
+	void *buf;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
+	/* The buffer is allocated to make sure it's suitably aligned */
+	buf = malloc(BUFSIZE);
+
+	if (buf == NULL)
+		tst_brkm(TBROK, NULL, "malloc failed");
+
+	dirp64 = buf;
+	dirp = buf;
+
+	if ((msg = parse_opts(ac, av, options, &help)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		const char *d_name;
 
-		if ((dir_name = getcwd(dir_name, size)) == NULL)
-			tst_brkm(TBROK, cleanup, "Can not get current "
-				 "directory name");
+		tst_count = 0;
 
-		if ((dirp = malloc(sizeof(struct dirent))) == NULL)
-			tst_brkm(TBROK, cleanup, "malloc failed");
-
-		/*
-		 * Set up count to be equal to the sizeof struct dirent,
-		 * just to pick a decent size.
-		 */
-
-		count = (int)sizeof(struct dirent);
-
-		if ((fd = open(dir_name, O_RDONLY)) == -1)
+		if ((fd = open(".", O_RDONLY)) == -1)
 			tst_brkm(TBROK, cleanup, "open of directory failed");
 
-		rval = getdents(fd, dirp, count);
+		if (longsyscall)
+			rval = getdents64(fd, dirp64, BUFSIZE);
+		else
+			rval = getdents(fd, dirp, BUFSIZE);
+
 		if (rval < 0) {
-
-			TEST_ERROR_LOG(errno);
-
-			tst_resm(TFAIL | TERRNO,
-				 "getdents failed unexpectedly");
+			if (errno == ENOSYS)
+				tst_resm(TCONF, "syscall not implemented");
+			else
+				tst_resm(TFAIL | TERRNO,
+				         "getdents failed unexpectedly");
 			continue;
 		}
 
@@ -122,35 +131,114 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		tst_resm(TPASS, "call succeeded");
+		reset_flags();
 
-		free(dir_name);
-		dir_name = NULL;
+		do {
+			size_t d_reclen;
 
-		free(dirp);
+			if (longsyscall) {
+				d_reclen = dirp64->d_reclen;
+				d_name = dirp64->d_name;
+			} else {
+				d_reclen = dirp->d_reclen;
+				d_name = dirp->d_name;
+			}
 
-		if ((rval = close(fd)) == -1)
-			tst_brkm(TBROK, cleanup, "file close failed");
+			set_flag(d_name);
+
+			tst_resm(TINFO, "Found '%s'", d_name);
+			
+			rval -= d_reclen;
+			
+			if (longsyscall)
+				dirp64 = (void*)dirp64 + d_reclen;
+			else
+				dirp = (void*)dirp + d_reclen;
+
+		} while (rval > 0);
+
+		if (close(fd) == -1)
+			tst_brkm(TBROK | TERRNO, cleanup, "Directory close failed");
+	
+		check_flags();
 	}
 
-	cleanup();
+	free(buf);
 
+	cleanup();
 	tst_exit();
 }
 
-void setup(void)
+static void reset_flags(void)
 {
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(testcases); i++)
+		testcases[i].found = 0;
+}
+
+static void check_flags(void)
+{
+	int i, err = 0;
+
+	for (i = 0; i < ARRAY_SIZE(testcases); i++) {
+		if (!testcases[i].found) {
+			tst_resm(TINFO, "Entry '%s' not found", testcases[i].name);
+			err++;
+		}
+	}
+
+	if (err)
+		tst_resm(TFAIL, "Some entires not found");
+	else
+		tst_resm(TPASS, "All entires found");
+}
+
+static void set_flag(const char *name)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(testcases); i++) {
+		if (!strcmp(name, testcases[i].name)) {
+			testcases[i].found = 1;
+			return;
+		}
+	}
+
+	tst_resm(TFAIL, "Unexpected entry '%s' found", name);
+}
+
+static void setup(void)
+{
+	int i;
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	tst_tmpdir();
 
+	for (i = 0; i < ARRAY_SIZE(testcases); i++) {
+		
+		if (!testcases[i].create)
+			continue;
+	
+		switch (testcases[i].type) {
+		case ENTRY_DIR:
+			SAFE_MKDIR(cleanup, testcases[i].name, 0777);
+		break;
+		case ENTRY_FILE:
+			SAFE_FILE_PRINTF(cleanup, testcases[i].name, " ");
+		break;
+		case ENTRY_SYMLINK:
+			SAFE_SYMLINK(cleanup, "nonexistent", testcases[i].name);
+		break;
+		}
+	}
+
 	TEST_PAUSE;
 }
 
-void cleanup(void)
+static void cleanup(void)
 {
-
 	TEST_CLEANUP;
 
 	tst_rmdir();

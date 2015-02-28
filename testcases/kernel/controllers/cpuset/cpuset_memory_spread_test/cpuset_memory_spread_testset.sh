@@ -22,18 +22,17 @@
 #                                                                              #
 ################################################################################
 
-cd $LTPROOT/testcases/bin
-
-. ./cpuset_funcs.sh
-
-export TCID="cpuset11"
+export TCID="cpuset_memory_spread"
 export TST_TOTAL=6
 export TST_COUNT=1
 
+. cpuset_funcs.sh
+
+check
+
 exit_status=0
-# must >= 3 for: 1-$((nr_mems-2))
-nr_cpus=4
-nr_mems=3
+nr_cpus=$NR_CPUS
+nr_mems=$N_NODES
 
 # In general, the cache hog will use more than 10000 kb slab space on the nodes
 # on which it is running. The other nodes' slab space has littler change.(less
@@ -48,15 +47,45 @@ nodedir="/sys/devices/system/node"
 
 FIFO="./myfifo"
 
-declare -a memsinfo
+# memsinfo is an array implementation of the form of a multi-line string
+# _0: value0
+# _1: value1
+# _2: value2
+#
+memsinfo=""
 
-init_mems_info_array()
+# set value to memsinfo ($1 - index, $2 - value)
+set_memsinfo_val()
+{
+	local nl='
+'
+	# clearing existent value (if present)
+	memsinfo=`echo "$memsinfo" | sed -r "/^\_$1\: /d"`
+
+	if [ -z "$memsinfo" ]; then
+		memsinfo="_$1: $2"
+	else
+		memsinfo="$memsinfo${nl}_$1: $2"
+	fi
+}
+
+# get value from memsinfo ($1 - index)
+get_memsinfo_val()
+{
+	local value=
+	value=`echo "$memsinfo" | grep -e "^\_$1\: "`
+	value=`echo "$value" | sed -r "s/^.*\: (.*)$/\1/"`
+	echo "$value"
+}
+
+
+init_memsinfo_array()
 {
 	local i=
 
 	for i in `seq 0 $((nr_mems-1))`
 	do
-		memsinfo[$i]=0
+		set_memsinfo_val $i 0
 	done
 }
 
@@ -67,8 +96,8 @@ get_meminfo()
 	local nodepath="$nodedir/node$nodeid"
 	local nodememinfo="$nodepath/meminfo"
 	local item="$2"
-	local infoarray=(`cat $nodememinfo | grep $item`)
-	memsinfo[$nodeid]=${infoarray[3]}
+	local info=`cat $nodememinfo | grep $item | awk '{print $4}'`
+	set_memsinfo_val $nodeid $info
 }
 
 # freemem_check
@@ -88,7 +117,7 @@ freemem_check()
 	for i in `seq 0 $((nr_mems-1))`
 	do
 		# I think we need 100MB free memory to run test
-		if [ ${memsinfo[$i]} -lt 100000 ]; then
+		if [ $(get_memsinfo_val $i) -lt 100000 ]; then
 			return 1
 		fi
 	done
@@ -109,9 +138,9 @@ get_memsinfo()
 account_meminfo()
 {
 	local nodeId="$1"
-	local tmp="${memsinfo[$nodeId]}"
+	local tmp="$(get_memsinfo_val $nodeId)"
 	get_meminfo $@ "FilePages"
-	memsinfo[$nodeId]=$((${memsinfo[$nodeId]}-$tmp))
+	set_memsinfo_val $nodeId $(($(get_memsinfo_val $nodeId)-$tmp))
 }
 
 # account_memsinfo
@@ -136,7 +165,7 @@ result_check()
 
 	for i in $nodelist
 	do
-		if [ ${memsinfo[$i]} -le $upperlimit ]; then
+		if [ $(get_memsinfo_val $i) -le $upperlimit ]; then
 			return 1
 		fi
 	done
@@ -153,7 +182,7 @@ result_check()
 
 	for i in $othernodelist
 	do
-		if [ ${memsinfo[$i]} -gt $lowerlimit ]; then
+		if [ $(get_memsinfo_val $i) -gt $lowerlimit ]; then
 			return 1
 		fi
 	done
@@ -193,15 +222,13 @@ general_memory_spread_test()
 	fi
 
 	# we'd better drop the caches before we test page cache.
+	sync
 	/bin/echo 3 > /proc/sys/vm/drop_caches 2> $CPUSET_TMP/stderr
 	if [ $? -ne 0 ]; then
 		cpuset_log_error $CPUSET_TMP/stderr
 		tst_resm TFAIL "drop caches failed."
 		return 1
 	fi
-
-	# wait for droping the cache
-	sleep 10
 
 	get_memsinfo
 	/bin/kill -s SIGUSR1 $test_pid
@@ -214,7 +241,7 @@ general_memory_spread_test()
 	account_memsinfo
 	result_check $expect_nodes
 	if [ $? -ne 0 ]; then
-		tst_resm TFAIL "hog the memory on the unexpected node(FilePages_For_Nodes(KB): ${memsinfo[*]}, Expect Nodes: $expect_nodes)."
+		tst_resm TFAIL "hog the memory on the unexpected node(FilePages_For_Nodes(KB): ${memsinfo}, Expect Nodes: $expect_nodes)."
 		return 1
 	fi
 }
@@ -228,7 +255,7 @@ base_test()
 	if [ $? -ne 0 ]; then
 		exit_status=1
 	else
-		./cpuset_mem_hog &
+		cpuset_mem_hog &
 		pid=$!
 		general_memory_spread_test "$@" "$pid"
 		result_num=$?
@@ -246,7 +273,7 @@ base_test()
 			tst_resm TPASS "Cpuset memory spread page test succeeded."
 		fi
 	fi
-	((TST_COUNT++))
+	TST_COUNT=$(($TST_COUNT + 1))
 }
 
 # test general spread page cache in a cpuset
@@ -275,7 +302,7 @@ test_spread_page2()
 	if [ $? -ne 0 ]; then
 		exit_status=1
 	else
-		./cpuset_mem_hog &
+		cpuset_mem_hog &
 		pid=$!
 		general_memory_spread_test "1" "$cpus_all" "0" "0" "$pid"
 		result_num=$?
@@ -301,30 +328,21 @@ test_spread_page2()
 	fi
 }
 
-init_mems_info_array
+init_memsinfo_array
 freemem_check
 if [ $? -ne 0 ]; then
-	tst_brkm TFAIL ignored "Some node doesn't has enough free memory(100MB) to do test(MemFree_For_Nodes(KB): ${memsinfo[*]})."
-	exit 1
+	tst_brkm TCONF "Some node doesn't has enough free memory(100MB) to do test(MemFree_For_Nodes(KB): ${memsinfo[*]})."
 fi
 
 dd if=/dev/zero of=./DATAFILE bs=1M count=100
 if [ $? -ne 0 ]; then
-	tst_brkm TFAIL ignored "Creating DATAFILE failed."
-	exit 1
+	tst_brkm TFAIL "Creating DATAFILE failed."
 fi
-
-# drop page caches
-/bin/echo 1 > /proc/sys/vm/drop_caches
-
-# wait for droping caches
-sleep 10
 
 mkfifo $FIFO
 if [ $? -ne 0 ]; then
 	rm -f DATAFILE
-	tst_brkm TFAIL ignored "failed to mkfifo $FIFO"
-	exit 1
+	tst_brkm TFAIL "failed to mkfifo $FIFO"
 fi
 
 test_spread_page1

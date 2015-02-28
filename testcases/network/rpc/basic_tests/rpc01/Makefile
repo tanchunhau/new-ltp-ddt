@@ -24,9 +24,28 @@ top_srcdir		?= ../../../../..
 
 include $(top_srcdir)/include/mk/env_pre.mk
 
-# XXX (garrcoop): rpc.c has a ridiculous warning to code ratio.
-CPPFLAGS		+= -Wno-error
-
 INSTALL_TARGETS		:= rpc01
+SUBDIRS			:= datafiles
 
-include $(top_srcdir)/include/mk/generic_leaf_target.mk
+CPPFLAGS		+= -I$(abs_srcdir)/lib
+LDFLAGS			+= -L$(abs_builddir)/lib
+LDLIBS			+= -lrpc01
+
+LIBDIR			:= lib
+LIB			:= $(LIBDIR)/librpc01.a
+
+$(LIBDIR):
+	mkdir -p "$@"
+
+$(LIB): $(LIBDIR)
+	$(MAKE) -C $^ -f "$(abs_srcdir)/$^/Makefile" all
+
+trunk-clean:: | lib-clean
+
+lib-clean:: $(LIBDIR)
+	$(MAKE) -C $^ -f "$(abs_srcdir)/$^/Makefile" clean
+
+MAKE_TARGETS		:= rpc1 rpc_server
+MAKE_DEPS		:= $(LIB)
+
+include $(top_srcdir)/include/mk/generic_trunk_target.mk

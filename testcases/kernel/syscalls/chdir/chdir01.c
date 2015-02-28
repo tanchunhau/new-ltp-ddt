@@ -58,10 +58,10 @@
 #include "usctest.h"
 #include "safe_macros.h"
 
-char *TCID = "chdir01";		/* Test program identifier */
-int TST_TOTAL = 1;		/* Total number of test cases */
+char *TCID = "chdir01";
+int TST_TOTAL = 2;
 
-int exp_enos[] = { ENOTDIR, 0 };
+int exp_enos[] = { ENOTDIR, ELOOP, 0 };
 
 void setup(void);
 void cleanup(void);
@@ -77,7 +77,7 @@ int main(int ac, char **av)
 	char *filenames[3];
 
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -88,7 +88,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		SAFE_CHDIR(cleanup, testdir);
 
@@ -120,6 +120,23 @@ int main(int ac, char **av)
 
 		SAFE_CHDIR(cleanup, "..");
 
+		/* ELOOP */
+		SAFE_SYMLINK(cleanup, "test_eloop1", "test_eloop2");
+		SAFE_SYMLINK(cleanup, "test_eloop2", "test_eloop1");
+
+		TEST(chdir("test_eloop1"));
+
+		if (TEST_RETURN != -1) {
+			tst_resm(TFAIL, "call succeeded unexpectedly");
+		} else if (TEST_ERRNO != ELOOP) {
+			tst_resm(TFAIL | TTERRNO,
+				 "failed unexpectedly; wanted ELOOP");
+		} else {
+			tst_resm(TPASS, "failed as expected with ELOOP");
+		}
+
+		SAFE_UNLINK(cleanup, "test_eloop1");
+		SAFE_UNLINK(cleanup, "test_eloop2");
 	}
 	cleanup();
 

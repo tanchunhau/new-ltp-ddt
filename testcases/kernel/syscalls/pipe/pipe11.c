@@ -88,7 +88,7 @@ ssize_t safe_read(int fd, void *buf, size_t count)
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	int i;
 	int fork_ret, status;
@@ -106,18 +106,13 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		TEST(pipe(fd));
 
 		if (TEST_RETURN != 0) {
 			tst_resm(TFAIL, "pipe creation failed");
-			continue;
-		}
-
-		if (!STD_FUNCTIONAL_TEST) {
-			tst_resm(TPASS, "call succeeded");
 			continue;
 		}
 
@@ -171,7 +166,7 @@ refork:
 /*
  * do_child()
  */
-void do_child()
+void do_child(void)
 {
 	int nread;
 
@@ -193,9 +188,9 @@ void do_child()
 /*
  * do_child_uclinux() - as above, but mallocs rdbuf first
  */
-void do_child_uclinux()
+void do_child_uclinux(void)
 {
-	if ((rdbuf = (char *)malloc(szcharbuf)) == (char *)0) {
+	if ((rdbuf = malloc(szcharbuf)) == NULL) {
 		tst_brkm(TBROK, cleanup, "malloc of rdbuf failed");
 	}
 
@@ -205,7 +200,7 @@ void do_child_uclinux()
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	int i, j;
 
@@ -227,11 +222,11 @@ void setup()
 		ncperchild = szcharbuf / numchild;
 	}
 
-	if ((wrbuf = (char *)malloc(szcharbuf)) == (char *)0) {
+	if ((wrbuf = malloc(szcharbuf)) == NULL) {
 		tst_brkm(TBROK, cleanup, "malloc failed");
 	}
 
-	if ((rdbuf = (char *)malloc(szcharbuf)) == (char *)0) {
+	if ((rdbuf = malloc(szcharbuf)) == NULL) {
 		tst_brkm(TBROK, cleanup, "malloc of rdbuf failed");
 	}
 
@@ -249,7 +244,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

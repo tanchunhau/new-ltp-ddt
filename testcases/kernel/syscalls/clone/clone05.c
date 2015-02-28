@@ -44,7 +44,7 @@ int main(int ac, char **av)
 {
 
 	int lc, status;
-	char *msg;
+	const char *msg;
 	void *child_stack;
 
 	msg = parse_opts(ac, av, NULL, NULL);
@@ -58,7 +58,7 @@ int main(int ac, char **av)
 		tst_brkm(TBROK, cleanup, "Cannot allocate stack for child");
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(ltp_clone(CLONE_VM | CLONE_VFORK | SIGCHLD, child_fn, NULL,
 		               CHILD_STACK_SIZE, child_stack));

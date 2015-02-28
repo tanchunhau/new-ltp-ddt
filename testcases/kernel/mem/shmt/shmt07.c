@@ -72,11 +72,11 @@ int main()
 
 	if ((shmid = shmget(key, SIZE, IPC_CREAT | 0666)) < 0) {
 		perror("shmget");
-		tst_resm(TFAIL, "Error: shmget: shmid = %d, errno = %d\n",
+		tst_brkm(TFAIL, NULL,
+			 "Error: shmget: shmid = %d, errno = %d\n",
 			 shmid, errno);
-		tst_exit();
 	}
-	cp = (char *)shmat(shmid, NULL, 0);
+	cp = shmat(shmid, NULL, 0);
 
 	if (cp == (char *)-1) {
 		perror("shmat");
@@ -97,8 +97,7 @@ int main()
 	pid = fork();
 	switch (pid) {
 	case -1:
-		tst_resm(TBROK, "fork failed");
-		tst_exit();
+		tst_brkm(TBROK, NULL, "fork failed");
 
 	case 0:
 		if (*cp != '1') {
@@ -118,8 +117,6 @@ int main()
 /*-----------------------------------------------------------*/
 	rm_shm(shmid);
 	tst_exit();
-/*-----------------------------------------------------------*/
-	return (0);
 }
 
 int rm_shm(shmid)
@@ -127,10 +124,10 @@ int shmid;
 {
 	if (shmctl(shmid, IPC_RMID, NULL) == -1) {
 		perror("shmctl");
-		tst_resm(TFAIL,
+		tst_brkm(TFAIL,
+			 NULL,
 			 "shmctl Failed to remove: shmid = %d, errno = %d\n",
 			 shmid, errno);
-		tst_exit();
 	}
 	return (0);
 }

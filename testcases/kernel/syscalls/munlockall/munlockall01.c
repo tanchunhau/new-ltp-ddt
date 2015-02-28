@@ -69,8 +69,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "munlockall01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "munlockall01";
+int TST_TOTAL = 1;
 int exp_enos[] = { 0 };
 
 #if !defined(UCLINUX)
@@ -78,7 +78,7 @@ int exp_enos[] = { 0 };
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -90,7 +90,7 @@ int main(int ac, char **av)
 	/* check looping state */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(munlockall());
 
@@ -113,7 +113,7 @@ int main(int ac, char **av)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -122,17 +122,14 @@ int main()
 #endif /* if !defined(UCLINUX) */
 
 /* setup() - performs all ONE TIME setup for this test. */
-void setup()
+void setup(void)
 {
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	/*set the expected errnos */
 	TEST_EXP_ENOS(exp_enos);
-
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be tested as root");
-	}
 
 	TEST_PAUSE;
 }
@@ -141,7 +138,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

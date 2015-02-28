@@ -55,7 +55,7 @@
 #include "test.h"
 #include "usctest.h"
 
-char *TCID = "recvfrom01";	/* Test program identifier.    */
+char *TCID = "recvfrom01";
 int testno;
 
 char buf[1024];
@@ -105,9 +105,9 @@ struct test_case_t {		/* test case structure */
 		    0, ENOTSOCK, setup1, cleanup1, "invalid socket buffer"},
 /* 4 */
 	{
-	PF_INET, SOCK_STREAM, 0, (void *)buf, sizeof(buf), -1,
+	PF_INET, SOCK_STREAM, 0, (void *)buf, sizeof(buf), 0,
 		    (struct sockaddr *)&from, &fromlen,
-		    -1, EINVAL, setup2, cleanup1, "invalid socket length"},
+		    -1, EINVAL, setup2, cleanup1, "invalid socket addr length"},
 /* 5 */
 	{
 	PF_INET, SOCK_STREAM, 0, (void *)-1, sizeof(buf), 0,
@@ -115,11 +115,16 @@ struct test_case_t {		/* test case structure */
 		    -1, EFAULT, setup1, cleanup1, "invalid recv buffer"},
 /* 6 */
 	{
-PF_INET, SOCK_STREAM, 0, (void *)buf, sizeof(buf), -1,
+	PF_INET, SOCK_STREAM, 0, (void *)buf, sizeof(buf), MSG_OOB,
 		    (struct sockaddr *)&from, &fromlen,
-		    -1, EINVAL, setup1, cleanup1, "invalid flags set"},};
+		    -1, EINVAL, setup1, cleanup1, "invalid MSG_OOB flag set"},
+/* 7 */
+	{
+	PF_INET, SOCK_STREAM, 0, (void *)buf, sizeof(buf), MSG_ERRQUEUE,
+		    (struct sockaddr *)&from, &fromlen,
+		    -1, EAGAIN, setup1, cleanup1, "invalid MSG_ERRQUEUE flag set"},};
 
-int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);	/* Total number of test cases. */
+int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);
 
 int exp_enos[] = { EBADF, ENOTSOCK, EFAULT, EINVAL, 0 };
 
@@ -130,9 +135,8 @@ static char *argv0;
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -146,10 +150,17 @@ int main(int argc, char *argv[])
 	TEST_EXP_ENOS(exp_enos);
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
-			tdat[testno].setup();
+			if ((tst_kvercmp(3, 17, 0) < 0)
+			    && (tdat[testno].flags & MSG_ERRQUEUE)
+			    && (tdat[testno].type & SOCK_STREAM)) {
+				tst_resm(TCONF, "skip MSG_ERRQUEUE test, "
+						"it's supported from 3.17");
+				continue;
+			}
 
+			tdat[testno].setup();
 			TEST(recvfrom(s, tdat[testno].buf, tdat[testno].buflen,
 				      tdat[testno].flags, tdat[testno].from,
 				      tdat[testno].salen));
@@ -180,12 +191,8 @@ pid_t pid;
 
 void setup(void)
 {
-	TEST_PAUSE;		/* if -P option specified */
+	TEST_PAUSE;
 
-	/* initialize sockaddr's */
-	sin1.sin_family = AF_INET;
-	sin1.sin_port = htons((getpid() % 32768) + 11000);
-	sin1.sin_addr.s_addr = INADDR_ANY;
 	pid = start_server(&sin1);
 }
 
@@ -249,15 +256,19 @@ void cleanup1(void)
 
 pid_t start_server(struct sockaddr_in *sin0)
 {
-	struct sockaddr_in sin1 = *sin0;
 	pid_t pid;
+	socklen_t slen = sizeof(*sin0);
+
+	sin0->sin_family = AF_INET;
+	sin0->sin_port = 0; /* pick random free port */
+	sin0->sin_addr.s_addr = INADDR_ANY;
 
 	sfd = socket(PF_INET, SOCK_STREAM, 0);
 	if (sfd < 0) {
 		tst_brkm(TBROK | TERRNO, cleanup, "server socket failed");
 		return -1;
 	}
-	if (bind(sfd, (struct sockaddr *)&sin1, sizeof(sin1)) < 0) {
+	if (bind(sfd, (struct sockaddr *)sin0, sizeof(*sin0)) < 0) {
 		tst_brkm(TBROK | TERRNO, cleanup, "server bind failed");
 		return -1;
 	}
@@ -265,6 +276,9 @@ pid_t start_server(struct sockaddr_in *sin0)
 		tst_brkm(TBROK | TERRNO, cleanup, "server listen failed");
 		return -1;
 	}
+	if (getsockname(sfd, (struct sockaddr *)sin0, &slen) == -1)
+		tst_brkm(TBROK | TERRNO, cleanup, "getsockname failed");
+
 	switch ((pid = FORK_OR_VFORK())) {
 	case 0:		/* child */
 #ifdef UCLINUX
@@ -286,7 +300,7 @@ pid_t start_server(struct sockaddr_in *sin0)
 	exit(1);
 }
 
-void do_child()
+void do_child(void)
 {
 	struct sockaddr_in fsin;
 	fd_set afds, rfds;
@@ -295,7 +309,7 @@ void do_child()
 	FD_ZERO(&afds);
 	FD_SET(sfd, &afds);
 
-	nfds = getdtablesize();
+	nfds = sfd + 1;
 
 	/* accept connections until killed */
 	while (1) {
@@ -303,8 +317,8 @@ void do_child()
 
 		memcpy(&rfds, &afds, sizeof(rfds));
 
-		if (select(nfds, &rfds, (fd_set *) 0, (fd_set *) 0,
-			   (struct timeval *)0) < 0)
+		if (select(nfds, &rfds, NULL, NULL,
+			   NULL) < 0)
 			if (errno != EINTR)
 				exit(1);
 		if (FD_ISSET(sfd, &rfds)) {
@@ -312,10 +326,12 @@ void do_child()
 
 			fromlen = sizeof(fsin);
 			newfd = accept(sfd, (struct sockaddr *)&fsin, &fromlen);
-			if (newfd >= 0)
+			if (newfd >= 0) {
 				FD_SET(newfd, &afds);
-			/* send something back */
-			(void)write(newfd, "hoser\n", 6);
+				nfds = MAX(nfds, newfd + 1);
+				/* send something back */
+				(void)write(newfd, "hoser\n", 6);
+			}
 		}
 		for (fd = 0; fd < nfds; ++fd)
 			if (fd != sfd && FD_ISSET(fd, &rfds)) {

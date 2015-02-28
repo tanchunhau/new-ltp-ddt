@@ -118,13 +118,13 @@
 void setup();
 void cleanup();
 
-char *TCID = "alarm01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "alarm01";
+int TST_TOTAL = 1;
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -133,7 +133,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call alarm(2)
@@ -144,22 +144,17 @@ int main(int ac, char **av)
 		if (TEST_RETURN == -1)
 			tst_resm(TFAIL | TTERRNO, "alarm(1) failed");
 		else {
-
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS, "alarm(1) returned %ld",
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS, "alarm(1) returned %ld",
+				 TEST_RETURN);
 		}
 
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	void trapper();
 
@@ -174,7 +169,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

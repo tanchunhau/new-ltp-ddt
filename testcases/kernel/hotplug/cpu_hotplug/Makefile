@@ -1,5 +1,6 @@
 #
 #    kernel/hotplug/cpu_hotplug test suite Makefile.
+#    Maxin B. John, March 2010
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -15,17 +16,10 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Maxin B. John, March 2010
 
 top_srcdir                      ?= ../../../..
 
 include $(top_srcdir)/include/mk/env_pre.mk
 
-# Avoid namespace collisions because the installation filenames are pretty
-# generic.
-INSTALL_DIR			:= testcases/bin/cpu_hotplug
-
-INSTALL_TARGETS                 := runtests.sh functional/* include/* tools/*
-
-include $(top_srcdir)/include/mk/generic_leaf_target.mk
+include $(top_srcdir)/include/mk/generic_trunk_target.mk
 

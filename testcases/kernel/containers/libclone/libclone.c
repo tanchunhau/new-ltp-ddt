@@ -56,7 +56,7 @@ int do_unshare_tests(unsigned long clone_flags,
 	}
 	if (pid == 0) {
 		close(retpipe[0]);
-		ret = syscall(SYS_unshare, clone_flags);
+		ret = ltp_syscall(SYS_unshare, clone_flags);
 		if (ret == -1) {
 			if (write(retpipe[1], "0", 2) < 0) {
 				perror("unshare:write(retpipe[1], ..)");
@@ -97,7 +97,7 @@ int do_plain_tests(int (*fn1) (void *arg), void *arg1,
 		return -1;
 	}
 	if (pid == 0)
-		return fn1(arg1);
+		exit(fn1(arg1));
 	if (fn2)
 		ret = fn2(arg2);
 	return ret;

@@ -67,7 +67,7 @@ int main(int ac, char **av)
 	int exno = 0;
 
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -85,8 +85,8 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * When the process group having forked of a child
@@ -151,7 +151,7 @@ int main(int ac, char **av)
 /*
  * do_child_1()
  */
-void do_child_1()
+void do_child_1(void)
 {
 	int exno = 0;
 	int retval, ret, status;
@@ -165,14 +165,12 @@ void do_child_1()
 	}
 
 	if ((pid = FORK_OR_VFORK()) == -1) {
-		tst_resm(TFAIL, "Fork failed");
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "Fork failed");
 	}
 	if (pid == 0) {
 #ifdef UCLINUX
 		if (self_exec(argv0, "n", 2) < 0) {
-			tst_resm(TFAIL, "self_exec failed");
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "self_exec failed");
 		}
 #else
 		do_child_2();
@@ -210,7 +208,7 @@ void do_child_1()
 /*
  * do_child_2()
  */
-void do_child_2()
+void do_child_2(void)
 {
 	for (;;) ;
 }

@@ -43,17 +43,13 @@
 #include <linux/unistd.h>
 #include <sys/wait.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "exit_group01";	/* Test program identifier. */
+char *TCID = "exit_group01";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -73,7 +69,7 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -98,7 +94,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -118,7 +114,7 @@ int main(int ac, char **av)
 		tst_brkm(TFAIL | TERRNO, cleanup, "fork failed");
 	} else if (cpid == 0) {
 		sleep(5);
-		TEST(syscall(__NR_exit_group, 4));
+		TEST(ltp_syscall(__NR_exit_group, 4));
 	} else {
 		w = wait(&status);
 		if (w == -1)

@@ -27,13 +27,13 @@
 
 #define SIGTOTEST SIGUSR1
 
-stack_t altstack1;
+static stack_t altstack1;
 
-void handler(int signo)
+void handler()
 {
 	stack_t altstack2;
 
-	if ((altstack2.ss_sp = (void *)malloc(SIGSTKSZ)) == NULL) {
+	if ((altstack2.ss_sp = malloc(SIGSTKSZ)) == NULL) {
 		perror
 		    ("Unexpected error while attempting to setup test pre-conditions");
 		exit(PTS_UNRESOLVED);
@@ -42,14 +42,14 @@ void handler(int signo)
 	altstack2.ss_flags = 0;
 	altstack2.ss_size = SIGSTKSZ;
 
-	if (sigaltstack(&altstack2, (stack_t *) 0) != -1) {
+	if (sigaltstack(&altstack2, NULL) != -1) {
 		printf
 		    ("Test FAILED: Attempt to set change alternate stack while inside handler succeeded.\n");
 		exit(PTS_FAIL);
 	}
 }
 
-int main()
+int main(void)
 {
 
 	struct sigaction act;
@@ -63,7 +63,7 @@ int main()
 		return PTS_UNRESOLVED;
 	}
 
-	if ((altstack1.ss_sp = (void *)malloc(SIGSTKSZ)) == NULL) {
+	if ((altstack1.ss_sp = malloc(SIGSTKSZ)) == NULL) {
 		perror
 		    ("Unexpected error while attempting to setup test pre-conditions");
 		return PTS_UNRESOLVED;
@@ -72,7 +72,7 @@ int main()
 	altstack1.ss_flags = 0;
 	altstack1.ss_size = SIGSTKSZ;
 
-	if (sigaltstack(&altstack1, (stack_t *) 0) == -1) {
+	if (sigaltstack(&altstack1, NULL) == -1) {
 		perror
 		    ("Unexpected error while attempting to setup test pre-conditions");
 		return PTS_UNRESOLVED;

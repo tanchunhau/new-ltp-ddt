@@ -90,8 +90,8 @@
 #define PIPE_MODE	S_IFIFO | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 #define SEEK_TOP	10
 
-char *TCID = "lseek10";		/* Test program identifier.    */
-int TST_TOTAL = 3;		/* Total number of test cases. */
+char *TCID = "lseek10";
+int TST_TOTAL = 3;
 int exp_enos[] = { ESPIPE, EINVAL, EBADF, 0 };
 
 int no_setup();
@@ -124,13 +124,12 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int fildes;		/* file handle for testfile */
 	int whence;		/* position of file handle in the file */
 	char *test_desc;	/* test specific error message */
 	int ind;		/* counter to test different test conditions */
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -141,7 +140,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; Test_cases[ind].desc != NULL; ind++) {
 			fildes = Test_cases[ind].fd;
@@ -193,7 +192,7 @@ int main(int ac, char **av)
  *	     Invoke individual test setup functions according to the order
  *	     set in test struct. definition.
  */
-void setup()
+void setup(void)
 {
 	int ind;
 
@@ -212,7 +211,7 @@ void setup()
 /*
  * no_setup() - This is a dummy function which simply returns 0.
  */
-int no_setup()
+int no_setup(void)
 {
 	return 0;
 }
@@ -224,7 +223,7 @@ int no_setup()
  *	      reading/writing.
  *	      This function returns 0 on success.
  */
-int setup1()
+int setup1(void)
 {
 	/* Creat a named pipe/fifo using mknod() */
 	if (mknod(TEMP_FILE1, PIPE_MODE, 0) < 0) {
@@ -250,7 +249,7 @@ int setup1()
  *	      into it.
  *	      This function returns 0 on success.
  */
-int setup2()
+int setup2(void)
 {
 	char write_buff[BUFSIZ];	/* buffer to hold data */
 
@@ -280,7 +279,7 @@ int setup2()
  *	      Creat a temporary file for reading/writing and close it.
  *	      This function returns 0 on success.
  */
-int setup3()
+int setup3(void)
 {
 	/* Creat/open a temporary file under above directory */
 	if ((fd3 = open(TEMP_FILE3, O_RDWR | O_CREAT, FILE_MODE)) == -1) {
@@ -304,7 +303,7 @@ int setup3()
  *             completion or premature exit.
  *	       Remove the test directory and testfile(s) created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

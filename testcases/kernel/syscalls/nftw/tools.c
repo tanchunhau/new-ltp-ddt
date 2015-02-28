@@ -25,8 +25,6 @@
  *	tools.c - Supporting functions for nftw.c
  */
 
-#define _USC_LIB_
-
 #include "nftw.h"
 
 extern pathdata pathdat[];
@@ -264,10 +262,9 @@ void do_info(const char *path_name)
  *
  * Exit on failure
  */
-void fail_exit()
+void fail_exit(void)
 {
-	tst_resm(TFAIL, "Test failed");
-	tst_exit();
+	tst_brkm(TFAIL, NULL, "Test failed");
 }
 
 /**************/

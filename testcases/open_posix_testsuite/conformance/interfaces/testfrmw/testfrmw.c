@@ -29,6 +29,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <pthread.h>
+#include <stdarg.h>
 
 /* We use a mutex to avoid conflicts in traces */
 static pthread_mutex_t m_trace = PTHREAD_MUTEX_INITIALIZER;
@@ -41,7 +42,6 @@ void output_init(void)
 void output(char *string, ...)
 {
 	va_list ap;
-	char *ts = "[??:??:??]";
 	struct tm *now;
 	time_t nw;
 	int oldstate;
@@ -51,7 +51,7 @@ void output(char *string, ...)
 	nw = time(NULL);
 	now = localtime(&nw);
 	if (now == NULL)
-		printf(ts);
+		printf("[??:??:??]");
 	else
 		printf("[%2.2d:%2.2d:%2.2d]",
 		       now->tm_hour, now->tm_min, now->tm_sec);

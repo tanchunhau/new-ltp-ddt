@@ -100,7 +100,7 @@ int *producer(void *ID)
 		pthread_exit((void *)1);
 	}
 	printf("Producer %d exit... \n", ThreadID);
-	pthread_exit((void *)0);
+	pthread_exit(NULL);
 }
 
 int *consumer(void *ID)
@@ -140,7 +140,7 @@ int *consumer(void *ID)
 	while (data != -1);
 
 	printf("Consumer %d exit... \n", ThreadID);
-	pthread_exit((void *)0);
+	pthread_exit(NULL);
 }
 
 int main(int argc, char *argv[])
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 	return PTS_UNRESOLVED;
 #endif
 
-	buf = (buf_t *) malloc(sizeof(buf_t));
+	buf = malloc(sizeof(buf_t));
 
 	if ((2 != argc) || ((num = atoi(argv[1])) <= 0)) {
 		fprintf(stderr, "Usage: %s number_of_threads\n", argv[0]);

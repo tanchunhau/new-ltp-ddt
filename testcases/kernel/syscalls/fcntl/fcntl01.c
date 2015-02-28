@@ -49,7 +49,7 @@ int main(int ac, char **av)
 	int fd[10], fd2[10];
 	int mypid, i;
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -59,7 +59,7 @@ int main(int ac, char **av)
 	/* check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		mypid = getpid();
 		for (i = 0; i < 8; i++) {
@@ -157,7 +157,7 @@ int main(int ac, char **av)
 			tst_resm(TFAIL, "unexpected flags, got 0x%x, "
 				 "expected 0x%x", flags, 1);
 
-		for (i = 0; i < sizeof(fd) / sizeof(*fd); i++)
+		for (i = 0; i < ARRAY_SIZE(fd); i++)
 			close(fd[i]);
 		for (i = 0; i < 8; i++) {
 			sprintf(fname, "./fcntl%d.%d", i, mypid);

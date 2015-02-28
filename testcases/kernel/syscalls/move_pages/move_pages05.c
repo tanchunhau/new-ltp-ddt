@@ -108,12 +108,11 @@ void child(void **pages, sem_t * sem)
 
 int main(int argc, char **argv)
 {
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 
 	}
 
@@ -138,8 +137,8 @@ int main(int argc, char **argv)
 		pid_t cpid;
 		sem_t *sem;
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		ret = alloc_shared_pages_on_node(pages + SHARED_PAGE,
 						 N_SHARED_PAGES, from_node);
@@ -178,7 +177,6 @@ int main(int argc, char **argv)
 
 		ret = numa_move_pages(0, N_TEST_PAGES, pages, nodes,
 				      status, MPOL_MF_MOVE);
-		TEST_ERRNO = errno;
 		if (ret == -1) {
 			tst_resm(TFAIL | TERRNO,
 				 "move_pages unexpectedly failed");

@@ -24,13 +24,13 @@
 void *thread_function(void *arg)
 {
 	/* Does nothing */
-	pthread_exit((void *)0);
+	pthread_exit(NULL);
 
 	/* To please some compilers */
 	return NULL;
 }
 
-int main()
+int main(void)
 {
 	pthread_t child_thread;
 	pthread_t invalid_tid;

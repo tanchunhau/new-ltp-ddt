@@ -198,8 +198,8 @@ int main(int argc, char *argv[])
 		anyfail();
 	}
 
-	if ((buf = (uchar_t *) malloc(pagesize)) == NULL
-	    || (pidarray = (pid_t *) malloc(nprocs * sizeof(pid_t))) == NULL) {
+	if ((buf = malloc(pagesize)) == NULL
+	    || (pidarray = malloc(nprocs * sizeof(pid_t))) == NULL) {
 		perror("malloc error");
 		anyfail();
 	}
@@ -480,7 +480,7 @@ unsigned int initrand(void)
 	 */
 	srand((unsigned int)getpid());
 	seed = rand();
-	srand((unsigned int)time((time_t *) 0));
+	srand((unsigned int)time(NULL));
 	seed = (seed ^ rand()) % 100000;
 	srand48((long int)seed);
 	return (seed);
@@ -495,9 +495,7 @@ void ok_exit()
 
 int anyfail()
 {
-	tst_resm(TFAIL, "Test failed\n");
-	tst_exit();
-	return 0;
+	tst_brkm(TFAIL, NULL, "Test failed\n");
 }
 
 /*****  **      **      *****/

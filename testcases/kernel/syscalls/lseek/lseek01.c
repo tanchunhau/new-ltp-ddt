@@ -121,8 +121,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "lseek01";		/* Test program identifier.    */
-int TST_TOTAL = 3;		/* Total number of test cases. */
+char *TCID = "lseek01";
+int TST_TOTAL = 3;
 
 int exp_enos[] = { 0, 0 };
 
@@ -134,7 +134,7 @@ int Whence[] = { SEEK_SET, SEEK_CUR, SEEK_END, -1 };
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	int ind;
 	int offset;
@@ -160,7 +160,7 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		offset = (lc % 100) * 4096;	/* max size is 100 blocks */
 
@@ -179,35 +179,23 @@ int main(int ac, char **av)
 					 Fname, offset, TEST_ERRNO,
 					 strerror(TEST_ERRNO));
 			} else {
-
-		/***************************************************************
-	         * only perform functional verification if flag set (-f not given)
-	         ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "lseek(%s, %d, %d) returned %ld",
-						 Fname, offset, Whence[ind],
-						 TEST_RETURN);
-				} else
-					Tst_count++;
+				tst_resm(TPASS,
+					 "lseek(%s, %d, %d) returned %ld",
+					 Fname, offset, Whence[ind],
+					 TEST_RETURN);
 			}
 		}
 
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -228,7 +216,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

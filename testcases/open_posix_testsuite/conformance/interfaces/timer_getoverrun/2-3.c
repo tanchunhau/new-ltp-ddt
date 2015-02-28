@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include "posixtest.h"
 
-int main()
+int main(void)
 {
 #ifndef _POSIX_REALTIME_SIGNALS
 	printf("_POSIX_REALTIME_SIGNALS is not defined\n");
@@ -150,12 +150,9 @@ int main()
 	if (overruns >= expectedoverruns && overruns < expectedoverruns + fudge) {
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		printf("FAIL:  %d overruns sent; expected %d\n",
-		       overruns, expectedoverruns);
-		return PTS_FAIL;
 	}
 
-	printf("UNRESOLVED:  This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("FAIL:  %d overruns sent; expected %d\n",
+	       overruns, expectedoverruns);
+	return PTS_FAIL;
 }

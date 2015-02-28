@@ -126,8 +126,8 @@ void cleanup();
 
 extern char *get_high_address();
 
-char *TCID = "unlink07";	/* Test program identifier.    */
-int TST_TOTAL = 6;		/* Total number of test cases. */
+char *TCID = "unlink07";
+int TST_TOTAL = 6;
 
 int exp_enos[] = { 0, 0 };
 
@@ -173,7 +173,7 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	char *fname;
 	char *desc;
 	int ind;
@@ -183,7 +183,6 @@ int main(int ac, char **av)
      ***************************************************************/
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
     /***************************************************************
@@ -199,7 +198,7 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; Test_cases[ind].desc != NULL; ind++) {
 
@@ -217,20 +216,17 @@ int main(int ac, char **av)
 
 			/* check return code */
 			if (TEST_RETURN == -1) {
-				if (STD_FUNCTIONAL_TEST) {
-					if (TEST_ERRNO ==
-					    Test_cases[ind].exp_errno)
-						tst_resm(TPASS,
-							 "unlink(<%s>) Failed, errno=%d",
-							 desc, TEST_ERRNO);
-					else
-						tst_resm(TFAIL,
-							 "unlink(<%s>) Failed, errno=%d, expected errno:%d",
-							 desc, TEST_ERRNO,
-							 Test_cases
-							 [ind].exp_errno);
-				} else
-					Tst_count++;
+				if (TEST_ERRNO ==
+				    Test_cases[ind].exp_errno)
+					tst_resm(TPASS,
+						 "unlink(<%s>) Failed, errno=%d",
+						 desc, TEST_ERRNO);
+				else
+					tst_resm(TFAIL,
+						 "unlink(<%s>) Failed, errno=%d, expected errno:%d",
+						 desc, TEST_ERRNO,
+						 Test_cases
+						 [ind].exp_errno);
 			} else {
 				tst_resm(TFAIL,
 					 "unlink(<%s>) returned %ld, expected -1, errno:%d",
@@ -241,18 +237,14 @@ int main(int ac, char **av)
 
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
-
 	tst_exit();
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 	int ind;
 
@@ -278,7 +270,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	chmod("unwrite_dir", 0777);
 	chmod("unsearch_dir", 0777);
@@ -296,7 +288,7 @@ void cleanup()
 /******************************************************************
  *
  ******************************************************************/
-int no_setup()
+int no_setup(void)
 {
 	return 0;
 }
@@ -304,7 +296,7 @@ int no_setup()
 /******************************************************************
  *
  ******************************************************************/
-int longpath_setup()
+int longpath_setup(void)
 {
 	int ind;
 
@@ -318,7 +310,7 @@ int longpath_setup()
 /******************************************************************
  *
  ******************************************************************/
-int filepath_setup()
+int filepath_setup(void)
 {
 	int fd;
 

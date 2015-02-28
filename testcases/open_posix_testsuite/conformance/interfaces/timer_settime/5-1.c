@@ -36,7 +36,7 @@ void handler(int signo)
 	printf("Caught signal\n");
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct sigevent ev;
 	struct sigaction act;
@@ -92,13 +92,10 @@ int main(int argc, char *argv[])
 	if (abs(tsleft.tv_sec - SLEEPDELTA) <= ACCEPTABLEDELTA) {
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		printf("Timer did not last for correct amount of time\n");
-		printf("timer: %d != correct %d\n",
-		       (int)ts.tv_sec - (int)tsleft.tv_sec, TIMERSEC);
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("Timer did not last for correct amount of time\n");
+	printf("timer: %d != correct %d\n",
+	       (int)ts.tv_sec - (int)tsleft.tv_sec, TIMERSEC);
+	return PTS_FAIL;
 }

@@ -81,7 +81,7 @@ char path_sys_sz_huge[BUFSIZ];
 #endif
 
 char *TCID = "hugemmap05";
-int TST_TOTAL = 1, Tst_count;
+int TST_TOTAL = 1, tst_count;
 static char nr_hugepages[BUFSIZ], nr_overcommit_hugepages[BUFSIZ];
 static char buf[BUFSIZ], line[BUFSIZ], path[BUFSIZ], pathover[BUFSIZ];
 static char shmmax[BUFSIZ];
@@ -113,7 +113,7 @@ static void init_sys_sz_paths(void);
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	init_hugepagesize();
 	init_sys_sz_paths();
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
 	}
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		overcommit();
 	}
 	cleanup();
@@ -160,7 +160,7 @@ static void overcommit(void)
 			tst_brkm(TBROK | TERRNO, cleanup, "shmget");
 	} else {
 		/* XXX (garrcoop): memory leak. */
-		snprintf(s, BUFSIZ, "%s/hugemmap05/file", get_tst_tmpdir());
+		snprintf(s, BUFSIZ, "%s/hugemmap05/file", tst_get_tmpdir());
 		fd = open(s, O_CREAT | O_RDWR, 0755);
 		if (fd == -1)
 			tst_brkm(TBROK | TERRNO, cleanup, "open");
@@ -281,7 +281,7 @@ static void cleanup(void)
 	close(fd);
 
 	/* XXX (garrcoop): memory leak. */
-	snprintf(buf, BUFSIZ, "%s/hugemmap05", get_tst_tmpdir());
+	snprintf(buf, BUFSIZ, "%s/hugemmap05", tst_get_tmpdir());
 	if (umount(buf) == -1)
 		tst_resm(TWARN | TERRNO, "umount");
 	if (shmid != -1) {
@@ -380,7 +380,7 @@ static void setup(void)
 	close(fd);
 
 	/* XXX (garrcoop): memory leak. */
-	snprintf(buf, BUFSIZ, "%s/hugemmap05", get_tst_tmpdir());
+	snprintf(buf, BUFSIZ, "%s/hugemmap05", tst_get_tmpdir());
 	if (mkdir(buf, 0700) == -1)
 		tst_brkm(TBROK | TERRNO, cleanup, "mkdir");
 	if (mount(NULL, buf, "hugetlbfs", 0, NULL) == -1)

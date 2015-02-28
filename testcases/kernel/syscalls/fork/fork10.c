@@ -63,7 +63,7 @@ int main(int ac, char **av)
 	char chilchar[2];
 
 	int lc;
-	char *msg;
+	const char *msg;
 
 	fildes = -1;
 
@@ -74,7 +74,7 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		fildes = creat(fnamebuf, 0600);
 		if (fildes < 0)
@@ -151,7 +151,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-static void setup()
+static void setup(void)
 {
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	umask(0);
@@ -163,7 +163,7 @@ static void setup()
 	strcat(fnamebuf, pidbuf);
 }
 
-static void cleanup()
+static void cleanup(void)
 {
 	TEST_CLEANUP;
 	tst_rmdir();

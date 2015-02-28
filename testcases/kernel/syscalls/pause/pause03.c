@@ -73,8 +73,8 @@
 int cflag;			/* flag to indicate child process status */
 pid_t cpid;			/* child process id */
 
-char *TCID = "pause03";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "pause03";
+int TST_TOTAL = 1;
 
 void do_child();		/* Function to run in child process */
 void setup();			/* Main setup function of test */
@@ -84,11 +84,10 @@ void sig_handle(int sig);	/* signal handler for SIGCLD */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int status;		/* child process exit status */
 	int ret_val;
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 #ifdef UCLINUX
@@ -99,7 +98,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* Creat a new process using fork() */
 		if ((cpid = FORK_OR_VFORK()) == -1) {
@@ -182,7 +181,7 @@ int main(int ac, char **av)
 /*
  * do_child()
  */
-void do_child()
+void do_child(void)
 {
 	/* Suspend the child using pause() */
 	TEST(pause());
@@ -197,7 +196,7 @@ void do_child()
  * setup() - performs all ONE TIME setup for this test.
  *	     Setup signal handler to catch SIGCLD signal.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -228,7 +227,7 @@ void sig_handle(int sig)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

@@ -53,7 +53,7 @@ static long get_pid_max(void)
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t epid = get_pid_max() + 1;
 
 	int status = 1;
@@ -65,7 +65,7 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(wait4(epid, &status, 0, &rusage));
 

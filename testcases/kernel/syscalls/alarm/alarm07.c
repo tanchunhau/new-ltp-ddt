@@ -84,7 +84,7 @@ void sigproc(int sig);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int sleep_time = 5;
 	int status;
 	int time_sec = 3;
@@ -97,7 +97,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call First alarm() with non-zero time parameter
@@ -113,32 +113,28 @@ int main(int ac, char **av)
 
 		sleep(sleep_time);
 
-		if (STD_FUNCTIONAL_TEST) {
-			if (cpid == 0) {
-				if (alarms_received == 0)
-					exit(0);
-				else {
-					printf("alarm request not cleared in "
-					       "child; alarms received:%d\n",
-					       alarms_received);
-					exit(1);
-				}
-			} else {
-				/* Wait for child to complete execution */
-				if (wait(&status) == -1)
-					tst_brkm(TBROK | TERRNO, cleanup,
-						 "wait failed");
-				if (!WIFEXITED(status) ||
-				    WEXITSTATUS(status) != 0)
-					tst_brkm(TBROK | TERRNO, cleanup,
-						 "child exited abnormally");
+		if (cpid == 0) {
+			if (alarms_received == 0)
+				exit(0);
+			else {
+				printf("alarm request not cleared in "
+				       "child; alarms received:%d\n",
+				       alarms_received);
+				exit(1);
 			}
-		} else
-			tst_resm(TPASS, "call returned %ld", TEST_RETURN);
+		} else {
+			/* Wait for child to complete execution */
+			if (wait(&status) == -1)
+				tst_brkm(TBROK | TERRNO, cleanup,
+					 "wait failed");
+			if (!WIFEXITED(status) ||
+			    WEXITSTATUS(status) != 0)
+				tst_brkm(TBROK | TERRNO, cleanup,
+					 "child exited abnormally");
+		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -146,7 +142,7 @@ int main(int ac, char **av)
  * setup() - performs all ONE TIME setup for this test.
  *  Setup signal handler to catch SIGALRM signal.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -174,7 +170,7 @@ void sigproc(int sig)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

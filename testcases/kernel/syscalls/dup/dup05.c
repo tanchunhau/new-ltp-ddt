@@ -121,8 +121,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "dup05";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "dup05";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0, 0 };
 
@@ -132,7 +132,7 @@ int fd;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -143,17 +143,15 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(dup(fd));
 
-		if (TEST_RETURN == -1)
+		if (TEST_RETURN == -1) {
 			tst_resm(TFAIL | TTERRNO, "dup failed");
-		else {
-
-			if (STD_FUNCTIONAL_TEST)
-				tst_resm(TPASS, "dup returned %ld",
-					 TEST_RETURN);
+		} else {
+			tst_resm(TPASS, "dup returned %ld",
+				 TEST_RETURN);
 
 			if (close(TEST_RETURN) == -1)
 				tst_brkm(TBROK | TERRNO, cleanup,
@@ -163,11 +161,10 @@ int main(int ac, char **av)
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	fd = -1;
 
@@ -184,7 +181,7 @@ void setup()
 		tst_brkm(TBROK, cleanup, "open failed");
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

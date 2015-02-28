@@ -66,9 +66,9 @@ access02 access02
 access03 access03
 access04 access04
 access05 access05
+access06 access06
 
 acct01 acct01
-acct02 acct02
 
 adjtimex01 adjtimex01
 adjtimex02 adjtimex02
@@ -104,14 +104,14 @@ chmod01A symlink01 -T chmod01
 chmod02 chmod02
 chmod03 chmod03
 chmod04 chmod04
-chmod05 cp -p $LTPROOT/testcases/bin/change_owner $TMPDIR;chmod05
-chmod06 cp -p $LTPROOT/testcases/bin/change_owner $TMPDIR;chmod06
+chmod05 chmod05
+chmod06 chmod06
 chmod07 chmod07
 
 chown01 chown01
 chown02 chown02
-chown03 export change_owner=$LTPROOT/testcases/bin/change_owner;chown03
-chown04 cp -p $LTPROOT/testcases/bin/change_owner $TMPDIR;chown04
+chown03 chown03
+chown04 chown04
 chown05 chown05
 
 chroot01 chroot01
@@ -127,6 +127,7 @@ clone04 clone04
 clone05 clone05
 clone06 clone06
 clone07 clone07
+clone08 clone08
 
 close01 close01
 close02 close02
@@ -182,14 +183,14 @@ fchmod01 fchmod01
 fchmod02 fchmod02
 fchmod03 fchmod03
 fchmod04 fchmod04
-fchmod05 cp -p $LTPROOT/testcases/bin/change_owner $TMPDIR;fchmod05
-fchmod06 cp -p $LTPROOT/testcases/bin/change_owner $TMPDIR;fchmod06
+fchmod05 fchmod05
+fchmod06 fchmod06
 fchmod07 fchmod07
 
 fchown01 fchown01
 fchown02 fchown02
-fchown03 cp -p $LTPROOT/testcases/bin/change_owner $TMPDIR;fchown03
-fchown04 export change_owner=$LTPROOT/testcases/bin/change_owner;fchown04
+fchown03 fchown03
+fchown04 fchown04
 fchown05 fchown05
 
 fcntl01 fcntl01
@@ -199,7 +200,6 @@ fcntl04 fcntl04
 fcntl05 fcntl05
 fcntl06 fcntl06
 fcntl07 fcntl07
-fcntl07B fcntl07B
 fcntl08 fcntl08
 fcntl09 fcntl09
 fcntl10 fcntl10
@@ -222,6 +222,9 @@ fcntl26 fcntl26
 # The tests for these system calls  fcntl27 and fcntl28 are temporarily being disabled
 # fcntl27 fcntl27
 # fcntl28 fcntl28
+fcntl29 fcntl29
+fcntl30 fcntl30
+fcntl31 fcntl31
 
 fdatasync01 fdatasync01
 fdatasync02 fdatasync02
@@ -272,11 +275,10 @@ getcontext01 getcontext01
 getcwd01 getcwd01
 getcwd02 getcwd02
 getcwd03 getcwd03
+getcwd04 getcwd04
 
 getdents01 getdents01
 getdents02 getdents02
-getdents03 getdents03
-getdents04 getdents04
 
 getdomainname01 getdomainname01
 
@@ -285,14 +287,13 @@ getdtablesize01 getdtablesize01
 getegid01 getegid01
 
 geteuid01 geteuid01
+geteuid02 geteuid02
 
 getgid01 getgid01
 getgid03 getgid03
 
 getgroups01 getgroups01
-getgroups02 getgroups02
 getgroups03 getgroups03
-getgroups04 getgroups04
 
 gethostid01 gethostid01
 
@@ -343,7 +344,6 @@ gettimeofday01 gettimeofday01
 gettimeofday02 gettimeofday02
 
 getuid01 getuid01
-getuid02 getuid02
 getuid03 getuid03
 
 #Needs tty device.
@@ -374,6 +374,7 @@ kill12 kill12
 
 lchown01 lchown01
 lchown02 lchown02
+lchown03 lchown03
 
 link01 symlink01 -T link01
 link02 link02
@@ -382,11 +383,13 @@ link04 link04
 link05 link05
 link06 link06
 link07 link07
+link08 link08
 
 listen01 listen01
 
 llseek01 llseek01
 llseek02 llseek02
+llseek03 llseek03
 
 lseek01 lseek01
 lseek02 lseek02
@@ -449,6 +452,7 @@ mmap09 mmap09
 
 modify_ldt01 modify_ldt01
 modify_ldt02 modify_ldt02
+modify_ldt03 modify_ldt03
 
 #
 # These tests require an unmounted block device
@@ -463,6 +467,7 @@ modify_ldt02 modify_ldt02
 mprotect01 mprotect01
 mprotect02 mprotect02
 mprotect03 mprotect03
+mprotect04 mprotect04
 
 mremap01 mremap01
 mremap02 mremap02
@@ -490,6 +495,7 @@ msgrcv03 msgrcv03
 msgrcv04 msgrcv04
 msgrcv05 msgrcv05
 msgrcv06 msgrcv06
+msgrcv07 msgrcv07
 
 msgsnd01 msgsnd01
 msgsnd02 msgsnd02
@@ -501,8 +507,6 @@ msgsnd06 msgsnd06
 msync01 msync01
 msync02 msync02
 msync03 msync03
-msync04 msync04
-msync05 msync05
 
 munlock01 munlock01
 munlock02 munlock02
@@ -539,6 +543,8 @@ open07 open07
 open08 open08
 open09 open09
 open10 open10
+open11 open11
+open12 open12
 
 mincore01 mincore01
 #mincore02 mincore02 currently hangs and does not exit correctly
@@ -581,6 +587,7 @@ pread03 pread03
 profil01 profil01
 
 pselect01 pselect01
+pselect02 pselect02
 
 ptrace01 ptrace01
 ptrace02 ptrace02
@@ -589,12 +596,10 @@ ptrace05 ptrace05
 
 pwrite01 pwrite01
 pwrite02 pwrite02
-pwrite03 pwrite03
 pwrite04 pwrite04
 
 pwrite01_64 pwrite01_64
 pwrite02_64 pwrite02_64
-pwrite03_64 pwrite03_64
 pwrite04_64 pwrite04_64
 
 read01 read01
@@ -604,12 +609,13 @@ read04 read04
 
 readdir01 readdir01
 readdir02 readdir02
+readdir21 readdir21
 
 readlink01A symlink01 -T readlink01
 readlink01 readlink01
 readlink02 readlink02
 readlink03 readlink03
-readlink04 cp -f $LTPROOT/testcases/bin/creat_slink $TMPDIR; readlink04
+readlink04 readlink04
 
 readv01 readv01
 readv02 readv02
@@ -635,6 +641,7 @@ rename07 rename07
 rename08 rename08
 rename09 rename09
 rename10 rename10
+rename11 rename11
 rename12 rename12
 rename13 rename13
 rename14 rename14
@@ -647,6 +654,7 @@ rmdir04 rmdir04
 rmdir05 rmdir05
 
 sbrk01 sbrk01
+sbrk02 sbrk02
 
 sched_get_priority_max01 sched_get_priority_max01
 sched_get_priority_max02 sched_get_priority_max02
@@ -727,6 +735,7 @@ setgid02 setgid02
 setgid03 setgid03
 
 setegid01 setegid01
+setegid02 setegid02
 
 setgroups01 setgroups01
 setgroups02 setgroups02
@@ -762,11 +771,13 @@ setregid04 setregid04
 setresgid01 setresgid01
 setresgid02 setresgid02
 setresgid03 setresgid03
+setresgid04 setresgid04
 
 setresuid01 setresuid01
 setresuid02 setresuid02
 setresuid03 setresuid03
 setresuid04 setresuid04
+setresuid05 setresuid05
 
 setreuid01 setreuid01
 setreuid02 setreuid02
@@ -857,6 +868,7 @@ statfs02 statfs02
 statfs03 statfs03
 
 statvfs01 statvfs01
+statvfs02 statvfs02
 
 # This syscall is obsoleted by settimeofday.
 #stime01 stime01
@@ -922,7 +934,6 @@ times03 times03
 truncate01 truncate01
 truncate02 truncate02
 truncate03 truncate03
-truncate04 truncate04
 
 # This syscall is obsolete.  The latest glibc does not even
 # include the ulimit.h file anymore.  The test will fail
@@ -970,6 +981,7 @@ vfork02 vfork02
 vhangup01 vhangup01
 vhangup02 vhangup02
 
+wait01 wait01
 wait02 wait02
 
 wait401 wait401
