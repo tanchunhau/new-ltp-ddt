@@ -84,7 +84,7 @@ int sys_support = 0;
 void cleanup(void);
 void setup(void);
 static inline int getcpu(unsigned int *, unsigned int *, void *);
-unsigned int set_cpu_affinity();
+unsigned int set_cpu_affinity(void);
 unsigned int get_nodeid(unsigned int);
 unsigned int max_cpuid(size_t, cpu_set_t *);
 
@@ -94,7 +94,7 @@ int TST_TOTAL = 1;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	unsigned int cpu_id, node_id = 0;
 	unsigned int cpu_set;
 #ifdef __i386__
@@ -119,8 +119,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* call the system call with the TEST() macro */
 		cpu_set = set_cpu_affinity();
@@ -188,7 +188,7 @@ void setup(void)
  * This will set the affinity to max cpu on which process can run
  * and return that cpu id to the calling process
  */
-unsigned int set_cpu_affinity()
+unsigned int set_cpu_affinity(void)
 {
 	unsigned cpu_max;
 	cpu_set_t *set;
@@ -201,8 +201,7 @@ realloc:
 	set = malloc(sizeof(cpu_set_t));
 #endif
 	if (set == NULL) {
-		tst_resm(TFAIL, "CPU_ALLOC:errno:%d", errno);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "CPU_ALLOC:errno:%d", errno);
 	}
 #if __GLIBC_PREREQ(2, 7)
 	size = CPU_ALLOC_SIZE(nrcpus);
@@ -237,8 +236,7 @@ realloc:
 #endif
 	if (sched_setaffinity(0, size, set) < 0) {
 		CPU_FREE(set);
-		tst_resm(TFAIL, "sched_setaffinity:errno:%d", errno);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "sched_setaffinity:errno:%d", errno);
 	}
 	CPU_FREE(set);
 	return cpu_max;

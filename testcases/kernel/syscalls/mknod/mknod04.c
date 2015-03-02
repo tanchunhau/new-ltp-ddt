@@ -91,8 +91,8 @@
 struct stat buf;		/* struct. to hold stat(2) o/p contents */
 struct passwd *user1;		/* struct. to hold getpwnam(3) o/p contents */
 
-char *TCID = "mknod04";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "mknod04";
+int TST_TOTAL = 1;
 char node_name[PATH_MAX];	/* buffer to hold node name created */
 
 gid_t group1_gid, group2_gid, mygid;	/* user and process group id's */
@@ -106,9 +106,8 @@ int main(int ac, char **av)
 {
 	int lc;
 	int fflag;		/* functionality flag variable */
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -119,7 +118,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * TEST CASE CONDITION:
@@ -138,44 +137,36 @@ int main(int ac, char **av)
 				 strerror(TEST_ERRNO));
 			continue;
 		}
-		/*
-		 * Perform functional verification if test executed
-		 * without (-f) option.
-		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/* Set the functionality flag */
-			fflag = 1;
+		/* Set the functionality flag */
+		fflag = 1;
 
-			/* Check for node's creation */
-			if (stat(node_name, &buf) < 0) {
-				tst_resm(TFAIL, "stat() of %s failed, errno:%d",
-					 node_name, TEST_ERRNO);
-				/* unset fflag */
-				fflag = 0;
-			}
+		/* Check for node's creation */
+		if (stat(node_name, &buf) < 0) {
+			tst_resm(TFAIL, "stat() of %s failed, errno:%d",
+				 node_name, TEST_ERRNO);
+			/* unset fflag */
+			fflag = 0;
+		}
 
-			/* Verify mode permissions of node */
-			if (buf.st_mode & S_ISGID) {
-				tst_resm(TFAIL, "%s: Incorrect modes, setgid "
-					 "bit set", node_name);
-				/* unset flag as functionality fails */
-				fflag = 0;
-			}
+		/* Verify mode permissions of node */
+		if (buf.st_mode & S_ISGID) {
+			tst_resm(TFAIL, "%s: Incorrect modes, setgid "
+				 "bit set", node_name);
+			/* unset flag as functionality fails */
+			fflag = 0;
+		}
 
-			/* Verify group ID of node */
-			if (buf.st_gid != group2_gid) {
-				tst_resm(TFAIL, "%s: Incorrect group",
-					 node_name);
-				/* unset flag as functionality fails */
-				fflag = 0;
-			}
-			if (fflag) {
-				tst_resm(TPASS, "Functionality of mknod(%s, "
-					 "%#o, 0) successful",
-					 node_name, MODE_RWX);
-			}
-		} else {
-			tst_resm(TPASS, "call succeeded");
+		/* Verify group ID of node */
+		if (buf.st_gid != group2_gid) {
+			tst_resm(TFAIL, "%s: Incorrect group",
+				 node_name);
+			/* unset flag as functionality fails */
+			fflag = 0;
+		}
+		if (fflag) {
+			tst_resm(TPASS, "Functionality of mknod(%s, "
+				 "%#o, 0) successful",
+				 node_name, MODE_RWX);
 		}
 
 		/* Remove the node for the next go `round */
@@ -209,17 +200,12 @@ int main(int ac, char **av)
  *	to set group-id bit on it.
  *	Set the effective uid/gid of the process to that of guest user.
  */
-void setup()
+void setup(void)
 {
+	tst_require_root(NULL);
 
 	/* Capture unexpected signals */
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Check that the test process id is super/root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be super/root for this test!");
-		tst_exit();
-	}
 
 	TEST_PAUSE;
 
@@ -317,7 +303,7 @@ void setup()
  *	created during setup().
  *	Exit the test program with normal exit code.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

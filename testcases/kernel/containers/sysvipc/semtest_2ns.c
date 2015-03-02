@@ -45,6 +45,7 @@
 #include <sys/sem.h>
 #include <libclone.h>
 #include "test.h"
+#include "ipcns_helper.h"
 
 #define MY_KEY     124326L
 #define UNSHARESTR "unshare"
@@ -74,15 +75,13 @@ void sem_lock(int id)
 	/* Checking the semlock and simulating as if the crit-sec is updated */
 	if (semop(id, &semop_lock[0], 2) < 0) {
 		perror("sem lock error");
-		tst_resm(TBROK, "semop failed");
-		tst_exit();
+		tst_brkm(TBROK, NULL, "semop failed");
 	}
 	tst_resm(TINFO, "Sem1: File locked, Critical section is updated...");
 	sleep(2);
 	if (semop(id, &semop_unlock[0], 1) < 0) {
 		perror("sem unlock error");
-		tst_resm(TBROK, "semop failed");
-		tst_exit();
+		tst_brkm(TBROK, NULL, "semop failed");
 	}
 }
 
@@ -93,6 +92,8 @@ int check_sem1(void *vtest)
 {
 	int id1;
 
+	(void) vtest;
+
 	close(p1[0]);
 	/* 1. Create (or fetch if existing) the binary semaphore */
 	id1 = semget(MY_KEY, 1, IPC_CREAT | IPC_EXCL | 0666);
@@ -100,21 +101,18 @@ int check_sem1(void *vtest)
 		perror("Semaphore create");
 		if (errno != EEXIST) {
 			perror("semget failure");
-			tst_resm(TBROK, "semget failure");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "semget failure");
 		}
 		id1 = semget(MY_KEY, 1, 0);
 		if (id1 == -1) {
 			perror("Semaphore create");
-			tst_resm(TBROK, "semget failure");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "semget failure");
 		}
 	}
 
 	write(p1[1], "go", 3);
 	tst_resm(TINFO, "Cont1: Able to create semaphore");
 	tst_exit();
-	return 0;
 }
 
 /*
@@ -125,6 +123,8 @@ int check_sem2(void *vtest)
 {
 	char buf[3];
 	int id2;
+
+	(void) vtest;
 
 	close(p1[1]);
 	close(p2[0]);
@@ -151,7 +151,12 @@ int check_sem2(void *vtest)
 	}
 
 	tst_exit();
-	return 0;
+}
+
+static void setup(void)
+{
+	tst_require_root(NULL);
+	check_newipc();
 }
 
 int main(int argc, char *argv[])
@@ -159,6 +164,8 @@ int main(int argc, char *argv[])
 	int ret, id, use_clone = T_NONE;
 	char *tsttype = NONESTR;
 	char buf[7];
+
+	setup();
 
 	if (argc != 2) {
 		tst_resm(TINFO, "Usage: %s <clone| unshare| none>", argv[0]);
@@ -190,14 +197,12 @@ int main(int argc, char *argv[])
 	/* Create 2 containers */
 	ret = do_clone_unshare_test(use_clone, CLONE_NEWIPC, check_sem1, NULL);
 	if (ret < 0) {
-		tst_resm(TFAIL, "clone/unshare failed");
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "clone/unshare failed");
 	}
 
 	ret = do_clone_unshare_test(use_clone, CLONE_NEWIPC, check_sem2, NULL);
 	if (ret < 0) {
-		tst_resm(TFAIL, "clone/unshare failed");
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "clone/unshare failed");
 	}
 	close(p2[1]);
 	read(p2[0], buf, 7);
@@ -221,7 +226,5 @@ int main(int argc, char *argv[])
 	/* Delete the semaphore */
 	id = semget(MY_KEY, 1, 0);
 	semctl(id, IPC_RMID, 0);
-	tst_exit();
-
 	tst_exit();
 }

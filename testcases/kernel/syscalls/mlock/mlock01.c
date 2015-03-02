@@ -56,8 +56,8 @@ void setup();
 void setup1(int);
 void cleanup();
 
-char *TCID = "mlock01";		/* Test program identifier.    */
-int TST_TOTAL = 4;		/* Total number of test cases. */
+char *TCID = "mlock01";
+int TST_TOTAL = 4;
 
 int exp_enos[] = { 0 };
 
@@ -84,7 +84,7 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -102,7 +102,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -128,14 +128,14 @@ int main(int ac, char **av)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_brkm(TCONF, NULL, "test is not available on uClinux");
 }
 
 #endif /* if !defined(UCLINUX) */
 
-void setup()
+void setup(void)
 {
 	TEST_PAUSE;
 }
@@ -147,7 +147,7 @@ void setup1(int len)
 		tst_brkm(TFAIL, cleanup, "malloc failed");
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

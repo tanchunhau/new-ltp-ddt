@@ -69,7 +69,7 @@
  *
  ****************************************************************/
 
-char *TCID = "iopl02";		/* Test program identifier.    */
+char *TCID = "iopl02";
 
 #if defined __i386__ || defined(__x86_64__)
 
@@ -109,7 +109,7 @@ int main(int ac, char **av)
 {
 
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -118,7 +118,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 
@@ -179,7 +179,7 @@ int setup1(void)
 }
 
 /* cleanup1() - reset to super user for first test case */
-void cleanup1()
+void cleanup1(void)
 {
 	/* reset user as root */
 	if (seteuid(0) == -1) {
@@ -188,22 +188,17 @@ void cleanup1()
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Check whether we are root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be root for this test!");
-	}
 
 	/* Check if "nobody" user id exists */
 	if ((ltpuser = getpwnam(nobody_uid)) == NULL) {
 		tst_brkm(TBROK, NULL, "\"nobody\" user id doesn't exist");
 	}
 
-	/* Set up the expected error numbers for -e option */
 	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
@@ -214,7 +209,7 @@ void setup()
  *cleanup() -  performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 
 	/*
@@ -230,13 +225,12 @@ void cleanup()
 #include "test.h"
 #include "usctest.h"
 
-int TST_TOTAL = 0;		/* Total number of test cases. */
+int TST_TOTAL = 0;
 
-int main()
+int main(void)
 {
 	tst_resm(TPASS,
 		 "LSB v1.3 does not specify iopl() for this architecture.");
-	tst_exit();
 	tst_exit();
 }
 

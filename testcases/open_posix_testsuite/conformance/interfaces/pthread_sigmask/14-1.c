@@ -35,13 +35,13 @@ void *a_thread_func()
 	}
 
 	printf("PASS: pthread_sigmask returned 0.\n");
-	pthread_exit((void *)0);
+	pthread_exit(NULL);
 
 	/* To please some compilers */
 	return NULL;
 }
 
-int main()
+int main(void)
 {
 
 	int *thread_return_value;

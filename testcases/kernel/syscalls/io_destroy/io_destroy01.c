@@ -64,7 +64,7 @@ static void setup(void)
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	io_context_t ctx;
 
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(io_destroy(ctx));
 
@@ -107,6 +107,5 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	tst_brkm(TCONF, NULL, "System doesn't support execution of the test");
-	tst_exit();
 }
 #endif

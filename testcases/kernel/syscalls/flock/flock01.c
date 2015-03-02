@@ -31,7 +31,7 @@
  *      (See the parse_opts(3) man page).
  *
  *    DESCRIPTION
- * 	Test to verify flock(2) succeds with all kind of locks.
+ * 	Test to verify flock(2) succeeds with all kind of locks.
  *	Intends to provide a limited exposure of system call.
  *    $
  *	Setup:
@@ -78,8 +78,8 @@ void cleanup(void);
 /* 0 terminated list of expected errnos */
 int exp_enos[] = { EWOULDBLOCK, EAGAIN, EINVAL, 0 };
 
-char *TCID = "flock01";		/* Test program identifier */
-int TST_TOTAL = 3;		/* Total number of test cases */
+char *TCID = "flock01";
+int TST_TOTAL = 3;
 char filename[100];
 int fd;
 
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 {
 	int lc, i;
 	/* loop counter */
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -109,8 +109,8 @@ int main(int argc, char **argv)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 				continue;	/*next loop for MTKERNEL  */
 			} else {
 				tst_resm(TPASS,
-					 "flock() succeded with %s, returned error number=%d",
+					 "flock() succeeded with %s, returned error number=%d",
 					 test_cases[i].opt, TEST_ERRNO);
 			}
 
@@ -151,7 +151,6 @@ void setup(void)
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	/* Set up the expected error numbers for -e option */
 	TEST_EXP_ENOS(exp_enos);
 
 	/* Pause if that option was specified

@@ -124,15 +124,15 @@ void cleanup();
 void alarm_handler(int sig);
 void do_child();
 
-char *TCID = "kill09";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "kill09";
+int TST_TOTAL = 1;
 
 int fork_pid;
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int status;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
@@ -146,7 +146,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		if ((fork_pid = FORK_OR_VFORK()) == -1)
 			tst_brkm(TBROK | TERRNO, cleanup, "fork failed");
@@ -166,12 +166,9 @@ int main(int ac, char **av)
 		if (TEST_RETURN == -1)
 			tst_resm(TFAIL | TTERRNO, "kill(.., SIGKILL) failed");
 		else {
-
-			if (STD_FUNCTIONAL_TEST) {
-				tst_resm(TPASS,
-					 "kill(%d, SIGKILL) returned %ld",
-					 fork_pid, TEST_RETURN);
-			}
+			tst_resm(TPASS,
+				 "kill(%d, SIGKILL) returned %ld",
+				 fork_pid, TEST_RETURN);
 		}
 
 		waitpid(0, &status, WNOHANG);
@@ -182,7 +179,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void do_child()
+void do_child(void)
 {
 	/*
 	 * Setup alarm signal if we don't get the signal to prevent this process
@@ -194,7 +191,7 @@ void do_child()
 	exit(1);
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -205,7 +202,7 @@ void setup()
 
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

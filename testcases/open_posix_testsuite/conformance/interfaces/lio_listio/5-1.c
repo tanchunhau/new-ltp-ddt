@@ -39,7 +39,7 @@
 
 #define TNAME "lio_listio/5-1.c"
 
-int main()
+int main(void)
 {
 	char tmpfname[256];
 	int fd;
@@ -70,7 +70,7 @@ int main()
 	/* Queue valid lio_opcode requests */
 	for (i = 0; i < NUM_AIOCBS; i++) {
 
-		aiocbs[i] = (struct aiocb *)malloc(sizeof(struct aiocb));
+		aiocbs[i] = malloc(sizeof(struct aiocb));
 		memset(aiocbs[i], 0, sizeof(struct aiocb));
 
 		aiocbs[i]->aio_fildes = fd;

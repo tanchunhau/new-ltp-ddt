@@ -75,7 +75,7 @@ struct statvfs stat_buf;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	off_t offsetret, offset;
 	char pbuf[BUFSIZ];
@@ -93,7 +93,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		while (max_block <= data_blocks) {
 			random_number = random();
@@ -126,23 +126,20 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			if (time_end < time_start)
-				tst_resm(TBROK,
-					 "timer broken end %ld < start %ld",
-					 time_end, time_start);
+		if (time_end < time_start)
+			tst_resm(TBROK,
+				 "timer broken end %ld < start %ld",
+				 time_end, time_start);
 
-			if ((time_delta =
-			     difftime(time_end, time_start)) > TIME_LIMIT)
-				tst_resm(TFAIL,
-					 "fsync took too long: %lf seconds; "
-					 "max_block: %d; data_blocks: %d",
-					 time_delta, max_block, data_blocks);
-			else
-				tst_resm(TPASS, "fsync succeeded in an "
-					 "acceptable amount of time");
-		} else
-			tst_resm(TPASS, "call succeeded");
+		if ((time_delta =
+		     difftime(time_end, time_start)) > TIME_LIMIT)
+			tst_resm(TFAIL,
+				 "fsync took too long: %lf seconds; "
+				 "max_block: %d; data_blocks: %d",
+				 time_delta, max_block, data_blocks);
+		else
+			tst_resm(TPASS, "fsync succeeded in an "
+				 "acceptable amount of time");
 
 		if (ftruncate(fd, 0) == -1)
 			tst_brkm(TBROK, cleanup, "ftruncate failed");
@@ -156,7 +153,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	/* free blocks avail to non-superuser */
 	unsigned long f_bavail;
@@ -177,7 +174,7 @@ void setup()
 	if (fstatvfs(fd, &stat_buf) != 0)
 		tst_brkm(TBROK, cleanup, "fstatvfs failed");
 
-	f_bavail = stat_buf.f_bavail / (BLOCKSIZE / stat_buf.f_frsize);
+	f_bavail = (stat_buf.f_bavail * stat_buf.f_frsize) / BLOCKSIZE;
 	if (f_bavail && (f_bavail < MAXBLKS))
 		max_blks = f_bavail;
 
@@ -191,7 +188,7 @@ void setup()
 #endif
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

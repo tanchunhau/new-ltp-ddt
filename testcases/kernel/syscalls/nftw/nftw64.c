@@ -43,8 +43,8 @@ int local_flag = PASSED;
 int block_number;
 
 FILE *temp;
-char *TCID = "nftw6401";	/* Test program identifier.    */
-int TST_TOTAL = 10;		/* Total number of test cases. */
+char *TCID = "nftw6401";
+int TST_TOTAL = 10;
 
 struct passwd *ltpuser;		/* password struct for ltpuser */
 /**************/
@@ -698,7 +698,7 @@ int main(void)
  *
  * Do set up - here its a dummy function
  */
-void setup()
+void setup(void)
 {
 	/* Direct debug output to stderr */
 	temp = stderr;
@@ -720,7 +720,7 @@ void setup()
  *
  * Description: Print message on entering a new block
  */
-void blenter()
+void blenter(void)
 {
 	local_flag = PASSED;
 	return;
@@ -733,7 +733,7 @@ void blenter()
  *              of a test. It will report the status if the test ie fail or
  *              pass.
  */
-void blexit()
+void blexit(void)
 {
 	(local_flag == PASSED) ? tst_resm(TPASS, "Test block %d", block_number)
 	    : tst_resm(TFAIL, "Test block %d", block_number);
@@ -747,7 +747,7 @@ void blexit()
  *
  * Description: Exit a test.
  */
-void anyfail()
+void anyfail(void)
 {
 	(local_flag == FAILED) ? tst_resm(TFAIL, "Test failed")
 	    : tst_resm(TPASS, "Test passed");

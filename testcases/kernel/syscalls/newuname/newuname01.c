@@ -44,17 +44,13 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "newuname01";	/* Test program identifier. */
+char *TCID = "newuname01";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -74,7 +70,7 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -101,7 +97,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -113,25 +109,22 @@ int main(int ac, char **av)
 {
 	struct utsname name;
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
-			TEST(syscall(__NR_uname, &name));	//call newuname()
+			TEST(ltp_syscall(__NR_uname, &name));
 			if (TEST_RETURN == -1) {
-				tst_resm(TFAIL, "%s failed - errno = %d : %s",
+				tst_brkm(TFAIL, cleanup, "%s failed - errno = %d : %s",
 					 TCID, TEST_ERRNO,
 					 strerror(TEST_ERRNO));
-				cleanup();
-				tst_exit();
 			} else {
 				tst_resm(TPASS,
 					 "newuname call succeed: return value = %ld ",

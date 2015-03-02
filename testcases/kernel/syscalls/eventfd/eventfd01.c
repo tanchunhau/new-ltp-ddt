@@ -74,7 +74,7 @@ int TST_TOTAL = 15;
 static int myeventfd(unsigned int initval, int flags)
 {
 	/* eventfd2 uses FLAGS but eventfd doesn't take FLAGS. */
-	return syscall(__NR_eventfd, initval);
+	return ltp_syscall(__NR_eventfd, initval);
 }
 
 /*
@@ -657,7 +657,7 @@ static void overflow_read_test(int evfd)
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int fd;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
@@ -669,7 +669,7 @@ int main(int argc, char **argv)
 		int ret;
 		uint64_t einit = 10;
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		fd = myeventfd(einit, 0);
 		if (fd == -1)

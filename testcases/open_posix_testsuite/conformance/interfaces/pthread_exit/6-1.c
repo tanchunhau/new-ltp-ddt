@@ -123,6 +123,10 @@ void *threaded(void *arg)
 	if (mf > 0)
 		*ctl = 0;
 
+#if VERBOSE > 0
+	fflush(stdout);
+#endif
+
 	pid = fork();
 	if (pid == (pid_t) - 1) {
 		UNRESOLVED(errno, "Failed to fork()");
@@ -186,7 +190,7 @@ void *threaded(void *arg)
 }
 
 /* Main routine */
-int main(int argc, char *argv[])
+int main(void)
 {
 	int ret = 0;
 	pthread_t child;

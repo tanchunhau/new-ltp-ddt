@@ -75,7 +75,7 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;		/* message returned by parse_opts */
+	const char *msg;		/* message returned by parse_opts */
 
 	int i;
 	struct sched_param param;
@@ -87,7 +87,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -104,24 +104,21 @@ int main(int ac, char **av)
 				continue;
 			}
 
-			if (STD_FUNCTIONAL_TEST) {
-				if (TEST_RETURN != TC[i].policy)
-					tst_resm(TFAIL,
-						 "policy value returned is not "
-						 "correct");
-				else
-					tst_resm(TPASS,
-						 "policy value returned is correct");
-			} else
-				tst_resm(TPASS, "call succeeded");
+			if (TEST_RETURN != TC[i].policy)
+				tst_resm(TFAIL,
+					 "policy value returned is not "
+					 "correct");
+			else
+				tst_resm(TPASS,
+					 "policy value returned is correct");
 		}
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_require_root(NULL);
@@ -131,7 +128,7 @@ void setup()
 	TEST_PAUSE;
 }
 
-void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;

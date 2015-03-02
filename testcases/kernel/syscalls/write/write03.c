@@ -73,7 +73,7 @@ char filename[100];
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	char wbuf[BUFSIZ], rbuf[BUFSIZ];
 	int fd;
@@ -88,8 +88,8 @@ int main(int argc, char **argv)
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 //block1:
 		tst_resm(TINFO, "Enter Block 1: test to check if write "
@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -157,7 +157,6 @@ void setup(void)
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	/* Set up the expected error numbers for -e option */
 	TEST_EXP_ENOS(exp_enos);
 
 	/* Pause if that option was specified

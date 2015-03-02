@@ -74,7 +74,7 @@ static void do_child(void);
 
 int main(int ac, char **av)
 {
-	char *msg;
+	const char *msg;
 	int pid;
 
 	msg = parse_opts(ac, av, NULL, NULL);
@@ -121,14 +121,14 @@ static void do_child(void)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * use TEST macro to make the call
 		 */
 		errno = 0;
-		addr = shmat(shm_id_1, (const void *)0, 0);
+		addr = shmat(shm_id_1, NULL, 0);
 		TEST_ERRNO = errno;
 
 		if (addr != (char *)-1) {
@@ -155,8 +155,7 @@ static void do_child(void)
  */
 void setup(void)
 {
-	/* check for root as process owner */
-	check_root();
+	tst_require_root(NULL);
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 

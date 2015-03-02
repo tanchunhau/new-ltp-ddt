@@ -76,7 +76,7 @@ void cleanup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -88,7 +88,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(statfs(path, &buf));
 
@@ -118,7 +118,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_require_root(NULL);
@@ -129,9 +129,9 @@ void setup()
 
 	/* make a temporary directory and cd to it */
 	tst_tmpdir();
-	if (chmod(get_tst_tmpdir(), S_IRWXU) == -1)
+	if (chmod(tst_get_tmpdir(), S_IRWXU) == -1)
 		tst_brkm(TBROK | TERRNO, cleanup, "chmod(%s, 700) failed",
-			 get_tst_tmpdir());
+			 tst_get_tmpdir());
 
 	/* create a test file */
 	sprintf(fname, "%s.%d", fname, getpid());
@@ -157,7 +157,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/* reset the process ID to the saved ID (root) */
 	if (setuid(0) == -1) {

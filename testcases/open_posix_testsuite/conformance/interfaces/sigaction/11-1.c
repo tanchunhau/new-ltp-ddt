@@ -39,7 +39,7 @@ void handler(int signo, siginfo_t * info, void *context)
 	}
 }
 
-int main()
+int main(void)
 {
 	pid_t pid;
 	struct sigaction act;
@@ -95,8 +95,7 @@ int main()
 
 		}
 
-		/* POSIX specifies default action to be abnormal termination */
-		kill(pid, SIGHUP);
+		kill(pid, SIGKILL);
 		waitpid(pid, &s, 0);
 	}
 

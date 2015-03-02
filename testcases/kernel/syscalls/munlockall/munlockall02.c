@@ -75,8 +75,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "munlockall02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "munlockall02";
+int TST_TOTAL = 1;
 static int exp_enos[] = { EPERM, 0 };
 
 static char nobody_uid[] = "nobody";
@@ -87,7 +87,7 @@ struct passwd *ltpuser;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -99,7 +99,7 @@ int main(int ac, char **av)
 	/* check looping state */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(munlockall());
 
@@ -123,8 +123,9 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test. */
-void setup()
+void setup(void)
 {
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -132,10 +133,6 @@ void setup()
 	TEST_EXP_ENOS(exp_enos);
 
 	/* switch to nobody user */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
-
 	if ((ltpuser = getpwnam(nobody_uid)) == NULL) {
 		tst_brkm(TBROK, NULL, "\"nobody\"user not present");
 	}
@@ -150,7 +147,7 @@ void setup()
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -162,7 +159,7 @@ int main()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

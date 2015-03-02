@@ -74,7 +74,7 @@ static void check(void);
 int main(int argc, char *argv[])
 {
 	/* message returned from parse_opts */
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL)
@@ -93,7 +93,7 @@ static void check(void)
 	int child_exit_code, distance, reaped, status;
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		child_exit_code = lc % RETURN;
 		switch (pid = fork()) {
 		case -1:
@@ -149,7 +149,7 @@ static void setup(void)
 static void cleanup(void)
 {
 	/* Restore pid_max value. */
-	SAFE_FILE_PRINTF(NULL, PID_MAX_PATH, "%lu", pid_max);
+	FILE_PRINTF(PID_MAX_PATH, "%lu", pid_max);
 
 	TEST_CLEANUP;
 }

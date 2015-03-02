@@ -67,7 +67,7 @@ static void cleanup(void);
 
 int main(int argc, char *argv[])
 {
-	char *msg;
+	const char *msg;
 	int lc;
 	void *map, *remap;
 	off_t pgoff;
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		fd = open(TESTFILE, O_RDWR);
 		if (fd == -1)
@@ -101,8 +101,10 @@ int main(int argc, char *argv[])
 				tst_resm(TPASS, "mremap failed as expected.");
 			else
 				tst_resm(TFAIL | TERRNO, "mremap");
+			munmap(map, pgsz);
 		} else {
 			tst_resm(TFAIL, "mremap succeeded unexpectedly.");
+			munmap(remap, 2 * pgsz);
 		}
 
 		close(fd);

@@ -32,6 +32,7 @@ set TEST_USER $env(TEST_USER)
 set TEST_USER_PASSWD $env(TEST_USER_PASSWD)
 
 set RUSER $TEST_USER
+set PASSWD $TEST_USER_PASSWD
 
 set timeout 90
 
@@ -41,26 +42,32 @@ send_user "TEST: Test to see if ssh rejects Invalid User \n"
 
 # Set RUSER to an invalid user
 set RUSER "Invaild_User"
-set PASSWD $TEST_USER_PASSWD
 
-
-spawn ssh -l $RUSER $RHOST
+spawn ssh -l $RUSER $RHOST whoami
 
 while 1 {
-    sleep 2
-    expect {
+	sleep 2
+	expect {
 
-        "Are you sure you want to continue connecting (yes/no)?" { exp_send "yes\r"}
-        "assword:" {exp_send "$PASSWD\r"}
-        "Permission denied" {
-            send_user "SSH would not allow $RUSER to login with invalid password, Test Passed \n"
-            send_user "\nTEST_PASSED\n"
-            break
-        }
-            "#" {send_user "SSH allowed $RUSER to login with invalid pass, Test
-Failed \n" ;exit 1}
-    }
-    sleep 1
+		"Are you sure you want to continue connecting (yes/no)?" {
+			exp_send "yes\r"
+		}
+		"assword:" {
+			exp_send "$PASSWD\r"
+		}
+		-re "Permission denied (.*)\." {
+			send_user "SSH would not allow $RUSER to login with\
+				   invalid password, Test Passed \n"
+			send_user "\nTEST_PASSED\n"
+			exit 0
+		}
+		"$RUSER" {
+			send_user "SSH allowed $RUSER to login with invalid\
+				   pass, Test Failed \n"
+			exit 1
+		}
+	}
+	sleep 1
 }
 
-exit 0
+exit 1

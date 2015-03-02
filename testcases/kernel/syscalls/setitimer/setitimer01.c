@@ -70,7 +70,7 @@ int TST_TOTAL = 1;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	struct itimerval *value, *ovalue;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
@@ -82,21 +82,17 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* allocate some space for the timer structures */
 
-		if ((value = (struct itimerval *)malloc((size_t)
-							sizeof(struct
-							       itimerval))) ==
+		if ((value = malloc((size_t)sizeof(struct itimerval))) ==
 		    NULL) {
 			tst_brkm(TBROK, cleanup, "value malloc failed");
 		}
 
-		if ((ovalue = (struct itimerval *)malloc((size_t)
-							 sizeof(struct
-								itimerval))) ==
+		if ((ovalue = malloc((size_t)sizeof(struct itimerval))) ==
 		    NULL) {
 			tst_brkm(TBROK, cleanup, "ovalue malloc failed");
 		}
@@ -120,33 +116,28 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * call setitimer again with new values.
-			 * the old values should be stored in ovalue
-			 */
-			value->it_value.tv_sec = SEC2;
-			value->it_value.tv_usec = SEC0;
+		/*
+		 * call setitimer again with new values.
+		 * the old values should be stored in ovalue
+		 */
+		value->it_value.tv_sec = SEC2;
+		value->it_value.tv_usec = SEC0;
 
-			if ((setitimer(ITIMER_REAL, value, ovalue)) == -1) {
-				tst_brkm(TBROK, cleanup, "second setitimer "
-					 "call failed");
-			}
+		if ((setitimer(ITIMER_REAL, value, ovalue)) == -1) {
+			tst_brkm(TBROK, cleanup, "second setitimer "
+				 "call failed");
+		}
 
-			if (ovalue->it_value.tv_sec <= SEC1) {
-				tst_resm(TPASS, "functionality is correct");
-			} else {
-				tst_brkm(TFAIL, cleanup, "old timer value is "
-					 "not equal to expected value");
-			}
+		if (ovalue->it_value.tv_sec <= SEC1) {
+			tst_resm(TPASS, "functionality is correct");
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			tst_brkm(TFAIL, cleanup, "old timer value is "
+				 "not equal to expected value");
 		}
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*

@@ -59,23 +59,16 @@
 #include <sys/syscall.h>
 #include <errno.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
+#include "lapi/fcntl.h"
 #include "linux_syscall_numbers.h"
-
-#ifndef O_CLOEXEC
-#define O_CLOEXEC 02000000
-#endif
 
 #define IN_CLOEXEC O_CLOEXEC
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "inotify_init1_01";	/* test program identifier.              */
+char *TCID = "inotify_init1_01";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -95,7 +88,7 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -120,7 +113,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -132,9 +125,8 @@ int main(int argc, char *argv[])
 {
 	int fd, coe;
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -146,9 +138,9 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
-			fd = syscall(__NR_inotify_init1, 0);
+			fd = ltp_syscall(__NR_inotify_init1, 0);
 			if (fd == -1) {
 				tst_brkm(TFAIL | TERRNO, cleanup,
 					 "inotify_init1(0) failed");
@@ -164,7 +156,7 @@ int main(int argc, char *argv[])
 			}
 			close(fd);
 
-			fd = syscall(__NR_inotify_init1, IN_CLOEXEC);
+			fd = ltp_syscall(__NR_inotify_init1, IN_CLOEXEC);
 			if (fd == -1) {
 				tst_brkm(TFAIL | TERRNO, cleanup,
 					 "inotify_init1(IN_CLOEXEC) failed");

@@ -90,12 +90,12 @@ MSGBUF msg_buf;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t c_pid;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
+	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+
 #ifdef UCLINUX
 	maybe_run_child(&do_child_uclinux, "d", &msg_q_1);
 #endif
@@ -108,8 +108,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * fork a child that will attempt to write a message
@@ -165,7 +165,7 @@ int main(int ac, char **av)
 /*
  * do_child()
  */
-void do_child()
+void do_child(void)
 {
 	if (sync_pipe_notify(sync_pipes) == -1)
 		tst_brkm(TBROK, cleanup, "sync_pipe_notify failed");
@@ -209,7 +209,7 @@ void sighandler(int sig)
 /*
  * do_child_uclinux() - capture signals, initialize buffer, then run do_child()
  */
-void do_child_uclinux()
+void do_child_uclinux(void)
 {
 	/* initialize the message buffer */
 	init_buf(&msg_buf, MSGTYPE, MSGSIZE);

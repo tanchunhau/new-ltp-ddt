@@ -130,8 +130,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "read01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "read01";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0, 0 };
 
@@ -143,7 +143,7 @@ char *s;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
     /***************************************************************
      * parse standard options
@@ -164,7 +164,7 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		if (write(fd, s, READ_BLOCK_SIZE) == -1) {
 			tst_brkm(TBROK, cleanup,
@@ -191,30 +191,20 @@ int main(int ac, char **av)
 				 "read(fd, s, READ_BLOCK_SIZE) Failed, errno=%d : %s",
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-	    /***************************************************************
-	     * only perform functional verification if flag set (-f not given)
-	     ***************************************************************/
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS, "read(pfds) returned %ld",
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS, "read(pfds) returned %ld",
+				 TEST_RETURN);
 		}
 
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -249,7 +239,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

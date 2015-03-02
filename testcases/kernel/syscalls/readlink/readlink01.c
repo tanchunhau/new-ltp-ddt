@@ -79,13 +79,13 @@
 #define FILE_MODE       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 #define MAX_SIZE	256
 
-char *TCID = "readlink01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "readlink01";
+int TST_TOTAL = 1;
 
 int exp_val;			/* strlen of testfile */
 
-void setup();			/* Setup function for the test */
-void cleanup();			/* Cleanup function for the test */
+void setup();
+void cleanup();
 
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
@@ -94,9 +94,8 @@ int main(int ac, char **av)
 {
 	char buffer[MAX_SIZE];	/* temporary buffer to hold symlink contents */
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -104,7 +103,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call readlink(2) to read the contents of
@@ -120,39 +119,30 @@ int main(int ac, char **av)
 		}
 
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Compare the return value of readlink()
+		 * with the expected value which is the
+		 * strlen() of testfile.
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Compare the return value of readlink()
-			 * with the expected value which is the
-			 * strlen() of testfile.
-			 */
-			if (TEST_RETURN == exp_val) {
-				/* Check for the contents of buffer */
-				if (memcmp(buffer, TESTFILE, exp_val) != 0) {
-					tst_resm(TFAIL, "Pathname %s and buffer"
-						 " contents %s differ",
-						 TESTFILE, buffer);
-				} else {
-					tst_resm(TPASS, "readlink() "
-						 "functionality on '%s' is "
-						 "correct", SYMFILE);
-				}
+		if (TEST_RETURN == exp_val) {
+			/* Check for the contents of buffer */
+			if (memcmp(buffer, TESTFILE, exp_val) != 0) {
+				tst_resm(TFAIL, "Pathname %s and buffer"
+					 " contents %s differ",
+					 TESTFILE, buffer);
 			} else {
-				tst_resm(TFAIL, "readlink() return value %ld "
-					 "does't match, Expected %d",
-					 TEST_RETURN, exp_val);
+				tst_resm(TPASS, "readlink() "
+					 "functionality on '%s' is "
+					 "correct", SYMFILE);
 			}
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			tst_resm(TFAIL, "readlink() return value %ld "
+				 "does't match, Expected %d",
+				 TEST_RETURN, exp_val);
 		}
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -162,7 +152,7 @@ int main(int ac, char **av)
  *  Create a test file under temporary directory and close it
  *  Create a symbolic link of testfile.
  */
-void setup()
+void setup(void)
 {
 	int fd;			/* file handle for testfile */
 
@@ -207,7 +197,7 @@ void setup()
  *
  *  Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

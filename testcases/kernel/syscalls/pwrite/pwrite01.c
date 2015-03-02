@@ -88,8 +88,8 @@
 #define K4              (K1 * 4)
 #define NBUFS           4
 
-char *TCID = "pwrite01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "pwrite01";
+int TST_TOTAL = 1;
 int fildes;			/* file descriptor for tempfile */
 char *write_buf[NBUFS];		/* buffer to hold data to be written */
 
@@ -102,10 +102,9 @@ void check_file_contents();	/* function to verify the contents of file */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int nwrite;		/* no. of bytes written by pwrite() */
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -113,7 +112,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call pwrite() to write K1 bytes of data (0's) at offset 0
@@ -180,20 +179,12 @@ int main(int ac, char **av)
 		}
 
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Check the contents of temporary file
+		 * to which data written using pwrite().
+		 * Compare the data read with the original
+		 * write_buf[] contents.
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Check the contents of temporary file
-			 * to which data written using pwrite().
-			 * Compare the data read with the original
-			 * write_buf[] contents.
-			 */
-			check_file_contents();
-		} else {
-			tst_resm(TPASS, "calls to pwrite() succeeded");
-		}
+		check_file_contents();
 
 		/* reset to offset 0 in case we are looping */
 		l_seek(fildes, 0, SEEK_SET, 0);
@@ -202,8 +193,6 @@ int main(int ac, char **av)
 
 	cleanup();
 	tst_exit();
-	tst_exit();
-
 }
 
 /*
@@ -212,7 +201,7 @@ int main(int ac, char **av)
  *  Initialize/allocate read/write buffers.
  *  Create a temporary directory and a file under it and
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -239,13 +228,13 @@ void setup()
  *    write_buf[0] has 0's, write_buf[1] has 1's, write_buf[2] has 2's
  *    write_buf[3] has 3's.
  */
-void init_buffers()
+void init_buffers(void)
 {
 	int count;		/* counter variable for loop */
 
 	/* Allocate and Initialize write buffer with known data */
 	for (count = 0; count < NBUFS; count++) {
-		write_buf[count] = (char *)malloc(K1);
+		write_buf[count] = malloc(K1);
 
 		if (write_buf[count] == NULL) {
 			tst_brkm(TBROK, NULL, "malloc() failed ");
@@ -278,7 +267,7 @@ void l_seek(int fdesc, off_t offset, int whence, off_t checkoff)
  *  The contents of the file are verified by using a plain read() and
  *  Compare the data read with the original write_buf[] contents.
  */
-void check_file_contents()
+void check_file_contents(void)
 {
 	int count, err_flg = 0;	/* index variable and error flag */
 	int nread;		/* return value of read() */
@@ -286,7 +275,7 @@ void check_file_contents()
 	char *read_buf;		/* buffer to hold read data */
 
 	/* Allocate space for read buffer */
-	read_buf = (char *)malloc(K1);
+	read_buf = malloc(K1);
 	if (read_buf == NULL) {
 		tst_brkm(TBROK, cleanup, "malloc() failed on read buffer");
 	}
@@ -332,7 +321,7 @@ void check_file_contents()
  * Close the temporary file.
  * Remove the temporary directory created.
  */
-void cleanup()
+void cleanup(void)
 {
 	int count;		/* index for the loop */
 

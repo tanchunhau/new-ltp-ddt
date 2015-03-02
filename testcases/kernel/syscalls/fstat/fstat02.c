@@ -83,8 +83,8 @@
 #define BUF_SIZE	256
 #define MASK		0777
 
-char *TCID = "fstat02";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fstat02";
+int TST_TOTAL = 1;
 uid_t user_id;			/* user id/group id of test process */
 gid_t group_id;
 int fildes;			/* File descriptor of testfile */
@@ -92,14 +92,14 @@ int fildes;			/* File descriptor of testfile */
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
 
-void setup();			/* Setup function for the test */
-void cleanup();			/* Cleanup function for the test */
+void setup();
+void cleanup();
 
 int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat structure buffer */
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -108,7 +108,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(fstat(fildes, &stat_buf));
 
@@ -116,26 +116,23 @@ int main(int ac, char **av)
 			tst_resm(TFAIL | TTERRNO, "fstat(%s) failed", TESTFILE);
 			continue;
 		}
-		if (STD_FUNCTIONAL_TEST) {
-			if (stat_buf.st_uid != user_id ||
-			    stat_buf.st_gid != group_id ||
-			    stat_buf.st_size != FILE_SIZE ||
-			    (stat_buf.st_mode & MASK) != FILE_MODE) {
-				tst_resm(TFAIL,
-					 "functionality of fstat incorrect");
-			} else
-				tst_resm(TPASS,
-					 "functionality of fstat correct");
-		} else
-			tst_resm(TPASS, "call succeeded");
+		if (stat_buf.st_uid != user_id ||
+		    stat_buf.st_gid != group_id ||
+		    stat_buf.st_size != FILE_SIZE ||
+		    (stat_buf.st_mode & MASK) != FILE_MODE) {
+			tst_resm(TFAIL,
+				 "functionality of fstat incorrect");
+		} else {
+			tst_resm(TPASS,
+				 "functionality of fstat correct");
+		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	char tst_buff[BUF_SIZE];
 	int wbytes;
@@ -173,7 +170,7 @@ void setup()
 
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

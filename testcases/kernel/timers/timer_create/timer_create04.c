@@ -107,7 +107,7 @@ void cleanup(void)
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 	kernel_timer_t timer_id, *temp_id;	/* stores the returned timer_id */
 	struct sigevent *temp_ev;	/* used for bad address test case */
 
@@ -140,11 +140,11 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
-			temp_ev = (struct sigevent *)NULL;
+			temp_ev = NULL;
 			temp_id = &timer_id;
 
 			switch (i) {
@@ -166,7 +166,7 @@ int main(int ac, char **av)
 					temp_ev = (struct sigevent *)-1;
 			}
 
-			TEST(syscall(__NR_timer_create, clocks[i], temp_ev,
+			TEST(ltp_syscall(__NR_timer_create, clocks[i], temp_ev,
 				     temp_id));
 
 			/* check return code */

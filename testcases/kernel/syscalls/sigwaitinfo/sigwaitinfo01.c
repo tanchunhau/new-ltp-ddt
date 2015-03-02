@@ -133,7 +133,7 @@ static int my_rt_sigtimedwait(const sigset_t * set, siginfo_t * info,
 {
 
 	/* The last argument is (number_of_signals)/(bits_per_byte), which are 64 and 8, resp. */
-	return syscall(__NR_rt_sigtimedwait, set, info, timeout, 8);
+	return ltp_syscall(__NR_rt_sigtimedwait, set, info, timeout, 8);
 }
 #endif
 
@@ -238,7 +238,7 @@ void test_masked_matching(swi_func sigwaitinfo, int signo)
 	SUCCEED_OR_DIE(sigprocmask, "restoring original signal mask failed",
 		       SIG_SETMASK, &oldmask, &oldmask);
 
-	Tst_count--;
+	tst_count--;
 
 	if (sigismember(&oldmask, signo))
 		tst_resm(TPASS, "sigwaitinfo restored the original mask");
@@ -277,7 +277,7 @@ void test_masked_matching_rt(swi_func sigwaitinfo, int signo)
 			    && si.si_signo == signo, "Struct siginfo mismatch");
 
 	/* eat the other signal */
-	Tst_count--;
+	tst_count--;
 	TEST(sigwaitinfo(&sigs, &si, NULL));
 	REPORT_SUCCESS_COND(signo + 1, 0, si.si_pid == child[1]
 			    && si.si_code == SI_USER
@@ -287,7 +287,7 @@ void test_masked_matching_rt(swi_func sigwaitinfo, int signo)
 	SUCCEED_OR_DIE(sigprocmask, "restoring original signal mask failed",
 		       SIG_SETMASK, &oldmask, &oldmask);
 
-	Tst_count--;
+	tst_count--;
 
 	if (sigismember(&oldmask, signo))
 		tst_resm(TPASS, "sigwaitinfo restored the original mask");
@@ -321,7 +321,7 @@ void test_masked_matching_noinfo(swi_func sigwaitinfo, int signo)
 	SUCCEED_OR_DIE(sigprocmask, "restoring original signal mask failed",
 		       SIG_SETMASK, &oldmask, &oldmask);
 
-	Tst_count--;
+	tst_count--;
 
 	if (sigismember(&oldmask, signo))
 		tst_resm(TPASS, "sigwaitinfo restored the original mask");
@@ -443,13 +443,13 @@ const char *TCID = "sigtimedwait01";
 const char *TCID = "sigwait01";
 #endif
 
-int TST_TOTAL = sizeof(tests) / sizeof(*tests);
+int TST_TOTAL = ARRAY_SIZE(tests);
 
 int main(int argc, char **argv)
 {
 	unsigned i;
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -457,9 +457,9 @@ int main(int argc, char **argv)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 
-		for (i = 0; i < sizeof(tests) / sizeof(*tests); i++) {
+		for (i = 0; i < ARRAY_SIZE(tests); i++) {
 			alarm(10);	/* arrange a 10 second timeout */
 			tst_resm(TINFO, "%p, %d", tests[i].swi, tests[i].signo);
 			tests[i].tf(tests[i].swi, tests[i].signo);

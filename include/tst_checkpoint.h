@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Cyril Hrubis chrubis@suse.cz
+ * Copyright (C) 2014 Matus Marhefka mmarhefk@redhat.com
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -36,9 +37,10 @@
 
 #include "test.h"
 
-#define TST_CHECKPOINT_FIFO "tst_checkpoint_fifo"
 
+#define TST_FIFO_LEN 30
 struct tst_checkpoint {
+	char file[TST_FIFO_LEN];
 	/* child return value in case of failure */
 	int retval;
 	/* timeout in msecs */
@@ -49,10 +51,16 @@ struct tst_checkpoint {
  * Checkpoint initializaton, must be done first.
  */
 #define TST_CHECKPOINT_INIT(self) \
-        tst_checkpoint_init(__FILE__, __LINE__, self)
+	tst_checkpoint_init(__FILE__, __LINE__, self)
 
 void tst_checkpoint_init(const char *file, const int lineno,
-                         struct tst_checkpoint *self);
+			 struct tst_checkpoint *self);
+
+#define TST_CHECKPOINT_CREATE(self) \
+	tst_checkpoint_create(__FILE__, __LINE__, self)
+
+void tst_checkpoint_create(const char *file, const int lineno,
+			   struct tst_checkpoint *self);
 
 /*
  * Wait called from parent. In case parent waits for child.

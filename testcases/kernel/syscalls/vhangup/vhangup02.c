@@ -59,7 +59,7 @@ int fail;
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	pid_t pid, pid1;
 	int status;
@@ -71,8 +71,8 @@ int main(int argc, char **argv)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		fail = 0;
 

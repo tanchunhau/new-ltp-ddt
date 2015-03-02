@@ -46,9 +46,12 @@ TCbin=${TCbin:=`pwd`}
 EXPORTDIR=${EXPORTDIR:=/tmp/$TC$PID}
 HOST=`hostname`
 CLEANUP=${CLEANUP:="ON"}
-VERSION=${VERSION:=2}
+VERSION=${VERSION:=3}
 TESTDIR=${TESTDIR:=/tmp/$TC$PID.testdir}
-NFS_TYPE=${NFS_TYPE:nfs}
+NFS_TYPE=${NFS_TYPE:=nfs}
+export TCID=$TC
+export TST_TOTAL=1
+export TST_COUNT=1
 
 if [ "x$NFS_TYPE" != "xnfs4" ]; then
     OPTS=${OPTS:="-o vers=$VERSION "}
@@ -97,7 +100,7 @@ $trace_logic
    fi
 
    #Verify export
-   /usr/sbin/showmount -e $HOST | grep $EXPORTDIR > /dev/null
+   showmount -e $HOST | grep $EXPORTDIR > /dev/null
    [ $? -eq 0 ] || end_testcase "$EXPORTDIR not exported"
 
    #Create mount point
@@ -212,12 +215,15 @@ $trace_logic
 
    echo "Unmounting EXPORTDIR"
    /usr/sbin/exportfs -u $HOST:$EXPORTDIR
-   umount $EXPORTDIR
-   sleep 3
-   rm -rf $EXPORTDIR
+
    if [ "x$NFS_TYPE" = "xnfs4" ]; then
+       umount $EXPORTDIR
+       sleep 3
        rm -rf /export$EXPORTDIR
    fi
+
+   rm -rf $EXPORTDIR
+
 }
 
 #=============================================================================
@@ -236,8 +242,8 @@ $trace_logic
        do_cleanup
     fi
 
-    [ $? = 0 ] && { echo "Test PASS"; exit 0; }
-    echo "Test FAIL: $@"
+    [ $# = 0 ] && { tst_resm TPASS "Test Successful"; exit 0; }
+    tst_resm TFAIL "Test Failed: $@"
     exit 1
 }
 

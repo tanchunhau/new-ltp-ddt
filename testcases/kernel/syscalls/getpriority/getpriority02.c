@@ -82,8 +82,8 @@
 #define INVAL_PID	-1
 #define INVAL_FLAG      -1
 
-char *TCID = "getpriority02";	/* Test program identifier.    */
-int TST_TOTAL = 4;		/* Total number of test cases. */
+char *TCID = "getpriority02";
+int TST_TOTAL = 4;
 int exp_enos[] = { EINVAL, ESRCH, 0 };
 
 struct test_case_t {		/* test case struct. to hold ref. test cond's */
@@ -106,13 +106,12 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int ind;		/* counter variable for test case looping */
 	char *test_desc;	/* test specific error message */
 	int which;		/* process priority category */
 	uid_t who;		/* process uid of the test process */
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -126,7 +125,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; ind < TST_TOTAL; ind++) {
 			which = Test_cases[ind].pro_which;
@@ -175,7 +174,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -187,7 +186,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

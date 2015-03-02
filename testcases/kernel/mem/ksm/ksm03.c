@@ -73,6 +73,8 @@
 char *TCID = "ksm03";
 int TST_TOTAL = 1;
 
+static int merge_across_nodes;
+
 option_t ksm_options[] = {
 	{"n:", &opt_num, &opt_numstr},
 	{"s:", &opt_size, &opt_sizestr},
@@ -83,7 +85,7 @@ option_t ksm_options[] = {
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int size = 128, num = 3, unit = 1;
 
 	msg = parse_opts(argc, argv, ksm_options, ksm_usage);
@@ -91,7 +93,7 @@ int main(int argc, char *argv[])
 		tst_brkm(TBROK, tst_exit, "OPTION PARSING ERROR - %s", msg);
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		check_ksm_options(&size, &num, &unit);
 		write_memcg();
 		create_same_memory(size, num, unit);
@@ -109,6 +111,12 @@ void setup(void)
 	if (access(PATH_KSM, F_OK) == -1)
 		tst_brkm(TCONF, NULL, "KSM configuration is not enabled");
 
+	if (access(PATH_KSM "merge_across_nodes", F_OK) == 0) {
+		SAFE_FILE_SCANF(NULL, PATH_KSM "merge_across_nodes",
+				"%d", &merge_across_nodes);
+		SAFE_FILE_PRINTF(NULL, PATH_KSM "merge_across_nodes", "1");
+	}
+
 	mount_mem("memcg", "cgroup", "memory", MEMCG_PATH, MEMCG_PATH_NEW);
 	tst_sig(FORK, DEF_HANDLER, NULL);
 	TEST_PAUSE;
@@ -116,6 +124,10 @@ void setup(void)
 
 void cleanup(void)
 {
+	if (access(PATH_KSM "merge_across_nodes", F_OK) == 0)
+		FILE_PRINTF(PATH_KSM "merge_across_nodes",
+				 "%d", merge_across_nodes);
+
 	umount_mem(MEMCG_PATH, MEMCG_PATH_NEW);
 	TEST_CLEANUP;
 }

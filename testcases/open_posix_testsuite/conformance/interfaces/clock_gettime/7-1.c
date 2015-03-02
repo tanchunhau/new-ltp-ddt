@@ -12,18 +12,15 @@
 #include "posixtest.h"
 
 #define INVALIDCLOCK 9999
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec tp;
 
 	if (clock_gettime(INVALIDCLOCK, &tp) == -1) {
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		printf("Test FAILED\n");
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("Test FAILED\n");
+	return PTS_FAIL;
 }

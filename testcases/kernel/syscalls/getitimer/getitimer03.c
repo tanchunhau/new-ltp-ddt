@@ -1,14 +1,19 @@
 /*
- * $Copyright: $
- * Copyright (c) 1984-2000
- * Sequent Computer Systems, Inc.   All rights reserved.
- *$
- * This software is furnished under a license and may be used
- * only in accordance with the terms of that license and with the
- * inclusion of the above copyright notice.   This software may not
- * be provided or otherwise made available to, or used by, any
- * other person.  No title to or ownership of the software is
- * hereby transferred.
+ * Copyright (c) International Business Machines  Corp., 2001
+ *
+ * This program is free software;  you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ * the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program;  if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /* $Header: /cvsroot/ltp/ltp/testcases/kernel/syscalls/getitimer/getitimer03.c,v 1.7 2009/08/28 10:18:24 vapier Exp $ */
@@ -71,7 +76,7 @@ int exp_enos[] = { EINVAL, 0 };
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	struct itimerval *value;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
@@ -83,14 +88,12 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* allocate some space for the timer structure */
 
-		if ((value = (struct itimerval *)malloc((size_t)
-							sizeof(struct
-							       itimerval))) ==
+		if ((value = malloc((size_t)sizeof(struct itimerval))) ==
 		    NULL) {
 			tst_brkm(TBROK, cleanup, "value malloc failed");
 		}
@@ -144,7 +147,6 @@ void setup(void)
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	/* Set up the expected error numbers for -e option */
 	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;

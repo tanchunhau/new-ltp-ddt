@@ -30,7 +30,7 @@ int compare(const void *key, const void *amemb)
 	}
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct sigevent ev;
 	timer_t tid;
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 #else
 	int max = 256;
 #endif
-	tids = (timer_t *) malloc(max * sizeof(timer_t));
+	tids = malloc(max * sizeof(timer_t));
 	if (tids == NULL) {
 		perror("malloc failed\n");
 		return PTS_UNRESOLVED;

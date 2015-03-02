@@ -69,7 +69,7 @@ int TST_TOTAL = 1;
 
 int main(int argc, char **argv)
 {
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL)
@@ -94,8 +94,8 @@ int main(int argc, char **argv)
 		int nodes[TEST_PAGES];
 		int status[TEST_PAGES];
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		ret = alloc_pages_on_node(pages, TEST_PAGES, from_node);
 		if (ret == -1)
@@ -106,13 +106,12 @@ int main(int argc, char **argv)
 
 		ret = numa_move_pages(0, ULONG_MAX, pages, nodes,
 				      status, MPOL_MF_MOVE);
-		TEST_ERRNO = errno;
 		if (ret == -1 && errno == E2BIG)
 			tst_resm(TPASS, "move_pages failed with "
 				 "E2BIG as expected");
 		else
-			tst_resm(TFAIL, "move pages did not fail "
-				 "with E2BIG");
+			tst_resm(TFAIL|TERRNO, "move pages did not fail "
+				 "with E2BIG ret: %d", ret);
 
 		free_pages(pages, TEST_PAGES);
 	}

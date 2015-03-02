@@ -76,8 +76,8 @@
 #include "test.h"
 #include "usctest.h"
 
-char *TCID = "alarm05";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "alarm05";
+int TST_TOTAL = 1;
 int alarms_received = 0;	/* flag to indicate SIGALRM received or not */
 
 void setup();			/* Main setup function of test */
@@ -87,7 +87,7 @@ void sigproc(int sig);		/* signal catching function */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int time_sec1 = 10;	/* time for which 1st alarm is set */
 	int time_sec2 = 5;	/* time for which 2st alarm is set */
 	int ret_val1, ret_val2;	/* return values for alarm() calls */
@@ -102,7 +102,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Reset alarms_received for every iteration, since it has
@@ -138,35 +138,32 @@ int main(int ac, char **av)
 		 * sigproc() executed when SIGALRM received by the
 		 * process, the variable alarms_received is set.
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			if ((alarms_received == 1) &&
-			    (ret_val2 == (time_sec1 - sleep_time1))) {
+		if ((alarms_received == 1) &&
+		    (ret_val2 == (time_sec1 - sleep_time1))) {
 
-				/*
-				 *  Make sure the system cleaned up the alarm
-				 *  after it delivered it.
-				 */
-				TEST(alarm(0));
-				ret_val3 = TEST_RETURN;
+			/*
+			 *  Make sure the system cleaned up the alarm
+			 *  after it delivered it.
+			 */
+			TEST(alarm(0));
+			ret_val3 = TEST_RETURN;
 
-				if (ret_val3 != 0)
-					tst_resm(TFAIL, "System did not "
-						 "clean up delivered " "alarm");
-				else {
-					tst_resm(TPASS, "Functionality of "
-						 "alarm(%u) successful",
-						 time_sec2);
-				}
-			} else
-				tst_resm(TFAIL, "alarm(%u) fails, returned %d, "
-					 "alarms_received:%d",
-					 time_sec2, ret_val2, alarms_received);
-		} else
-			tst_resm(TPASS, "call succeeded");
+			if (ret_val3 != 0)
+				tst_resm(TFAIL, "System did not "
+					 "clean up delivered " "alarm");
+			else {
+				tst_resm(TPASS, "Functionality of "
+					 "alarm(%u) successful",
+					 time_sec2);
+			}
+		} else {
+			tst_resm(TFAIL, "alarm(%u) fails, returned %d, "
+				 "alarms_received:%d",
+				 time_sec2, ret_val2, alarms_received);
+		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -174,7 +171,7 @@ int main(int ac, char **av)
  * setup() - performs all ONE TIME setup for this test.
  *  Setup the signal handler to catch SIGALRM.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -204,7 +201,7 @@ void sigproc(int sig)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

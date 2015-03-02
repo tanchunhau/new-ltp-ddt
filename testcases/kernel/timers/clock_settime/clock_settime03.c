@@ -49,12 +49,12 @@ int testcases[] = {
 	EINVAL,			/* Invalid timespec     */
 	EINVAL,			/* NSEC_PER_SEC + 1     */
 	EPERM,			/* non-root user        */
-	0,
-	0,
+	EINVAL,			/* PROCESS_CPUTIME_ID	*/
+	EINVAL,			/* THREAD_CPUTIME_ID	*/
 };
 
 char *TCID = "clock_settime03";
-int TST_TOTAL = sizeof(testcases) / sizeof(*testcases);
+int TST_TOTAL = ARRAY_SIZE(testcases);
 
 static int exp_enos[] = { EINVAL, EFAULT, EPERM, 0 };
 
@@ -65,34 +65,23 @@ static struct timespec spec, *temp, saved;
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	/* PROCESS_CPUTIME_ID & THREAD_CPUTIME_ID are not supported on
-	 * kernel versions lower than 2.6.12 and changed back in 2.6.38
-	 */
-	if ((tst_kvercmp(2, 6, 12)) < 0 || (tst_kvercmp(2, 6, 38)) >= 0) {
-		testcases[7] = EINVAL;
-		testcases[8] = EINVAL;
-	} else {
-		testcases[7] = EFAULT;
-		testcases[8] = EFAULT;
-	}
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
 			if (setup_test(i) < 0)
 				continue;
 
-			TEST(syscall(__NR_clock_settime, clocks[i], temp));
+			TEST(ltp_syscall(__NR_clock_settime, clocks[i], temp));
 
 			/* Change the UID back to root */
 			if (i == TST_TOTAL - 1) {
@@ -115,7 +104,7 @@ int main(int ac, char **av)
 					 TEST_RETURN);
 				/* Restore the clock to its previous state. */
 				if (TEST_RETURN == 0) {
-					if (syscall(__NR_clock_settime,
+					if (ltp_syscall(__NR_clock_settime,
 						    CLOCK_REALTIME,
 						    &saved) < 0) {
 						tst_resm(TWARN | TERRNO,
@@ -168,11 +157,6 @@ static int setup_test(int option)
 			return -1;
 		}
 		break;
-	case 7:
-	case 8:
-		/* Make tp argument bad pointer */
-		if (tst_kvercmp(2, 6, 12) >= 0)
-			temp = (struct timespec *)-1;
 	}
 	return 0;
 }
@@ -183,7 +167,7 @@ static void setup(void)
 
 	tst_require_root(NULL);
 
-	if (syscall(__NR_clock_gettime, CLOCK_REALTIME, &saved) < 0)
+	if (ltp_syscall(__NR_clock_gettime, CLOCK_REALTIME, &saved) < 0)
 		tst_brkm(TBROK, NULL, "Clock gettime failed");
 
 	TEST_EXP_ENOS(exp_enos);

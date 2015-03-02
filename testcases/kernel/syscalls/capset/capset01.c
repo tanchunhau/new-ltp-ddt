@@ -86,8 +86,8 @@
 static void setup();
 static void cleanup();
 
-char *TCID = "capset01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "capset01";
+int TST_TOTAL = 1;
 static int exp_enos[] = { EFAULT, EINVAL, EPERM, 0 };
 
 static struct __user_cap_header_struct header;	/* cap_user_header_t is a pointer
@@ -100,7 +100,7 @@ int main(int ac, char **av)
 {
 
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -109,9 +109,9 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
-		TEST(syscall(__NR_capset, &header, &data));
+		TEST(ltp_syscall(__NR_capset, &header, &data));
 
 		if (TEST_RETURN == 0) {
 			tst_resm(TPASS, "capset() returned %ld", TEST_RETURN);
@@ -128,7 +128,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -139,13 +139,11 @@ void setup()
 
 	header.version = _LINUX_CAPABILITY_VERSION;
 	header.pid = 0;
-	if (syscall(__NR_capget, &header, &data) == -1) {
+	if (ltp_syscall(__NR_capget, &header, &data) == -1)
 		tst_brkm(TBROK | TERRNO, NULL, "capget() failed");
-	}
-
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 }

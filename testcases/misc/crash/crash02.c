@@ -144,7 +144,7 @@ void record_errno(unsigned int n);
 
 int main(int argc, char *argv[])
 {
-	char *msg;
+	const char *msg;
 	int lc;
 
 	if ((msg = parse_opts(argc, argv, options, help)) != NULL)
@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		tst_resm(TINFO, "crashme02 %d %d %d", sysno_max, nseed, ntries);
 

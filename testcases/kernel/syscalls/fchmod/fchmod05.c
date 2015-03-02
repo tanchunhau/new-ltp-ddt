@@ -94,8 +94,8 @@
 #define TESTDIR		"testdir"
 
 int fd;				/* file descriptor for test directory */
-char *TCID = "fchmod05";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fchmod05";
+int TST_TOTAL = 1;
 
 void setup();			/* Main setup function for test */
 void cleanup();			/* Main cleanup function for test */
@@ -104,10 +104,9 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat struct */
 	int lc;
-	char *msg;
+	const char *msg;
 	mode_t dir_mode;	/* mode permissions set on test directory */
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -118,7 +117,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call fchmod(2) with mode argument
@@ -133,36 +132,27 @@ int main(int ac, char **av)
 			continue;
 		}
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Get the directory information using
+		 * fstat(2).
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Get the directory information using
-			 * fstat(2).
-			 */
-			if (fstat(fd, &stat_buf) < 0) {
-				tst_brkm(TFAIL, cleanup,
-					 "fstat(2) of %s failed, errno:%d",
-					 TESTDIR, TEST_ERRNO);
-			}
-			dir_mode = stat_buf.st_mode;
-			if ((PERMS & ~S_ISGID) != dir_mode) {
-				tst_resm(TFAIL, "%s: Incorrect modes 0%03o, "
-					 "Expected 0%03o",
-					 TESTDIR, dir_mode, PERMS & ~S_ISGID);
-			} else {
-				tst_resm(TPASS, "Functionality of fchmod(%d, "
-					 "%#o) successful", fd,
-					 PERMS & ~S_ISGID);
-			}
+		if (fstat(fd, &stat_buf) < 0) {
+			tst_brkm(TFAIL, cleanup,
+				 "fstat(2) of %s failed, errno:%d",
+				 TESTDIR, TEST_ERRNO);
+		}
+		dir_mode = stat_buf.st_mode;
+		if ((PERMS & ~S_ISGID) != dir_mode) {
+			tst_resm(TFAIL, "%s: Incorrect modes 0%03o, "
+				 "Expected 0%03o",
+				 TESTDIR, dir_mode, PERMS & ~S_ISGID);
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			tst_resm(TPASS, "Functionality of fchmod(%d, "
+				 "%#o) successful", fd,
+				 PERMS & ~S_ISGID);
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -175,18 +165,14 @@ int main(int ac, char **av)
  *  on test directory.
  *  Open the test directory for reading.
  */
-void setup()
+void setup(void)
 {
 	struct passwd *nobody_u;
 	struct group *bin_group;
 
-	tst_sig(FORK, DEF_HANDLER, cleanup);
+	tst_require_root(NULL);
 
-	/* Check that the test process id is not super/root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be super/root for this test!");
-		tst_exit();
-	}
+	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 
@@ -242,7 +228,7 @@ void setup()
  *  Remove the test directory and temporary directory created in
  *  in the setup().
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

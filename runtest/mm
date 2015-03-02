@@ -59,7 +59,6 @@ mmap10_1 mmap10 -a
 mmap10_2 mmap10 -s
 mmap10_3 mmap10 -a -s
 mmap10_4 mmap10 -a -s -i 60
-mmap10_5 mmap10 -a -s -c 200
 
 ksm01 ksm01
 ksm01_1 ksm01 -u 128
@@ -70,19 +69,27 @@ ksm03_1 ksm03 -u 128
 ksm04 ksm04
 ksm04_1 ksm04 -u 128
 ksm05 ksm05 -I 10
-
-cpuset01 cpuset01 -I 3600
+ksm06 ksm06
+ksm06_1 ksm06 -n 10
+ksm06_2 ksm06 -n 10000
 
 oom01 oom01
 oom02 oom02
 oom03 oom03
 oom04 oom04
+oom05 oom05
 
 swapping01 swapping01 -i 5
 
 thp01 thp01 -I 120
 thp02 thp02
 thp03 x=`zcat /proc/config.gz | grep CONFIG_HUGETLB_PAGE= &> /dev/null; echo $?`; if [ $x -eq 0 ]; then thp03; else echo 'CONFIG_HUGETLB_PAGE is not supported'; fi
+thp04_1 thp04
+thp04_2 thp04 -n 10 -N 20
+thp04_3 thp04 -n 1 -N 300
+thp05_1 thp05
+thp05_2 thp05 -n 10 -N 20
+thp05_3 thp05 -n 1 -N 300
 
 vma01 vma01
 vma02 vma02

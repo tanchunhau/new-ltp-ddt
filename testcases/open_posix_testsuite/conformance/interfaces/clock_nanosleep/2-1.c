@@ -21,7 +21,7 @@
 #define SLEEPSEC 3
 #define ACCEPTABLEDELTA 1
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec tssleep, tsbefore, tsafter;
 	int sleepuntilsec, flags = 0;
@@ -54,11 +54,8 @@ int main(int argc, char *argv[])
 			printf("clock_nanosleep() slept too long\n");
 			return PTS_FAIL;
 		}
-	} else {
-		printf("clock_nanosleep() did not sleep long enough\n");
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("clock_nanosleep() did not sleep long enough\n");
+	return PTS_FAIL;
 }

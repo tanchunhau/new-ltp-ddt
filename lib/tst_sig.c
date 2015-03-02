@@ -75,13 +75,7 @@
 
 #define MAXMESG 150		/* size of mesg string sent to tst_res */
 
-void (*T_cleanup) ();		/* pointer to cleanup function */
-
-/****************************************************************************
- * STD_COPIES is defined in parse_opts.c but is externed here in order to
- * test whether SIGCHILD should be ignored or not.
- ***************************************************************************/
-extern int STD_COPIES;
+static void (*T_cleanup) ();
 
 static void def_handler();	/* default signal handler */
 static void (*tst_setup_signal(int, void (*)(int))) (int);
@@ -176,11 +170,6 @@ void tst_sig(int fork_flag, void (*handler) (), void (*cleanup) ())
 		case __SIGRTMAX - 1:
 		case __SIGRTMAX:
 #endif
-#ifdef CRAY
-		case SIGINFO:
-		case SIGRECOVERY:	/* allow chkpnt/restart */
-#endif /* CRAY */
-
 #ifdef SIGSWAP
 		case SIGSWAP:
 #endif /* SIGSWAP */
@@ -217,7 +206,7 @@ void tst_sig(int fork_flag, void (*handler) (), void (*cleanup) ())
 			break;
 
 		case SIGCLD:
-			if (fork_flag == FORK || STD_COPIES > 1)
+			if (fork_flag == FORK)
 				continue;
 
 		default:
@@ -226,13 +215,7 @@ void tst_sig(int fork_flag, void (*handler) (), void (*cleanup) ())
 					 "signal failed for signal %d", sig);
 			break;
 		}
-#ifdef __sgi
-		/* On irix  (07/96), signal() fails when signo is 33 or higher */
-		if (sig + 1 >= 33)
-			break;
-#endif /*  __sgi */
-
-	}			/* endfor */
+	}
 }
 
 /****************************************************************************
@@ -246,7 +229,8 @@ static void def_handler(int sig)
 	 * Break remaining test cases, do any cleanup, then exit
 	 */
 	tst_brkm(TBROK, T_cleanup,
-		 "unexpected signal %d received (pid = %d).", sig, getpid());
+		 "unexpected signal %s(%d) received (pid = %d).",
+		 tst_strsig(sig), sig, getpid());
 }
 
 /*

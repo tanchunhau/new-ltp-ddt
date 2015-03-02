@@ -85,8 +85,8 @@ int setup_test(int);
 void cleanup_test(int);
 void cleanup();
 
-char *TCID = "mlockall02";	/* Test program identifier.    */
-int TST_TOTAL = 3;		/* Total number of test cases. */
+char *TCID = "mlockall02";
+int TST_TOTAL = 3;
 
 int exp_enos[] = { ENOMEM, EPERM, EINVAL, 0 };
 
@@ -106,11 +106,10 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
 	setup();
@@ -118,7 +117,7 @@ int main(int ac, char **av)
 	/* check looping state */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -169,7 +168,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -271,7 +270,7 @@ void cleanup_test(int i)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 
@@ -280,7 +279,7 @@ void cleanup()
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();

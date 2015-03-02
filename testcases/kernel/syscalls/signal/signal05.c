@@ -91,7 +91,7 @@ int pass = 0;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t pid;
 	int i, rval;
 
@@ -104,8 +104,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * loop through the list of signals and test each one
@@ -123,35 +123,29 @@ int main(int ac, char **av)
 				continue;
 			}
 
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Send the signals and make sure they are
-				 * handled in our handler.
-				 */
-				pid = getpid();
+			/*
+			 * Send the signals and make sure they are
+			 * handled in our handler.
+			 */
+			pid = getpid();
 
-				if ((rval = kill(pid, siglist[i])) != 0) {
-					tst_brkm(TBROK, cleanup,
-						 "call to kill failed");
-				}
+			if ((rval = kill(pid, siglist[i])) != 0) {
+				tst_brkm(TBROK, cleanup,
+					 "call to kill failed");
+			}
 
-				if (siglist[i] == pass) {
-					tst_resm(TPASS,
-						 "%s call succeeded", TCID);
-				} else {
-					tst_resm(TFAIL,
-						 "received unexpected signal");
-				}
+			if (siglist[i] == pass) {
+				tst_resm(TPASS,
+					 "%s call succeeded", TCID);
 			} else {
-				tst_resm(TPASS, "Call succeeded");
+				tst_resm(TFAIL,
+					 "received unexpected signal");
 			}
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
-
 }
 
 /*

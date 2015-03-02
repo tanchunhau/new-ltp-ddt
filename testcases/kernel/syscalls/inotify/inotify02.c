@@ -22,25 +22,12 @@
  *
  * Started by Andrew Vagin <avagin@sw.ru>
  *
- */
-/****************************************************************************
- * NAME
- *     inotify02
- *
  * DESCRIPTION
  *     Check that inotify work for a directory
  *
  * ALGORITHM
  *     Execute sequence file's operation and check return events
- *
- * HISTORY
- *     01/06/2007 - Fix to compile inotify test case with kernel that does
- *     not support it. Ricardo Salveti de Araujo <rsalveti@linux.vnet.ibm.com>
- *
- *     03/27/2008 - Fix the test failure due to event coalescence. Also add
- *     test for this event coalescence. Li Zefan <lizf@cn.fujitsu.com>
- *
- * ***************************************************************************/
+ */
 
 #include "config.h"
 
@@ -69,52 +56,42 @@
 /* reasonable guess as to size of 1024 events */
 #define EVENT_BUF_LEN        (EVENT_MAX * (EVENT_SIZE + 16))
 
-void setup();
-void cleanup();
+static void setup(void);
+static void cleanup(void);
 
-char *TCID = "inotify02";	/* Test program identifier. */
-int TST_TOTAL = 9;		/* Total number of test cases. */
+char *TCID = "inotify02";
+int TST_TOTAL = 9;
 
 #define BUF_SIZE 256
-char fname1[BUF_SIZE], fname2[BUF_SIZE], fname3[BUF_SIZE];
-char buf[BUF_SIZE];
-int fd, fd_notify;
-int wd;
+static char fname1[BUF_SIZE], fname2[BUF_SIZE], fname3[BUF_SIZE];
+static int fd, fd_notify, reap_wd;
+static int wd;
 
 struct event_t {
 	char name[BUF_SIZE];
-	int mask;
-	int len;
+	unsigned int mask;
 };
 #define FILE_NAME1 "test_file1"
 #define FILE_NAME2 "test_file2"
 
-struct event_t event_set[EVENT_MAX];
+static struct event_t event_set[EVENT_MAX];
 
-char event_buf[EVENT_BUF_LEN];
+static char event_buf[EVENT_BUF_LEN];
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
+	unsigned int stored_cookie = UINT_MAX;
 
-	/*
-	 * parse standard options
-	 */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
-	/*
-	 * perform global setup for test
-	 */
 	setup();
 
-	/*
-	 * check looping state if -c option given
-	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * generate sequence of events
@@ -123,41 +100,41 @@ int main(int ac, char **av)
 			tst_brkm(TBROK | TERRNO, cleanup,
 				 "chmod(\".\", 0755) failed");
 		}
-		event_set[Tst_count].mask = IN_ISDIR | IN_ATTRIB;
-		strcpy(event_set[Tst_count].name, "");
-		Tst_count++;
+		event_set[tst_count].mask = IN_ISDIR | IN_ATTRIB;
+		strcpy(event_set[tst_count].name, "");
+		tst_count++;
 
 		if ((fd = creat(FILE_NAME1, 0755)) == -1) {
 			tst_brkm(TBROK | TERRNO, cleanup,
 				 "creat(\"%s\", 755) failed", FILE_NAME1);
 		}
 
-		event_set[Tst_count].mask = IN_CREATE;
-		strcpy(event_set[Tst_count].name, FILE_NAME1);
-		Tst_count++;
-		event_set[Tst_count].mask = IN_OPEN;
-		strcpy(event_set[Tst_count].name, FILE_NAME1);
-		Tst_count++;
+		event_set[tst_count].mask = IN_CREATE;
+		strcpy(event_set[tst_count].name, FILE_NAME1);
+		tst_count++;
+		event_set[tst_count].mask = IN_OPEN;
+		strcpy(event_set[tst_count].name, FILE_NAME1);
+		tst_count++;
 
 		if (close(fd) == -1) {
 			tst_brkm(TBROK | TERRNO, cleanup,
 				 "close(%s) failed", FILE_NAME1);
 		}
-		event_set[Tst_count].mask = IN_CLOSE_WRITE;
-		strcpy(event_set[Tst_count].name, FILE_NAME1);
-		Tst_count++;
+		event_set[tst_count].mask = IN_CLOSE_WRITE;
+		strcpy(event_set[tst_count].name, FILE_NAME1);
+		tst_count++;
 
 		if (rename(FILE_NAME1, FILE_NAME2) == -1) {
 			tst_brkm(TBROK | TERRNO, cleanup,
 				 "rename(%s, %s) failed",
 				 FILE_NAME1, FILE_NAME2);
 		}
-		event_set[Tst_count].mask = IN_MOVED_FROM;
-		strcpy(event_set[Tst_count].name, FILE_NAME1);
-		Tst_count++;
-		event_set[Tst_count].mask = IN_MOVED_TO;
-		strcpy(event_set[Tst_count].name, FILE_NAME2);
-		Tst_count++;
+		event_set[tst_count].mask = IN_MOVED_FROM;
+		strcpy(event_set[tst_count].name, FILE_NAME1);
+		tst_count++;
+		event_set[tst_count].mask = IN_MOVED_TO;
+		strcpy(event_set[tst_count].name, FILE_NAME2);
+		tst_count++;
 
 		if (getcwd(fname1, BUF_SIZE) == NULL) {
 			tst_brkm(TBROK | TERRNO, cleanup,
@@ -169,17 +146,17 @@ int main(int ac, char **av)
 			tst_brkm(TBROK | TERRNO, cleanup,
 				 "rename(%s, %s) failed", fname1, fname2);
 		}
-		event_set[Tst_count].mask = IN_MOVE_SELF;
-		strcpy(event_set[Tst_count].name, "");
-		Tst_count++;
+		event_set[tst_count].mask = IN_MOVE_SELF;
+		strcpy(event_set[tst_count].name, "");
+		tst_count++;
 
 		if (unlink(FILE_NAME2) == -1) {
 			tst_brkm(TBROK | TERRNO, cleanup,
 				 "unlink(%s) failed", FILE_NAME2);
 		}
-		event_set[Tst_count].mask = IN_DELETE;
-		strcpy(event_set[Tst_count].name, FILE_NAME2);
-		Tst_count++;
+		event_set[tst_count].mask = IN_DELETE;
+		strcpy(event_set[tst_count].name, FILE_NAME2);
+		tst_count++;
 
 		/*
 		 * test that duplicate events will be coalesced into
@@ -197,16 +174,16 @@ int main(int ac, char **av)
 			tst_brkm(TBROK | TERRNO, cleanup,
 				 "rename(%s, %s) failed", fname3, fname1);
 		}
-		event_set[Tst_count].mask = IN_MOVE_SELF;
-		strcpy(event_set[Tst_count].name, "");
-		Tst_count++;
+		event_set[tst_count].mask = IN_MOVE_SELF;
+		strcpy(event_set[tst_count].name, "");
+		tst_count++;
 
-		if (Tst_count != TST_TOTAL) {
+		if (tst_count != TST_TOTAL) {
 			tst_brkm(TBROK, cleanup,
-				 "Tst_count and TST_TOTAL are not equal");
+				 "tst_count and TST_TOTAL are not equal");
 		}
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		int len, i = 0, test_num = 0;
 		if ((len = read(fd_notify, event_buf, EVENT_BUF_LEN)) == -1) {
@@ -238,8 +215,8 @@ int main(int ac, char **av)
 				tst_resm(TFAIL,
 					 "get unnecessary event: "
 					 "wd=%d mask=%x cookie=%u len=%u"
-					 "name=\"%s\"", event->wd, event->mask,
-					 event->cookie, event->len,
+					 "name=\"%.*s\"", event->wd, event->mask,
+					 event->cookie, event->len, event->len,
 					 event->name);
 
 			} else if ((event_set[test_num].mask == event->mask)
@@ -247,12 +224,38 @@ int main(int ac, char **av)
 				   (!strncmp
 				    (event_set[test_num].name, event->name,
 				     event->len))) {
-				tst_resm(TPASS,
-					 "get event: wd=%d mask=%x"
-					 " cookie=%u len=%u name=\"%s\"",
-					 event->wd, event->mask, event->cookie,
-					 event->len, event->name);
+				int fail = 0;
 
+				if (event->mask == IN_MOVED_FROM) {
+					if (event->cookie == 0)
+						fail = 1;
+					else
+						stored_cookie = event->cookie;
+				} else if (event->mask == IN_MOVED_TO) {
+					if (event->cookie != stored_cookie)
+						fail = 1;
+					else
+						stored_cookie = UINT_MAX;
+				} else {
+					if (event->cookie != 0)
+						fail = 1;
+				}
+				if (!fail) {
+					tst_resm(TPASS,
+						 "get event: wd=%d mask=%x "
+						 "cookie=%u len=%u name=\"%.*s\"",
+						 event->wd, event->mask,
+						 event->cookie, event->len,
+						 event->len, event->name);
+				} else {
+					tst_resm(TFAIL,
+						 "get event: wd=%d mask=%x "
+						 "cookie=%u (wrong) len=%u "
+						 "name=\"%s\"",
+						 event->wd, event->mask,
+						 event->cookie, event->len,
+						 event->name);
+				}
 			} else {
 				tst_resm(TFAIL, "get event: wd=%d mask=%x "
 					 "(expected %x) cookie=%u len=%u "
@@ -274,15 +277,11 @@ int main(int ac, char **av)
 		}
 	}
 
-	/* cleanup and exit */
 	cleanup();
 	tst_exit();
 }
 
-/*
- * setup() - performs all ONE TIME setup for this test.
- */
-void setup()
+static void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -305,39 +304,30 @@ void setup()
 		tst_brkm(TBROK | TERRNO, cleanup,
 			 "inotify_add_watch (%d, \".\", IN_ALL_EVENTS) failed",
 			 fd_notify);
+		reap_wd = 1;
 	};
 
 }
 
-/*
- * cleanup() - performs all ONE TIME cleanup for this test at
- *        completion or premature exit.
- */
-void cleanup()
+static void cleanup(void)
 {
-	if (myinotify_rm_watch(fd_notify, wd) < 0) {
+	if (reap_wd && myinotify_rm_watch(fd_notify, wd) < 0) {
 		tst_resm(TWARN,
 			 "inotify_rm_watch (%d, %d) failed,", fd_notify, wd);
 
 	}
 
-	if (close(fd_notify) == -1) {
+	if (fd_notify > 0 && close(fd_notify))
 		tst_resm(TWARN, "close(%d) failed", fd_notify);
-	}
 
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
 	TEST_CLEANUP;
-
 	tst_rmdir();
 }
 
 #else
 
-char *TCID = "inotify02";	/* Test program identifier.    */
-int TST_TOTAL = 0;		/* Total number of test cases. */
+char *TCID = "inotify02";
+int TST_TOTAL = 0;
 
 int main(void)
 {

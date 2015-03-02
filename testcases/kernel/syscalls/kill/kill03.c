@@ -76,7 +76,7 @@ int exp_enos[] = { EINVAL, 0 };
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t pid;
 	int exno, status;
 
@@ -94,8 +94,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 		status = 1;
 		exno = 1;
 		pid = FORK_OR_VFORK();
@@ -123,33 +123,31 @@ int main(int ac, char **av)
 				 TEST_RETURN);
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Check to see if the errno was set to the expected
-			 * value of 22 : EINVAL.
-			 */
-			TEST_ERROR_LOG(TEST_ERRNO);
-			if (TEST_ERRNO == EINVAL) {
-				tst_resm(TPASS, "errno set to %d : %s, as "
-					 "expected", TEST_ERRNO,
-					 strerror(TEST_ERRNO));
-			} else {
-				tst_resm(TFAIL, "errno set to %d : %s expected "
-					 "%d : %s", TEST_ERRNO,
-					 strerror(TEST_ERRNO), 22,
-					 strerror(22));
-			}
+		/*
+		 * Check to see if the errno was set to the expected
+		 * value of 22 : EINVAL.
+		 */
+		TEST_ERROR_LOG(TEST_ERRNO);
+		if (TEST_ERRNO == EINVAL) {
+			tst_resm(TPASS, "errno set to %d : %s, as "
+				 "expected", TEST_ERRNO,
+				 strerror(TEST_ERRNO));
+		} else {
+			tst_resm(TFAIL, "errno set to %d : %s expected "
+				 "%d : %s", TEST_ERRNO,
+				 strerror(TEST_ERRNO), 22,
+				 strerror(22));
 		}
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 
 /*
  * do_child()
  */
-void do_child()
+void do_child(void)
 {
 	int exno = 1;
 

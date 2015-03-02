@@ -56,7 +56,7 @@ int TST_TOTAL = sizeof(test_cases) / sizeof(test_cases[0]);
 int main(int ac, char **av)
 {
 	int lc, ind;
-	char *msg;
+	const char *msg;
 	void *test_stack;
 
 	msg = parse_opts(ac, av, NULL, NULL);
@@ -66,11 +66,11 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; ind < TST_TOTAL; ind++) {
 			if (test_cases[ind].child_stack == NULL) {
-				test_stack = (void *)NULL;
+				test_stack = NULL;
 			} else if (*test_cases[ind].child_stack == NULL) {
 				tst_resm(TWARN, "Can not allocate stack for"
 					 "child, skipping test case");
@@ -104,7 +104,6 @@ int main(int ac, char **av)
 static void setup(void)
 {
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-	/* Set up the expected error numbers for -e option */
 	TEST_EXP_ENOS(exp_enos);
 	TEST_PAUSE;
 
@@ -117,7 +116,7 @@ static void cleanup(void)
 	free(child_stack);
 }
 
-static int child_fn()
+static int child_fn(void)
 {
 	exit(1);
 }

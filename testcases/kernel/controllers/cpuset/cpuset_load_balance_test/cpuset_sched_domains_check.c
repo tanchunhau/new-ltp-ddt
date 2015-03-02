@@ -20,6 +20,7 @@
 /*                                                                            */
 /******************************************************************************/
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -138,7 +139,7 @@ int main(void)
 #else
 int main(void)
 {
-	tst_resm(TCONF, "System doesn't have required mempolicy support");
-	tst_exit();
+	tst_brkm(TCONF, NULL,
+		 "System doesn't have required mempolicy support");
 }
 #endif

@@ -30,7 +30,11 @@
  * http://oss.sgi.com/projects/GenInfo/SGIGPLNoticeExplan/
  */
 
+#include "config.h"
 #include "global.h"
+#ifdef HAVE_SYS_PRCTL_H
+# include <sys/prctl.h>
+#endif
 
 #define XFS_ERRTAG_MAX		17
 
@@ -160,35 +164,35 @@ opdesc_t ops[] = {
 	{OP_BULKSTAT, "bulkstat", bulkstat_f, 1, 0, 1},
 	{OP_BULKSTAT1, "bulkstat1", bulkstat1_f, 1, 0, 1},
 #endif
-	{OP_CHOWN, "chown", chown_f, 3, 1},
-	{OP_CREAT, "creat", creat_f, 4, 1},
-	{OP_DREAD, "dread", dread_f, 4, 0},
-	{OP_DWRITE, "dwrite", dwrite_f, 4, 1},
-	{OP_FDATASYNC, "fdatasync", fdatasync_f, 1, 1},
+	{OP_CHOWN, "chown", chown_f, 3, 1, 0},
+	{OP_CREAT, "creat", creat_f, 4, 1, 0},
+	{OP_DREAD, "dread", dread_f, 4, 0, 0},
+	{OP_DWRITE, "dwrite", dwrite_f, 4, 1, 0},
+	{OP_FDATASYNC, "fdatasync", fdatasync_f, 1, 1, 0},
 #ifndef NO_XFS
 	{OP_FREESP, "freesp", freesp_f, 1, 1, 1},
 #endif
-	{OP_FSYNC, "fsync", fsync_f, 1, 1},
-	{OP_GETDENTS, "getdents", getdents_f, 1, 0},
-	{OP_LINK, "link", link_f, 1, 1},
-	{OP_MKDIR, "mkdir", mkdir_f, 2, 1},
-	{OP_MKNOD, "mknod", mknod_f, 2, 1},
-	{OP_READ, "read", read_f, 1, 0},
-	{OP_READLINK, "readlink", readlink_f, 1, 0},
-	{OP_RENAME, "rename", rename_f, 2, 1},
+	{OP_FSYNC, "fsync", fsync_f, 1, 1, 0},
+	{OP_GETDENTS, "getdents", getdents_f, 1, 0, 0},
+	{OP_LINK, "link", link_f, 1, 1, 0},
+	{OP_MKDIR, "mkdir", mkdir_f, 2, 1, 0},
+	{OP_MKNOD, "mknod", mknod_f, 2, 1, 0},
+	{OP_READ, "read", read_f, 1, 0, 0},
+	{OP_READLINK, "readlink", readlink_f, 1, 0, 0},
+	{OP_RENAME, "rename", rename_f, 2, 1, 0},
 #ifndef NO_XFS
 	{OP_RESVSP, "resvsp", resvsp_f, 1, 1, 1},
 #endif
-	{OP_RMDIR, "rmdir", rmdir_f, 1, 1},
-	{OP_STAT, "stat", stat_f, 1, 0},
-	{OP_SYMLINK, "symlink", symlink_f, 2, 1},
-	{OP_SYNC, "sync", sync_f, 1, 0},
-	{OP_TRUNCATE, "truncate", truncate_f, 2, 1},
-	{OP_UNLINK, "unlink", unlink_f, 1, 1},
+	{OP_RMDIR, "rmdir", rmdir_f, 1, 1, 0},
+	{OP_STAT, "stat", stat_f, 1, 0, 0},
+	{OP_SYMLINK, "symlink", symlink_f, 2, 1, 0},
+	{OP_SYNC, "sync", sync_f, 1, 0, 0},
+	{OP_TRUNCATE, "truncate", truncate_f, 2, 1, 0},
+	{OP_UNLINK, "unlink", unlink_f, 1, 1, 0},
 #ifndef NO_XFS
 	{OP_UNRESVSP, "unresvsp", unresvsp_f, 1, 1, 1},
 #endif
-	{OP_WRITE, "write", write_f, 4, 1},
+	{OP_WRITE, "write", write_f, 4, 1, 0},
 }, *ops_end;
 
 flist_t flist[FT_nft] = {
@@ -227,6 +231,7 @@ int no_xfs = 0;
 #else
 int no_xfs = 1;
 #endif
+sig_atomic_t should_stop = 0;
 
 void add_to_flist(int, int, int);
 void append_pathname(pathname_t *, char *);
@@ -273,6 +278,11 @@ void usage(void);
 void write_freq(void);
 void zero_freq(void);
 
+void sg_handler(int signum)
+{
+	should_stop = 1;
+}
+
 int main(int argc, char **argv)
 {
 	char buf[10];
@@ -297,6 +307,7 @@ int main(int argc, char **argv)
 #ifndef NO_XFS
 	xfs_error_injection_t err_inj;
 #endif
+	struct sigaction action;
 
 	errrange = errtag = 0;
 	umask(0);
@@ -389,7 +400,7 @@ int main(int argc, char **argv)
 
 	make_freq_table();
 
-	while ((loopcntr <= loops) || (loops == 0)) {
+	while ((loopcntr <= loops) || (loops == 0) && !should_stop) {
 		if (!dirname) {
 			/* no directory specified */
 			if (!nousage)
@@ -465,17 +476,44 @@ int main(int argc, char **argv)
 #endif
 			close(fd);
 		unlink(buf);
+
+
 		if (nproc == 1) {
 			procid = 0;
 			doproc();
 		} else {
+			setpgid(0, 0);
+			action.sa_handler = sg_handler;
+			sigemptyset(&action.sa_mask);
+			action.sa_flags = 0;
+			if (sigaction(SIGTERM, &action, 0)) {
+				perror("sigaction failed");
+				exit(1);
+			}
+
 			for (i = 0; i < nproc; i++) {
 				if (fork() == 0) {
+
+					action.sa_handler = SIG_DFL;
+					sigemptyset(&action.sa_mask);
+					if (sigaction(SIGTERM, &action, 0))
+						return 1;
+#ifdef HAVE_SYS_PRCTL_H
+					prctl(PR_SET_PDEATHSIG, SIGKILL);
+					if (getppid() == 1) /* parent died already? */
+						return 0;
+#endif
 					procid = i;
 					doproc();
 					return 0;
 				}
 			}
+			while (wait(&stat) > 0 && !should_stop) {
+				continue;
+			}
+			action.sa_flags = SA_RESTART;
+			sigaction(SIGTERM, &action, 0);
+			kill(-getpid(), SIGTERM);
 			while (wait(&stat) > 0)
 				continue;
 		}

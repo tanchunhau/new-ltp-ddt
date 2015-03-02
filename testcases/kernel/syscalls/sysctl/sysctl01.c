@@ -53,6 +53,10 @@
 #include <linux/sysctl.h>
 
 char *TCID = "sysctl01";
+
+/* This is an older/deprecated syscall that newer arches are omitting */
+#ifdef __NR_sysctl
+
 int TST_TOTAL = 3;
 
 static int sysctl(int *name, int nlen, void *oldval, size_t * oldlenp,
@@ -96,7 +100,7 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int i;
 	char *comp_string;
 
@@ -109,8 +113,8 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 
@@ -144,11 +148,6 @@ int main(int ac, char **av)
 				continue;
 			}
 
-			if (!STD_FUNCTIONAL_TEST) {
-				tst_resm(TPASS, "call succeeded");
-				continue;
-			}
-
 			if (strcmp(TC[i].oldval, comp_string) != 0) {
 				tst_resm(TFAIL, "strings don't match - %s : %s",
 					 TC[i].oldval, comp_string);
@@ -160,15 +159,15 @@ int main(int ac, char **av)
 			}
 		}
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -185,7 +184,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.
@@ -194,3 +193,14 @@ void cleanup()
 	TEST_CLEANUP;
 
 }
+
+#else
+int TST_TOTAL = 0;
+
+int main(void)
+{
+
+	tst_brkm(TCONF, NULL,
+		 "This test needs a kernel that has sysctl syscall.");
+}
+#endif

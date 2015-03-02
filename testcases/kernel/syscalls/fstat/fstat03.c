@@ -62,8 +62,8 @@
 #define FILE_MODE	S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 #define TEST_FILE	"testfile"
 
-char *TCID = "fstat03";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fstat03";
+int TST_TOTAL = 1;
 int exp_enos[] = { EBADF, 0 };
 
 int fildes;			/* testfile descriptor */
@@ -75,9 +75,8 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat structure buffer */
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -95,7 +94,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 		/*
 		 * Call fstat(2) to get the status information
 		 * of a closed testfile pointed to by 'fd'.
@@ -137,7 +136,7 @@ int main(int ac, char **av)
  *      Create a testfile under temporary directory.
  *      Close the testfile.
  */
-void setup()
+void setup(void)
 {
 	/* Capture unexpected signals */
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -168,7 +167,7 @@ void setup()
  *	created during setup().
  *	Exit the test program with normal exit code.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

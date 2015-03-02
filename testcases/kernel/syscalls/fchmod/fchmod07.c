@@ -80,7 +80,7 @@
 #define TESTFILE	"testfile"
 
 int fd;				/* file descriptor for testfile */
-char *TCID = "fchmod07";	/* Test program identifier.    */
+char *TCID = "fchmod07";
 int TST_TOTAL = 8;		/* Total number of test conditions */
 
 int Modes[] = { 0, 07, 070, 0700, 0777, 02777, 04777, 06777 };
@@ -92,13 +92,12 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat(2) struct contents */
 	int lc;
-	char *msg;
+	const char *msg;
 	int ind;		/* counter variable for chmod(2) tests */
 	int mode;		/* file mode permission */
 
 	TST_TOTAL = sizeof(Modes) / sizeof(int);
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -109,7 +108,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; ind < TST_TOTAL; ind++) {
 			mode = Modes[ind];
@@ -127,45 +126,36 @@ int main(int ac, char **av)
 				continue;
 			}
 			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
+			 * Get the testfile information using
+			 * fstat(2).
 			 */
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Get the testfile information using
-				 * fstat(2).
-				 */
-				if (fstat(fd, &stat_buf) < 0) {
-					tst_brkm(TFAIL, cleanup,
-						 "fstat(2) of "
-						 "%s failed, errno:%d",
-						 TESTFILE, TEST_ERRNO);
-				}
-				stat_buf.st_mode &= ~S_IFREG;
+			if (fstat(fd, &stat_buf) < 0) {
+				tst_brkm(TFAIL, cleanup,
+					 "fstat(2) of "
+					 "%s failed, errno:%d",
+					 TESTFILE, TEST_ERRNO);
+			}
+			stat_buf.st_mode &= ~S_IFREG;
 
-				/*
-				 * Check for expected mode permissions
-				 * on testfile.
-				 */
-				if (stat_buf.st_mode == mode) {
-					tst_resm(TPASS,
-						 "Functionality of "
-						 "fchmod(%d, %#o) successful",
-						 fd, mode);
-				} else {
-					tst_resm(TFAIL, "%s: Incorrect modes "
-						 "0%03o, Expected 0%03o",
-						 TESTFILE, stat_buf.st_mode,
-						 mode);
-				}
+			/*
+			 * Check for expected mode permissions
+			 * on testfile.
+			 */
+			if (stat_buf.st_mode == mode) {
+				tst_resm(TPASS,
+					 "Functionality of "
+					 "fchmod(%d, %#o) successful",
+					 fd, mode);
 			} else {
-				tst_resm(TPASS, "call succeeded");
+				tst_resm(TFAIL, "%s: Incorrect modes "
+					 "0%03o, Expected 0%03o",
+					 TESTFILE, stat_buf.st_mode,
+					 mode);
 			}
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -175,7 +165,7 @@ int main(int ac, char **av)
  *  Create a temporary directory and change directory to it.
  *  Create a test file under temporary directory.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -198,7 +188,7 @@ void setup()
  *  Close the testfile created in the setup.
  *  Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

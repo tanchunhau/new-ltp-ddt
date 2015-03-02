@@ -55,8 +55,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "dup204";		/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "dup204";
+int TST_TOTAL = 2;
 
 int fd[2];
 int nfd[2];
@@ -64,7 +64,7 @@ int nfd[2];
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int i;
 	struct stat oldbuf, newbuf;
 
@@ -75,7 +75,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -86,34 +86,31 @@ int main(int ac, char **av)
 				continue;
 			}
 
-			if (STD_FUNCTIONAL_TEST) {
-				if (fstat(fd[i], &oldbuf) == -1)
-					tst_brkm(TBROK, cleanup, "fstat() #1 "
-						 "failed");
-				if (fstat(nfd[i], &newbuf) == -1)
-					tst_brkm(TBROK, cleanup, "fstat() #2 "
-						 "failed");
+			if (fstat(fd[i], &oldbuf) == -1)
+				tst_brkm(TBROK, cleanup, "fstat() #1 "
+					 "failed");
+			if (fstat(nfd[i], &newbuf) == -1)
+				tst_brkm(TBROK, cleanup, "fstat() #2 "
+					 "failed");
 
-				if (oldbuf.st_ino != newbuf.st_ino)
-					tst_resm(TFAIL, "original and duped "
-						 "inodes do not match");
-				else
-					tst_resm(TPASS, "original and duped "
-						 "inodes are the same");
-			} else
-				tst_resm(TPASS, "call succeeded");
+			if (oldbuf.st_ino != newbuf.st_ino)
+				tst_resm(TFAIL, "original and duped "
+					 "inodes do not match");
+			else
+				tst_resm(TPASS, "original and duped "
+					 "inodes are the same");
 
 			if (close(TEST_RETURN) == -1)
 				tst_brkm(TBROK | TERRNO, cleanup,
 					 "close failed");
 		}
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	fd[0] = -1;
 
@@ -127,7 +124,7 @@ void setup()
 		tst_brkm(TBROK | TERRNO, cleanup, "pipe failed");
 }
 
-void cleanup()
+void cleanup(void)
 {
 	int i;
 

@@ -12,7 +12,7 @@
 #include <time.h>
 #include "posixtest.h"
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec tp;
 
@@ -27,11 +27,8 @@ int main(int argc, char *argv[])
 			printf("clock_gettime() success, but tp not filled\n");
 			return PTS_FAIL;
 		}
-	} else {
-		printf("clock_gettime() failed\n");
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("clock_gettime() failed\n");
+	return PTS_FAIL;
 }

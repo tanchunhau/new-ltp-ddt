@@ -21,13 +21,14 @@
 
 void *runner(void *arg)
 {
+	(void) arg;
 
 	while (1)
 		sleep(1);
 	return NULL;
 }
 
-int main()
+int main(void)
 {
 	int new_policy, policy, result;
 	struct sched_param param;

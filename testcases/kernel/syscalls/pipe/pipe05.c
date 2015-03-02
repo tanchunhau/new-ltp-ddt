@@ -63,7 +63,7 @@ void sig11_handler(int sig);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	struct sigaction sa, osa;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
@@ -75,8 +75,8 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 		/* special sig11 case */
 		sa.sa_handler = &sig11_handler;
 		sigemptyset(&sa.sa_mask);
@@ -118,7 +118,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -138,7 +138,7 @@ void sig11_handler(int sig)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

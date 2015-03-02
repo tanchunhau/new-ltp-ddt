@@ -53,7 +53,6 @@
 #include <sys/socket.h>
 #include <sys/syscall.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 
@@ -61,12 +60,9 @@
 #define SOCK_NONBLOCK O_NONBLOCK
 #endif
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "socket03";	/* test program identifier.              */
+char *TCID = "socket03";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -86,7 +82,7 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -112,7 +108,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -124,59 +120,50 @@ int main(int argc, char *argv[])
 {
 	int fd, fl;
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 	if ((tst_kvercmp(2, 6, 27)) < 0) {
-		tst_resm(TCONF,
+		tst_brkm(TCONF,
+			 NULL,
 			 "This test can only run on kernels that are 2.6.27 and higher");
-		tst_exit();
 	}
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 			fd = socket(PF_INET, SOCK_STREAM, 0);
 			if (fd == -1) {
-				tst_resm(TFAIL, "socket(0) failed");
-				cleanup();
-				tst_exit();
+				tst_brkm(TFAIL, cleanup, "socket(0) failed");
 			}
 			fl = fcntl(fd, F_GETFL);
 			if (fl == -1) {
 				tst_brkm(TBROK, cleanup, "fcntl failed");
-				tst_exit();
 			}
 			if (fl & O_NONBLOCK) {
-				tst_resm(TFAIL,
+				tst_brkm(TFAIL,
+					 cleanup,
 					 "socket(0) set non-blocking mode");
-				cleanup();
-				tst_exit();
 			}
 			close(fd);
 
 			fd = socket(PF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 			if (fd == -1) {
-				tst_resm(TFAIL, "socket(SOCK_NONBLOCK) failed");
-				cleanup();
-				tst_exit();
+				tst_brkm(TFAIL, cleanup,
+					 "socket(SOCK_NONBLOCK) failed");
 			}
 			fl = fcntl(fd, F_GETFL);
 			if (fl == -1) {
 				tst_brkm(TBROK, cleanup, "fcntl failed");
-				tst_exit();
 			}
 			if ((fl & O_NONBLOCK) == 0) {
-				tst_resm(TFAIL,
+				tst_brkm(TFAIL,
+					 cleanup,
 					 "socket(SOCK_NONBLOCK) does not set non-blocking mode");
-				cleanup();
-				tst_exit();
 			}
 			close(fd);
 			tst_resm(TPASS, "socket(SOCK_NONBLOCK) PASSED");

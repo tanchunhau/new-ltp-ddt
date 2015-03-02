@@ -107,13 +107,14 @@ static int i_uclinux;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int i;
 	pid_t pid;
 	void do_child();
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+
 #ifdef UCLINUX
 	maybe_run_child(&do_child_uclinux, "dd", &i_uclinux, &sem_id_1);
 #endif
@@ -123,8 +124,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -268,7 +269,7 @@ void sighandler(int sig)
  * do_child_uclinux() - capture signals, re-initialize s_buf then call do_child
  *                      with the appropriate argument
  */
-void do_child_uclinux()
+void do_child_uclinux(void)
 {
 	int i = i_uclinux;
 

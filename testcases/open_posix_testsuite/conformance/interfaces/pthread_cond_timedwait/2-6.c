@@ -34,9 +34,7 @@
 #ifndef WITHOUT_XOPEN
 #define _XOPEN_SOURCE	600
 #endif
- /********************************************************************************************/
-/****************************** standard includes *****************************************/
-/********************************************************************************************/
+
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -47,32 +45,9 @@
 #include <time.h>
 #include <semaphore.h>
 
-/********************************************************************************************/
-/******************************   Test framework   *****************************************/
-/********************************************************************************************/
 #include "../testfrmw/testfrmw.h"
 #include "../testfrmw/testfrmw.c"
- /* This header is responsible for defining the following macros:
-  * UNRESOLVED(ret, descr);
-  *    where descr is a description of the error and ret is an int (error code for example)
-  * FAILED(descr);
-  *    where descr is a short text saying why the test has failed.
-  * PASSED();
-  *    No parameter.
-  *
-  * Both three macros shall terminate the calling process.
-  * The testcase shall not terminate in any other maneer.
-  *
-  * The other file defines the functions
-  * void output_init()
-  * void output(char * string, ...)
-  *
-  * Those may be used to output information.
-  */
 
-/********************************************************************************************/
-/********************************** Configuration ******************************************/
-/********************************************************************************************/
 #ifndef VERBOSE
 #define VERBOSE 1
 #endif
@@ -80,10 +55,6 @@
 #ifndef WITHOUT_ALTCLK
 #define USE_ALTCLK		/* make tests with MONOTONIC CLOCK if supported */
 #endif
-
-/********************************************************************************************/
-/***********************************    Test case   *****************************************/
-/********************************************************************************************/
 
 struct {
 	pthread_mutex_t mtx;
@@ -101,6 +72,9 @@ struct {
 void clnp1(void *arg)
 {
 	int ret;
+
+	(void) arg;
+
 	if (data.type == PTHREAD_MUTEX_RECURSIVE) {
 		ret = pthread_mutex_trylock(&(data.mtx));
 		if (ret != 0) {
@@ -122,6 +96,9 @@ void clnp1(void *arg)
 void clnp2(void *arg)
 {
 	int ret;
+
+	(void) arg;
+
 	do {
 		ret = sem_post(&(data.semA));
 	} while ((ret != 0) && (errno == EINTR));
@@ -145,6 +122,8 @@ void clnp2(void *arg)
 void clnp3(void *arg)
 {
 	int ret;
+
+	(void) arg;
 
 	ret = pthread_mutex_unlock(&(data.mtx));
 	if (ret != 0) {
@@ -170,6 +149,8 @@ void clnp3(void *arg)
 void *threaded(void *arg)
 {
 	int ret;
+
+	(void) arg;
 
 	struct timespec ts;
 
@@ -215,9 +196,10 @@ void *threaded(void *arg)
 	return NULL;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
-	int ret, i;
+	int ret;
+	unsigned int i;
 	void *rc;
 
 	pthread_mutexattr_t ma;

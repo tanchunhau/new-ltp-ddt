@@ -44,7 +44,7 @@ static void cleanup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int status;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
@@ -57,7 +57,7 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		cpid = FORK_OR_VFORK();
 		switch (cpid) {

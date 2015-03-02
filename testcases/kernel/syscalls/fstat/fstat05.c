@@ -101,8 +101,8 @@ char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
 extern struct passwd *my_getpwnam(char *);
 
-char *TCID = "fstat05";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fstat05";
+int TST_TOTAL = 1;
 int exp_enos[] = { EFAULT, 0 };
 
 int fildes;			/* testfile descriptor */
@@ -134,9 +134,8 @@ int main(int ac, char **av)
 	struct stat stat_buf;	/* stat structure buffer */
 	struct stat *ptr_str;
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -154,7 +153,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call fstat(2).
@@ -188,7 +187,7 @@ int main(int ac, char **av)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_brkm(TCONF, NULL, "test is not available on uClinux");
 }
@@ -201,7 +200,7 @@ int main()
  *	Exit the test program on receipt of unexpected signals.
  *	Create a temporary directory and change directory to it.
  */
-void setup()
+void setup(void)
 {
 	int i;
 
@@ -239,7 +238,7 @@ void setup()
  *	created during setup().
  *	Exit the test program with normal exit code.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

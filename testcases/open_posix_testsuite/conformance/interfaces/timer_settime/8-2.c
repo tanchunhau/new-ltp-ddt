@@ -24,7 +24,7 @@
 #define TIMERSEC 1
 #define SLEEPDELTA 1
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct sigevent ev;
 	timer_t tid;
@@ -74,16 +74,13 @@ int main(int argc, char *argv[])
 	    (0 == oits.it_interval.tv_sec) && (0 == oits.it_interval.tv_nsec)) {
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		printf("Test FAILED:  value: tv_sec %d tv_nsec %d\n",
-		       (int)oits.it_value.tv_sec, (int)oits.it_value.tv_nsec);
-
-		printf("Test FAILED:  interval: tv_sec %d tv_nsec %d\n",
-		       (int)oits.it_interval.tv_sec,
-		       (int)oits.it_interval.tv_nsec);
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("Test FAILED:  value: tv_sec %d tv_nsec %d\n",
+	       (int)oits.it_value.tv_sec, (int)oits.it_value.tv_nsec);
+
+	printf("Test FAILED:  interval: tv_sec %d tv_nsec %d\n",
+	       (int)oits.it_interval.tv_sec,
+	       (int)oits.it_interval.tv_nsec);
+	return PTS_FAIL;
 }

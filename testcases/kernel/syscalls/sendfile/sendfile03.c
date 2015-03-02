@@ -79,9 +79,9 @@ struct test_case_t {
 	int exp_errno;
 } testcases[] = {
 	{
-	"Test for EBADF, in_fd = -1", NULL, 8, -1, (void *)0, 0, EBADF}, {
-	"Test for EBADF, out_fd = -1", NULL, -1, 7, (void *)0, 0, EBADF}, {
-	"Test for EBADF, in_fd = out_fd = -1", NULL, -1, -1, (void *)0,
+	"Test for EBADF, in_fd = -1", NULL, 8, -1, NULL, 0, EBADF}, {
+	"Test for EBADF, out_fd = -1", NULL, -1, 7, NULL, 0, EBADF}, {
+	"Test for EBADF, in_fd = out_fd = -1", NULL, -1, -1, NULL,
 		    0, EBADF}
 };
 
@@ -91,7 +91,7 @@ int main(int ac, char **av)
 {
 	int i;
 	int lc;
-	char *msg;		/* parse_opts() return message */
+	const char *msg;		/* parse_opts() return message */
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -105,7 +105,7 @@ int main(int ac, char **av)
 	 * The following loop checks looping state if -c option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 			if (testcases[i].setupfunc != NULL) {
@@ -140,7 +140,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	char buf[100];
 
@@ -174,7 +174,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

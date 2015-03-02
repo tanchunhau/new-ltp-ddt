@@ -57,6 +57,7 @@
 #include "test.h"
 #include "linux_syscall_numbers.h"
 #include "libclone.h"
+#include "pidns_helper.h"
 
 char *TCID = "pidns31";
 int TST_TOTAL = 1;
@@ -95,7 +96,7 @@ static void remove_pipe(int *fd)
 static void remove_mqueue(mqd_t mqd)
 {
 	mq_close(mqd);
-	syscall(__NR_mq_unlink, mqname);
+	ltp_syscall(__NR_mq_unlink, mqname);
 }
 
 /*
@@ -118,7 +119,7 @@ static void cleanup_resources(int step, mqd_t mqd)
 		break;
 
 	case F_STEP_2:
-		syscall(__NR_mq_notify, mqd, NULL);
+		ltp_syscall(__NR_mq_notify, mqd, NULL);
 		/* fall through */
 	case F_STEP_1:
 		remove_mqueue(mqd);
@@ -177,7 +178,7 @@ int child_fn(void *arg)
 	}
 	tst_resm(TINFO, "cinit: my father is ready to receive a message");
 
-	mqd = syscall(__NR_mq_open, mqname, O_WRONLY, 0, NULL);
+	mqd = ltp_syscall(__NR_mq_open, mqname, O_WRONLY, 0, NULL);
 	if (mqd == (mqd_t) - 1) {
 		tst_resm(TBROK, "cinit: mq_open() failed (%s)",
 			 strerror(errno));
@@ -243,6 +244,12 @@ static void father_signal_handler(int sig, siginfo_t * si, void *unused)
 		mq_receive(info->mqd, buf, attr.mq_msgsize, NULL);
 }
 
+static void setup(void)
+{
+	tst_require_root(NULL);
+	check_newpid();
+}
+
 /***********************************************************************
 *   M A I N
 ***********************************************************************/
@@ -256,14 +263,16 @@ int main(int argc, char *argv[])
 	int status;
 	struct notify_info info;
 
+	setup();
+
 	if (pipe(father_to_child) == -1) {
 		tst_resm(TBROK, "parent: pipe() failed. aborting!");
 		cleanup_mqueue(TBROK, NO_STEP, 0);
 	}
 
-	syscall(__NR_mq_unlink, mqname);
+	ltp_syscall(__NR_mq_unlink, mqname);
 	mqd =
-	    syscall(__NR_mq_open, mqname, O_RDWR | O_CREAT | O_EXCL, 0777,
+	    ltp_syscall(__NR_mq_open, mqname, O_RDWR | O_CREAT | O_EXCL, 0777,
 		    NULL);
 	if (mqd == (mqd_t) - 1) {
 		tst_resm(TBROK, "parent: mq_open() failed (%s)",
@@ -286,7 +295,7 @@ int main(int argc, char *argv[])
 	info.mqd = mqd;
 	info.pid = cpid;
 	notif.sigev_value.sival_ptr = &info;
-	if (syscall(__NR_mq_notify, mqd, &notif) == (mqd_t) - 1) {
+	if (ltp_syscall(__NR_mq_notify, mqd, &notif) == (mqd_t) -1) {
 		tst_resm(TBROK, "parent: mq_notify() failed (%s)",
 			 strerror(errno));
 		cleanup_mqueue(TBROK, F_STEP_1, mqd);

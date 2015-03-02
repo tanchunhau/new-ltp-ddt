@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 
 	/* Create threads */
 	for (i = 0; i < numthreads; i++)
-		if (pthread_create(&th_id, (pthread_attr_t *) NULL, threads,
+		if (pthread_create(&th_id, NULL, threads,
 				   (void *)(uintptr_t) i)) {
 			tst_resm(TFAIL,
 				 "failed creating a pthread; increase limits");
@@ -263,5 +263,5 @@ void *threads(void *thread_id_)
 	/* Close file handles and exit */
 	close_files(fd_list, numfiles);
 	unlink(filename);
-	pthread_exit((void *)0);
+	pthread_exit(NULL);
 }

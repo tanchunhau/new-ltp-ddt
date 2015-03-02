@@ -107,7 +107,7 @@ int main(int ac, char **av)
 {
 	int lc;
 	int rval;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(ac, av, options, &help);
 	if (msg != NULL)
@@ -126,7 +126,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		parenttty = devname;
 		childtty = devname;
@@ -213,6 +213,7 @@ void do_child_uclinux(void)
 	/* Set up the signal handlers again */
 	act.sa_handler = (void *)sigterm_handler;
 	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
 	(void)sigaction(SIGTERM, &act, 0);
 
 	/* Run the normal child */
@@ -260,19 +261,14 @@ static int run_ptest(void)
 		return -1;
 	}
 
-	if (STD_FUNCTIONAL_TEST) {
-		/* Get termio and see if all parameters actually got set */
-		rval = ioctl(parentfd, TCGETA, &termio);
-		if (rval < 0) {
-			tst_resm(TFAIL, "ioctl TCGETA failed.  Ending test.");
-			return -1;
-		}
-
-		return chk_tty_parms();
-	} else {
-		tst_resm(TINFO, "call succeeded");
-		return 0;
+	/* Get termio and see if all parameters actually got set */
+	rval = ioctl(parentfd, TCGETA, &termio);
+	if (rval < 0) {
+		tst_resm(TFAIL, "ioctl TCGETA failed.  Ending test.");
+		return -1;
 	}
+
+	return chk_tty_parms();
 }
 
 static int run_ctest(void)
@@ -457,6 +453,7 @@ static void setup(void)
 	/* Set up the signal handlers */
 	act.sa_handler = (void *)sigterm_handler;
 	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
 	(void)sigaction(SIGTERM, &act, 0);
 
 	act.sa_handler = (void *)sigusr1_handler;

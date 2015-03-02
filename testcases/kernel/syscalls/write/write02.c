@@ -65,7 +65,7 @@ char pfiln[40] = "";
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	int cwrite;
 	int fild;
@@ -82,8 +82,8 @@ int main(int argc, char **argv)
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 //block1:
 		tst_resm(TINFO, "Block 1: test to see write() returns proper "
@@ -135,8 +135,6 @@ void setup(void)
 
 	tst_tmpdir();
 
-// Changed by prashant yendigeri, because the temp file was not being created in//  the $TDIRECTORY
-//      sprintf(pfiln, "./write1.%d", getpid());
 	sprintf(pfiln, "write1.%d", getpid());
 }
 
@@ -155,5 +153,4 @@ void cleanup(void)
 	unlink(pfiln);
 
 	tst_rmdir();
-
 }

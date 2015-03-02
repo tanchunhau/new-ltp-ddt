@@ -69,7 +69,7 @@ static int fail;
 
 int main(int ac, char **av)
 {
-	char *msg;
+	const char *msg;
 
 	int kid_count, ret_val, status;
 	int i, j, k, found;
@@ -87,7 +87,7 @@ int main(int ac, char **av)
 
 	setup();
 
-	Tst_count = 0;
+	tst_count = 0;
 	fail = 0;
 
 	/*
@@ -359,7 +359,7 @@ static void cleanup(void)
 	TEST_CLEANUP;
 }
 
-static void inthandlr()
+static void inthandlr(void)
 {
 	intintr++;
 }

@@ -36,6 +36,7 @@
  */
 
 #define _GNU_SOURCE
+#include "config.h"
 #include <sys/mman.h>
 #include <errno.h>
 #include <unistd.h>
@@ -44,13 +45,15 @@
 
 char *TCID = "mremap05";
 
+#ifdef HAVE_MREMAP_FIXED
+
 struct test_case_t {
 	char *old_address;
 	char *new_address;
 	size_t old_size;	/* in pages */
 	size_t new_size;	/* in pages */
 	int flags;
-	const char *msg;
+	const const char *msg;
 	void *exp_ret;
 	int exp_errno;
 	char *ret;
@@ -212,7 +215,7 @@ static void cleanup1(struct test_case_t *t)
 
 int main(int ac, char **av)
 {
-	char *msg;
+	const char *msg;
 	int lc, testno;
 
 	msg = parse_opts(ac, av, NULL, NULL);
@@ -221,7 +224,7 @@ int main(int ac, char **av)
 
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; testno++) {
 			tdat[testno].setup(&tdat[testno]);
 			test_mremap(&tdat[testno]);
@@ -241,3 +244,12 @@ static void cleanup(void)
 {
 	TEST_CLEANUP;
 }
+
+#else
+
+int main(void)
+{
+	tst_brkm(TCONF, NULL, "MREMAP_FIXED not present in <sys/mman.h>");
+}
+
+#endif /* HAVE_MREMAP_FIXED */

@@ -81,8 +81,8 @@
 #define TEMP_FILE	"temp_file"
 #define FILE_MODE       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 
-char *TCID = "sync02";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "sync02";
+int TST_TOTAL = 1;
 char write_buffer[BUFSIZ];	/* buffer used to write data to file */
 int fildes;			/* file descriptor for temporary file */
 
@@ -92,10 +92,9 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	char read_buffer[BUFSIZ];	/* buffer used to read data from file */
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -103,7 +102,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call sync(2) to commit buffer data to disk.
@@ -114,45 +113,36 @@ int main(int ac, char **av)
 			tst_resm(TFAIL, "%s, Failed, errno=%d : %s",
 				 TCID, TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
-			 */
-			if (STD_FUNCTIONAL_TEST) {
-				/* Set the file ptr to b'nning of file */
-				if (lseek(fildes, 0, SEEK_SET) < 0) {
-					tst_brkm(TFAIL, cleanup, "lseek() "
-						 "failed on %s, error=%d",
-						 TEMP_FILE, errno);
-				}
+			/* Set the file ptr to b'nning of file */
+			if (lseek(fildes, 0, SEEK_SET) < 0) {
+				tst_brkm(TFAIL, cleanup, "lseek() "
+					 "failed on %s, error=%d",
+					 TEMP_FILE, errno);
+			}
 
-				/* Read the contents of file */
-				if (read(fildes, read_buffer,
-					 sizeof(read_buffer)) > 0) {
-					if (strcmp(read_buffer, write_buffer)) {
-						tst_resm(TFAIL, "Data read "
-							 "from %s doesn't match "
-							 "with witten data",
-							 TEMP_FILE);
-					} else {
-						tst_resm(TPASS, "Functionality "
-							 "of sync() successful");
-					}
+			/* Read the contents of file */
+			if (read(fildes, read_buffer,
+				 sizeof(read_buffer)) > 0) {
+				if (strcmp(read_buffer, write_buffer)) {
+					tst_resm(TFAIL, "Data read "
+						 "from %s doesn't match "
+						 "with witten data",
+						 TEMP_FILE);
 				} else {
-					tst_brkm(TFAIL, cleanup,
-						 "read() Fails on %s, error=%d",
-						 TEMP_FILE, errno);
+					tst_resm(TPASS, "Functionality "
+						 "of sync() successful");
 				}
 			} else {
-				tst_resm(TPASS, "call succeeded");
+				tst_brkm(TFAIL, cleanup,
+					 "read() Fails on %s, error=%d",
+					 TEMP_FILE, errno);
 			}
 		}
-		Tst_count++;	/* incr. TEST_LOOP counter */
+		tst_count++;	/* incr. TEST_LOOP counter */
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -162,7 +152,7 @@ int main(int ac, char **av)
  *  Create a test file under temporary directory and write some
  *  data into it.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -202,7 +192,7 @@ void setup()
  *             completion or premature exit.
  *  Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

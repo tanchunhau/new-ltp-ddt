@@ -49,6 +49,7 @@
 #include <inttypes.h>
 #include "usctest.h"
 #include "test.h"
+#include "tst_fs_type.h"
 
 #define SKIP 0x0c00
 #if SKIP == F_RDLCK || SKIP== F_WRLCK
@@ -540,11 +541,12 @@ static char tmpname[40];
 
 #define FILEDATA	"ten bytes!"
 
-extern void catch1();		/* signal catching subroutine */
-extern void catch_alarm();
+void catch1(int sig);		/* signal catching subroutine */
+void catch_alarm(int sig);
 
-char *TCID = "fcntl14";		/* Test program identifier */
-int TST_TOTAL = 1;		/* Total number of test cases */
+char *TCID = "fcntl14";
+int TST_TOTAL = 1;
+int NO_NFS = 1;
 
 #ifdef UCLINUX
 static char *argv0;		/* Set by main(), passed to self_exec() */
@@ -615,14 +617,14 @@ void wake_parent(void)
 	}
 }
 
-void do_usleep_child()
+void do_usleep_child(void)
 {
 	usleep(100000);		/* XXX how long is long enough? */
 	wake_parent();
 	exit(0);
 }
 
-void dochild()
+void dochild(void)
 {				/* child process */
 	int rc;
 	pid_t pid;
@@ -937,7 +939,7 @@ void run_test(int file_flag, int file_mode, int seek, int start, int end)
 	unlink(tmpname);
 }
 
-void catch_alarm()
+void catch_alarm(int sig)
 {
 	/*
 	 * Timer has runout and child has not signaled, need
@@ -952,7 +954,7 @@ void catch_alarm()
 	}
 }
 
-void catch1()
+void catch1(int sig)
 {				/* invoked on catching SIGUSR1 */
 	struct sigaction act;
 
@@ -968,10 +970,19 @@ void catch1()
 	got1++;
 }
 
+static void testcheck_end(int check_fail, char *msg)
+{
+	if (check_fail) {
+		tst_resm(TFAIL, "%s FAILED", msg);
+	} else {
+		tst_resm(TPASS, "%s PASSED", msg);
+	}
+}
+
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -990,18 +1001,14 @@ int main(int ac, char **av)
 
 	setup();		/* global setup */
 
-	/*
-	 * check if the current filesystem is nfs
-	 */
-	if (tst_is_cwd_nfs()) {
-		tst_brkm(TCONF, cleanup,
-			 "Cannot do fcntl on a file located on an NFS filesystem");
-	}
+	/* Check if test on NFS or not*/
+	if (tst_fs_type(cleanup, ".") == TST_NFS_MAGIC)
+		NO_NFS = 0;
 
 	/* Check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 /* //block1: */
 		tst_resm(TINFO, "Enter block 1: without mandatory locking");
@@ -1011,47 +1018,38 @@ int main(int ac, char **av)
 		 * mandatory locking
 		 */
 		(void)run_test(O_CREAT | O_RDWR | O_TRUNC, 0777, 0, 0, 36);
-		if (fail) {
-			tst_resm(TFAIL, "Block 1, test 1 FAILED");
-		} else {
-			tst_resm(TPASS, "Block 1, test 1 PASSED");
-		}
+		testcheck_end(fail, "Block 1, test 1");
 
 		/* Now try with negative values for L_start and L_len */
 		(void)run_test(O_CREAT | O_RDWR | O_TRUNC, 0777, 5, 36, 45);
-
-		if (fail) {
-			tst_resm(TFAIL, "Block 1, test 2 FAILED");
-		} else {
-			tst_resm(TPASS, "Block 1, test 2 PASSED");
-		}
+		testcheck_end(fail, "Block 1, test 2");
 
 		tst_resm(TINFO, "Exit block 1");
 
 /* //block2: */
-		tst_resm(TINFO, "Enter block 2: with mandatory locking");
-		fail = 0;
 		/*
-		 * Try various locks on a file with mandatory record locking
-		 * this should behave the same as an ordinary file
+		 * Skip block2 if test on NFS, since NFS does not support
+		 * mandatory locking
 		 */
-		(void)run_test(O_CREAT | O_RDWR | O_TRUNC, S_ENFMT | S_IRUSR |
-			       S_IWUSR, 0, 0, 36);
-		if (fail) {
-			tst_resm(TFAIL, "Block 2, test 1 FAILED");
-		} else {
-			tst_resm(TPASS, "Block 2, test 1 PASSED");
-		}
+		tst_resm(TINFO, "Enter block 2: with mandatory locking");
+		if (NO_NFS) {
+			fail = 0;
+			/*
+			 * Try various locks on a file with mandatory
+			 * record locking this should behave the same
+			 * as an ordinary file
+			 */
+			(void)run_test(O_CREAT | O_RDWR | O_TRUNC,
+				S_ENFMT | S_IRUSR | S_IWUSR, 0, 0, 36);
+			testcheck_end(fail, "Block 2, test 1");
 
-		/* Now try negative values for L_start and L_len */
-		(void)run_test(O_CREAT | O_RDWR | O_TRUNC, S_ENFMT | S_IRUSR |
-			       S_IWUSR, 5, 36, 45);
-		if (fail) {
-			tst_resm(TFAIL, "Block 2, test 2 FAILED");
-		} else {
-			tst_resm(TPASS, "Block 2, test 2 PASSED");
-		}
-
+			/* Now try negative values for L_start and L_len */
+			(void)run_test(O_CREAT | O_RDWR | O_TRUNC,
+				S_ENFMT | S_IRUSR | S_IWUSR, 5, 36, 45);
+			testcheck_end(fail, "Block 2, test 2");
+		} else
+			tst_resm(TCONF, "Skip block 2 as NFS does not"
+				" support mandatory locking");
 		tst_resm(TINFO, "Exit block 2");
 
 /* //block3: */
@@ -1096,13 +1094,7 @@ int main(int ac, char **av)
 		close(fd);
 		unlink(tmpname);
 
-		if (fail) {
-			tst_resm(TINFO, "Test with mandatory "
-				 "locking FAILED");
-		} else {
-			tst_resm(TINFO, "Test with mandatory "
-				 "locking PASSED");
-		}
+		testcheck_end(fail, "Test with negative whence locking");
 		tst_resm(TINFO, "Exit block 3");
 
 /* //block4: */
@@ -1225,11 +1217,7 @@ int main(int ac, char **av)
 		close(fd);
 		unlink(tmpname);
 
-		if (fail) {
-			tst_resm(TINFO, "Test of locks on file FAILED");
-		} else {
-			tst_resm(TINFO, "Test of locks on file PASSED");
-		}
+		testcheck_end(fail, "Test of locks on file");
 		tst_resm(TINFO, "Exit block 4");
 	}
 	cleanup();

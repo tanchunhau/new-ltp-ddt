@@ -88,13 +88,11 @@
 /*   version, then you may want to try switching to it. -Robbie W.        */
 /**************************************************************************/
 
-#define INVALID_PID 999999
-
 static void setup();
 static void cleanup();
 static void test_setup(int);
 
-char *TCID = "capget02";	/* Test program identifier.    */
+char *TCID = "capget02";
 static int exp_enos[] = { EFAULT, EINVAL, ESRCH, 0 };
 
 static struct __user_cap_header_struct header;
@@ -124,7 +122,7 @@ int main(int ac, char **av)
 {
 
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -133,11 +131,11 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 			test_setup(i);
-			TEST(syscall(__NR_capget, test_cases[i].headerp,
+			TEST(ltp_syscall(__NR_capget, test_cases[i].headerp,
 				     test_cases[i].datap));
 
 			if (TEST_RETURN == -1 &&
@@ -159,7 +157,7 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -174,7 +172,7 @@ void setup()
  *cleanup() -  performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 
@@ -203,7 +201,7 @@ void test_setup(int i)
 		break;
 	case 4:
 		header.version = _LINUX_CAPABILITY_VERSION;
-		header.pid = INVALID_PID;
+		header.pid = tst_get_unused_pid(cleanup);
 		break;
 	}
 }

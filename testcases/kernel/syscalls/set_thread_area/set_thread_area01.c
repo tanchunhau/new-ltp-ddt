@@ -78,7 +78,7 @@ static const char *get_name(int syscall)
 int main(int argc, char *argv[])
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		for (i = 0; i < sizeof(tests) / sizeof(struct test); i++) {
-			TEST(syscall(tests[i].syscall, tests[i].u_info));
+			TEST(ltp_syscall(tests[i].syscall, tests[i].u_info));
 
 			if (TEST_RETURN != tests[i].exp_ret) {
 				tst_resm(TFAIL, "%s returned %li expected %i",
@@ -120,6 +120,5 @@ int main(void)
 {
 	tst_brkm(TCONF, NULL,
 		 "set_thread_area isn't available for this architecture");
-	tst_exit();
 }
 #endif

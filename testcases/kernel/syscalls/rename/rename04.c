@@ -70,8 +70,8 @@ void setup();
 void cleanup();
 extern void do_file_setup(char *);
 
-char *TCID = "rename04";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "rename04";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { ENOTEMPTY, EEXIST, 0 };	/* List must end with 0 */
 
@@ -85,7 +85,7 @@ ino_t oldino, oldino1;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	/*
 	 * parse standard options
@@ -106,7 +106,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* rename a directory to a non-empty directory */
 
@@ -143,7 +143,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -195,7 +195,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *              completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

@@ -35,12 +35,12 @@
  *
  */
 
-#include <sys/types.h>		/* needed for test              */
-#include <sys/ipc.h>		/* needed for test              */
-#include <sys/msg.h>		/* needed for test              */
-#include <signal.h>		/* needed for test              */
-#include <wait.h>		/* needed for test              */
-#include <stdio.h>		/* needed by testhead.h         */
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <signal.h>
+#include <wait.h>
+#include <stdio.h>
 #include "test.h"
 #include "usctest.h"
 #include "ipcmsg.h"
@@ -59,12 +59,8 @@ void cleanup();
 void do_child_1();
 void do_child_2();
 
-/*
- *  *  *  * These globals must be defined in the test.
- *   *   *   */
-
-char *TCID = "msgctl07";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "msgctl07";
+int TST_TOTAL = 1;
 
 /* Used by main() and do_child_1(): */
 static int msqid;
@@ -72,8 +68,6 @@ struct my_msgbuf {
 	long type;
 	char text[BYTES];
 } p1_msgp, p2_msgp, p3_msgp, c1_msgp, c2_msgp, c3_msgp;
-
-/*--------------------------------------------------------------*/
 
 int main(int argc, char *argv[])
 {
@@ -83,11 +77,10 @@ int main(int argc, char *argv[])
 	sighandler_t alrm();
 
 #ifdef UCLINUX
-	char *msg;
+	const char *msg;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
+	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
 
 	maybe_run_child(&do_child_1, "ndd", 1, &msqid, &c1_msgp.type);
 	maybe_run_child(&do_child_2, "ndddd", 2, &msqid, &c1_msgp.type,
@@ -98,21 +91,19 @@ int main(int argc, char *argv[])
 
 	key = getipckey();
 	if ((msqid = msgget(key, IPC_CREAT | IPC_EXCL)) == -1) {
-		tst_resm(TFAIL | TERRNO, "msgget() failed");
-		tst_exit();
+		tst_brkm(TFAIL | TERRNO, NULL, "msgget() failed");
 
 	}
 
 	pid = FORK_OR_VFORK();
 	if (pid < 0) {
 		(void)msgctl(msqid, IPC_RMID, NULL);
-		tst_resm(TFAIL, "\tFork failed (may be OK if under stress)");
-		tst_exit();
+		tst_brkm(TFAIL, NULL,
+			 "\tFork failed (may be OK if under stress)");
 	} else if (pid == 0) {
 #ifdef UCLINUX
 		if (self_exec(argv[0], "ndd", 1, msqid, c1_msgp.type) < 0) {
-			tst_resm(TFAIL, "\tself_exec failed");
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "\tself_exec failed");
 		}
 #else
 		do_child_1();
@@ -146,21 +137,20 @@ int main(int argc, char *argv[])
 		wait(&status);
 	}
 	if ((status >> 8) == 1) {
-		tst_resm(TFAIL, "test failed. status = %d", (status >> 8));
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "test failed. status = %d",
+			 (status >> 8));
 	}
 
 	pid = FORK_OR_VFORK();
 	if (pid < 0) {
 		(void)msgctl(msqid, IPC_RMID, NULL);
-		tst_resm(TFAIL, "\tFork failed (may be OK if under stress)");
-		tst_exit();
+		tst_brkm(TFAIL, NULL,
+			 "\tFork failed (may be OK if under stress)");
 	} else if (pid == 0) {
 #ifdef UCLINUX
 		if (self_exec(argv[0], "ndddd", 1, msqid, c1_msgp.type,
 			      c2_msgp.type, c3_msgp.type) < 0) {
-			tst_resm(TFAIL, "\tself_exec failed");
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "\tself_exec failed");
 		}
 #else
 		do_child_2();
@@ -212,8 +202,8 @@ int main(int argc, char *argv[])
 		wait(&status);
 	}
 	if ((status >> 8) == 1) {
-		tst_resm(TFAIL, "test failed. status = %d", (status >> 8));
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "test failed. status = %d",
+			 (status >> 8));
 	}
 	/*
 	 * Remove the message queue from the system
@@ -225,8 +215,7 @@ int main(int argc, char *argv[])
 	(void)msgctl(msqid, IPC_RMID, NULL);
 	if ((status = msgctl(msqid, IPC_STAT, NULL)) != -1) {
 		(void)msgctl(msqid, IPC_RMID, NULL);
-		tst_resm(TFAIL, "msgctl(msqid, IPC_RMID) failed");
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "msgctl(msqid, IPC_RMID) failed");
 
 	}
 
@@ -235,10 +224,8 @@ int main(int argc, char *argv[])
 
 	cleanup();
 
-	return (0);
+	tst_exit();
 }
-
-/*--------------------------------------------------------------*/
 
 sighandler_t alrm(int sig)
 {
@@ -246,118 +233,83 @@ sighandler_t alrm(int sig)
 	return 0;
 }
 
-/*--------------------------------------------------------------*/
-
-void do_child_1()
+void do_child_1(void)
 {
 	int i;
 	int size;
 
 	if ((size = msgrcv(msqid, &c1_msgp, BYTES, 0, 0)) == -1) {
-		tst_resm(TFAIL | TERRNO, "msgrcv() failed");
-		tst_exit();
+		tst_brkm(TFAIL | TERRNO, NULL, "msgrcv() failed");
 	}
 	if (size != BYTES) {
-		tst_resm(TFAIL, "error: received %d bytes expected %d", size,
+		tst_brkm(TFAIL, NULL, "error: received %d bytes expected %d",
+			 size,
 			 BYTES);
-		tst_exit();
 	}
 	for (i = 0; i < BYTES; i++)
 		if (c1_msgp.text[i] != 'i') {
-			tst_resm(TFAIL, "error: corrup message");
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "error: corrup message");
 		}
 	exit(0);
 }
 
-void do_child_2()
+void do_child_2(void)
 {
 	int i, j, k;
 	int size;
 
 	if ((size = msgrcv(msqid, &c3_msgp, BYTES, 3, 0)) == -1) {
-		tst_resm(TFAIL | TERRNO, "msgrcv() failed");
-		tst_exit();
+		tst_brkm(TFAIL | TERRNO, NULL, "msgrcv() failed");
 	}
 	if (size != BYTES) {
-		tst_resm(TFAIL, "error: received %d bytes expected %d", size,
+		tst_brkm(TFAIL, NULL, "error: received %d bytes expected %d",
+			 size,
 			 BYTES);
-		tst_exit();
 	}
 	for (k = 0; k < BYTES; k++)
 		if (c3_msgp.text[k] != 'k') {
-			tst_resm(TFAIL, "error: corrupt message");
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "error: corrupt message");
 		}
 	if ((size = msgrcv(msqid, &c2_msgp, BYTES, 2, 0)) == -1) {
-		tst_resm(TFAIL | TERRNO, "msgrcv() failed");
-		tst_exit();
+		tst_brkm(TFAIL | TERRNO, NULL, "msgrcv() failed");
 	}
 	if (size != BYTES) {
-		tst_resm(TFAIL, "error: received %d bytes expected %d", size,
+		tst_brkm(TFAIL, NULL, "error: received %d bytes expected %d",
+			 size,
 			 BYTES);
-		tst_exit();
 	}
 	for (j = 0; j < BYTES; j++)
 		if (c2_msgp.text[j] != 'j') {
-			tst_resm(TFAIL, "error: corrupt message");
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "error: corrupt message");
 		}
 	if ((size = msgrcv(msqid, &c1_msgp, BYTES, 1, 0)) == -1) {
-		tst_resm(TFAIL | TERRNO, "msgrcv() failed");
-		tst_exit();
+		tst_brkm(TFAIL | TERRNO, NULL, "msgrcv() failed");
 	}
 	if (size != BYTES) {
-		tst_resm(TFAIL, "error: received %d bytes expected %d", size,
+		tst_brkm(TFAIL, NULL, "error: received %d bytes expected %d",
+			 size,
 			 BYTES);
-		tst_exit();
 	}
 	for (i = 0; i < BYTES; i++)
 		if (c1_msgp.text[i] != 'i') {
-			tst_resm(TFAIL, "error: corrupt message");
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "error: corrupt message");
 		}
 
 	exit(0);
 }
 
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- ****************************************************************/
-void setup()
+void setup(void)
 {
-	/* You will want to enable some signal handling so you can capture
-	 * unexpected signals like SIGSEGV.
-	 */
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	/* One cavet that hasn't been fixed yet.  TEST_PAUSE contains the code to
-	 * fork the test with the -c option.  You want to make sure you do this
-	 * before you create your temporary directory.
-	 */
 	TEST_PAUSE;
 
-	/*
-	 * Create a temporary directory and cd into it.
-	 * This helps to ensure that a unique msgkey is created.
-	 * See ../lib/libipc.c for more information.
-	 */
 	tst_tmpdir();
 }
 
-/***************************************************************
- *  * cleanup() - performs all ONE TIME cleanup for this test at
- *   *              completion or premature exit.
- *    ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-
 	tst_rmdir();
 
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
 	TEST_CLEANUP;
-
 }

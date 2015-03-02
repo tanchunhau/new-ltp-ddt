@@ -85,8 +85,8 @@
 #define K1              2048
 #define NBUFS           1
 
-char *TCID = "pread03";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "pread03";
+int TST_TOTAL = 1;
 
 char *read_buf[NBUFS];		/* buffer to hold data read from file */
 char test_dir[100];
@@ -100,12 +100,11 @@ void init_buffers();		/* function to initialize/allocate buffers */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	size_t nbytes;		/* no. of bytes to be written */
 	off_t offset;		/* offset position in the specified file */
 	char *test_desc;	/* test specific error message */
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -115,8 +114,8 @@ int main(int ac, char **av)
 
 	/* Check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		test_desc = "EISDIR";
 		nbytes = K1;
@@ -156,7 +155,7 @@ int main(int ac, char **av)
  * setup() - performs all ONE TIME setup for this test.
  *           create temporary directory and open it
  */
-void setup()
+void setup(void)
 {
 	char *cur_dir = NULL;
 
@@ -198,13 +197,13 @@ void setup()
  *
  *  Allocate read buffer.
  */
-void init_buffers()
+void init_buffers(void)
 {
 	int count;		/* counter variable for loop */
 
 	/* Allocate and Initialize read buffer */
 	for (count = 0; count < NBUFS; count++) {
-		read_buf[count] = (char *)malloc(K1);
+		read_buf[count] = malloc(K1);
 
 		if (read_buf[count] == NULL) {
 			tst_brkm(TBROK, NULL,
@@ -219,7 +218,7 @@ void init_buffers()
  *
  *  Close/Remove the temporary directory created.
  */
-void cleanup()
+void cleanup(void)
 {
 	int count;		/* index for the loop */
 

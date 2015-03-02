@@ -86,9 +86,9 @@ tst_setup()
 #=============================================================================
 end_testcase()
 {
-    tst_cleanup
     if [ $# -eq 0 ]; then
         tst_resm TPASS "Test successful"
+        exit 0
     else
         tst_resm TFAIL "Test broken: $*"
         exit 1
@@ -114,9 +114,12 @@ incr_tst_count()
     : $(( TST_COUNT += 1 ))
 }
 
-is_root()
+tst_require_root()
 {
-    [ "x$(id -ru)" = x0 ]
+	if [ "x$(id -u)" != "x0" ]; then
+		tst_resm TCONF "You must be root to execute this test"
+		exit 0
+	fi
 }
 
 #
@@ -151,45 +154,4 @@ TCID=${TCID:=}
 [ -z "$TCID" ] && TCID=${0##*/}
 TC=$(echo "$TCID" | awk '{ sub( /[0-9]+$/,""); print; }')
 
-# running under systemd?
-if command -v systemctl >/dev/null 2>&1; then
-	HAVE_SYSTEMCTL=1
-else
-	HAVE_SYSTEMCTL=0
-fi
-
-start_daemon()
-{
-	if [ $HAVE_SYSTEMCTL -eq 1 ]; then
-		systemctl start $1.service > /dev/null 2>&1
-	else
-		service $1 start > /dev/null 2>&1
-	fi
-}
-
-stop_daemon()
-{
-	if [ $HAVE_SYSTEMCTL -eq 1 ]; then
-		systemctl stop $1.service > /dev/null 2>&1
-	else
-		service $1 stop > /dev/null 2>&1
-	fi
-}
-
-status_daemon()
-{
-	if [ $HAVE_SYSTEMCTL -eq 1 ]; then
-		systemctl status $1.service > /dev/null 2>&1
-	else
-		service $1 status > /dev/null 2>&1
-	fi
-}
-
-restart_daemon()
-{
-	if [ $HAVE_SYSTEMCTL -eq 1 ]; then
-		systemctl start $1.service > /dev/null 2>&1
-	else
-		service $1 start > /dev/null 2>&1
-	fi
-}
+. daemonlib.sh

@@ -40,20 +40,6 @@
  *
  */
 
-/* The #ifndef code below is for 2.5 64-bit kernels, where     */
-/* the MSG_CMSG_COMPAT flag must be 0 in order for the syscall */
-/* and this test to function correctly.                        */
-#ifndef MSG_CMSG_COMPAT
-
-#if defined (__powerpc64__) || defined (__mips64) || defined (__x86_64__) || defined (__sparc64__)
-#define MSG_CMSG_COMPAT 0x80000000
-#else
-#define MSG_CMSG_COMPAT 0
-#endif
-
-#endif
-/***************************************************/
-
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -71,8 +57,9 @@
 
 #include "test.h"
 #include "usctest.h"
+#include "msg_common.h"
 
-char *TCID = "recvmsg01";	/* Test program identifier.    */
+char *TCID = "recvmsg01";
 int testno;
 
 char buf[1024], cbuf[1024];
@@ -170,24 +157,31 @@ struct test_case_t {		/* test case structure */
 /* 9 */
 	{
 	PF_INET, SOCK_STREAM, 0, iov, 1, (void *)buf, sizeof(buf),
-		    &msgdat, ~MSG_CMSG_COMPAT, (struct sockaddr *)&from,
+		    &msgdat, MSG_OOB, (struct sockaddr *)&from,
 		    sizeof(from), -1, EINVAL, setup1, cleanup1,
-		    "invalid flags set"}
+		    "invalid MSG_OOB flag set"}
 	,
 /* 10 */
+	{
+	PF_INET, SOCK_STREAM, 0, iov, 1, (void *)buf, sizeof(buf),
+		    &msgdat, MSG_ERRQUEUE, (struct sockaddr *)&from,
+		    sizeof(from), -1, EAGAIN, setup1, cleanup1,
+		    "invalid MSG_ERRQUEUE flag set"}
+	,
+/* 11 */
 	{
 	PF_UNIX, SOCK_STREAM, 0, iov, 1, (void *)buf, sizeof(buf),
 		    &msgdat, 0, (struct sockaddr *)&from, sizeof(from),
 		    0, EINVAL, setup3, cleanup2, "invalid cmsg length"}
 	,
-/* 11 */
+/* 12 */
 	{
 	PF_UNIX, SOCK_STREAM, 0, iov, 1, (void *)buf, sizeof(buf),
 		    &msgdat, 0, (struct sockaddr *)&from, sizeof(from),
 		    0, 0, setup4, cleanup2, "large cmesg length"}
 ,};
 
-int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);	/* Total number of test cases. */
+int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);
 
 int exp_enos[] = { EBADF, ENOTSOCK, EFAULT, EINVAL, 0 };
 
@@ -198,9 +192,8 @@ static char *argv0;
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 #ifdef UCLINUX
@@ -213,12 +206,19 @@ int main(int argc, char *argv[])
 	TEST_EXP_ENOS(exp_enos);
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
+			if ((tst_kvercmp(3, 17, 0) < 0)
+			    && (tdat[testno].flags & MSG_ERRQUEUE)
+			    && (tdat[testno].type & SOCK_STREAM)) {
+				tst_resm(TCONF, "skip MSG_ERRQUEUE test, "
+						"it's supported from 3.17");
+				continue;
+			}
+
 			tdat[testno].setup();
 
 			/* setup common to all tests */
-
 			iov[0].iov_base = tdat[testno].buf;
 			iov[0].iov_len = tdat[testno].buflen;
 			msgdat.msg_name = tdat[testno].from;
@@ -259,12 +259,8 @@ char tmpsunpath[1024];
 void setup(void)
 {
 	int tfd;
-	TEST_PAUSE;		/* if -P option specified */
+	TEST_PAUSE;
 
-	/* initialize sockaddr's */
-	sin1.sin_family = AF_INET;
-	sin1.sin_port = htons((getpid() % 32768) + 11000);
-	sin1.sin_addr.s_addr = INADDR_ANY;
 	tst_tmpdir();
 	(void)strcpy(tmpsunpath, "udsockXXXXXX");
 	tfd = mkstemp(tmpsunpath);
@@ -381,6 +377,11 @@ void cleanup2(void)
 pid_t start_server(struct sockaddr_in *ssin, struct sockaddr_un *ssun)
 {
 	pid_t pid;
+	socklen_t slen = sizeof(*ssin);
+
+	ssin->sin_family = AF_INET;
+	ssin->sin_port = 0; /* pick random free port */
+	ssin->sin_addr.s_addr = INADDR_ANY;
 
 	/* set up inet socket */
 	sfd = socket(PF_INET, SOCK_STREAM, 0);
@@ -396,6 +397,9 @@ pid_t start_server(struct sockaddr_in *ssin, struct sockaddr_un *ssun)
 		tst_brkm(TBROK | TERRNO, cleanup, "server listen failed");
 		return -1;
 	}
+	if (getsockname(sfd, (struct sockaddr *)ssin, &slen) == -1)
+		tst_brkm(TBROK | TERRNO, cleanup, "getsockname failed");
+
 	/* set up UNIX-domain socket */
 	ufd = socket(PF_UNIX, SOCK_STREAM, 0);
 	if (ufd < 0) {
@@ -432,7 +436,7 @@ pid_t start_server(struct sockaddr_in *ssin, struct sockaddr_un *ssun)
 	exit(1);
 }
 
-void do_child()
+void do_child(void)
 {
 	struct sockaddr_in fsin;
 	struct sockaddr_un fsun;
@@ -443,7 +447,7 @@ void do_child()
 	FD_SET(sfd, &afds);
 	FD_SET(ufd, &afds);
 
-	nfds = getdtablesize();
+	nfds = MAX(sfd + 1, ufd + 1);
 
 	/* accept connections until killed */
 	while (1) {
@@ -451,8 +455,8 @@ void do_child()
 
 		memcpy(&rfds, &afds, sizeof(rfds));
 
-		if (select(nfds, &rfds, (fd_set *) 0, (fd_set *) 0,
-			   (struct timeval *)0) < 0) {
+		if (select(nfds, &rfds, NULL, NULL,
+			   NULL) < 0) {
 			if (errno != EINTR) {
 				perror("server select");
 				exit(1);
@@ -466,6 +470,7 @@ void do_child()
 			newfd = accept(sfd, (struct sockaddr *)&fsin, &fromlen);
 			if (newfd >= 0) {
 				FD_SET(newfd, &afds);
+				nfds = MAX(nfds, newfd + 1);
 				/* send something back */
 				(void)write(newfd, "hoser\n", 6);
 			}
@@ -475,8 +480,10 @@ void do_child()
 
 			fromlen = sizeof(fsun);
 			newfd = accept(ufd, (struct sockaddr *)&fsun, &fromlen);
-			if (newfd >= 0)
+			if (newfd >= 0) {
 				FD_SET(newfd, &afds);
+				nfds = MAX(nfds, newfd + 1);
+			}
 		}
 		for (fd = 0; fd < nfds; ++fd)
 			if (fd != sfd && fd != ufd && FD_ISSET(fd, &rfds)) {

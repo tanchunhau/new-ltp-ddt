@@ -97,7 +97,7 @@ option_t options[] = {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t pid, pid1;
 	int retval = 3, status;
 	char *argv[1], *env[1];
@@ -118,7 +118,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		if (sync_pipe_create(start_sync_pipes, PIPE_NAME_START) == -1)
 			tst_brkm(TBROK, cleanup, "sync_pipe_create failed");
@@ -190,7 +190,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void help()
+void help(void)
 {
 	printf("  -F <test name> : for example, 'execve04 -F test3'\n");
 }
@@ -212,8 +212,7 @@ void setup(char *argv0)
 		free(pwd);
 	}
 
-	cmd = malloc(strlen(test_path) + strlen("cp -p \"") + strlen("\" .") +
-		     1);
+	cmd = malloc(strlen(test_path) + strlen("cp -p \"") + strlen("\" .") + 1);
 	if (cmd == NULL)
 		tst_brkm(TBROK | TERRNO, NULL, "Cannot alloc command string");
 
@@ -227,7 +226,7 @@ void setup(char *argv0)
 	free(cmd);
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 
@@ -235,7 +234,7 @@ void cleanup()
 
 }
 
-void do_child_1()
+void do_child_1(void)
 {
 	int fildes;
 

@@ -53,7 +53,7 @@
 void setup();
 void cleanup();
 
-TCID_DEFINE(posix_fadvise04);	/* Test program identifier.    */
+TCID_DEFINE(posix_fadvise04);
 
 #define GIVEN_IN_SETUP 42	/* No mean. Just used as padding.
 				   This is overwritten by setup(). */
@@ -78,7 +78,7 @@ int TST_TOTAL = sizeof(TC) / sizeof(TC[0]);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int i;
 
 	/* Check this system has fadvise64 system which is used
@@ -113,7 +113,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -152,7 +152,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	int pipedes[2];
 
@@ -183,7 +183,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

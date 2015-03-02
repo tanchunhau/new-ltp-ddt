@@ -111,7 +111,7 @@ int set_handler(int sig, int sig_to_mask, int flag)
 
 int main(int ac, char **av)
 {
-	char *msg;		/* message got from parse_opts */
+	const char *msg;		/* message got from parse_opts */
 
 	int ret;
 
@@ -197,8 +197,6 @@ int main(int ac, char **av)
 		tst_resm(TPASS, "call failed with expected EFAULT error");
 	}
 #endif /* GLIBC_SIGACTION_BUG */
-
-	tst_exit();
 
 	tst_exit();
 

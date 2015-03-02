@@ -81,7 +81,7 @@ static void setup();
 static void cleanup();
 static int exp_enos[] = { EINVAL, EFAULT, 0 };
 
-char *TCID = "getrusage02";	/* Test program identifier.    */
+char *TCID = "getrusage02";
 
 static struct rusage usage;
 
@@ -98,13 +98,13 @@ struct test_cases_t {
 #endif
 };
 
-int TST_TOTAL = sizeof(test_cases) / sizeof(*test_cases);
+int TST_TOTAL = ARRAY_SIZE(test_cases);
 
 int main(int ac, char **av)
 {
 
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -113,7 +113,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			TEST(getrusage(test_cases[i].who, test_cases[i].usage));
@@ -134,7 +134,7 @@ int main(int ac, char **av)
 
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -145,7 +145,7 @@ void setup()
 
 }
 
-void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;

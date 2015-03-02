@@ -82,7 +82,8 @@
  *
 *************************************************************************/
 
-/* Standard Include Files */
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <endian.h>
@@ -94,10 +95,9 @@
 #include <inttypes.h>
 #include <sys/utsname.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "fallocate.h"
 
 #define BLOCKS_WRITTEN 12
 #define HOLE_SIZE_IN_BLOCKS 12
@@ -105,16 +105,11 @@
 #define FALLOC_FL_KEEP_SIZE 1	//Need to be removed once the glibce support is provided
 #define TRUE 0
 
-/*Local Functions*/
-static inline long fallocate();
 void get_blocksize(int);
 void populate_file();
 void file_seek(off_t);
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "fallocate03";	/* test program identifier */
+char *TCID = "fallocate03";
 char fname[255];
 int fd;
 struct test_data_t {
@@ -137,7 +132,7 @@ struct test_data_t {
 		    1, TRUE}
 };
 
-int TST_TOTAL = sizeof(test_data) / sizeof(test_data[0]);	/* total number of tests in this file.   */
+int TST_TOTAL = sizeof(test_data) / sizeof(test_data[0]);
 int block_size;
 int buf_size;
 
@@ -147,7 +142,7 @@ int buf_size;
  * files, removes all temporary directories exits the test with
  * appropriate return code by calling tst_exit() function.
 ******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 	/* Close all open file descriptors. */
 	if (close(fd) == -1)
@@ -163,7 +158,7 @@ extern void cleanup()
  * that may be used in the course of this test
  ******************************************************************************/
 
-void setup()
+void setup(void)
 {
 	/* Create temporary directories */
 	TEST_PAUSE;
@@ -208,7 +203,7 @@ void file_seek(off_t offset)
 /*****************************************************************************
  * Writes data into the file
  ******************************************************************************/
-void populate_file()
+void populate_file(void)
 {
 	char buf[buf_size + 1];
 	int index;
@@ -225,22 +220,6 @@ void populate_file()
 }
 
 /*****************************************************************************
- * Wraper function to call fallocate system call
- ******************************************************************************/
-static inline long fallocate(int fd, int mode, loff_t offset, loff_t len)
-{
-#if __WORDSIZE == 32
-	return (long)syscall(__NR_fallocate, fd, mode,
-			     __LONG_LONG_PAIR((off_t) (offset >> 32),
-					      (off_t) offset),
-			     __LONG_LONG_PAIR((off_t) (len >> 32),
-					      (off_t) len));
-#else
-	return syscall(__NR_fallocate, fd, mode, offset, len);
-#endif
-}
-
-/*****************************************************************************
  * Main function that calls the system call with the  appropriate parameters
  ******************************************************************************/
 /* ac: number of command line parameters */
@@ -249,7 +228,7 @@ int main(int ac, char **av)
 {
 	int test_index = 0;
 	int lc;
-	char *msg;
+	const char *msg;
 
 	/***************************************************************
 	 * parse standard options
@@ -261,8 +240,8 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 		for (test_index = 0; test_index < TST_TOTAL; test_index++) {
 			TEST(fallocate
 			     (fd, test_data[test_index].mode,
@@ -286,21 +265,19 @@ int main(int ac, char **av)
 					 test_data[test_index].len *
 					 block_size);
 			} else {
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "fallocate(%s, %d, %" PRId64
-						 ", %" PRId64 ") returned %ld",
-						 fname,
-						 test_data[test_index].mode,
-						 test_data[test_index].offset *
-						 block_size,
-						 test_data[test_index].len *
-						 block_size, TEST_RETURN);
-				}
+				tst_resm(TPASS,
+					 "fallocate(%s, %d, %" PRId64
+					 ", %" PRId64 ") returned %ld",
+					 fname,
+					 test_data[test_index].mode,
+					 test_data[test_index].offset *
+					 block_size,
+					 test_data[test_index].len *
+					 block_size, TEST_RETURN);
 			}
 		}
 	}
+
 	cleanup();
 	tst_exit();
 }

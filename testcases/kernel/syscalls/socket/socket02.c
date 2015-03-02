@@ -62,27 +62,20 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
+#include "lapi/fcntl.h"
 
 #define PORT 57392
-
-#ifndef O_CLOEXEC
-#define O_CLOEXEC 02000000
-#endif
 
 /* For Linux these must be the same.  */
 #ifndef SOCK_CLOEXEC
 #define SOCK_CLOEXEC O_CLOEXEC
 #endif
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "socket02";	/* test program identifier.              */
+char *TCID = "socket02";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -102,7 +95,7 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -128,7 +121,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -140,79 +133,67 @@ int main(int argc, char *argv[])
 {
 	int fd, fds[2], i, coe;
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 	if ((tst_kvercmp(2, 6, 27)) < 0) {
-		tst_resm(TCONF,
+		tst_brkm(TCONF,
+			 NULL,
 			 "This test can only run on kernels that are 2.6.27 and higher");
-		tst_exit();
 	}
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 			fd = socket(PF_INET, SOCK_STREAM, 0);
 			if (fd == -1) {
 				tst_brkm(TBROK, cleanup, "socket(0) failed");
-				tst_exit();
 			}
 			coe = fcntl(fd, F_GETFD);
 			if (coe == -1) {
 				tst_brkm(TBROK, cleanup, "fcntl failed");
-				tst_exit();
 			}
 			if (coe & FD_CLOEXEC) {
-				tst_resm(TFAIL,
+				tst_brkm(TFAIL,
+					 cleanup,
 					 "socket(0) set close-on-exec flag");
-				cleanup();
-				tst_exit();
 			}
 			close(fd);
 
 			fd = socket(PF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
 			if (fd == -1) {
-				tst_resm(TFAIL, "socket(SOCK_CLOEXEC) failed");
-				cleanup();
-				tst_exit();
+				tst_brkm(TFAIL, cleanup,
+					 "socket(SOCK_CLOEXEC) failed");
 			}
 			coe = fcntl(fd, F_GETFD);
 			if (coe == -1) {
 				tst_brkm(TBROK, cleanup, "fcntl failed");
-				tst_exit();
 			}
 			if ((coe & FD_CLOEXEC) == 0) {
-				tst_resm(TFAIL,
+				tst_brkm(TFAIL,
+					 cleanup,
 					 "socket(SOCK_CLOEXEC) does not set close-on-exec flag");
-				cleanup();
-				tst_exit();
 			}
 			close(fd);
 
 			if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) == -1) {
 				tst_brkm(TBROK, cleanup,
 					 "socketpair(0) failed");
-				tst_exit();
 			}
 			for (i = 0; i < 2; ++i) {
 				coe = fcntl(fds[i], F_GETFD);
 				if (coe == -1) {
 					tst_brkm(TBROK, cleanup,
 						 "fcntl failed");
-					tst_exit();
 				}
 				if (coe & FD_CLOEXEC) {
-					tst_resm(TFAIL,
-						 "socketpair(0) set close-on-exec flag for fds[%d]\n",
+					tst_brkm(TFAIL,
+						 cleanup, "socketpair(0) set close-on-exec flag for fds[%d]\n",
 						 i);
-					cleanup();
-					tst_exit();
 				}
 				close(fds[i]);
 			}
@@ -222,21 +203,17 @@ int main(int argc, char *argv[])
 			     fds) == -1) {
 				tst_brkm(TBROK, cleanup,
 					 "socketpair(SOCK_CLOEXEC) failed");
-				tst_exit();
 			}
 			for (i = 0; i < 2; ++i) {
 				coe = fcntl(fds[i], F_GETFD);
 				if (coe == -1) {
 					tst_brkm(TBROK, cleanup,
 						 "fcntl failed");
-					tst_exit();
 				}
 				if ((coe & FD_CLOEXEC) == 0) {
-					tst_resm(TFAIL,
-						 "socketpair(SOCK_CLOEXEC) does not set close-on-exec flag for fds[%d]\n",
+					tst_brkm(TFAIL,
+						 cleanup, "socketpair(SOCK_CLOEXEC) does not set close-on-exec flag for fds[%d]\n",
 						 i);
-					cleanup();
-					tst_exit();
 				}
 				close(fds[i]);
 			}

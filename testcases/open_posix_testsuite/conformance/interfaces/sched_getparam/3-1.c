@@ -15,9 +15,8 @@
 #include <errno.h>
 #include "posixtest.h"
 
-int main(int argc, char **argv)
+int main(void)
 {
-
 	struct sched_param param;
 	int result = -1;
 
@@ -38,11 +37,8 @@ int main(int argc, char **argv)
 	if (result != 0) {
 		printf("returned code is not zero.\n");
 		return PTS_FAIL;
-	} else {
-		perror("Unresolved test error");
-		return PTS_UNRESOLVED;
 	}
 
-	printf("This code should not be executed.\n");
+	perror("Unresolved test error");
 	return PTS_UNRESOLVED;
 }

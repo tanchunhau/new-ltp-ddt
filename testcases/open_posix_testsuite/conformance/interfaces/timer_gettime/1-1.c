@@ -27,7 +27,7 @@
 #define TIMERSEC 5
 #define ACCEPTABLEDELTA 1
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct sigevent ev;
 	timer_t tid;
@@ -69,13 +69,10 @@ int main(int argc, char *argv[])
 	if (delta <= ACCEPTABLEDELTA) {
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		printf("FAIL:  timer_gettime() value !~= timer_settime()\n");
-		printf("%d !~= %d\n", (int)itsget.it_value.tv_sec,
-		       (int)itsset.it_value.tv_sec);
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed\n");
-	return PTS_UNRESOLVED;
+	printf("FAIL:  timer_gettime() value !~= timer_settime()\n");
+	printf("%d !~= %d\n", (int)itsget.it_value.tv_sec,
+	       (int)itsset.it_value.tv_sec);
+	return PTS_FAIL;
 }

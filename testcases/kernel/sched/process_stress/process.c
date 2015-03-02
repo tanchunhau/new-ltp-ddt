@@ -746,7 +746,7 @@ void setup_shm(void)
 
 	/* allocate shared memory */
 
-	if ((shmad = (Pinfo *) shmat(shmid, (char *)shmad, 0)) == MAP_FAILED) {
+	if ((shmad = shmat(shmid, (char *)shmad, 0)) == MAP_FAILED) {
 		printf("SEVERE : shmat failed\n");
 		exit(1);
 	} else {
@@ -1029,7 +1029,7 @@ int getenv_val(void)
 			c++;
 
 		if (*c == '\0') {
-			(envd->eval.vint) = (int *)malloc(sizeof(int));
+			(envd->eval.vint) = malloc(sizeof(int));
 			*(envd->eval.vint) = atoi(val.chptr);
 		} else {
 			envd->eval.chptr = malloc(strlen(val.chptr) + 1);
@@ -1132,6 +1132,7 @@ void messenger(void)
 				prtln();
 				if (discrim) {
 					prtln();
+					printf("Test exiting with SUCCESS\n");
 					exit(0);
 				}
 				exit(1);
@@ -1204,7 +1205,6 @@ void doit(void)
 
 			}
 		}
-		printf("Test exiting with SUCCESS\n");
 		exit(0);
 	}
 #ifdef __64LDT__

@@ -89,7 +89,7 @@ int testcase[] = {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL))
 	    != NULL) {
@@ -102,11 +102,11 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
-			TEST(syscall(__NR_timer_delete, INVALID_ID));
+			TEST(ltp_syscall(__NR_timer_delete, INVALID_ID));
 
 			/* check return code */
 			if (TEST_RETURN == -1 && TEST_ERRNO == testcase[i]) {

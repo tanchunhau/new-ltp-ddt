@@ -73,8 +73,8 @@
 static void setup();
 static void cleanup();
 
-char *TCID = "capget01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "capget01";
+int TST_TOTAL = 1;
 
 static struct __user_cap_header_struct header;	/* cap_user_header_t is a pointer
 						   to __user_cap_header_struct */
@@ -86,7 +86,7 @@ int main(int ac, char **av)
 {
 
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -98,9 +98,9 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
-		TEST(syscall(__NR_capget, &header, &data));
+		TEST(ltp_syscall(__NR_capget, &header, &data));
 
 		if (TEST_RETURN == 0) {
 			tst_resm(TPASS, "capget() returned %ld", TEST_RETURN);
@@ -116,7 +116,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -125,7 +125,7 @@ void setup()
 
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 }

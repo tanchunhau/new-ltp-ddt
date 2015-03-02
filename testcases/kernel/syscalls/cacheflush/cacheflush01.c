@@ -44,16 +44,13 @@
 #include <stdlib.h>
 #include <errno.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-#if defined __NR_cacheflush && __NR_cacheflush > 0
+#if __NR_cacheflush != __LTP__NR_INVALID_SYSCALL
 #include <asm/cachectl.h>
 #else
-/* Fake linux_syscall_numbers.h */
-#define __NR_cacheflush		0
 #ifndef   ICACHE
 #define   ICACHE   (1<<0)	/* flush instruction cache        */
 #endif
@@ -65,11 +62,8 @@
 #endif
 #endif
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "cacheflush01";	/* Test program identifier. */
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+char *TCID = "cacheflush01";
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -89,7 +83,7 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -114,7 +108,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -126,16 +120,15 @@ int main(int ac, char **av)
 {
 
 	char *addr = NULL;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
 	setup();
 
-	Tst_count = 0;
+	tst_count = 0;
 	/* Create some user address range */
 	addr = malloc(getpagesize());
 	if (addr == NULL) {
@@ -143,21 +136,21 @@ int main(int ac, char **av)
 	}
 
 	/* Invokes cacheflush() with proper parameters */
-	TEST(syscall(__NR_cacheflush, addr, getpagesize(), ICACHE));
+	TEST(ltp_syscall(__NR_cacheflush, addr, getpagesize(), ICACHE));
 	if (TEST_RETURN == 0) {
 		tst_resm(TPASS, "passed with no errno");
 	} else {
 		tst_resm(TFAIL, "failed with unexpected errno");
 	}
 
-	TEST(syscall(__NR_cacheflush, addr, getpagesize(), DCACHE));
+	TEST(ltp_syscall(__NR_cacheflush, addr, getpagesize(), DCACHE));
 	if (TEST_RETURN == 0) {
 		tst_resm(TPASS, "passed with no errno");
 	} else {
 		tst_resm(TFAIL, "failed with unexpected errno");
 	}
 
-	TEST(syscall(__NR_cacheflush, addr, getpagesize(), BCACHE));
+	TEST(ltp_syscall(__NR_cacheflush, addr, getpagesize(), BCACHE));
 	if (TEST_RETURN == 0) {
 		tst_resm(TPASS, "passed with no errno");
 	} else {

@@ -25,6 +25,7 @@
 #include <time.h>
 #include <errno.h>
 #include <stdint.h>
+#include <unistd.h>
 #include "posixtest.h"
 
 #define TESTTIME 1037128358
@@ -36,7 +37,7 @@ static int invalid_tests[NUMINVALIDTESTS] = {
 	1073743192, -1, 17
 };
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec tpset;
 	int i;
@@ -65,11 +66,8 @@ int main(int argc, char *argv[])
 	if (failure) {
 		printf("At least one test FAILED -- see above\n");
 		return PTS_FAIL;
-	} else {
-		printf("All tests PASSED\n");
-		return PTS_PASS;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("All tests PASSED\n");
+	return PTS_PASS;
 }

@@ -59,8 +59,8 @@ void setup();
 void help();
 void cleanup();
 
-char *TCID = "sigpending02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "sigpending02";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { EFAULT, 0 };
 
@@ -70,7 +70,7 @@ int exp_enos[] = { EFAULT, 0 };
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	sigset_t *sigset;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
@@ -97,7 +97,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(sigpending(sigset));
 
@@ -132,7 +132,7 @@ int main(int ac, char **av)
 /***************************************************************
  * help
  ***************************************************************/
-void help()
+void help(void)
 {
 	printf("test\n");
 }
@@ -140,7 +140,7 @@ void help()
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 	TEST_PAUSE;
 }
@@ -149,7 +149,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

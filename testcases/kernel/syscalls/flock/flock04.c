@@ -83,15 +83,15 @@ void cleanup(void);
 
 int exp_enos[] = { EWOULDBLOCK, EAGAIN, 0 };
 
-char *TCID = "flock04";		/* Test program identifier */
-int TST_TOTAL = 2;		/* Total number of test cases */
+char *TCID = "flock04";
+int TST_TOTAL = 2;
 char filename[100];
 int fd, fd1, status;
 
 int main(int argc, char **argv)
 {
 	int lc, retval;
-	char *msg;
+	const char *msg;
 	pid_t pid;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(flock(fd, LOCK_SH));
 		if (TEST_RETURN == 0) {

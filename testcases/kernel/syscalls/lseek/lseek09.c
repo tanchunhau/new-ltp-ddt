@@ -84,8 +84,8 @@
 #define TEMP_FILE	"tmp_file"
 #define FILE_MODE	S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 
-char *TCID = "lseek09";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "lseek09";
+int TST_TOTAL = 1;
 int fildes;			/* file handle for temp file */
 size_t file_size;		/* total size of file after data write */
 
@@ -95,10 +95,9 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	char read_buf[BUFSIZ];	/* data read from temp. file */
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -106,7 +105,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Invoke lseek(2) to set the file
@@ -121,46 +120,38 @@ int main(int ac, char **av)
 			continue;
 		}
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Check if the return value from lseek(2) is equal
+		 * to the 3 positions from the beginning of the file.
+		 * ie, 2 positions from lseek() in the setup +
+		 * 1 position from above above.
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Check if the return value from lseek(2) is equal
-			 * to the 3 positions from the beginning of the file.
-			 * ie, 2 positions from lseek() in the setup +
-			 * 1 position from above above.
-			 */
-			if (TEST_RETURN != 3) {
-				tst_resm(TFAIL, "lseek() returned incorrect "
-					 "value %ld, expected 4", TEST_RETURN);
-				continue;
-			}
-			/*
-			 * Read the data byte from this location.
-			 */
-			memset(read_buf, 0, sizeof(read_buf));
-			if (read(fildes, &read_buf, (file_size - 3)) < 0) {
-				tst_brkm(TFAIL, cleanup,
-					 "read() failed on %s, error=%d",
-					 TEMP_FILE, errno);
-			} else {
-				/*
-				 * Check if read data contains
-				 * expected characters
-				 * From pos 4 ---> 'defg'.
-				 */
-				if (strcmp(read_buf, "defg")) {
-					tst_resm(TFAIL, "Incorrect data read "
-						 "from file %s", TEMP_FILE);
-				} else {
-					tst_resm(TPASS, "Functionality of "
-						 "lseek() on %s successful",
-						 TEMP_FILE);
-				}
-			}
+		if (TEST_RETURN != 3) {
+			tst_resm(TFAIL, "lseek() returned incorrect "
+				 "value %ld, expected 4", TEST_RETURN);
+			continue;
+		}
+		/*
+		 * Read the data byte from this location.
+		 */
+		memset(read_buf, 0, sizeof(read_buf));
+		if (read(fildes, &read_buf, (file_size - 3)) < 0) {
+			tst_brkm(TFAIL, cleanup,
+				 "read() failed on %s, error=%d",
+				 TEMP_FILE, errno);
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			/*
+			 * Check if read data contains
+			 * expected characters
+			 * From pos 4 ---> 'defg'.
+			 */
+			if (strcmp(read_buf, "defg")) {
+				tst_resm(TFAIL, "Incorrect data read "
+					 "from file %s", TEMP_FILE);
+			} else {
+				tst_resm(TPASS, "Functionality of "
+					 "lseek() on %s successful",
+					 TEMP_FILE);
+			}
 		}
 
 		/* reset file pointer in case we are looping */
@@ -172,7 +163,6 @@ int main(int ac, char **av)
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -182,7 +172,7 @@ int main(int ac, char **av)
  *	     data into it.
  *	     Get the size of the file using fstat().
  */
-void setup()
+void setup(void)
 {
 	struct stat stat_buf;	/* buffer to hold stat info. */
 	char write_buf[BUFSIZ];	/* buffer to hold data */
@@ -232,7 +222,7 @@ void setup()
  *             completion or premature exit.
  *	       Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

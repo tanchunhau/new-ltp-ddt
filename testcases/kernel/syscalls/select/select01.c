@@ -126,8 +126,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "select01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "select01";
+int TST_TOTAL = 1;
 
 int Fd = -1;
 fd_set Readfds;
@@ -138,7 +138,7 @@ fd_set Readfds;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	struct timeval timeout;
 	long test_time = 0;	/* in usecs */
 
@@ -160,7 +160,7 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Assigning the specified seconds within the timeval structure.
@@ -188,30 +188,20 @@ int main(int ac, char **av)
 				 lc, test_time, errno);
 		}
 
-	/***************************************************************
-	 * only perform functional verification if flag set (-f not given)
-	 ***************************************************************/
-		if (STD_FUNCTIONAL_TEST) {
-			/* Perform functional verification here */
-			tst_resm(TPASS,
-				 "select(4, &Readfds, 0, 0, &timeout) timeout = %ld usecs",
-				 test_time);
-		}
+		tst_resm(TPASS,
+			 "select(4, &Readfds, 0, 0, &timeout) timeout = %ld usecs",
+			 test_time);
 
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -238,7 +228,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

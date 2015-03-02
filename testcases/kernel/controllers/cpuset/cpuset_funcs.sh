@@ -24,6 +24,8 @@
 ##                                                                            ##
 ################################################################################
 
+. test.sh
+
 NR_CPUS=`tst_ncpus`
 if [ -f "/sys/devices/system/node/has_high_memory" ]; then
 	N_NODES="`cat /sys/devices/system/node/has_high_memory`"
@@ -31,7 +33,7 @@ else
 	N_NODES="`cat /sys/devices/system/node/has_normal_memory`"
 fi
 N_NODES=${N_NODES#*-*}
-: $((N_NODES++))
+N_NODES=$(($N_NODES + 1))
 
 CPUSET="/dev/cpuset"
 CPUSET_TMP="/tmp/cpuset_tmp"
@@ -58,70 +60,60 @@ version_check()
 {
 	tst_kvercmp 2 6 28
 	if [ $? -eq 0 ]; then
-		tst_brkm TCONF ignored "kernel is below 2.6.28"
-		return 1
+		tst_brkm TCONF "kernel is below 2.6.28"
 	fi
 }
 
 ncpus_check()
 {
-	if [ $NR_CPUS -lt 4 ]; then
-		tst_brkm TCONF ignored "The total of CPUs is less than 4"
-		return 1
+	if [ $NR_CPUS -lt $1 ]; then
+		tst_brkm TCONF "The total of CPUs is less than $1"
 	fi
 }
 
 nnodes_check()
 {
-	if [ $N_NODES -lt 3 ]; then
-		tst_brkm TCONF ignored "The total of nodes is less than 3"
-		return 1
+	if [ $N_NODES -lt $1 ]; then
+		tst_brkm TCONF "The total of nodes is less than $1"
 	fi
 }
 
 user_check()
 {
-	if [ "$USER" != root ]; then
-		tst_brkm TCONF ignored "Test must be run as root"
-		return 1
+	if [ $(id -u) != 0 ]; then
+		tst_brkm TCONF "Test must be run as root"
 	fi
 }
 
 cpuset_check()
 {
-	grep cpuset /proc/cgroups > /dev/null 2>&1
-	if [ $? -ne 0 ]; then
-		tst_brkm TCONF ignored "Cpuset is not supported"
-		return 1
+        if [ -f /proc/cgroups ]; then
+		CPUSET_CONTROLLER=`grep -w cpuset /proc/cgroups | cut -f1`
+		CPUSET_CONTROLLER_VALUE=`grep -w cpuset /proc/cgroups | cut -f4`
+
+		if [ "$CPUSET_CONTROLLER" = "cpuset" ] && [ "$CPUSET_CONTROLLER_VALUE" = "1" ]
+		then
+			return 0
+		fi
 	fi
+
+	tst_brkm TCONF "Cpuset is not supported"
 }
 
+# optional parameters (pass both or none of them):
+# $1 - required number of cpus (default 2)
+# $2 - required number of memory nodes (default 2)
 check()
 {
 	user_check
-	if [ $? -ne 0 ]; then
-		return 1
-	fi
 
 	cpuset_check
-	if [ $? -ne 0 ]; then
-		return 1
-	fi
 
 	version_check
-	if [ $? -ne 0 ]; then
-		return 1
-	fi
 
-	ncpus_check
-	if [ $? -ne 0 ]; then
-		return 1
-	fi
+	ncpus_check ${1:-2}
 
-	nnodes_check
-	if [ $? -ne 0 ]; then
-		return 1
-	fi
+	nnodes_check ${2:-2}
 
 }
 
@@ -132,27 +124,23 @@ setup()
 	if [ -e "$CPUSET" ]
 	then
 		tst_resm TWARN "$CPUSET already exist.. overwriting"
-		cleanup || {
-			tst_brkm TFAIL ignored "Can't cleanup... Exiting"
-			return 1
-		}
+		cleanup || tst_brkm TFAIL "Can't cleanup... Exiting"
 	fi
 
 	mkdir -p "$CPUSET_TMP"
 	mkdir "$CPUSET"
 	mount -t cpuset cpuset "$CPUSET" 2> /dev/null
 	if [ $? -ne 0 ]; then
-		tst_brkm TFAIL ignored "Could not mount cgroup filesystem with"\
-					" cpuset on $CPUSET..Exiting test"
 		cleanup
-		return 1
+		tst_brkm TFAIL "Could not mount cgroup filesystem with"\
+					" cpuset on $CPUSET..Exiting test"
 	fi
 }
 
 # Write the cleanup function
 cleanup()
 {
-	mount | grep "$CPUSET" >/dev/null 2>&1 || {
+	grep "$CPUSET" /proc/mounts >/dev/null 2>&1 || {
 		rm -rf "$CPUSET" >/dev/null 2>&1
 		return 0
 	}
@@ -161,26 +149,23 @@ cleanup()
 	do
 		while read pid
 		do
-			/bin/kill $pid > /dev/null 2>&1
+			/bin/kill -9 $pid > /dev/null 2>&1
 			if [ $? -ne 0 ]; then
-				tst_brkm TFAIL ignored "Couldn't kill task - "\
+				tst_brkm TFAIL "Couldn't kill task - "\
 							"$pid in the cpuset"
-				return 1
 			fi
 		done < "$subdir/tasks"
 		rmdir "$subdir"
 		if [ $? -ne 0 ]; then
-			tst_brkm TFAIL ignored "Couldn't remove subdir - "
+			tst_brkm TFAIL "Couldn't remove subdir - "
 						"$subdir in the cpuset"
-			return 1
 		fi
 	done
 
 	umount "$CPUSET"
 	if [ $? -ne 0 ]; then
-		tst_brkm TFAIL ignored "Couldn't umount cgroup filesystem with"\
+		tst_brkm TFAIL "Couldn't umount cgroup filesystem with"\
 					" cpuset on $CPUSET..Exiting test"
-		return 1
 	fi
 	rmdir "$CPUSET" > /dev/null 2>&1
 	rm -rf "$CPUSET_TMP" > /dev/null 2>&1

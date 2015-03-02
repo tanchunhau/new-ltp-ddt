@@ -119,8 +119,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "dup02";		/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "dup02";
+int TST_TOTAL = 2;
 
 int exp_enos[] = { 0, 0 };
 
@@ -129,7 +129,7 @@ int Fds[] = { -1, 1500 };
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int nfds = sizeof(Fds) / sizeof(int);
 	int ind;
 
@@ -142,22 +142,20 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; ind < nfds; ind++) {
 
 			TEST(dup(Fds[ind]));
 
 			if (TEST_RETURN == -1) {
-				if (STD_FUNCTIONAL_TEST) {
-					if (TEST_ERRNO == EBADF)
-						tst_resm(TPASS,
-							 "dup failed as expected "
-							 "with EBADF");
-					else
-						tst_resm(TFAIL | TTERRNO,
-							 "dup failed unexpectedly");
-				}
+				if (TEST_ERRNO == EBADF)
+					tst_resm(TPASS,
+						 "dup failed as expected "
+						 "with EBADF");
+				else
+					tst_resm(TFAIL | TTERRNO,
+						 "dup failed unexpectedly");
 			} else {
 				tst_resm(TFAIL, "dup succeeded unexpectedly");
 
@@ -169,11 +167,10 @@ int main(int ac, char **av)
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -184,7 +181,7 @@ void setup()
 
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

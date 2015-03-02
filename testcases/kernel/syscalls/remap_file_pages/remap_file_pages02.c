@@ -97,8 +97,8 @@ static int setup03(int test);
 static int setup04(int test);
 static void cleanup();
 
-char *TCID = "remap_file_pages02";	/* Test program identifier.    */
-int TST_TOTAL = 4;		/* Total number of test cases. */
+char *TCID = "remap_file_pages02";
+int TST_TOTAL = 4;
 static int exp_enos[] = { EINVAL, 0 };
 
 static char *cache_contents;
@@ -133,7 +133,7 @@ static struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 #if defined (__s390__) || (__s390x__) || (__ia64__)
 	/* Disables the test in case the kernel version is lower than 2.6.12 and arch is s390 */
@@ -151,7 +151,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			/* do the setup if the test have one */
@@ -266,7 +266,7 @@ int setup04(int test)
  * setup() - performs all ONE TIME setup for this test
  * - creates a defaul mmaped area to be able to run remap_file_pages
  */
-void setup()
+void setup(void)
 {
 	int i, j;
 
@@ -290,7 +290,7 @@ void setup()
 	/* Set the cache size */
 	cache_pages = 32;
 	cache_sz = cache_pages * page_sz;
-	cache_contents = (char *)malloc(cache_sz * sizeof(char));
+	cache_contents = malloc(cache_sz * sizeof(char));
 
 	for (i = 0; i < cache_pages; i++) {
 		char *page = cache_contents + i * page_sz;
@@ -327,7 +327,7 @@ void setup()
 * cleanup() - Performs one time cleanup for this test at
 * completion or premature exit
 */
-void cleanup()
+void cleanup(void)
 {
 	/* Close the file descriptor */
 	close(fd);

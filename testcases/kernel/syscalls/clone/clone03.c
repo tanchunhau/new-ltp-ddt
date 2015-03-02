@@ -58,7 +58,7 @@ int main(int ac, char **av)
 {
 
 	int lc;
-	char *msg;
+	const char *msg;
 	void *child_stack;
 	char buff[10];
 	int child_pid, status;
@@ -75,7 +75,7 @@ int main(int ac, char **av)
 		tst_brkm(TBROK, cleanup, "Cannot allocate stack for child");
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		if ((pipe(pfd)) == -1)
 			tst_brkm(TBROK | TERRNO, cleanup, "pipe failed");
@@ -130,7 +130,7 @@ static void cleanup(void)
 	TEST_CLEANUP;
 }
 
-static int child_fn()
+static int child_fn(void)
 {
 	char pid[10];
 

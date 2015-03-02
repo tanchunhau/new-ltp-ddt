@@ -89,7 +89,7 @@ int main(int ac, char **av)
 {
 	int i;
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -98,7 +98,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			TEST(fd = creat(filename, TC[i].mode));
@@ -108,19 +108,16 @@ int main(int ac, char **av)
 				continue;
 			}
 
-			if (STD_FUNCTIONAL_TEST)
-				(*TC[i].functest) ();
-			else
-				tst_resm(TPASS, "call succeeded");
+			(*TC[i].functest) ();
 			close(fd);
 		}
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 
-void functest1()
+void functest1(void)
 {
 	if (write(TEST_RETURN, "A", 1) != 1)
 		tst_resm(TFAIL, "write was unsuccessful");
@@ -128,7 +125,7 @@ void functest1()
 		tst_resm(TPASS, "file was created and written to successfully");
 }
 
-void functest2()
+void functest2(void)
 {
 	struct stat buf;
 
@@ -140,7 +137,7 @@ void functest2()
 		tst_resm(TFAIL, "creat FAILED to truncate file to 0 bytes");
 }
 
-void setup()
+void setup(void)
 {
 	fd = -1;
 
@@ -163,7 +160,7 @@ void setup()
 	sprintf(filename, "creat01.%d", getpid());
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

@@ -115,18 +115,16 @@ static struct test_case_t {
 
 static int exp_enos[] = { EINVAL, EINVAL, EFAULT, 0 };
 
-int TST_TOTAL = sizeof(testcases) / sizeof(*testcases);
+int TST_TOTAL = ARRAY_SIZE(testcases);
 
 int main(int ac, char **av)
 {
 	int i;
 	int lc;
-	char *msg;		/* parse_opts() return message */
+	const char *msg;		/* parse_opts() return message */
 
-	/* Parse standard options */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
 	/* Do initial setup */
@@ -134,7 +132,7 @@ int main(int ac, char **av)
 
 	/* check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 
@@ -164,20 +162,16 @@ int main(int ac, char **av)
 /*
  * setup() - performs all one time setup for this test.
  */
-void setup()
+void setup(void)
 {
 	int ret;
 
-	/* set up expected error numbers */
+	tst_require_root(NULL);
+
 	TEST_EXP_ENOS(exp_enos);
 
 	/* capture the signals */
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Test should be executed as root user */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 
 	/* Keep the host name before starting the test */
 	if ((ret = gethostname(hname, sizeof(hname))) < 0) {
@@ -193,7 +187,7 @@ void setup()
  * cleanup()  - performs all one time cleanup for this test
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	int ret;
 

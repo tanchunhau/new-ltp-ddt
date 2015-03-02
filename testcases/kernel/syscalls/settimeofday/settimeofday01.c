@@ -80,7 +80,7 @@ void cleanup(void);
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	suseconds_t delta;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
@@ -92,8 +92,8 @@ int main(int argc, char **argv)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		int condition_number = 1;
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		tp.tv_sec = VAL_SEC;
 		tp.tv_usec = VAL_MSEC;
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -160,14 +160,9 @@ int main()
  */
 void setup(void)
 {
+	tst_require_root(NULL);
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* Check that the test process id is root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be root for this test!");
-		tst_exit();
-	}
 
 	/* set the expected errnos... */
 	TEST_EXP_ENOS(exp_enos);

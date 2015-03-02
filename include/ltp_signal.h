@@ -34,74 +34,23 @@
 #include <stdio.h>
 #include "config.h"
 
-#define SIGSETSIZE (_NSIG / 8)
-
-#ifdef LTP_RT_SIG_TEST
-
-#ifdef __x86_64__
-
 /*
- * From asm/signal.h -- this value isn't exported anywhere outside of glibc and
- * asm/signal.h and is only required for the rt_sig* function family because
- * sigaction(2), et all, appends this if necessary to
- * (struct sigaction).sa_flags. HEH.
+ * For all but __mips__:
  *
- * I do #undef though, just in case...
+ * _COMPAT_NSIG / _COMPAT_NSIG_BPW == 2.
  *
- * Also, from .../arch/x86/kernel/signal.c:448 for v2.6.30 (something or
- * other):
+ * For __mips__:
  *
- * x86-64 should always use SA_RESTORER.
+ * _COMPAT_NSIG / _COMPAT_NSIG_BPW == 4.
  *
- * -- thus SA_RESTORER must always be defined along with
- * (struct sigaction).sa_restorer for this architecture.
+ * See asm/compat.h under the kernel source for more details.
+ *
+ * Multiply that by a fudge factor of 4 and you have your SIGSETSIZE.
  */
-#undef SA_RESTORER
-#define HAVE_SA_RESTORER
-#define SA_RESTORER	0x04000000
-
-struct kernel_sigaction {
-	__sighandler_t k_sa_handler;
-	unsigned long sa_flags;
-	void (*sa_restorer) (void);
-	sigset_t sa_mask;
-};
-
-void (*restore_rt)(void);
-
-static void handler_h(int signal)
-{
-	return;
-}
-
-/* Setup an initial signal handler for signal number = sig for x86_64. */
-static inline int sig_initial(int sig)
-{
-	int ret_code = -1;
-	struct sigaction act, oact;
-
-	act.sa_handler = handler_h;
-	/* Clear out the signal set. */
-	if (sigemptyset(&act.sa_mask) < 0) {
-		/* Add the signal to the mask set. */
-	} else if (sigaddset(&act.sa_mask, sig) < 0) {
-		/* Set act.sa_restorer via syscall(2) */
-	} else if (sigaction(sig, &act, &oact) < 0) {
-		/* Copy oact.sa_restorer via syscall(2) */
-	} else if (sigaction(sig, &act, &oact) < 0) {
-		/* And voila -- we just tricked the kernel into giving us our
-		 * restorer function! */
-	} else {
-		restore_rt = oact.sa_restorer;
-		ret_code = 0;
-	}
-
-	return ret_code;
-
-}
-
-#endif /* __x86_64__ */
-
-#endif /* LTP_RT_SIG_TEST */
+#if defined __mips__
+#define SIGSETSIZE 16
+#else
+#define SIGSETSIZE (_NSIG / 8)
+#endif
 
 #endif

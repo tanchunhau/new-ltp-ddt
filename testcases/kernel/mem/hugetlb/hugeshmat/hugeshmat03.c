@@ -80,7 +80,7 @@ static void do_child(void);
 
 int main(int ac, char **av)
 {
-	char *msg;
+	const char *msg;
 	int status;
 	pid_t pid;
 
@@ -114,7 +114,7 @@ static void do_child(void)
 	int lc;
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		addr = shmat(shm_id_1, NULL, 0);
 		if (addr != (void *)-1) {

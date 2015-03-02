@@ -80,7 +80,7 @@ int TST_TOTAL;			/* Total number of test cases. */
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 	struct timespec spec;
 	clockid_t clocks[2] = { CLOCK_REALTIME, CLOCK_MONOTONIC };
 
@@ -93,10 +93,10 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
-			TEST(syscall(__NR_clock_gettime, clocks[i], &spec));
+			TEST(ltp_syscall(__NR_clock_gettime, clocks[i], &spec));
 			tst_resm((TEST_RETURN < 0 ? TFAIL | TTERRNO : TPASS),
 				 "%s",
 				 (TEST_RETURN == 0 ? "passed" : "failed"));

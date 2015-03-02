@@ -83,7 +83,7 @@
 static void setup(void);
 static void cleanup(void);
 
-char *TCID = "prctl01";		/* Test program identifier.    */
+char *TCID = "prctl01";
 
 int option[2] = { PR_GET_PDEATHSIG, PR_SET_PDEATHSIG };
 
@@ -93,7 +93,7 @@ int main(int ac, char **av)
 {
 
 	int lc, i;
-	char *msg;
+	const char *msg;
 	pid_t child_pid;
 	int status, sig;
 
@@ -104,7 +104,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 
@@ -158,7 +158,7 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -171,7 +171,7 @@ void setup()
  *cleanup() -  performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 
 	/*

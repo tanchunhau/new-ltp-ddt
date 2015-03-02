@@ -81,7 +81,7 @@ int pp[2];			/* pipe descriptor */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	char rbuf[BUFSIZ], wbuf[BUFSIZ];
 	int pid, ret, len, rlen, status;
 	int sig = 0;
@@ -99,8 +99,8 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		ret = pipe(pp);
 		if (ret == -1)
@@ -158,7 +158,7 @@ void catch_usr2(int sig)
 /*
  * do_child()
  */
-void do_child()
+void do_child(void)
 {
 	char wbuf[BUFSIZ];
 	int len;
@@ -181,7 +181,7 @@ void do_child()
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -194,7 +194,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

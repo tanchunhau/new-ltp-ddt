@@ -125,12 +125,12 @@ struct test_case_t {
 	test_name6, ENOEXEC}
 };
 
-int TST_TOTAL = sizeof(TC) / sizeof(*TC);
+int TST_TOTAL = ARRAY_SIZE(TC);
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int i;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
@@ -142,7 +142,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -170,7 +170,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	char *cwdname = NULL;
 	int fd;
@@ -207,7 +207,7 @@ void setup()
 #endif
 }
 
-void cleanup()
+void cleanup(void)
 {
 #ifndef UCLINUX
 	SAFE_MUNMAP(NULL, bad_addr, 1);

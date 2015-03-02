@@ -49,11 +49,14 @@ TCsrc=${TCsrc:=$TCbin}
 TCtmp=${TCtmp:=$TCbin/$TC$$}
 TCdump=${TCdump:=$TCbin}
 RHOST=${RHOST:=`hostname | awk {'print $1'}`}
+export TCID=$TC
+export TST_TOTAL=1
+export TST_COUNT=1
 
 PID=$$
 
-# Setting the NFS to version 2 by default
-VERSION=${VERSION:=2}
+# Setting the NFS to version 3 by default
+VERSION=${VERSION:=3}
 SOCKET_TYPE=${SOCKET_TYPE:=udp}
 TESTDIR=${TESTDIR:=/tmp/$TC$PID.testdir}
 NFS_TYPE=${NFS_TYPE:=nfs}
@@ -411,8 +414,8 @@ $trace_logic
 
     fi
 
-    [ $# = 0 ] && { echo "Test Successful"; exit 0; }
-    echo "Test Failed: $@"
+    [ $# = 0 ] && { tst_resm TPASS "Test Successful"; exit 0; }
+    tst_resm TFAIL "Test Failed: $@"
     exit 1
 }
 

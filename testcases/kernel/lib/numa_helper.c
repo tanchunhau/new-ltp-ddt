@@ -60,7 +60,7 @@ unsigned long get_max_node(void)
 #if HAVE_NUMA_H
 static void get_nodemask_allnodes(nodemask_t * nodemask, unsigned long max_node)
 {
-	unsigned long nodemask_size = max_node / 8 + 1;
+	unsigned long nodemask_size = max_node / 8;
 	int i;
 	char fn[64];
 	struct stat st;
@@ -76,14 +76,14 @@ static void get_nodemask_allnodes(nodemask_t * nodemask, unsigned long max_node)
 static int filter_nodemask_mem(nodemask_t * nodemask, unsigned long max_node)
 {
 #if MPOL_F_MEMS_ALLOWED
-	unsigned long nodemask_size = max_node / 8 + 1;
+	unsigned long nodemask_size = max_node / 8;
 	memset(nodemask, 0, nodemask_size);
 	/*
 	 * avoid numa_get_mems_allowed(), because of bug in getpol()
 	 * utility function in older versions:
 	 * http://www.spinics.net/lists/linux-numa/msg00849.html
 	 */
-	if (syscall(__NR_get_mempolicy, NULL, nodemask->n,
+	if (ltp_syscall(__NR_get_mempolicy, NULL, nodemask->n,
 		    max_node, 0, MPOL_F_MEMS_ALLOWED) < 0)
 		return -2;
 #else
@@ -164,8 +164,9 @@ int get_allowed_nodes_arr(int flag, int *num_nodes, int **nodes)
 		*nodes = NULL;
 
 #if HAVE_NUMA_H
-	unsigned long max_node = get_max_node();
-	unsigned long nodemask_size = max_node / 8 + 1;
+	unsigned long max_node = LTP_ALIGN(get_max_node(),
+						sizeof(unsigned long)*8);
+	unsigned long nodemask_size = max_node / 8;
 
 	nodemask = malloc(nodemask_size);
 	if (nodes)
@@ -258,10 +259,34 @@ static void print_node_info(int flag)
 /*
  * nh_dump_nodes - dump info about nodes to stdout
  */
-void nh_dump_nodes()
+void nh_dump_nodes(void)
 {
 	print_node_info(0);
 	print_node_info(NH_MEMS);
 	print_node_info(NH_CPUS);
 	print_node_info(NH_MEMS | NH_CPUS);
+}
+
+/*
+ * is_numa - judge a system is NUMA system or not
+ * NOTE: the function is designed to try to find more than
+ *       1 available node, at least each node contains memory.
+ * WARN: Don't use this func in child, as it calls tst_brkm()
+ * RETURNS:
+ *     0 - it's not a NUMA system
+ *     1 - it's a NUMA system
+ */
+int is_numa(void (*cleanup_fn)(void))
+{
+	int ret;
+	int numa_nodes = 0;
+
+	ret = get_allowed_nodes_arr(NH_MEMS, &numa_nodes, NULL);
+	if (ret < 0)
+		tst_brkm(TBROK | TERRNO, cleanup_fn, "get_allowed_nodes_arr");
+
+	if (numa_nodes > 1)
+		return 1;
+	else
+		return 0;
 }

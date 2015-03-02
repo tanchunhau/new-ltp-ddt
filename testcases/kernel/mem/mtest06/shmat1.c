@@ -245,7 +245,7 @@ void *shmat_shmdt(void *args)
 				STR_SHMAT, pthread_self(), fsize);
 		}
 
-		if ((map_address = shmat(shmid, (void *)0, 0))
+		if ((map_address = shmat(shmid, NULL, 0))
 		    == (void *)-1) {
 			fprintf(stderr, "shmat_shmat(): map address = %p\n",
 				map_address);
@@ -281,7 +281,7 @@ void *shmat_shmdt(void *args)
 			pthread_exit((void *)-1);
 		}
 	}
-	pthread_exit((void *)0);
+	pthread_exit(NULL);
 }
 
 /******************************************************************************/
@@ -321,7 +321,7 @@ void *write_to_mem(void *args)
 		usleep(1);
 		sched_yield();
 	}
-	pthread_exit((void *)0);
+	pthread_exit(NULL);
 }
 
 /******************************************************************************/
@@ -368,7 +368,7 @@ void *read_from_mem(void *args)
 		usleep(1);
 		sched_yield();
 	}
-	pthread_exit((void *)0);
+	pthread_exit(NULL);
 }
 
 /******************************************************************************/
@@ -392,7 +392,7 @@ int main(int argc,		/* number of input parameters.                        */
 	int num_iter;		/* number of iteration to perform             */
 	int thrd_ndx;		/* index into the array of threads.           */
 	double exec_time;	/* period for which the test is executed      */
-	int status[1];		/* exit status for light weight process       */
+	void *status;		/* exit status for light weight process       */
 	int sig_ndx;		/* index into signal handler structure.       */
 	pthread_t thid[1000];	/* pids of process that will map/write/unmap  */
 	long chld_args[3];	/* arguments to funcs execed by child process */
@@ -451,7 +451,7 @@ int main(int argc,		/* number of input parameters.                        */
 	for (sig_ndx = 0; sig_info[sig_ndx].signum != -1; sig_ndx++) {
 		sigaddset(&sigptr.sa_mask, sig_info[sig_ndx].signum);
 		if (sigaction(sig_info[sig_ndx].signum, &sigptr,
-			      (struct sigaction *)NULL) == -1) {
+			      NULL) == -1) {
 			perror("man(): sigaction()");
 			fprintf(stderr,
 				"could not set handler for SIGALRM, errno = %d\n",
@@ -497,14 +497,14 @@ int main(int argc,		/* number of input parameters.                        */
 
 		/* wait for the children to terminate */
 		for (thrd_ndx = 0; thrd_ndx < 3; thrd_ndx++) {
-			if (pthread_join(thid[thrd_ndx], (void *)status)) {
+			if (pthread_join(thid[thrd_ndx], &status)) {
 				perror("main(): pthread_create()");
 				exit(-1);
 			}
-			if (*status == -1) {
+			if (status == (void *)-1) {
 				fprintf(stderr,
-					"thread [%#lx] - process exited with errors %d\n",
-					thid[thrd_ndx], *status);
+					"thread [%#lx] - process exited with errors %ld\n",
+					thid[thrd_ndx], (long)status);
 				exit(-1);
 			}
 		}

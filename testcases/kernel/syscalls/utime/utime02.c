@@ -85,12 +85,13 @@
 
 #include "test.h"
 #include "usctest.h"
+#include "tst_fs_type.h"
 
 #define TEMP_FILE	"tmp_file"
 #define FILE_MODE	S_IRUSR | S_IRGRP | S_IROTH
 
-char *TCID = "utime02";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "utime02";
+int TST_TOTAL = 1;
 time_t curr_time;		/* current time in seconds */
 time_t tloc;			/* argument var. for time() */
 int exp_enos[] = { 0 };
@@ -105,11 +106,11 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* struct buffer to hold file info. */
 	int lc;
-	char *msg;
+	long type;
+	const char *msg;
 	time_t modf_time, access_time;
 	time_t pres_time;	/* file modification/access/present time */
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -118,17 +119,18 @@ int main(int ac, char **av)
 
 	setup();
 
-	/*
-	 * check if the current filesystem is nfs
-	 */
-	if (tst_is_cwd_nfs()) {
+	switch ((type = tst_fs_type(cleanup, "."))) {
+	case TST_NFS_MAGIC:
+		if (tst_kvercmp(2, 6, 18) < 0)
+			tst_brkm(TCONF, cleanup, "Cannot do utime on a file"
+				" on %s filesystem before 2.6.18",
+				 tst_fs_type_name(type));
+		break;
+	case TST_V9FS_MAGIC:
 		tst_brkm(TCONF, cleanup,
-			 "Cannot do utime on a file located on an NFS filesystem");
-	}
-
-	if (tst_is_cwd_v9fs()) {
-		tst_brkm(TCONF, cleanup,
-			 "Cannot do utime on a file located on an 9P filesystem");
+			 "Cannot do utime on a file on %s filesystem",
+			 tst_fs_type_name(type));
+		break;
 	}
 
 	/* set the expected errnos... */
@@ -136,7 +138,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Invoke utime(2) to set TEMP_FILE access and
@@ -150,63 +152,54 @@ int main(int ac, char **av)
 				 TEMP_FILE, TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
 			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
+			 * Sleep for a second so that mod time and
+			 * access times will be different from the
+			 * current time
 			 */
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Sleep for a second so that mod time and
-				 * access times will be different from the
-				 * current time
-				 */
-				sleep(2);
+			sleep(2);
 
-				/*
-				 * Get the current time now, after calling
-				 * utime(2)
-				 */
-				if ((pres_time = time(&tloc)) < 0) {
-					tst_brkm(TFAIL, cleanup, "time() "
-						 "failed to get present time "
-						 "after utime, error=%d",
-						 errno);
-				}
+			/*
+			 * Get the current time now, after calling
+			 * utime(2)
+			 */
+			if ((pres_time = time(&tloc)) < 0) {
+				tst_brkm(TFAIL, cleanup, "time() "
+					 "failed to get present time "
+					 "after utime, error=%d",
+					 errno);
+			}
 
-				/*
-				 * Get the modification and access times of
-				 * temporary file using stat(2).
-				 */
-				if (stat(TEMP_FILE, &stat_buf) < 0) {
-					tst_brkm(TFAIL, cleanup, "stat(2) of "
-						 "%s failed, errno:%d",
-						 TEMP_FILE, TEST_ERRNO);
-				}
-				modf_time = stat_buf.st_mtime;
-				access_time = stat_buf.st_atime;
+			/*
+			 * Get the modification and access times of
+			 * temporary file using stat(2).
+			 */
+			if (stat(TEMP_FILE, &stat_buf) < 0) {
+				tst_brkm(TFAIL, cleanup, "stat(2) of "
+					 "%s failed, errno:%d",
+					 TEMP_FILE, TEST_ERRNO);
+			}
+			modf_time = stat_buf.st_mtime;
+			access_time = stat_buf.st_atime;
 
-				/* Now do the actual verification */
-				if (modf_time <= curr_time ||
-				    modf_time >= pres_time ||
-				    access_time <= curr_time ||
-				    access_time >= pres_time) {
-					tst_resm(TFAIL, "%s access and "
-						 "modification times not set",
-						 TEMP_FILE);
-				} else {
-					tst_resm(TPASS, "Functionality of "
-						 "utime(%s, NULL) successful",
-						 TEMP_FILE);
-				}
+			/* Now do the actual verification */
+			if (modf_time <= curr_time ||
+			    modf_time >= pres_time ||
+			    access_time <= curr_time ||
+			    access_time >= pres_time) {
+				tst_resm(TFAIL, "%s access and "
+					 "modification times not set",
+					 TEMP_FILE);
 			} else {
-				tst_resm(TPASS, "%s call succeeded", TCID);
+				tst_resm(TPASS, "Functionality of "
+					 "utime(%s, NULL) successful",
+					 TEMP_FILE);
 			}
 		}
-		Tst_count++;
+		tst_count++;
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -215,16 +208,15 @@ int main(int ac, char **av)
  *  Create a temporary directory and change directory to it.
  *  Create a test file under temporary directory and close it
  */
-void setup()
+void setup(void)
 {
 	int fildes;		/* file handle for temp file */
+
+	tst_require_root(NULL);
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	ltpuser = getpwnam(nobody_uid);
 	if (setuid(ltpuser->pw_uid) == -1) {
 		tst_resm(TINFO, "setuid failed to "
@@ -275,7 +267,7 @@ void setup()
  *             completion or premature exit.
  *  Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

@@ -66,7 +66,7 @@ int main(int ac, char **av)
 	struct flock fl;
 	int pid, status;
 
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -171,7 +171,7 @@ int main(int ac, char **av)
  * setup()
  *	performs all ONE TIME setup for this test
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -191,7 +191,7 @@ void setup()
  *	performs all the ONE TIME cleanup for this test at completion or
  *	or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing status if that option was specified.

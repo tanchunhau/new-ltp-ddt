@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 	long maxrss_self, maxrss_children, delta;
 	long consume_nr, grand_consume_nr, self_nr, child_nr;
 	struct rusage ru;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, child_options, usage);
 	if (msg != NULL)
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		if (opt_consume) {
 			consume_nr = SAFE_STRTOL(cleanup,

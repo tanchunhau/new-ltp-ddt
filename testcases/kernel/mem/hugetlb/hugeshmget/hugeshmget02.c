@@ -93,7 +93,7 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 	int shm_id_2 = -1;
 
 	msg = parse_opts(ac, av, options, &help);
@@ -105,7 +105,7 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			/* If this key is existent, just remove it */

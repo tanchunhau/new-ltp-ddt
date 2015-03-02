@@ -111,7 +111,7 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(ac, av, options, &help);
 	if (msg != NULL)
@@ -122,7 +122,7 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* initialize stat_time */
 		stat_time = FIRST;
@@ -149,21 +149,7 @@ int main(int ac, char **av)
 				tst_resm(TFAIL | TERRNO, "shmctl #main");
 				continue;
 			}
-			if (STD_FUNCTIONAL_TEST) {
-				(*TC[i].func_test) ();
-			} else {
-				tst_resm(TPASS, "shmctl call succeeded");
-
-				/* now perform command related cleanup */
-				switch (TC[i].cmd) {
-				case IPC_STAT:
-					stat_cleanup();
-					break;
-				case IPC_RMID:
-					shm_id_1 = -1;
-					break;
-				}
-			}
+			(*TC[i].func_test) ();
 		}
 	}
 	cleanup();

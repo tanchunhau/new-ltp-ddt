@@ -90,20 +90,20 @@
 #define TESTDIR		"testdir_4"
 
 int fd;				/* file descriptor for test directory */
-char *TCID = "fchmod04";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fchmod04";
+int TST_TOTAL = 1;
 
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
 
-void setup();			/* Setup function for the test */
-void cleanup();			/* Cleanup function for the test */
+void setup();
+void cleanup();
 
 int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat struct. */
 	int lc;
-	char *msg;
+	const char *msg;
 	mode_t dir_mode;	/* mode permissions set on testdirectory */
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
@@ -113,7 +113,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call fchmod(2) with mode argument to
@@ -125,29 +125,21 @@ int main(int ac, char **av)
 			tst_resm(TFAIL | TTERRNO, "fchmod failed");
 			continue;
 		}
-		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
-		 */
-		if (STD_FUNCTIONAL_TEST) {
-			if (fstat(fd, &stat_buf) == -1)
-				tst_brkm(TFAIL | TERRNO, cleanup,
-					 "fstat failed");
-			dir_mode = stat_buf.st_mode;
+		if (fstat(fd, &stat_buf) == -1)
+			tst_brkm(TFAIL | TERRNO, cleanup,
+				 "fstat failed");
+		dir_mode = stat_buf.st_mode;
 
-			if ((dir_mode & PERMS) == PERMS)
-				tst_resm(TPASS, "Functionality of fchmod(%d, "
-					 "%#o) successful", fd, PERMS);
-			else
-				tst_resm(TFAIL, "%s: Incorrect modes 0%03o, "
-					 "Expected 0%03o",
-					 TESTDIR, dir_mode, PERMS);
-		} else
-			tst_resm(TPASS, "call succeeded");
+		if ((dir_mode & PERMS) == PERMS)
+			tst_resm(TPASS, "Functionality of fchmod(%d, "
+				 "%#o) successful", fd, PERMS);
+		else
+			tst_resm(TFAIL, "%s: Incorrect modes 0%03o, "
+				 "Expected 0%03o",
+				 TESTDIR, dir_mode, PERMS);
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -158,15 +150,13 @@ int main(int ac, char **av)
  *  Create another test directory under temporary directory.
  *  Open the test directory for reading.
  */
-void setup()
+void setup(void)
 {
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	ltpuser = getpwnam(nobody_uid);
 	if (seteuid(ltpuser->pw_uid) == -1) {
 		tst_resm(TINFO, "seteuid failed to "
@@ -199,7 +189,7 @@ void setup()
  *  Close the test directory opened during setup().
  *  Remove the test directory and temporary directory created in setup().
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

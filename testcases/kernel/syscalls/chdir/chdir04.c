@@ -96,7 +96,7 @@ struct test_case_t {
 #endif
 };
 
-int TST_TOTAL = (sizeof(TC) / sizeof(*TC));
+int TST_TOTAL = ARRAY_SIZE(TC);
 
 int flag;
 #define	FAILED	1
@@ -110,7 +110,7 @@ int main(int ac, char **av)
 {
 	int lc;
 	int i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -120,7 +120,7 @@ int main(int ac, char **av)
 	TEST_EXP_ENOS(exp_enos);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -146,7 +146,7 @@ int main(int ac, char **av)
 
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -164,7 +164,7 @@ void setup()
 #endif
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

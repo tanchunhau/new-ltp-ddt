@@ -82,12 +82,13 @@
 
 #include "test.h"
 #include "usctest.h"
+#include "compat_16.h"
 
 #define FILE_MODE	(S_IFREG|S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 #define NEW_PERMS	(S_IFREG|S_IRWXU|S_IRWXG|S_ISUID|S_ISGID)
 #define TESTFILE	"testfile"
 
-char *TCID = "chown03";		/* Test program identifier.    */
+TCID_DEFINE(chown03);
 int TST_TOTAL = 1;		/* Total number of test conditions */
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
@@ -99,7 +100,7 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat(2) struct contents */
 	int lc;
-	char *msg;
+	const char *msg;
 	uid_t user_id;		/* Owner id of the test file. */
 	gid_t group_id;		/* Group id of the test file. */
 
@@ -110,12 +111,12 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
-		user_id = geteuid();
-		group_id = getegid();
+		UID16_CHECK((user_id = geteuid()), "chown", cleanup)
+		GID16_CHECK((group_id = getegid()), "chown", cleanup)
 
-		TEST(chown(TESTFILE, -1, group_id));
+		TEST(CHOWN(cleanup, TESTFILE, -1, group_id));
 
 		if (TEST_RETURN == -1) {
 			tst_resm(TFAIL | TTERRNO, "chown(%s, ..) failed",
@@ -123,34 +124,30 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			if (stat(TESTFILE, &stat_buf) == -1)
-				tst_brkm(TFAIL | TERRNO, cleanup,
-					 "stat failed");
+		if (stat(TESTFILE, &stat_buf) == -1)
+			tst_brkm(TFAIL | TERRNO, cleanup,
+				 "stat failed");
 
-			if (stat_buf.st_uid != user_id ||
-			    stat_buf.st_gid != group_id)
-				tst_resm(TFAIL, "%s: Incorrect ownership"
-					 "set to %d %d, Expected %d %d",
-					 TESTFILE, stat_buf.st_uid,
-					 stat_buf.st_gid, user_id, group_id);
+		if (stat_buf.st_uid != user_id ||
+		    stat_buf.st_gid != group_id)
+			tst_resm(TFAIL, "%s: Incorrect ownership"
+				 "set to %d %d, Expected %d %d",
+				 TESTFILE, stat_buf.st_uid,
+				 stat_buf.st_gid, user_id, group_id);
 
-			if (stat_buf.st_mode !=
-			    (NEW_PERMS & ~(S_ISUID | S_ISGID)))
-				tst_resm(TFAIL, "%s: incorrect mode permissions"
-					 " %#o, Expected %#o", TESTFILE,
-					 stat_buf.st_mode,
-					 NEW_PERMS & ~(S_ISUID | S_ISGID));
-			else
-				tst_resm(TPASS, "chown(%s, ..) was successful",
-					 TESTFILE);
-		} else
-			tst_resm(TPASS, "call succeeded");
+		if (stat_buf.st_mode !=
+		    (NEW_PERMS & ~(S_ISUID | S_ISGID)))
+			tst_resm(TFAIL, "%s: incorrect mode permissions"
+				 " %#o, Expected %#o", TESTFILE,
+				 stat_buf.st_mode,
+				 NEW_PERMS & ~(S_ISUID | S_ISGID));
+		else
+			tst_resm(TPASS, "chown(%s, ..) was successful",
+				 TESTFILE);
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -160,7 +157,7 @@ int main(int ac, char **av)
  *  Create a test file under temporary directory and close it
  *  Change the group ownership on testfile.
  */
-void setup()
+void setup(void)
 {
 	int fd;			/* file handler for testfile */
 
@@ -205,7 +202,7 @@ void setup()
 			 TESTFILE);
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

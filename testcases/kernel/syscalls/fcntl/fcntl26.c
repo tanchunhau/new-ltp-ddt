@@ -95,12 +95,13 @@
 #include <signal.h>
 #include "test.h"
 #include "usctest.h"
+#include "tst_fs_type.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "fcntl26";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fcntl26";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0, 0 };
 
@@ -110,7 +111,8 @@ int fd;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	long type;
+	const char *msg;
 
     /***************************************************************
      * parse standard options
@@ -123,28 +125,14 @@ int main(int ac, char **av)
      ***************************************************************/
 	setup();
 
-	/*
-	 * check if the current filesystem is nfs
-	 */
-	if (tst_is_cwd_nfs()) {
+	switch ((type = tst_fs_type(cleanup, "."))) {
+	case TST_NFS_MAGIC:
+	case TST_RAMFS_MAGIC:
+	case TST_TMPFS_MAGIC:
 		tst_brkm(TCONF, cleanup,
-			 "Cannot do fcntl on a file located on an NFS filesystem");
-	}
-
-	/*
-	 * check if the current filesystem is tmpfs
-	 */
-	if (tst_is_cwd_tmpfs()) {
-		tst_brkm(TCONF, cleanup,
-			 "Cannot do fcntl on a file located on an TMPFS filesystem");
-	}
-
-	/*
-	 * check if the current filesystem is ramfs
-	 */
-	if (tst_is_cwd_ramfs()) {
-		tst_brkm(TCONF, cleanup,
-			 "Cannot do fcntl on a file located on an RAMFS filesystem");
+			 "Cannot do fcntl on a file on %s filesystem",
+			 tst_fs_type_name(type));
+	break;
 	}
 
 	/* set the expected errnos... */
@@ -155,7 +143,7 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 #ifdef F_SETLEASE
 		/*
@@ -170,23 +158,21 @@ int main(int ac, char **av)
 				 "fcntl(%s, F_SETLEASE, F_WRLCK) Failed, errno=%d : %s",
 				 fname, TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				TEST(fcntl(fd, F_GETLEASE));
-				if (TEST_RETURN != F_WRLCK)
+			TEST(fcntl(fd, F_GETLEASE));
+			if (TEST_RETURN != F_WRLCK)
+				tst_resm(TFAIL,
+					 "fcntl(%s, F_GETLEASE) did not return F_WRLCK, returned %ld",
+					 fname, TEST_RETURN);
+			else {
+				TEST(fcntl(fd, F_SETLEASE, F_UNLCK));
+				if (TEST_RETURN != 0)
 					tst_resm(TFAIL,
-						 "fcntl(%s, F_GETLEASE) did not return F_WRLCK, returned %ld",
+						 "fcntl(%s, F_SETLEASE, F_UNLCK) did not return 0, returned %ld",
 						 fname, TEST_RETURN);
-				else {
-					TEST(fcntl(fd, F_SETLEASE, F_UNLCK));
-					if (TEST_RETURN != 0)
-						tst_resm(TFAIL,
-							 "fcntl(%s, F_SETLEASE, F_UNLCK) did not return 0, returned %ld",
-							 fname, TEST_RETURN);
-					else
-						tst_resm(TPASS,
-							 "fcntl(%s, F_SETLEASE, F_WRLCK)",
-							 fname);
-				}
+				else
+					tst_resm(TPASS,
+						 "fcntl(%s, F_SETLEASE, F_WRLCK)",
+						 fname);
 			}
 		}
 #else
@@ -194,18 +180,14 @@ int main(int ac, char **av)
 #endif
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -226,7 +208,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *				 completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

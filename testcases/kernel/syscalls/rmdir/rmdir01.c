@@ -70,15 +70,15 @@ void cleanup();
 
 #define PERMS		0777
 
-char *TCID = "rmdir01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "rmdir01";
+int TST_TOTAL = 1;
 
 char tstdir[100];
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	struct stat buf;
 
 	/*
@@ -98,7 +98,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * TEST rmdir() base functionality
@@ -120,33 +120,23 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			/* check whether tstdir been removed */
-			if (stat(tstdir, &buf) != -1) {
-				tst_resm(TFAIL, "directory %s still exists",
-					 tstdir);
-				continue;
-			} else {
-				tst_resm(TPASS, "directory has been removed");
-			}
+		if (stat(tstdir, &buf) != -1) {
+			tst_resm(TFAIL, "directory %s still exists",
+				 tstdir);
+			continue;
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			tst_resm(TPASS, "directory has been removed");
 		}
-
 	}
 
-	/*
-	 * cleanup and exit
-	 */
 	cleanup();
 	tst_exit();
-
 }
 
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -163,7 +153,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *              completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

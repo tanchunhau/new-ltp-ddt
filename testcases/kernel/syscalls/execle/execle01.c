@@ -122,10 +122,10 @@
 void setup();
 void cleanup();
 
-char *TCID = "execle01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "execle01";
+int TST_TOTAL = 1;
 
-int exp_enos[] = { 0, 0 };	/* Zero terminated list of expected errnos */
+int exp_enos[] = { 0, 0 };
 
 pid_t pid;			/* process id from fork */
 int status;			/* status returned from waitpid */
@@ -133,7 +133,7 @@ int status;			/* status returned from waitpid */
 int main(int ac, char **av, char **environ)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -144,7 +144,7 @@ int main(int ac, char **av, char **environ)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		switch (pid = FORK_OR_VFORK()) {
 		case 0:	/* CHILD - Call execle(2) */
@@ -159,12 +159,9 @@ int main(int ac, char **av, char **environ)
 				tst_brkm(TBROK | TERRNO, cleanup,
 					 "waitpid failed");
 			if (WIFEXITED(status)) {
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "execle - properly exec's a "
-						 "simple program..");
-				}
+				tst_resm(TPASS,
+					 "execle - properly exec's a "
+					 "simple program..");
 			} else
 				tst_resm(TFAIL,
 					 "child process exited abnormally; wait "
@@ -179,7 +176,7 @@ int main(int ac, char **av, char **environ)
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -195,7 +192,7 @@ The TEST macro is NOT used.");
 	tst_tmpdir();
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

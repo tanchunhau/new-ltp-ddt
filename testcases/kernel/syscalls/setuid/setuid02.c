@@ -112,26 +112,26 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
-
 #include <sys/types.h>
 
 #include "test.h"
 #include "usctest.h"
+#include "compat_16.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "setuid02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "setuid02";
+int TST_TOTAL = 1;
 
-int exp_enos[] = { 0, 0 };	/* Zero terminated list of expected errnos */
+int exp_enos[] = { 0, 0 };
 
-int uid;			/* current user id */
+uid_t uid;			/* current user id */
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
     /***************************************************************
      * parse standard options
@@ -151,9 +151,10 @@ int main(int ac, char **av)
      * check looping state if -c option given
      ***************************************************************/
 	uid = getuid();
+	UID16_CHECK(uid, setuid, cleanup);
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * TEST CASE:
@@ -161,7 +162,7 @@ int main(int ac, char **av)
 		 */
 
 		/* Call setuid(2) */
-		TEST(setuid(uid));
+		TEST(SETUID(cleanup, uid));
 
 		/* check return code */
 		if (TEST_RETURN == -1) {
@@ -170,33 +171,23 @@ int main(int ac, char **av)
 				 "setuid -  Set the effective user ID to the current real uid failed, errno=%d : %s",
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-	    /***************************************************************
-	     * only perform functional verification if flag set (-f not given)
-	     ***************************************************************/
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS,
-					 "setuid -  Set the effective user ID to the current real uid returned %ld",
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS,
+				 "setuid -  Set the effective user ID to the current real uid returned %ld",
+				 TEST_RETURN);
 		}
 
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -204,17 +195,13 @@ void setup()
 
 	/* make a temp dir and cd to it */
 	tst_tmpdir();
-
-	/* must be root */
-	if (geteuid() != 0)
-		tst_brkm(TBROK, cleanup, "Must be root for this test!");
 }
 
 /***************************************************************
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

@@ -68,7 +68,6 @@
 #include "../utils/include_j_h.h"
 #include "../utils/common_j_h.c"
 
-/* Harness Specific Include Files. */
 #include "ltp_signal.h"
 #include "test.h"
 #include "usctest.h"
@@ -79,9 +78,9 @@
 #define POLLRDHUP 0x2000
 #endif
 
-char *TCID = "ppoll01";		/* Test program identifier. */
+char *TCID = "ppoll01";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 void sighandler(int sig)
 {
@@ -91,14 +90,14 @@ void sighandler(int sig)
 		tst_brkm(TBROK, NULL, "received unexpected signal %d", sig);
 }
 
-void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
 	tst_rmdir();
 }
 
-void setup()
+void setup(void)
 {
 	tst_sig(FORK, sighandler, cleanup);
 
@@ -312,7 +311,8 @@ static int do_test(struct test_case *tc)
 	 * Execute system call
 	 */
 	errno = 0;
-	sys_ret = syscall(__NR_ppoll, p_fds, nfds, p_ts, p_sigmask, SIGSETSIZE);
+	sys_ret = ltp_syscall(__NR_ppoll, p_fds, nfds, p_ts, p_sigmask,
+		SIGSETSIZE);
 	sys_errno = errno;
 	if (sys_ret <= 0 || tc->ret < 0)
 		goto TEST_END;

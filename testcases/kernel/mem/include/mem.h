@@ -14,6 +14,20 @@
 #define PATH_SYS_SYSTEM		"/sys/devices/system"
 #define PATH_SYSVM		"/proc/sys/vm/"
 #define PATH_MEMINFO		"/proc/meminfo"
+#define BITS_PER_LONG           (8 * sizeof(long))
+
+static inline void set_node(unsigned long *array, unsigned int node)
+{
+	array[node / BITS_PER_LONG] |= 1UL << (node % BITS_PER_LONG);
+}
+
+static inline void clean_node(unsigned long *array)
+{
+	unsigned int i;
+
+	for (i = 0; i < MAXNODES / BITS_PER_LONG; i++)
+		array[i] &= 0UL;
+}
 
 /* OOM */
 
@@ -25,22 +39,31 @@
 #define KSM			4
 
 long overcommit;
-void oom(int testcase, int mempolicy, int lite);
-void testoom(int mempolicy, int lite, int numa);
+void oom(int testcase, int lite, int retcode, int allow_sigkill);
+void testoom(int mempolicy, int lite, int retcode, int allow_sigkill);
 
 /* KSM */
 
 #define PATH_KSM		"/sys/kernel/mm/ksm/"
 
+void test_ksm_merge_across_nodes(unsigned long nr_pages);
+
+/* THP */
+
+#define PATH_THP		"/sys/kernel/mm/transparent_hugepage/"
+#define PATH_KHPD		PATH_THP "khugepaged/"
+
+int opt_nr_children, opt_nr_thps;
+char *opt_nr_children_str, *opt_nr_thps_str;
+void test_transparent_hugepage(int nr_children, int nr_thps,
+			       int hg_aligned, int mempolicy);
+void check_thp_options(int *nr_children, int *nr_thps);
+void thp_usage(void);
+
 /* HUGETLB */
 
 #define PATH_SHMMAX		"/proc/sys/kernel/shmmax"
 
-/*
- * memory pointer to identify per process, MB unit, and byte like
- * memory[process No.][MB unit No.][byte No.].
- */
-char ***memory;
 void write_memcg(void);
 void create_same_memory(int size, int num, int unit);
 int  opt_num, opt_size, opt_unit;
@@ -54,6 +77,7 @@ void ksm_usage(void);
 #define CPATH_NEW		CPATH "/1"
 #define MEMCG_PATH		"/dev/cgroup"
 #define MEMCG_PATH_NEW		MEMCG_PATH "/1"
+#define MEMCG_LIMIT		MEMCG_PATH_NEW "/memory.limit_in_bytes"
 #define MEMCG_SW_LIMIT		MEMCG_PATH_NEW "/memory.memsw.limit_in_bytes"
 #if HAVE_SYS_EVENTFD_H
 #define PATH_OOMCTRL		MEMCG_PATH_NEW "/memory.oom_control"
@@ -72,8 +96,6 @@ int  path_exist(const char *path, ...);
 long read_meminfo(char *item);
 void set_sys_tune(char *sys_file, long tune, int check);
 long get_sys_tune(char *sys_file);
-void write_file(char *filename, char *buf);
-void read_file(char *filename, char *retbuf);
 void cleanup(void);
 void setup(void);
 

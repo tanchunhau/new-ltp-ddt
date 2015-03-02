@@ -59,7 +59,7 @@ static void help(void);
 int main(int argc, char **argv)
 {
 	int lc, status;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, options, &help);
 	if (msg != NULL)
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		if (pipe(pipe_fd) < 0)
 			tst_brkm(TBROK | TERRNO, cleanup, "pipe");

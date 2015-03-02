@@ -188,8 +188,8 @@ void checklist_reset(int bit);
 
 inline int k_sigaction(int sig, struct sigaction *sa, struct sigaction *osa);
 
-char *TCID = "kill10";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "kill10";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0, 0 };
 
@@ -218,7 +218,7 @@ option_t options[] = {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int cnt;
 
 	if ((msg = parse_opts(ac, av, options, &help))) {
@@ -248,7 +248,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 		child_signal_counter = 0;
 		pgrps_ready = 0;
 		checklist_reset(0x03);
@@ -279,7 +279,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void help()
+void help(void)
 {
 	printf("  -g n    Create n process groups (default: %d)\n", num_pgrps);
 	printf
@@ -288,7 +288,7 @@ void help()
 	printf("  -d n    Set debug level to n (default: %d)\n", debug_flag);
 }
 
-void setup()
+void setup(void)
 {
 	struct sigaction sa;
 	int i;
@@ -429,7 +429,7 @@ void ack_done(int sig, siginfo_t * si, void *data)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	int i;
 	/* send SIGHUP to all pgroups */

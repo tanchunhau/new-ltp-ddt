@@ -131,7 +131,7 @@ int fd;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -143,7 +143,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call dup(2)
@@ -156,12 +156,8 @@ int main(int ac, char **av)
 			tst_resm(TFAIL, "dup(%s) Failed, errno=%d : %s",
 				 filename, TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS, "dup(%s) returned %ld",
-					 filename, TEST_RETURN);
-			}
+			tst_resm(TPASS, "dup(%s) returned %ld",
+				 filename, TEST_RETURN);
 
 			/* close the new file so loops do not open too many files */
 			if (close(TEST_RETURN) == -1) {
@@ -173,11 +169,10 @@ int main(int ac, char **av)
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	fd = -1;
 
@@ -192,7 +187,7 @@ void setup()
 		tst_brkm(TBROK | TERRNO, cleanup, "open failed");
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

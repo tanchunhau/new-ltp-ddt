@@ -96,7 +96,7 @@ void cleanup(void)
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 	kernel_timer_t created_timer_id;	/* holds the returned timer_id */
 	char *message[] = {
 		"SIGEV_SIGNAL",
@@ -104,7 +104,7 @@ int main(int ac, char **av)
 		"SIGEV_NONE"
 	};
 
-	if ((msg = parse_opts(ac, av, (option_t *) NULL, NULL)) != (char *)NULL) {
+	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 	}
 
@@ -112,12 +112,12 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
 			setup_test(i);
-			TEST(syscall(__NR_timer_create, CLOCK_MONOTONIC,
+			TEST(ltp_syscall(__NR_timer_create, CLOCK_MONOTONIC,
 				     evp_ptr, &created_timer_id));
 
 			tst_resm((TEST_RETURN == 0 ? TPASS : TFAIL | TTERRNO),

@@ -28,7 +28,7 @@
 #define TIMELEFT 5
 #define ACCEPTABLEDELTA 1
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct sigevent ev;
 	timer_t tid;
@@ -62,12 +62,9 @@ int main(int argc, char *argv[])
 	if (abs(oits.it_value.tv_sec - TIMELEFT) <= ACCEPTABLEDELTA) {
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		printf("Test FAILED:  time left %d oits.it_value.tv_sec %d\n",
-		       TIMELEFT, (int)oits.it_value.tv_sec);
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("Test FAILED:  time left %d oits.it_value.tv_sec %d\n",
+	       TIMELEFT, (int)oits.it_value.tv_sec);
+	return PTS_FAIL;
 }
