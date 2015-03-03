@@ -163,7 +163,6 @@ int main(int ac, char **av)
 
 static void help(void)
 {
-
 	printf("  -D <tty device> : for example, /dev/tty[0-9]\n");
 }
 

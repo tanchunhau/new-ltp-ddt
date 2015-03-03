@@ -165,8 +165,6 @@ static long count_maps(pid_t pid)
 			continue;
 		map_count++;
 	}
-	/* exclude vdso and vsyscall */
-        map_count -= 2;
 	fclose(fp);
 
 	return map_count;

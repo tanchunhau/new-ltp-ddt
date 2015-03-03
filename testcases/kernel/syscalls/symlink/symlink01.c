@@ -1500,7 +1500,6 @@ void do_chdir(struct all_test_cases *tc_ptr)
 
 			char *cwd, *getcwd();
 			char expected_location[PATH_MAX];
-			char expected_alt_location[PATH_MAX];
 			/*
 			 *  Build expected current directory position
 			 */

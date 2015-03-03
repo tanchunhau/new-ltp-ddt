@@ -101,6 +101,5 @@ void cleanup(void)
 int main(void)
 {
 	tst_brkm(TCONF, NULL, "no NUMA development packages installed.");
-	tst_exit();
 }
 #endif

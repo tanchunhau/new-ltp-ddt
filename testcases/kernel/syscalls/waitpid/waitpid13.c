@@ -382,7 +382,6 @@ static void do_exit(void)
 #ifdef UCLINUX
 static void do_exit_uclinux(void)
 {
-
 	setup_sigint();
 	do_exit();
 }

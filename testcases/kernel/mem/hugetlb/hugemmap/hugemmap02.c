@@ -106,9 +106,6 @@ int main(int ac, char **av)
 	page_sz = getpagesize();
 	map_sz = read_meminfo("Hugepagesize:") * 1024 * 2;
 
-	page_sz = getpagesize();
-	map_sz = 2 * 1024 * hugepages_size();
-
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {

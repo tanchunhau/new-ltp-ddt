@@ -24,8 +24,6 @@
 
 #define _GNU_SOURCE
 
-#define _GNU_SOURCE
-
 #include <errno.h>
 #include <sched.h>
 #include <sys/wait.h>

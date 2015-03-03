@@ -122,13 +122,6 @@ int mkfile(int size)
 	if (write(fd, "\0", 1) == -1)
 		tst_brkm(TBROK | TERRNO, NULL, "write() failed");
 
-	for (i = 0; i < size; i++)
-		if (write(fd, "a", 1) == -1)
-			tst_brkm(TBROK|TERRNO, NULL, "write() failed");
-	
-	if (write(fd, "\0", 1) == -1)
-		tst_brkm(TBROK|TERRNO, NULL, "write() failed");
-		
 	if (fsync(fd) == -1)
 		tst_brkm(TBROK | TERRNO, NULL, "fsync() failed");
 

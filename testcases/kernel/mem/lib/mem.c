@@ -1075,4 +1075,3 @@ void update_shm_size(size_t * shm_size)
 		*shm_size = shmmax;
 	}
 }
-
