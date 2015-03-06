@@ -193,11 +193,7 @@
    for Arago Toolchain: CROSS_COMPILE=arm-none-linux-gnueabi-;
    for Linaro Toolchain: CROSS_COMPILE=arm-linux-gnueabihf-
 
- * cd to project root directory
- * $ cp include/config.h.default include/config.h
- * $ cp include/mk/config.mk.default include/mk/config.mk
- * $ cp include/mk/features.mk.default include/mk/features.mk
- * echo "ltp-ddt_x.x.x" > ChangeLog
+ == Checks before compilation ==
  * Update testcases/ddt/alsa_test_suite/Makefile with alsa include and 
    lib paths.
    For example:
@@ -215,20 +211,32 @@
         $make CROSS_COMPILE=arm-none-linux-gnueabi- <defconfig>
         $make CROSS_COMPILE=arm-none-linux-gnueabi- uImage modules
         $make CROSS_COMPILE=arm-none-linux-gnueabi- headers_install
- * cd to ltp-ddt root directory do
-   $ make CROSS_COMPILE=<CC PREFIX> SKIP_IDCHECK=1 KERNEL_INC=<Kernel
-     include directory> KERNEL_USR_INC=<Kernel usr include directory>
-     PLATFORM=<Platform name>
-   For Example:
-   $ make CROSS_COMPILE=arm-none-linux-gnueabi- SKIP_IDCHECK=1 KERNEL_USR_INC=/home/
-   a0850405local/oe/arago-tmp/sysroots/armv7te-none-linux-gnueabi/kernel/usr/include KERNEL_INC=/home/a0850405local/oe/arago-tmp/sysroots/armv5te-none-linux-gnueabi/kernel/include PLATFORM=am335x-evm
-   Also build ltp-ddt test modules like edma and gpio
-   $ make CROSS_COMPILE=<CC PREFIX> SKIP_IDCHECK=1 KERNEL_INC=<Kernel
-     include directory> KERNEL_USR_INC=<Kernel usr include directory>
-     PLATFORM=<Platform name> modules
+
+ == Builds steps ==
+make autotools
+
+export CROSS_COMPILER=arm-linux-gnueabihf-
+export CC=${CROSS_COMPILER}gcc
+export LD=${CROSS_COMPILER}ld
+export AR=${CROSS_COMPILER}ar
+export STRIP=${CROSS_COMPILER}strip
+export RANLIB=${CROSS_COMPILER}ranlib
+
+./configure --host=arm-linux-gnueabihf
+
+make SKIP_IDCHECK=1 KERNEL_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/include KERNEL_USR_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/usr/include CROSS_COMPILE=arm-linux-gnueabihf- PLATFORM=am335x-evm clean 
+
+make SKIP_IDCHECK=1 KERNEL_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/include KERNEL_USR_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/usr/include CROSS_COMPILE=arm-linux-gnueabihf- PLATFORM=am335x-evm  
+
+make SKIP_IDCHECK=1 KERNEL_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/include KERNEL_USR_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/usr/include CROSS_COMPILE=arm-linux-gnueabihf- PLATFORM=am335x-evm modules 
+
+ == Install Step ==
    $ sudo make DESTDIR=<destination directory> SKIP_IDCHECK=1 PLATFORM=<Platform name> install
    For example:
    $sudo make DESTDIR=/opt/filesystem/home/root/ltp-ddt-install SKIP_IDCHECK=1 PLATFORM=am335x-evm install
+
+For more information about autotools, please check the tutorial to GNU MAKE tools
+http://www.gnu.org/software/automake/manual/html_node/index.html#SEC_Contents
 
 7) HOW TO INSTALL ALSA INCLUDES AND LIBS
    Install following packages on to your filesystem
