@@ -287,8 +287,37 @@ usbhostmsc, usbhosthid, usbhostaudio, usbhostvideo, usbslavefbs, usbslavecdc, us
 * Storage Related:
 sd, sdhc, mmc, sata
 
+10) How to merge LTP to LTP-DDT
+================================================================================
+* fetch LTP using LTP release label. Ex: ltp-20150119
+git fetch https://github.com/linux-test-project/ltp master:new_branch
+git checkout new_branch
+git checkout -b ltp-20150119 20150119
 
-10) HELP/SUPPORT
+* merge LTP release into 'ltp' branch
+git checkout ltp
+git merge -X theirs ltp-20150119 
+git status
+resolve conflicts if there is any
+git commit
+
+* delete files which were deleted in LTP from 'ltp' branch
+git diff ltp..ltp-20150119 --summary > diff_between_ltp_and_ltp-20150119.txt
+write a script to delete and 'git rm' the files which are being deleted by LTP
+git commit
+
+* merge ltp branch to 'next' branch
+git checkout next
+git merge ltp
+git status
+resolve conflicts if there is any
+git commit
+
+* compare files between 'next' and 'ltp' and overwrite the files in 'next' for non-ddt files if there is any diff
+
+* build/test new ltp-ddt
+
+11) HELP/SUPPORT
 ================================================================================
    Please submit your queries or comments to the opentest mailing list at 
    opentest@arago-project.org
