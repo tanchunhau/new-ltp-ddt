@@ -20,8 +20,8 @@ INCLUDES        = -I $(KERNEL_INC) -I src/interface/common -I ../utils/user
 INCLUDES        = -I src/parser \
                   -I src/interface/common \
                   -I ../utils/user \
-                  -I $(KERNEL_INC)/include \
-                  -I $(KERNEL_INC)/arch/arm/include
+                  -I $(KERNEL_INC)/include/generated \
+                  -I $(KERNEL_INC)/arch/arm/include/generated
 
 #List of source files- Update this on adding a new C file
 SOURCES := \
