@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "librpc01.h"
 
 int program = 2000333;
 int version = 10;
@@ -17,15 +18,6 @@ char *file_name = NULL;
 char host_name[100];
 long host_address;
 
-struct data {
-	long address;
-	long request_id;
-	long data_length;
-	char *data;
-};
-
-int xdr_receive_data(XDR *, struct data **);
-int xdr_send_data(XDR *, struct data *);
 void do_compare(int, char *, struct data *, char *);
 void usage_error(char *program_name);
 
@@ -95,13 +87,13 @@ int main(int argc, char *argv[])
 		usage_error(argv[0]);
 	}
 	hp = gethostbyname(server);
-	if (hp == (struct hostent *)NULL) {
+	if (hp == NULL) {
 		fprintf(stderr, "server %s unknown\n", server);
 		usage_error(argv[0]);
 	}
 	memset(&server_sin, 0x00, sizeof(server_sin));
 	server_sin.sin_family = AF_INET;
-	memcpy((char *)&server_sin.sin_addr, hp->h_addr, sizeof(hp->h_addr));
+	memcpy(&server_sin.sin_addr, hp->h_addr, sizeof(hp->h_addr));
 
 	if (!file_name) {
 		fprintf(stderr, "file name not given\n");
@@ -128,13 +120,14 @@ int main(int argc, char *argv[])
 		usage_error(argv[0]);
 	}
 
-	buffer.data = (char *)malloc(buffer.data_length);
+	buffer.data = malloc(buffer.data_length);
 	for (i = 0, p = buffer.data; i < buffer.data_length; i++, p++)
 		*p = getc(fp);
 	fclose(fp);
 
-	rc = callrpc(server, program, version, 1, xdr_send_data, &buffer,
-		     xdr_receive_data, &return_buffer);
+	rc = callrpc(server, program, version, 1, (xdrproc_t)xdr_send_data,
+			(char *)&buffer, (xdrproc_t)xdr_receive_data,
+			(char *)&return_buffer);
 	do_compare(rc, "callrpc", &buffer, return_buffer->data);
 
 	server_sin.sin_port = 0;
@@ -142,28 +135,30 @@ int main(int argc, char *argv[])
 	timeout.tv_usec = 0;
 	timeout.tv_sec = 10;
 	clnt = clntudp_create(&server_sin, program, version, timeout, &sock);
-	if (clnt == (CLIENT *) NULL) {
+	if (clnt == NULL) {
 		fprintf(stderr, "clntudp_create failed\n");
 		exit(1);
 	}
 	timeout.tv_usec = 0;
 	timeout.tv_sec = 30;
-	rc = (int)clnt_call(clnt, 1, xdr_send_data, &buffer,
-			    xdr_receive_data, &return_buffer, timeout);
+	rc = (int)clnt_call(clnt, 1, (xdrproc_t)xdr_send_data,
+				(char *)&buffer, (xdrproc_t)xdr_receive_data,
+				(char *)&return_buffer, timeout);
 	clnt_destroy(clnt);
 	do_compare(rc, "udp transport", &buffer, return_buffer->data);
 
 	server_sin.sin_port = 0;
 	sock = RPC_ANYSOCK;
 	clnt = clnttcp_create(&server_sin, program, version, &sock, 0, 0);
-	if (clnt == (CLIENT *) NULL) {
+	if (clnt == NULL) {
 		fprintf(stderr, "clntudp_create failed\n");
 		exit(1);
 	}
 	timeout.tv_usec = 0;
 	timeout.tv_sec = 30;
-	rc = (int)clnt_call(clnt, 1, xdr_send_data, &buffer,
-			    xdr_receive_data, &return_buffer, timeout);
+	rc = (int)clnt_call(clnt, 1, (xdrproc_t)xdr_send_data,
+				(char *)&buffer, (xdrproc_t)xdr_receive_data,
+				(char *)&return_buffer, timeout);
 	clnt_destroy(clnt);
 	do_compare(rc, "tcp transport", &buffer, return_buffer->data);
 
@@ -185,35 +180,6 @@ void do_compare(int rpc_rc, char *msg, struct data *buffer, char *ret_data)
 		printf("Data compare for %s returned %d\n", msg, rc);
 		exit(1);
 	}
-}
-
-int xdr_receive_data(XDR * xdrs, struct data **buffer)
-{
-	struct data *bp;
-	int i, rc;
-	char *p;
-
-	bp = *buffer = (struct data *)malloc(sizeof(struct data));
-	rc = xdr_long(xdrs, &(bp->address));
-	rc = rc && xdr_long(xdrs, &bp->request_id);
-	rc = rc && xdr_long(xdrs, &bp->data_length);
-	p = (*buffer)->data = (char *)malloc(bp->data_length);
-	for (i = 0; rc && i < bp->data_length; p++, i++)
-		rc = xdr_char(xdrs, p);
-	return (rc);
-}
-
-int xdr_send_data(XDR * xdrs, struct data *buffer)
-{
-	int i, rc;
-	char *p;
-
-	rc = xdr_long(xdrs, &buffer->address);
-	rc = rc && xdr_long(xdrs, &buffer->request_id);
-	rc = rc && xdr_long(xdrs, &buffer->data_length);
-	for (i = 0, p = buffer->data; rc && i < buffer->data_length; i++, p++)
-		rc = xdr_char(xdrs, p);
-	return (rc);
 }
 
 void usage_error(char *program_name)

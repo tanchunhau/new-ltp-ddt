@@ -1,381 +1,218 @@
 /*
+ * Copyright (c) International Business Machines  Corp., 2001
+ * 07/2001 Ported by Wayne Boyer
  *
- *   Copyright (c) International Business Machines  Corp., 2001
+ * This program is free software;  you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   This program is free software;  you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ * the GNU General Public License for more details.
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+/*
+ * Description:
+ *   1) create a directory tstdir1, create a file under it.
+ *      call rmdir(tstdir1), verify the return value is -1
+ *      and the errno is ENOTEMPTY.
+ *   2) create a directory with long path, call rmdir(tstdir1),
+ *      verify the return value is -1 and the errno is ENAMETOOLONG.
+ *   3) pass a pathname containing non-exist directory component
+ *      to rmdir(), verify the return value is -1 and the errno
+ *      is ENOENT.
+ *   4) pass a pathname containing a file component to rmdir(),
+ *      verify the return value is -1 and the errno is ENOTDIR.
+ *   5) attempt to pass an invalid pathname with an address
+ *      pointing outside the address space of the process, as the
+ *      argument to rmdir(), verify the return value is -1 and
+ *      the errno is EFAULT.
+ *   6) attempt to pass an invalid pathname with NULL, as the
+ *      argument to rmdir(), verify the return value is -1 and
+ *      the errno is EFAULT.
+ *   7) pass a pathname with too many symbolic links to rmdir(),
+ *      verify the return value is -1 and the errno is ELOOP.
+ *   8) pass a pathname which refers to a directory on a read-only
+ *      file system to rmdir(), verify the return value is -1 and
+ *      the errno is EROFS.
+ *   9) pass a pathname which is currently used as a mount point
+ *      to rmdir(), verify the return value is -1 and the errno is
+ *      EBUSY.
  */
 
-/*
- * NAME
- *	rmdir02
- *
- * DESCRIPTION
- *	This test will verify that rmdir(2) fail in
- *      1. ENOTEMPTY
- *      2. ENAMETOOLONG
- *      3. ENOENT
- *      4. ENOTDIR
- *      5. EFAULT
- *      6. EFAULT
- *
- * ALGORITHM
- *	Setup:
- *		Setup signal handling.
- *		Pause for SIGUSR1 if option specified.
- *		Create temporary directory.
- *
- *	Test:
- *		Loop if the proper options are given.
- *              1. create a directory tstdir1, create a file under it.
- *                 call rmdir(tstdir1), verify the return value is not 0
- *                 and the errno is ENOTEMPTY
- *              2. create a directory with long path,
- *                 call rmdir(tstdir1), verify the return value is not 0
- *                 and the errno is ENAMETOOLONG
- *              3. pass a pathname containing non-exist directory component
- *                 to rmdir() and check the return value and errno (expect
- *                 ENOENT
- *              4. pass a pathname containing a file component
- *                 to rmdir() and check the return value and errno (expect
- *                 ENOTDIR
- *	        5. Attempt to pass an invalid pathname with an address
- *                 pointing outside the address space of the process,
- *                 as the argument to rmdir(), and expect to get EFAULT.
- *		6. Attempt to pass an invalid pathname with NULL
- *                 as the argument to rmdir(), and expect to get EFAULT.
- *
- *	Cleanup:
- *		Print errno log and/or timing stats if options given
- *		Delete the temporary directory created.
- *
- * USAGE
- *	rmdir02 [-c n] [-e] [-i n] [-I x] [-P x] [-t]
- *	where,  -c n : Run n copies concurrently.
- *		-e   : Turn on errno logging.
- *		-i n : Execute test n times.
- *		-I x : Execute test for x seconds.
- *		-P x : Pause for x seconds between iterations.
- *		-t   : Turn on syscall timing.
- *
- * HISTORY
- *	07/2001 Ported by Wayne Boyer
- *
- * RESTRICTIONS
- *	None.
- */
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <pwd.h>
+#include <sys/mount.h>
+
 #include "test.h"
 #include "usctest.h"
+#include "safe_macros.h"
 
-void setup();
-void cleanup();
-int create_longpath();
-void remove_longpath();
-void set_condition();
-void do_file_setup(char *);
+#define DIR_MODE	(S_IRWXU | S_IRWXG | S_IRWXO)
+#define FILE_MODE	(S_IRWXU | S_IRWXG | S_IRWXO)
 
-#define PERMS		0777
+#define TESTDIR		"testdir"
+#define TESTDIR2	"nosuchdir/testdir2"
+#define TESTDIR3	"testfile2/testdir3"
+#define TESTDIR4	"/loopdir"
+#define MNTPOINT	"mntpoint"
+#define TESTDIR5	"mntpoint/testdir5"
+#define TESTFILE    "testdir/testfile"
+#define TESTFILE2   "testfile2"
 
-char *TCID = "rmdir02";		/* Test program identifier.    */
+static char longpathname[PATH_MAX + 2];
+static char looppathname[sizeof(TESTDIR4) * 43] = ".";
 
-int exp_enos[] = { ENOTEMPTY, EBUSY, ENAMETOOLONG, ENOENT, ENOTDIR, EFAULT, 0 };
+static const char *device;
+static int mount_flag;
 
-char *bad_addr = 0;
-
-char tstfile[255];
-char tstdir1[255];
-char tstdir2[255];
-char tstdir3[255];
-char longname[255];
-char longpath[2 * PATH_MAX];
-char cwd[255];
-
-struct test_case_t {
+static struct test_case_t {
 	char *dir;
-	int error;
-	void (*set_cond) (int);
-} TC[] = {
-	/* The directory is not empty - ENOTEMPTY */
-	{
-	tstdir1, ENOTEMPTY, set_condition},
-	    /* The directory pathname is too long - ENAMETOOLONG */
-	{
-	longpath, ENAMETOOLONG, set_condition},
-	    /* A component of the pathname does not exists - ENOENT */
-	{
-	tstdir2, ENOENT, set_condition},
-	    /* The given argument is not a directory - ENOTDIR */
-	{
-	tstdir3, ENOTDIR, set_condition},
+	int exp_errno;
+} test_cases[] =  {
+	{TESTDIR, ENOTEMPTY},
+	{longpathname, ENAMETOOLONG},
+	{TESTDIR2, ENOENT},
+	{TESTDIR3, ENOTDIR},
 #if !defined(UCLINUX)
-	    /* The argument is illegal - EFAULT */
-	{
-	(char *)-1, EFAULT, NULL},
+	{(char *)-1, EFAULT},
 #endif
-	    /* The argument is illegal - EFAULT */
-	{
-	NULL, EFAULT, NULL}
+	{NULL, EFAULT},
+	{looppathname, ELOOP},
+	{TESTDIR5, EROFS},
+	{MNTPOINT, EBUSY},
 };
 
-int TST_TOTAL = (sizeof(TC) / sizeof(*TC));
+static void setup(void);
+static void rmdir_verify(struct test_case_t *tc);
+static void cleanup(void);
+
+char *TCID = "rmdir02";
+int TST_TOTAL = ARRAY_SIZE(test_cases);
+static int exp_enos[] = { ENOTEMPTY, ENAMETOOLONG, ENOENT, ENOTDIR,
+			EFAULT, ELOOP, EROFS, EBUSY, 0 };
 
 int main(int ac, char **av)
 {
-	int lc;
-	char *msg;
-	int i;
+	int i, lc;
+	const char *msg;
 
-	/*
-	 * parse standard options
-	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
+	msg = parse_opts(ac, av, NULL, NULL);
+	if (msg != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
 
-	/*
-	 * perform global setup for test
-	 */
 	setup();
 
-	/* set the expected errnos... */
 	TEST_EXP_ENOS(exp_enos);
 
-	/*
-	 * check looping state if -i option given
-	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
+		tst_count = 0;
 
-		Tst_count = 0;
-
-		/* save current working directory */
-		getcwd(cwd, 255);
-
-		/* loop through the test cases */
-		for (i = 0; i < TST_TOTAL; i++) {
-
-			/* make sure we start at the same place */
-			chdir(cwd);
-
-			if (TC[i].set_cond != NULL) {
-				TC[i].set_cond(i + 1);
-			}
-
-			TEST(rmdir(TC[i].dir));
-
-			if (TEST_RETURN != -1) {
-				tst_resm(TFAIL, "call succeeded unexpectedly");
-				continue;
-			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
-
-			if (TEST_ERRNO == TC[i].error) {
-				tst_resm(TPASS, "expected failure - "
-					 "errno = %d : %s", TEST_ERRNO,
-					 strerror(TEST_ERRNO));
-			} else {
-				tst_resm(TFAIL, "unexpected error - %d : %s - "
-					 "expected %d", TEST_ERRNO,
-					 strerror(TEST_ERRNO), TC[i].error);
-			}
-		}
-		/* clean up things in case we are looping */
-		(void)unlink(tstfile);
-
-		(void)rmdir(tstdir1);
-		(void)rmdir(tstdir2);
-		(void)rmdir(tstdir3);
-
+		for (i = 0; i < TST_TOTAL; i++)
+			rmdir_verify(&test_cases[i]);
 	}
 
-	/*
-	 * cleanup and exit
-	 */
 	cleanup();
 	tst_exit();
-
 }
 
-/*
- * set_condition - set up starting conditions for the individual tests
- */
-void set_condition(int num)
+static void setup(void)
 {
-	int fd;
-	switch (num) {
-	case 1:
-		/* set up for first test */
-		sprintf(tstdir1, "./tstdir1_%d", getpid());
-		sprintf(tstfile, "%s/tstfile_%d", tstdir1, getpid());
+	int i;
+	const char *fs_type;
 
-		/* create a directory */
-		if (mkdir(tstdir1, PERMS) == -1) {
-			tst_brkm(TBROK, cleanup, "mkdir(%s, %#o) Failed",
-				 tstdir1, PERMS);
-		}
-
-		/* create a file under tstdir1 */
-		do_file_setup(tstfile);
-
-		break;
-	case 2:
-		create_longpath();
-		break;
-	case 3:
-		/* Initialize the test directory name */
-		sprintf(tstdir2, "NOSUCHADIR/tstdir2.%d", getpid());
-
-		break;
-	case 4:
-		/* Initialize the test directory name and file name */
-		sprintf(tstdir3, "%s/tstdir3", tstfile);
-
-		/* create a file */
-		if ((fd = creat(tstfile, PERMS)) == -1) {
-			tst_brkm(TBROK, cleanup, "creat() failed");
-		}
-		close(fd);
-		break;
-	default:
-		tst_brkm(TBROK, cleanup, "illegal setup case - %d", num);
-		break;
-	}
-
-}
-
-int create_longpath()
-{
-	sprintf(longname,
-		"abcdefghivwxyzabcdefgmopqrsqrsrsthmopqrsqrsrstijklmnopjklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdabcdefghijklmopqrsqrsrstmnopqrqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyz_%d/",
-		getpid());
-
-	chdir(cwd);
-
-	while (strlen(longpath) < PATH_MAX) {
-		/*
-		 * if the longpath is not long enough
-		 * create a sub directory under it
-		 */
-		if (mkdir(longname, PERMS) == -1) {
-			tst_resm(TINFO, "mkdir failed in creae_longpath()");
-			break;
-		}
-		/*
-		 * save the path
-		 */
-		strcat(longpath, longname);
-
-		/*
-		 * cd to the sub directory
-		 */
-		if (chdir(longname) == -1) {
-			tst_resm(TINFO, "chdir failed in create_longpath()");
-			break;
-		}
-	}
-
-	/* resume original working directory */
-	chdir(cwd);
-
-	return (strlen(longpath) >= PATH_MAX) ? 0 : -1;
-}
-
-void remove_longpath()
-{
-	int len, i, j;
-	int path_len;
-
-	chdir(cwd);
-
-	len = strlen(longname);
-	path_len = strlen(longpath);
-
-	/*
-	 * Since we can't rm directory with long pathname directly,
-	 * we remove it's sub directories one by one.
-	 */
-	for (i = (path_len / len) - 1; i >= 0; i--) {
-		for (j = 1; j <= i; j++) {
-			if (chdir(longname) == -1) {
-				tst_resm(TFAIL,
-					 "failed in chdir %s, errno: %d ",
-					 longname, errno);
-				break;
-			}
-		}
-		if (rmdir(longname) == -1) {
-			tst_resm(TFAIL,
-				 "failed in clean %s, errno: %d",
-				 longname, errno);
-			break;
-		}
-		chdir(cwd);
-	}
-	/* resume original working directory */
-	chdir(cwd);
-}
-
-/*
- * setup() - performs all ONE TIME setup for this test.
- */
-void setup()
-{
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 
-	/* Create a temporary directory and make it current. */
 	tst_tmpdir();
 
-#if !defined(UCLINUX)
-	bad_addr = mmap(0, 1, PROT_NONE,
-			MAP_PRIVATE_EXCEPT_UCLINUX | MAP_ANONYMOUS, 0, 0);
-	if (bad_addr == MAP_FAILED) {
-		tst_brkm(TBROK, cleanup, "mmap failed");
+	fs_type = tst_dev_fs_type();
+	device = tst_acquire_device(cleanup);
+
+	if (!device)
+		tst_brkm(TCONF, cleanup, "Failed to acquire device");
+
+	tst_mkfs(cleanup, device, fs_type, NULL);
+	SAFE_MKDIR(cleanup, MNTPOINT, DIR_MODE);
+	if (mount(device, MNTPOINT, fs_type, 0, NULL) == -1) {
+		tst_brkm(TBROK | TERRNO, cleanup,
+			"mount device:%s failed", device);
 	}
-	TC[4].dir = bad_addr;
+	SAFE_MKDIR(cleanup, TESTDIR5, DIR_MODE);
+	if (mount(device, MNTPOINT, fs_type, MS_REMOUNT | MS_RDONLY,
+			NULL) == -1) {
+		tst_brkm(TBROK | TERRNO, cleanup,
+			"mount device:%s failed", device);
+	}
+	mount_flag = 1;
+
+	SAFE_MKDIR(cleanup, TESTDIR, DIR_MODE);
+	SAFE_TOUCH(cleanup, TESTFILE, FILE_MODE, NULL);
+
+	memset(longpathname, 'a', PATH_MAX + 1);
+
+	SAFE_TOUCH(cleanup, TESTFILE2, FILE_MODE, NULL);
+
+#if !defined(UCLINUX)
+	test_cases[4].dir = SAFE_MMAP(cleanup, 0, 1, PROT_NONE,
+		MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 #endif
+
+	/*
+	 * NOTE: the ELOOP test is written based on that the
+	 * consecutive symlinks limit in kernel is hardwired
+	 * to 40.
+	 */
+	SAFE_MKDIR(cleanup, "loopdir", DIR_MODE);
+	SAFE_SYMLINK(cleanup, "../loopdir", "loopdir/loopdir");
+	for (i = 0; i < 43; i++)
+		strcat(looppathname, TESTDIR4);
 }
 
-/*
- * cleanup() - performs all ONE TIME cleanup for this test at
- *              completion or premature exit.
- */
-void cleanup()
+static void rmdir_verify(struct test_case_t *tc)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
+	TEST(rmdir(tc->dir));
+
+	if (TEST_RETURN != -1) {
+		tst_resm(TFAIL, "rmdir() returned %ld, "
+			"expected -1, errno:%d", TEST_RETURN,
+			tc->exp_errno);
+		return;
+	}
+
+	TEST_ERROR_LOG(TEST_ERRNO);
+
+	if (TEST_ERRNO == tc->exp_errno) {
+		tst_resm(TPASS | TTERRNO, "rmdir() failed as expected");
+	} else {
+		tst_resm(TFAIL | TTERRNO,
+			"rmdir() failed unexpectedly; expected: %d - %s",
+			tc->exp_errno, strerror(tc->exp_errno));
+	}
+}
+
+static void cleanup(void)
+{
 	TEST_CLEANUP;
 
-	remove_longpath();
+	if (mount_flag && umount(MNTPOINT) == -1)
+		tst_resm(TWARN | TERRNO, "umount %s failed", MNTPOINT);
 
-	/*
-	 * Remove the temporary directory.
-	 */
+	if (device)
+		tst_release_device(NULL, device);
+
 	tst_rmdir();
-
-	/*
-	 * Exit with return code appropriate for results.
-	 */
-
 }

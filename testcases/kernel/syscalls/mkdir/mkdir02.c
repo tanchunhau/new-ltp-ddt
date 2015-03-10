@@ -83,8 +83,8 @@ extern struct passwd *my_getpwnam(char *);
 
 #define PERMS		0777
 
-char *TCID = "mkdir02";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "mkdir02";
+int TST_TOTAL = 1;
 
 char tstdir1[100];
 char tstdir2[100];
@@ -95,7 +95,7 @@ char user2name[] = "bin";
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	struct stat buf, buf1;
 	pid_t pid, pid1;
 	struct passwd *ltpuser1;
@@ -119,7 +119,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* check the inherited group ID */
 
@@ -310,12 +310,9 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
-	/* must run as root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, cleanup, "Must run this as root");
-	}
+	tst_require_root(NULL);
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
@@ -331,7 +328,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

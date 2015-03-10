@@ -73,7 +73,7 @@ int rfd, wfd;
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	struct stat buf;
 	int fail;
@@ -92,8 +92,8 @@ int main(int argc, char **argv)
 	 * The following loop checks looping state if -i option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		if (mknod(fifo, S_IFIFO | 0777, 0) < 0) {
 			tst_resm(TBROK, "mknod() failed, errno: %d", errno);
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 	tst_exit();
 }
 
-void alarm_handler()
+void alarm_handler(void)
 {
 	siglongjmp(jmp, 1);
 }
@@ -221,7 +221,6 @@ void setup(void)
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	/* Set up the expected error numbers for -e option */
 	TEST_EXP_ENOS(exp_enos);
 
 	/* Pause if that option was specified
@@ -239,7 +238,7 @@ void setup(void)
 
 }
 
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print errno log if that option was specified.

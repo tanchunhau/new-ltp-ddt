@@ -21,7 +21,7 @@
 
 #define TNAME "aio_fsync/9-1.c"
 
-int main()
+int main(void)
 {
 	char tmpfname[256];
 #define BUF_SIZE 111
@@ -70,6 +70,20 @@ int main()
 	if (aio_fsync(O_SYNC, &aiocb_fsync) != 0) {
 		printf(TNAME " Error at aio_fsync(): %s\n", strerror(errno));
 		exit(PTS_FAIL);
+	}
+
+	/* wait for aio_fsync */
+	do {
+		usleep(10000);
+		ret = aio_error(&aiocb_fsync);
+	} while (ret == EINPROGRESS);
+
+	ret = aio_return(&aiocb_fsync);
+	if (ret) {
+		printf(TNAME " Error at aio_return(): %d (%s)\n",
+			ret, strerror(errno));
+		close(fd);
+		return PTS_FAIL;
 	}
 
 	close(fd);

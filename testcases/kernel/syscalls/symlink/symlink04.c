@@ -82,20 +82,19 @@
 #define  SYMFILE	"slink_file"
 #define FILE_MODE       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 
-char *TCID = "symlink04";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "symlink04";
+int TST_TOTAL = 1;
 int exp_enos[] = { 0 };
 
-void setup();			/* Setup function for the test */
-void cleanup();			/* Cleanup function for the test */
+void setup();
+void cleanup();
 
 int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat structure buffer */
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -109,7 +108,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call symlink(2) to create a symlink of
@@ -124,32 +123,24 @@ int main(int ac, char **av)
 				 strerror(TEST_ERRNO));
 		} else {
 			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
+			 * Get the symlink file status information
+			 * using lstat(2).
 			 */
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Get the symlink file status information
-				 * using lstat(2).
-				 */
-				if (lstat(SYMFILE, &stat_buf) < 0) {
-					tst_brkm(TFAIL, cleanup, "lstat(2) of "
-						 "%s failed, error:%d", SYMFILE,
-						 errno);
-				}
+			if (lstat(SYMFILE, &stat_buf) < 0) {
+				tst_brkm(TFAIL, cleanup, "lstat(2) of "
+					 "%s failed, error:%d", SYMFILE,
+					 errno);
+			}
 
-				/* Check if the st_mode contains a link  */
-				if (!S_ISLNK(stat_buf.st_mode)) {
-					tst_resm(TFAIL,
-						 "symlink of %s doesn't exist",
-						 TESTFILE);
-				} else {
-					tst_resm(TPASS, "symlink(%s, %s) "
-						 "functionality successful",
-						 TESTFILE, SYMFILE);
-				}
+			/* Check if the st_mode contains a link  */
+			if (!S_ISLNK(stat_buf.st_mode)) {
+				tst_resm(TFAIL,
+					 "symlink of %s doesn't exist",
+					 TESTFILE);
 			} else {
-				tst_resm(TPASS, "Call succeeded");
+				tst_resm(TPASS, "symlink(%s, %s) "
+					 "functionality successful",
+					 TESTFILE, SYMFILE);
 			}
 		}
 
@@ -159,7 +150,7 @@ int main(int ac, char **av)
 				 "unlink(%s) Failed, errno=%d : %s",
 				 SYMFILE, errno, strerror(errno));
 		}
-		Tst_count++;	/* incr TEST_LOOP counter */
+		tst_count++;	/* incr TEST_LOOP counter */
 	}
 
 	cleanup();
@@ -173,7 +164,7 @@ int main(int ac, char **av)
  *  Create a temporary directory and change directory to it.
  *  Create a test file under temporary directory and close it
  */
-void setup()
+void setup(void)
 {
 	int fd;			/* file handle for testfile */
 
@@ -208,7 +199,7 @@ void setup()
  *             completion or premature exit.
  *  Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

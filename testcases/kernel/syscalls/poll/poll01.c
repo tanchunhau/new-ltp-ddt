@@ -73,8 +73,8 @@
 
 #define BUF_SIZE	512
 
-char *TCID = "poll01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "poll01";
+int TST_TOTAL = 1;
 
 int fildes[2];			/* file descriptors of the pipe. */
 struct pollfd fds[1];		/* struct. for poll() */
@@ -86,14 +86,13 @@ int main(int ac, char **av)
 {
 	int lc;			/* loop counters */
 	int length;		/* length of character string */
-	char *msg;
+	const char *msg;
 	pid_t cpid;		/* child process id */
 	char write_buf[] = "Testing";	/* buffer string for write */
 	char read_buf[BUF_SIZE];	/* buffer for read-end of pipe */
 	int status;		/* exit status of child process */
 	int rval;
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -101,7 +100,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call poll() with the TEST macro.
@@ -203,7 +202,7 @@ int main(int ac, char **av)
  * 	     Creat read/write pipe using pipe().
  * 	     Set poll data structures to check writing to the pipe.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -226,7 +225,7 @@ void setup()
  *             completion or premature exit.
  * 	       close read end of pipe if still open.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

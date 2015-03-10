@@ -44,17 +44,13 @@
 #include <sys/syscall.h>
 #include <linux/unistd.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "clock_nanosleep2_01";	/* Test program identifier. */
+char *TCID = "clock_nanosleep2_01";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -74,7 +70,7 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -101,7 +97,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -113,25 +109,24 @@ const clockid_t CLOCK_TO_USE = CLOCK_MONOTONIC;
 static int clock_nanosleep2(clockid_t clock_id, int flags,
 			    const struct timespec *req, struct timespec *rem)
 {
-	return syscall(__NR_clock_nanosleep, clock_id, flags, req, rem);
+	return ltp_syscall(__NR_clock_nanosleep, clock_id, flags, req, rem);
 }
 
 int main(int ac, char **av)
 {
 	int i;
 	int lc;
-	char *msg;
+	const char *msg;
 	struct timespec ts;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 			TEST(clock_gettime(CLOCK_TO_USE, &ts));
 			for (i = 0; i <= 50; i++) {
@@ -139,12 +134,10 @@ int main(int ac, char **av)
 				TEST(clock_nanosleep2
 				     (CLOCK_TO_USE, TIMER_ABSTIME, &ts, NULL));
 				if (TEST_ERRNO) {
-					tst_resm(TFAIL,
-						 "%s failed - errno = %d : %s",
+					tst_brkm(TFAIL,
+						 cleanup, "%s failed - errno = %d : %s",
 						 TCID, TEST_ERRNO,
 						 strerror(TEST_ERRNO));
-					cleanup();
-					tst_exit();
 				}
 				tst_resm(TINFO, "Iteration = %i", i);
 			}

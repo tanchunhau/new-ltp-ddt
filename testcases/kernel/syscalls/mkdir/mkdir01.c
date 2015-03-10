@@ -116,8 +116,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "mkdir01";		/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "mkdir01";
+int TST_TOTAL = 2;
 
 int exp_enos[] = { EFAULT, 0 };	/* List must end with 0 */
 
@@ -126,7 +126,7 @@ char *bad_addr = 0;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -138,7 +138,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * TEST CASE: 1
@@ -153,24 +153,22 @@ int main(int ac, char **av)
 			TEST_ERROR_LOG(TEST_ERRNO);
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			if (TEST_RETURN == -1) {
-				if (TEST_ERRNO == EFAULT) {
-					tst_resm(TPASS,
-						 "mkdir - path argument pointing below allocated address space failed as expected with errno %d : %s",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO));
-				} else {
-					tst_resm(TFAIL,
-						 "mkdir - path argument pointing below allocated address space failed with errno %d : %s but expected %d (EFAULT)",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO), EFAULT);
-				}
+		if (TEST_RETURN == -1) {
+			if (TEST_ERRNO == EFAULT) {
+				tst_resm(TPASS,
+					 "mkdir - path argument pointing below allocated address space failed as expected with errno %d : %s",
+					 TEST_ERRNO,
+					 strerror(TEST_ERRNO));
 			} else {
 				tst_resm(TFAIL,
-					 "mkdir - path argument pointing below allocated address space succeeded unexpectedly.");
-
+					 "mkdir - path argument pointing below allocated address space failed with errno %d : %s but expected %d (EFAULT)",
+					 TEST_ERRNO,
+					 strerror(TEST_ERRNO), EFAULT);
 			}
+		} else {
+			tst_resm(TFAIL,
+				 "mkdir - path argument pointing below allocated address space succeeded unexpectedly.");
+
 		}
 #if !defined(UCLINUX)
 		/*
@@ -186,24 +184,22 @@ int main(int ac, char **av)
 			TEST_ERROR_LOG(TEST_ERRNO);
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			if (TEST_RETURN == -1) {
-				if (TEST_ERRNO == EFAULT) {
-					tst_resm(TPASS,
-						 "mkdir - path argument pointing above allocated address space failed as expected with errno %d : %s",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO));
-				} else {
-					tst_resm(TFAIL,
-						 "mkdir - path argument pointing above allocated address space failed with errno %d : %s but expected %d (EFAULT)",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO), EFAULT);
-				}
+		if (TEST_RETURN == -1) {
+			if (TEST_ERRNO == EFAULT) {
+				tst_resm(TPASS,
+					 "mkdir - path argument pointing above allocated address space failed as expected with errno %d : %s",
+					 TEST_ERRNO,
+					 strerror(TEST_ERRNO));
 			} else {
 				tst_resm(TFAIL,
-					 "mkdir - path argument pointing above allocated address space succeeded unexpectedly.");
-
+					 "mkdir - path argument pointing above allocated address space failed with errno %d : %s but expected %d (EFAULT)",
+					 TEST_ERRNO,
+					 strerror(TEST_ERRNO), EFAULT);
 			}
+		} else {
+			tst_resm(TFAIL,
+				 "mkdir - path argument pointing above allocated address space succeeded unexpectedly.");
+
 		}
 #endif /* if !defined(UCLINUX) */
 
@@ -211,13 +207,12 @@ int main(int ac, char **av)
 
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -238,7 +233,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

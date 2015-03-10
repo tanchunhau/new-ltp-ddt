@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2000 Silicon Graphics, Inc.  All Rights Reserved.
- * Copyright (c) 2009, 2012 Cyril Hrubis <chrubis@suse.cz>
+ * Copyright (c) 2009-2013 Cyril Hrubis <chrubis@suse.cz>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -31,53 +31,23 @@
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  */
 
-/* $Id: tst_res.c,v 1.14 2009/12/01 08:57:20 yaberauneya Exp $ */
-
 /**********************************************************
  *
  *    OS Testing - Silicon Graphics, Inc.
  *
  *    FUNCTION NAME     :
- *      tst_res() -       Print result message (include file contents)
- *      tst_resm() -      Print result message
- *      tst_brk() -       Print result message (include file contents)
+ *      tst_res_() -       Print result message (include file contents)
+ *      tst_resm_() -      Print result message
+ *      tst_resm_hexd_() - Print result message (add buffer contents in hex)
+ *      tst_brk_() -       Print result message (include file contents)
  *                        and break remaining test cases
- *      tst_brkm() -      Print result message and break remaining test
+ *      tst_brkm_() -      Print result message and break remaining test
  *                        cases
  *      tst_flush() -     Print any messages pending in the output stream
  *      tst_exit() -      Exit test with a meaningful exit value.
  *      tst_environ() -   Keep results coming to original stdout
  *
  *    FUNCTION TITLE    : Standard automated test result reporting mechanism
- *
- *    SYNOPSIS:
- *      #include "test.h"
- *
- *      void tst_res(ttype, fname, tmesg [,arg]...)
- *      int  ttype;
- *      char *fname;
- *      char *tmesg;
- *
- *      void tst_resm(ttype, tmesg [,arg]...)
- *      int  ttype;
- *      char *tmesg;
- *
- *      void tst_brk(ttype, fname, cleanup, tmesg, [,argv]...)
- *      int  ttype;
- *      char *fname;
- *      void (*cleanup)();
- *      char *tmesg;
- *
- *      void tst_brkm(ttype, cleanup, tmesg [,arg]...)
- *      int  ttype;
- *      void (*cleanup)();
- *      char *tmesg;
- *
- *      void tst_flush()
- *
- *      void tst_exit()
- *
- *      int  tst_environ()
  *
  *    AUTHOR            : Kent Rogers (from Dave Fenner's original)
  *
@@ -92,6 +62,9 @@
  *
  *#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#**/
 
+#define _GNU_SOURCE		/* for asprintf */
+
+#include <pthread.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -99,13 +72,16 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #include "test.h"
 #include "usctest.h"
+#include "ltp_priv.h"
 
-/* Break bad habits. */
-#ifdef GARRETT_IS_A_PEDANTIC_BASTARD
-pid_t spawned_program_pid;
-#endif
+long TEST_RETURN;
+int TEST_ERRNO;
+struct usc_errno_t TEST_VALID_ENO[USC_MAX_ERRNO];
 
 #define VERBOSE      1		/* flag values for the T_mode variable */
 #define NOPASS       3
@@ -132,19 +108,21 @@ pid_t spawned_program_pid;
 	assert(strlen(buf) > 0);		\
 } while (0)
 
+static pthread_mutex_t tmutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+
 /*
  * Define local function prototypes.
  */
 static void check_env(void);
-static void tst_condense(int tnum, int ttype, char *tmesg);
-static void tst_print(char *tcid, int tnum, int ttype, char *tmesg);
-static void cat_file(char *filename);
+static void tst_condense(int tnum, int ttype, const char *tmesg);
+static void tst_print(const char *tcid, int tnum, int ttype, const char *tmesg);
+static void cat_file(const char *filename);
 
 /*
  * Define some static/global variables.
  */
 static FILE *T_out = NULL;	/* tst_res() output file descriptor */
-static char *File;		/* file whose contents is part of result */
+static const char *File;		/* file whose contents is part of result */
 static int T_exitval = 0;	/* exit value used by tst_exit() */
 static int T_mode = VERBOSE;	/* flag indicating print mode: VERBOSE, */
 			      /* NOPASS, DISCARD */
@@ -164,110 +142,80 @@ static char *Last_mesg;		/* previous test result message */
 /*
  * These globals may be externed by the test.
  */
-int Tst_count = 0;		/* current count of test cases executed; NOTE: */
-			/* Tst_count may be externed by other programs */
+int tst_count = 0;		/* current count of test cases executed; NOTE: */
+			/* tst_count may be externed by other programs */
 
 /*
  * These globals must be defined in the test.
  */
 extern char *TCID;		/* Test case identifier from the test source */
 extern int TST_TOTAL;		/* Total number of test cases from the test */
-			/* source */
+
 
 struct pair {
 	const char *name;
 	int val;
 };
-#define PAIR(def) [def] = { .name = #def, .val = def, },
-const char *pair_lookup(struct pair *pair, int pair_size, int idx)
-{
-	if (idx < 0 || idx >= pair_size || pair[idx].name == NULL)
-		return "???";
-	return pair[idx].name;
-}
 
-#define pair_lookup(pair, idx) pair_lookup(pair, ARRAY_SIZE(pair), idx)
+#define PAIR(def) [def] = {.name = #def, .val = def},
+#define STRPAIR(key, value) [key] = {.name = value, .val = key},
+
+#define PAIR_LOOKUP(pair_arr, idx) do {                       \
+	if (idx < 0 || (size_t)idx >= ARRAY_SIZE(pair_arr) || \
+	    pair_arr[idx].name == NULL)                       \
+		return "???";                                 \
+	return pair_arr[idx].name;                            \
+} while (0)
 
 /*
  * strttype() - convert a type result to the human readable string
  */
 const char *strttype(int ttype)
 {
-	struct pair ttype_pairs[] = {
+	static const struct pair ttype_pairs[] = {
 		PAIR(TPASS)
-		    PAIR(TFAIL)
-		    PAIR(TBROK)
-		    PAIR(TRETR)
-		    PAIR(TCONF)
-		    PAIR(TWARN)
-		    PAIR(TINFO)
+		PAIR(TFAIL)
+		PAIR(TBROK)
+		PAIR(TCONF)
+		PAIR(TWARN)
+		PAIR(TINFO)
 	};
-	return pair_lookup(ttype_pairs, TTYPE_RESULT(ttype));
+
+	PAIR_LOOKUP(ttype_pairs, TTYPE_RESULT(ttype));
 }
 
 /*
- * strerrnodef() - convert an errno value to its C define
+ * Include table of errnos and tst_strerrno() function.
  */
-static const char *strerrnodef(int err)
-{
-	struct pair errno_pairs[] = {
-		PAIR(EPERM)
-		    PAIR(ENOENT)
-		    PAIR(ESRCH)
-		    PAIR(EINTR)
-		    PAIR(EIO)
-		    PAIR(ENXIO)
-		    PAIR(E2BIG)
-		    PAIR(ENOEXEC)
-		    PAIR(EBADF)
-		    PAIR(ECHILD)
-		    PAIR(EAGAIN)
-		    PAIR(ENOMEM)
-		    PAIR(EACCES)
-		    PAIR(EFAULT)
-		    PAIR(ENOTBLK)
-		    PAIR(EBUSY)
-		    PAIR(EEXIST)
-		    PAIR(EXDEV)
-		    PAIR(ENODEV)
-		    PAIR(ENOTDIR)
-		    PAIR(EISDIR)
-		    PAIR(EINVAL)
-		    PAIR(ENFILE)
-		    PAIR(EMFILE)
-		    PAIR(ENOTTY)
-		    PAIR(ETXTBSY)
-		    PAIR(EFBIG)
-		    PAIR(ENOSPC)
-		    PAIR(ESPIPE)
-		    PAIR(EROFS)
-		    PAIR(EMLINK)
-		    PAIR(EPIPE)
-		    PAIR(EDOM)
-		    PAIR(ERANGE)
-		    PAIR(ENAMETOOLONG)
-	};
-	return pair_lookup(errno_pairs, err);
-}
+#include "errnos.h"
+
+/* Include table of signals and tst_strsig() function*/
+#include "signame.h"
 
 /*
- * tst_res() - Main result reporting function.  Handle test information
+ * tst_res_() - Main result reporting function.  Handle test information
  *             appropriately depending on output display mode.  Call
  *             tst_condense() or tst_print() to actually print results.
- *             All result functions (tst_resm(), tst_brk(), etc.)
+ *             All result functions (tst_resm_(), tst_brk_(), etc.)
  *             eventually get here to print the results.
  */
-void tst_res(int ttype, char *fname, char *arg_fmt, ...)
+void tst_res_(const char *file, const int lineno, int ttype,
+	const char *fname, const char *arg_fmt, ...)
 {
+	pthread_mutex_lock(&tmutex);
+
 	char tmesg[USERMESG];
+	int len = 0;
 	int ttype_result = TTYPE_RESULT(ttype);
 
 #if DEBUG
-	printf("IN tst_res; Tst_count = %d\n", Tst_count);
+	printf("IN tst_res_; tst_count = %d\n", tst_count);
 	fflush(stdout);
 #endif
 
-	EXPAND_VAR_ARGS(tmesg, arg_fmt, USERMESG);
+	if (file && (ttype_result != TPASS && ttype_result != TINFO))
+		len = sprintf(tmesg, "%s:%d: ", file, lineno);
+	EXPAND_VAR_ARGS(tmesg + len, arg_fmt, USERMESG - len);
 
 	/*
 	 * Save the test result type by ORing ttype into the current exit
@@ -298,9 +246,9 @@ void tst_res(int ttype, char *fname, char *arg_fmt, ...)
 	if (ttype_result == TWARN || ttype_result == TINFO) {
 		tst_print(TCID, 0, ttype, tmesg);
 	} else {
-		if (Tst_count < 0)
+		if (tst_count < 0)
 			tst_print(TCID, 0, TWARN,
-				  "tst_res(): Tst_count < 0 is not valid");
+				  "tst_res(): tst_count < 0 is not valid");
 
 		/*
 		 * Process each display type.
@@ -309,16 +257,17 @@ void tst_res(int ttype, char *fname, char *arg_fmt, ...)
 		case DISCARD:
 			break;
 		case NOPASS:	/* filtered by tst_print() */
-			tst_condense(Tst_count + 1, ttype, tmesg);
+			tst_condense(tst_count + 1, ttype, tmesg);
 			break;
 		default:	/* VERBOSE */
-			tst_print(TCID, Tst_count + 1, ttype, tmesg);
+			tst_print(TCID, tst_count + 1, ttype, tmesg);
 			break;
 		}
 
-		Tst_count++;
+		tst_count++;
 	}
 
+	pthread_mutex_unlock(&tmutex);
 }
 
 /*
@@ -328,9 +277,9 @@ void tst_res(int ttype, char *fname, char *arg_fmt, ...)
  *                  specified, print the current result and do not
  *                  buffer it.
  */
-static void tst_condense(int tnum, int ttype, char *tmesg)
+static void tst_condense(int tnum, int ttype, const char *tmesg)
 {
-	char *file;
+	const char *file;
 	int ttype_result = TTYPE_RESULT(ttype);
 
 #if DEBUG
@@ -368,11 +317,11 @@ static void tst_condense(int tnum, int ttype, char *tmesg)
 		tst_print(TCID, tnum, ttype, tmesg);
 		Buffered = FALSE;
 	} else {
-		Last_tcid = (char *)malloc(strlen(TCID) + 1);
+		Last_tcid = malloc(strlen(TCID) + 1);
 		strcpy(Last_tcid, TCID);
 		Last_num = tnum;
 		Last_type = ttype_result;
-		Last_mesg = (char *)malloc(strlen(tmesg) + 1);
+		Last_mesg = malloc(strlen(tmesg) + 1);
 		strcpy(Last_mesg, tmesg);
 		Buffered = TRUE;
 	}
@@ -384,6 +333,8 @@ static void tst_condense(int tnum, int ttype, char *tmesg)
  */
 void tst_flush(void)
 {
+	pthread_mutex_lock(&tmutex);
+
 #if DEBUG
 	printf("IN tst_flush\n");
 	fflush(stdout);
@@ -398,12 +349,14 @@ void tst_flush(void)
 	}
 
 	fflush(T_out);
+
+	pthread_mutex_unlock(&tmutex);
 }
 
 /*
  * tst_print() - Print a line to the output stream.
  */
-static void tst_print(char *tcid, int tnum, int ttype, char *tmesg)
+static void tst_print(const char *tcid, int tnum, int ttype, const char *tmesg)
 {
 	/*
 	 * avoid unintended side effects from failures with fprintf when
@@ -413,28 +366,7 @@ static void tst_print(char *tcid, int tnum, int ttype, char *tmesg)
 	const char *type;
 	int ttype_result = TTYPE_RESULT(ttype);
 	char message[USERMESG];
-	int size;
-
-#ifdef GARRETT_IS_A_PEDANTIC_BASTARD
-	/* Don't execute these APIs unless you have the same pid as main! */
-	if (spawned_program_pid != 0) {
-		/*
-		 * Die quickly and noisily so people get the cluebat that the
-		 * test needs to be fixed. These APIs should _not_ be called
-		 * from forked processes because of the fact that it can confuse
-		 * end-users with printouts, cleanup will potentially blow away
-		 * directories and/or files still in use introducing
-		 * non-determinism, etc.
-		 *
-		 * assert will not return (by design in accordance with POSIX
-		 * 1003.1) if the assertion fails. Read abort(3) for more
-		 * details. So don't worry about saving / restoring the signal
-		 * handler, unless you have a buggy OS that you've hacked 15
-		 * different ways to Sunday.
-		 */
-		assert(spawned_program_pid == getpid());
-	}
-#endif
+	size_t size;
 
 #if DEBUG
 	printf("IN tst_print: tnum = %d, ttype = %d, tmesg = %s\n",
@@ -482,7 +414,7 @@ static void tst_print(char *tcid, int tnum, int ttype, char *tmesg)
 
 	if (ttype & TERRNO) {
 		size += snprintf(message + size, sizeof(message) - size,
-				 ": errno=%s(%i): %s", strerrnodef(err),
+				 ": errno=%s(%i): %s", tst_strerrno(err),
 				 err, strerror(err));
 	}
 
@@ -494,8 +426,20 @@ static void tst_print(char *tcid, int tnum, int ttype, char *tmesg)
 	if (ttype & TTERRNO) {
 		size += snprintf(message + size, sizeof(message) - size,
 				 ": TEST_ERRNO=%s(%i): %s",
-				 strerrnodef(TEST_ERRNO), (int)TEST_ERRNO,
+				 tst_strerrno(TEST_ERRNO), (int)TEST_ERRNO,
 				 strerror(TEST_ERRNO));
+	}
+
+	if (size >= sizeof(message)) {
+		printf("%s: %i: line too long\n", __func__, __LINE__);
+		abort();
+	}
+
+	if (ttype & TRERRNO) {
+		size += snprintf(message + size, sizeof(message) - size,
+				 ": TEST_RETURN=%s(%i): %s",
+				 tst_strerrno(TEST_RETURN), (int)TEST_RETURN,
+				 strerror(TEST_RETURN));
 	}
 
 	if (size + 1 >= sizeof(message)) {
@@ -570,6 +514,8 @@ static void check_env(void)
  */
 void tst_exit(void)
 {
+	pthread_mutex_lock(&tmutex);
+
 #if DEBUG
 	printf("IN tst_exit\n");
 	fflush(stdout);
@@ -579,8 +525,58 @@ void tst_exit(void)
 	/* Call tst_flush() flush any output in the buffer. */
 	tst_flush();
 
-	/* Mask out TRETR, TINFO, and TCONF results from the exit status. */
-	exit(T_exitval & ~(TRETR | TINFO | TCONF));
+	/* Mask out TINFO result from the exit status. */
+	exit(T_exitval & ~TINFO);
+}
+
+pid_t tst_fork(void)
+{
+	pid_t child;
+
+	tst_flush();
+
+	child = fork();
+	if (child == 0)
+		T_exitval = 0;
+
+	return child;
+}
+
+void tst_record_childstatus(void (*cleanup)(void), pid_t child)
+{
+	int status, ttype_result;
+
+	if (waitpid(child, &status, 0) < 0)
+		tst_brkm(TBROK | TERRNO, cleanup, "waitpid(%d) failed", child);
+
+	if (WIFEXITED(status)) {
+		ttype_result = WEXITSTATUS(status);
+		ttype_result = TTYPE_RESULT(ttype_result);
+		T_exitval |= ttype_result;
+
+		if (ttype_result == TPASS)
+			tst_resm(TINFO, "Child process returned TPASS");
+
+		if (ttype_result & TFAIL)
+			tst_resm(TINFO, "Child process returned TFAIL");
+
+		if (ttype_result & TBROK)
+			tst_resm(TINFO, "Child process returned TBROK");
+
+		if (ttype_result & TCONF)
+			tst_resm(TINFO, "Child process returned TCONF");
+
+	} else {
+		tst_brkm(TBROK, cleanup, "child process(%d) killed by "
+			 "unexpected signal %s(%d)", child,
+			 tst_strsig(WTERMSIG(status)), WTERMSIG(status));
+	}
+}
+
+pid_t tst_vfork(void)
+{
+	tst_flush();
+	return vfork();
 }
 
 /*
@@ -589,10 +585,13 @@ void tst_exit(void)
  */
 int tst_environ(void)
 {
+	pthread_mutex_lock(&tmutex);
+	int ret = 0;
 	if ((T_out = fdopen(dup(fileno(stdout)), "w")) == NULL)
-		return -1;
-	else
-		return 0;
+		ret = -1;
+
+	pthread_mutex_unlock(&tmutex);
+	return ret;
 }
 
 /*
@@ -602,16 +601,19 @@ int tst_environ(void)
 static int tst_brk_entered = 0;
 
 /*
- * tst_brk() - Fail or break current test case, and break the remaining
+ * tst_brk_() - Fail or break current test case, and break the remaining
  *             tests cases.
  */
-void tst_brk(int ttype, char *fname, void (*func) (void), char *arg_fmt, ...)
+void tst_brk_(const char *file, const int lineno, int ttype, const char *fname,
+	void (*func)(void), const char *arg_fmt, ...)
 {
+	pthread_mutex_lock(&tmutex);
+
 	char tmesg[USERMESG];
 	int ttype_result = TTYPE_RESULT(ttype);
 
 #if DEBUG
-	printf("IN tst_brk\n");
+	printf("IN tst_brk_\n");
 	fflush(stdout);
 	fflush(stdout);
 #endif
@@ -622,7 +624,7 @@ void tst_brk(int ttype, char *fname, void (*func) (void), char *arg_fmt, ...)
 	 * Only FAIL, BROK, CONF, and RETR are supported by tst_brk().
 	 */
 	if (ttype_result != TFAIL && ttype_result != TBROK &&
-	    ttype_result != TCONF && ttype_result != TRETR) {
+	    ttype_result != TCONF) {
 		sprintf(Warn_mesg, "%s: Invalid Type: %d. Using TBROK",
 			__func__, ttype_result);
 		tst_print(TCID, 0, TWARN, Warn_mesg);
@@ -630,16 +632,16 @@ void tst_brk(int ttype, char *fname, void (*func) (void), char *arg_fmt, ...)
 		ttype = (ttype & ~ttype_result) | TBROK;
 	}
 
-	tst_res(ttype, fname, "%s", tmesg);
+	tst_res_(file, lineno, ttype, fname, "%s", tmesg);
 	if (tst_brk_entered == 0) {
-		if (ttype_result == TCONF)
-			tst_res(ttype, NULL,
+		if (ttype_result == TCONF) {
+			tst_res_(file, lineno, ttype, NULL,
 				"Remaining cases not appropriate for "
 				"configuration");
-		else if (ttype_result == TRETR)
-			tst_res(ttype, NULL, "Remaining cases retired");
-		else if (ttype_result == TBROK)
-			tst_res(TBROK, NULL, "Remaining cases broken");
+		} else if (ttype_result == TBROK) {
+			tst_res_(file, lineno, TBROK, NULL,
+				 "Remaining cases broken");
+		}
 	}
 
 	/*
@@ -654,12 +656,14 @@ void tst_brk(int ttype, char *fname, void (*func) (void), char *arg_fmt, ...)
 	if (tst_brk_entered == 0)
 		tst_exit();
 
+	pthread_mutex_unlock(&tmutex);
 }
 
 /*
- * tst_resm() - Interface to tst_res(), with no filename.
+ * tst_resm_() - Interface to tst_res(), with no filename.
  */
-void tst_resm(int ttype, char *arg_fmt, ...)
+void tst_resm_(const char *file, const int lineno, int ttype,
+	const char *arg_fmt, ...)
 {
 	char tmesg[USERMESG];
 
@@ -671,25 +675,74 @@ void tst_resm(int ttype, char *arg_fmt, ...)
 
 	EXPAND_VAR_ARGS(tmesg, arg_fmt, USERMESG);
 
-	tst_res(ttype, NULL, "%s", tmesg);
+	tst_res_(file, lineno, ttype, NULL, "%s", tmesg);
 }
 
 /*
- * tst_brkm() - Interface to tst_brk(), with no filename.
+ * tst_resm_hexd_() - Interface to tst_res(), with no filename.
+ * Also, dump specified buffer in hex.
  */
-void tst_brkm(int ttype, void (*func) (void), char *arg_fmt, ...)
+void tst_resm_hexd_(const char *file, const int lineno, int ttype,
+	const void *buf, size_t size, const char *arg_fmt, ...)
+{
+	pthread_mutex_lock(&tmutex);
+
+	char tmesg[USERMESG];
+
+#if DEBUG
+	printf("IN tst_resm_hexd_\n");
+	fflush(stdout);
+#endif
+
+	EXPAND_VAR_ARGS(tmesg, arg_fmt, USERMESG);
+
+	static const size_t symb_num	= 2; /* xx */
+	static const size_t size_max	= 16;
+	size_t offset = strlen(tmesg);
+	char *pmesg = tmesg;
+
+	if (size > size_max || size == 0 ||
+		(offset + size * (symb_num + 1)) >= USERMESG)
+		tst_res_(file, lineno, ttype, NULL, "%s", tmesg);
+	else
+		pmesg += offset;
+
+	size_t i;
+	for (i = 0; i < size; ++i) {
+		/* add space before byte except first one */
+		if (pmesg != tmesg)
+			*(pmesg++) = ' ';
+
+		sprintf(pmesg, "%02x", ((unsigned char *)buf)[i]);
+		pmesg += symb_num;
+		if ((i + 1) % size_max == 0 || i + 1 == size) {
+			tst_res_(file, lineno, ttype, NULL, "%s", tmesg);
+			pmesg = tmesg;
+		}
+	}
+
+	pthread_mutex_unlock(&tmutex);
+}
+
+/*
+ * tst_brkm_() - Interface to tst_brk(), with no filename.
+ */
+void tst_brkm_(const char *file, const int lineno, int ttype,
+	void (*func)(void), const char *arg_fmt, ...)
 {
 	char tmesg[USERMESG];
 
 #if DEBUG
-	printf("IN tst_brkm\n");
+	printf("IN tst_brkm_\n");
 	fflush(stdout);
 	fflush(stdout);
 #endif
 
 	EXPAND_VAR_ARGS(tmesg, arg_fmt, USERMESG);
 
-	tst_brk(ttype, NULL, func, "%s", tmesg);
+	tst_brk_(file, lineno, ttype, NULL, func, "%s", tmesg);
+	/* Shouldn't be reach, but fixes build time warnings about noreturn. */
+	abort();
 }
 
 /*
@@ -704,7 +757,7 @@ void tst_require_root(void (*func) (void))
 /*
  * cat_file() - Print the contents of a file to standard out.
  */
-static void cat_file(char *filename)
+static void cat_file(const char *filename)
 {
 	FILE *fp;
 	int b_read, b_written;
@@ -780,13 +833,13 @@ int main(void)
 	       %2i : call tst_res(TFAIL, ...)\n\
 	       %2i : call tst_res(TBROK, ...)\n\
 	       %2i : call tst_res(TWARN, ...)\n\
-	       %2i : call tst_res(TRETR, ...)\n\
 	       %2i : call tst_res(TINFO, ...)\n\
-	       %2i : call tst_res(TCONF, ...)\n\n", TPASS, TFAIL, TBROK, TWARN, TRETR, TINFO, TCONF);
+	       %2i : call tst_res(TCONF, ...)\n\n", TPASS, TFAIL, TBROK,
+	       TWARN, TINFO, TCONF);
 
 	while (1) {
-		printf("Enter ttype (-5,-4,-3,-2,-1,%i,%i,%i,%i,%i,%i,%i): ",
-		       TPASS, TFAIL, TBROK, TWARN, TRETR, TINFO, TCONF);
+		printf("Enter ttype(-5, -4, -3, -2, -1, %i, %i, %i, %i, %i, %i)"
+		       " : ", TPASS, TFAIL, TBROK, TWARN, TINFO, TCONF);
 		scanf("%d%c", &ttype, &chr);
 
 		switch (ttype) {
@@ -800,8 +853,8 @@ int main(void)
 
 		case -3:
 			printf
-			    ("Enter the current type (%i=FAIL, %i=BROK, %i=RETR, %i=CONF): ",
-			     TFAIL, TBROK, TRETR, TCONF);
+			    ("Enter the current type (%i=FAIL, %i=BROK, "
+			     "%i=CONF): ", TFAIL, TBROK, TCONF);
 			scanf("%d%c", &ttype, &chr);
 			printf("Enter file name (<cr> for none): ");
 			gets(fname);
@@ -814,8 +867,8 @@ int main(void)
 
 		case -4:
 			printf
-			    ("Enter the current type (%i,%i,%i,%i,%i,%i,%i): ",
-			     TPASS, TFAIL, TBROK, TWARN, TRETR, TINFO, TCONF);
+			    ("Enter the current type (%i,%i,%i,%i,%i,%i): ",
+			     TPASS, TFAIL, TBROK, TWARN, TINFO, TCONF);
 			scanf("%d%c", &ttype, &chr);
 		default:
 			printf("Enter file name (<cr> for none): ");

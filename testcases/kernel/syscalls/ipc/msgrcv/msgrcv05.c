@@ -87,7 +87,7 @@ pid_t c_pid;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -102,7 +102,7 @@ int main(int ac, char **av)
 		tst_brkm(TBROK, cleanup, "sync_pipe_create failed");
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * fork a child that will attempt to read a non-existent
@@ -152,7 +152,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void do_child()
+void do_child(void)
 {
 	if (sync_pipe_notify(sync_pipes) == -1)
 		tst_brkm(TBROK, cleanup, "sync_pipe_notify failed");
@@ -190,7 +190,7 @@ void sighandler(int sig)
 /*
  * do_child_uclinux() - capture signals again, then run do_child()
  */
-void do_child_uclinux()
+void do_child_uclinux(void)
 {
 	if (sync_pipe_create(sync_pipes, PIPE_NAME) == -1)
 		tst_brkm(TBROK, cleanup, "sync_pipe_create failed");

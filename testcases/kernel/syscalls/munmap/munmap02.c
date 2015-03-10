@@ -80,8 +80,8 @@
 
 #define TEMPFILE	"mmapfile"
 
-char *TCID = "munmap02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "munmap02";
+int TST_TOTAL = 1;
 
 size_t page_sz;			/* system page size */
 char *addr;			/* addr of memory mapped region */
@@ -97,15 +97,14 @@ void sig_handler();		/* signal catching function */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		setup();
 
@@ -123,25 +122,16 @@ int main(int ac, char **av)
 			continue;
 		}
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Check whether further reference is possible
+		 * to the unmapped memory region by writing
+		 * to the first byte of region with
+		 * some arbitrary number.
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Check whether further reference is possible
-			 * to the unmapped memory region by writing
-			 * to the first byte of region with
-			 * some arbitrary number.
-			 */
-			*addr = 50;
+		*addr = 50;
 
-			/* This message is printed if no SIGSEGV */
-			tst_resm(TFAIL, "process succeeds to refer unmapped "
-				 "memory region");
-		} else {
-			tst_resm(TPASS, "call succeeded");
-		}
-
+		/* This message is printed if no SIGSEGV */
+		tst_resm(TFAIL, "process succeeds to refer unmapped "
+			 "memory region");
 		cleanup();
 
 	}
@@ -150,7 +140,7 @@ int main(int ac, char **av)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "munmap02 test is not available on uClinux");
 	tst_exit();
@@ -165,7 +155,7 @@ int main()
  * write one byte data into it, map the open file for the specified
  * map length.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -173,7 +163,6 @@ void setup()
 	/* call signal function to trap the signal generated */
 	if (signal(SIGSEGV, sig_handler) == SIG_ERR) {
 		tst_brkm(TBROK, cleanup, "signal fails to catch signal");
-		tst_exit();
 	}
 
 	TEST_PAUSE;
@@ -182,7 +171,6 @@ void setup()
 	if ((page_sz = getpagesize()) < 0) {
 		tst_brkm(TBROK, cleanup,
 			 "getpagesize() fails to get system page size");
-		tst_exit();
 	}
 
 	/*
@@ -197,7 +185,6 @@ void setup()
 	if ((fildes = open(TEMPFILE, O_RDWR | O_CREAT, 0666)) < 0) {
 		tst_brkm(TBROK, cleanup, "open() on %s Failed, errno=%d : %s",
 			 TEMPFILE, errno, strerror(errno));
-		tst_exit();
 	}
 
 	/*
@@ -207,14 +194,12 @@ void setup()
 	if (lseek(fildes, map_len, SEEK_SET) == -1) {
 		tst_brkm(TBROK, cleanup, "lseek() fails on %s, errno=%d : %s",
 			 TEMPFILE, errno, strerror(errno));
-		tst_exit();
 	}
 
 	/* Write one byte into temporary file */
 	if (write(fildes, "a", 1) != 1) {
 		tst_brkm(TBROK, cleanup, "write() on %s Failed, errno=%d : %s",
 			 TEMPFILE, errno, strerror(errno));
-		tst_exit();
 	}
 
 	/*
@@ -235,7 +220,6 @@ void setup()
 	if (addr == (char *)MAP_FAILED) {
 		tst_brkm(TBROK, cleanup, "mmap() Failed on %s, errno=%d : %s",
 			 TEMPFILE, errno, strerror(errno));
-		tst_exit();
 	}
 
 	/*
@@ -257,7 +241,7 @@ void setup()
  *   this function is invoked when SIGSEGV generated and it calls test
  *   cleanup function and exit the program.
  */
-void sig_handler()
+void sig_handler(void)
 {
 	tst_resm(TPASS, "Functionality of munmap() successful");
 
@@ -274,7 +258,7 @@ void sig_handler()
  *  Close the temporary file.
  *  Remove the temporary directory.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

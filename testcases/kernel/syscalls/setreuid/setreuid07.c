@@ -1,83 +1,65 @@
-/******************************************************************************/
-/* Copyright (c) Kerlabs 2008.                                                */
-/* Copyright (c) International Business Machines  Corp., 2008                 */
-/*                                                                            */
-/* This program is free software;  you can redistribute it and/or modify      */
-/* it under the terms of the GNU General Public License as published by       */
-/* the Free Software Foundation; either version 2 of the License, or          */
-/* (at your option) any later version.                                        */
-/*                                                                            */
-/* This program is distributed in the hope that it will be useful,            */
-/* but WITHOUT ANY WARRANTY;  without even the implied warranty of            */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See                  */
-/* the GNU General Public License for more details.                           */
-/*                                                                            */
-/* You should have received a copy of the GNU General Public License          */
-/* along with this program;  if not, write to the Free Software               */
-/* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA    */
-/*                                                                            */
-/******************************************************************************/
 /*
- * NAME
- *	setreuid07.c
+ * Copyright (c) Kerlabs 2008.
+ * Copyright (c) International Business Machines  Corp., 2008
  *
- * DESCRIPTION
- *	Check if setreuid behaves correctly with file permissions.
- *      The test creates a file as ROOT with permissions 0644, does a setreuid
- *      and then tries to open the file with RDWR permissions.
- *      The same test is done in a fork to check if new UIDs are correctly
- *      passed to the son.
+ * This program is free software;  you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * USAGE:  <for command-line>
- *  setreuid07 [-c n] [-e] [-i n] [-I x] [-P x] [-t]
- *     where,  -c n : Run n copies concurrently.
- *             -e   : Turn on errno logging.
- *             -i n : Execute test n times.
- *             -I x : Execute test for x seconds.
- *             -P x : Pause for x seconds between iterations.
- *             -t   : Turn on syscall timing.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ * the GNU General Public License for more details.
  *
- * HISTORY
- *	07/2001 Created by Renaud Lottiaux
+ * You should have received a copy of the GNU General Public License
+ * along with this program;  if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
- * RESTRICTIONS
- *	Must be run as root.
+ * Created by Renaud Lottiaux
  */
+
+/*
+ * Check if setreuid behaves correctly with file permissions.
+ * The test creates a file as ROOT with permissions 0644, does a setreuid
+ * and then tries to open the file with RDWR permissions.
+ * The same test is done in a fork to check if new UIDs are correctly
+ * passed to the son.
+ */
+
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "test.h"
-#include "usctest.h"
 #include <pwd.h>
 
-char *TCID = "setreuid07";
+#include "test.h"
+#include "usctest.h"
+#include "compat_16.h"
+
+TCID_DEFINE(setreuid07);
 int TST_TOTAL = 1;
-char nobody_uid[] = "nobody";
-char testfile[256] = "";
-struct passwd *ltpuser;
 
-int exp_enos[] = { EACCES, 0 };
+static char testfile[256] = "";
+static struct passwd *ltpuser;
 
-int fd = -1;
+static int fd = -1;
 
-void setup(void);
-void cleanup(void);
-void do_master_child();
+static void setup(void);
+static void cleanup(void);
+static void do_master_child(void);
 
 int main(int ac, char **av)
 {
 	pid_t pid;
-	char *msg;
-	int status;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	setup();
+		tst_brkm(TBROK, cleanup, "OPTION PARSING ERROR - %s", msg);
 
-	TEST_EXP_ENOS(exp_enos);
+	setup();
 
 	pid = FORK_OR_VFORK();
 	if (pid < 0)
@@ -86,19 +68,13 @@ int main(int ac, char **av)
 	if (pid == 0)
 		do_master_child();
 
-	if (waitpid(pid, &status, 0) == -1)
-		tst_resm(TBROK | TERRNO, "waitpid failed");
-	if (!WIFEXITED(status) || (WEXITSTATUS(status) != 0))
-		tst_resm(TFAIL, "child process terminated abnormally");
+	tst_record_childstatus(cleanup, pid);
 
 	cleanup();
 	tst_exit();
 }
 
-/*
- * do_master_child()
- */
-void do_master_child()
+static void do_master_child(void)
 {
 	int lc;
 	int pid;
@@ -107,12 +83,11 @@ void do_master_child()
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		int tst_fd;
 
-		/* Reset Tst_count in case we are looping */
-		Tst_count = 0;
+		tst_count = 0;
 
-		if (setreuid(0, ltpuser->pw_uid) == -1) {
-			perror("setfsuid failed");
-			exit(1);
+		if (SETREUID(NULL, 0, ltpuser->pw_uid) == -1) {
+			perror("setreuid failed");
+			exit(TFAIL);
 		}
 
 		/* Test 1: Check the process with new uid cannot open the file
@@ -123,14 +98,14 @@ void do_master_child()
 		if (TEST_RETURN != -1) {
 			printf("open succeeded unexpectedly\n");
 			close(tst_fd);
-			exit(1);
+			exit(TFAIL);
 		}
 
 		if (TEST_ERRNO == EACCES) {
 			printf("open failed with EACCES as expected\n");
 		} else {
 			perror("open failed unexpectedly");
-			exit(1);
+			exit(TFAIL);
 		}
 
 		/* Test 2: Check a son process cannot open the file
@@ -149,23 +124,23 @@ void do_master_child()
 			if (TEST_RETURN != -1) {
 				printf("call succeeded unexpectedly\n");
 				close(tst_fd2);
-				exit(1);
+				exit(TFAIL);
 			}
 
 			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == EACCES) {
 				printf("open failed with EACCES as expected\n");
-				exit(0);
+				exit(TPASS);
 			} else {
 				printf("open failed unexpectedly\n");
-				exit(1);
+				exit(TFAIL);
 			}
 		} else {
 			/* Wait for son completion */
 			if (waitpid(pid, &status, 0) == -1) {
 				perror("waitpid failed");
-				exit(1);
+				exit(TFAIL);
 			}
 			if (!WIFEXITED(status) || (WEXITSTATUS(status) != 0))
 				exit(WEXITSTATUS(status));
@@ -174,33 +149,32 @@ void do_master_child()
 		/* Test 3: Fallback to initial uid and check we can again open
 		 *         the file with RDWR permissions.
 		 */
-		Tst_count++;
-		if (setreuid(0, 0) == -1) {
-			perror("setfsuid failed");
-			exit(1);
+		tst_count++;
+		if (SETREUID(NULL, 0, 0) == -1) {
+			perror("setreuid failed");
+			exit(TFAIL);
 		}
 
 		TEST(tst_fd = open(testfile, O_RDWR));
 
 		if (TEST_RETURN == -1) {
 			perror("open failed unexpectedly");
-			exit(1);
+			exit(TFAIL);
 		} else {
 			printf("open call succeeded\n");
 			close(tst_fd);
 		}
 	}
-	exit(0);
+	exit(TPASS);
 }
 
-/*
- * setup() - performs all ONE TIME setup for this test
- */
-void setup(void)
+static void setup(void)
 {
 	tst_require_root(NULL);
 
-	ltpuser = getpwnam(nobody_uid);
+	ltpuser = getpwnam("nobody");
+	if (ltpuser == NULL)
+		tst_brkm(TBROK, NULL, "nobody must be a valid user.");
 
 	tst_tmpdir();
 
@@ -209,27 +183,19 @@ void setup(void)
 	/* Create test file */
 	fd = open(testfile, O_CREAT | O_RDWR, 0644);
 	if (fd < 0)
-		tst_brkm(TBROK, cleanup, "cannot creat test file");
+		tst_brkm(TBROK | TERRNO,
+			cleanup, "cannot create test file");
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 }
 
-/*
- * cleanup() - performs all the ONE TIME cleanup for this test at completion
- *	       or premature exit
- */
-void cleanup(void)
+static void cleanup(void)
 {
 	close(fd);
 
-	/*
-	 * print timing status if that option was specified
-	 * print errno log if that option was specified
-	 */
 	TEST_CLEANUP;
 
 	tst_rmdir();
-
 }

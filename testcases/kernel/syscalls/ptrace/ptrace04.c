@@ -100,7 +100,7 @@ void compare_registers(unsigned char poison)
 
 int main(int argc, char *argv[])
 {
-	char *msg;
+	const char *msg;
 
 	if (ARRAY_SIZE(regs) == 0)
 		tst_brkm(TCONF, NULL, "test not supported for your arch (yet)");
@@ -119,8 +119,8 @@ int main(int argc, char *argv[])
 	tst_resm(TINFO, "After exec() in child");
 	errno = 0;
 	if (ptrace(PTRACE_SYSCALL, pid, NULL, NULL) && errno) {
-		tst_resm(TFAIL, "PTRACE_SYSCALL failed: %s", strerror(errno));
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "PTRACE_SYSCALL failed: %s",
+			 strerror(errno));
 	}
 	compare_registers(0x00);
 	compare_registers(0xff);
@@ -131,6 +131,6 @@ int main(int argc, char *argv[])
 	tst_exit();
 }
 
-static void cleanup()
+static void cleanup(void)
 {
 }

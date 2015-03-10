@@ -15,7 +15,7 @@
 #include <errno.h>
 #include "posixtest.h"
 
-int main(int argc, char **argv)
+int main(void)
 {
 	int result = -1;
 
@@ -34,11 +34,8 @@ int main(int argc, char **argv)
 	if (errno != EINVAL) {
 		perror("error is not EINVAL");
 		return PTS_FAIL;
-	} else {
-		printf("Unresolved test error\n");
-		return PTS_UNRESOLVED;
 	}
 
-	printf("This code should not be executed.\n");
+	printf("Unresolved test error\n");
 	return PTS_UNRESOLVED;
 }

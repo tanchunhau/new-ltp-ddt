@@ -103,7 +103,7 @@ extern int getipckey();
 
 int main(int ac, char **av)
 {
-	char *msg;
+	const char *msg;
 	pid_t pid;
 	int status;
 
@@ -156,7 +156,7 @@ void do_master_child(char **av)
 
 	TEST_EXP_ENOS(exp_enos);
 
-	Tst_count = 0;
+	tst_count = 0;
 
 	*flag = 0;
 
@@ -217,7 +217,7 @@ void do_master_child(char **av)
 	exit(1);
 }
 
-void do_child()
+void do_child(void)
 {
 	wait_for_flag(2);
 	exit(0);
@@ -236,7 +236,7 @@ void setup(void)
 	if ((shmid1 = shmget(semkey, getpagesize(), 0666 | IPC_CREAT)) == -1)
 		tst_brkm(TBROK, cleanup, "Failed to setup shared memory");
 
-	if ((flag = (int *)shmat(shmid1, 0, 0)) == (int *)-1)
+	if ((flag = shmat(shmid1, 0, 0)) == (int *)-1)
 		tst_brkm(TBROK | TERRNO, cleanup,
 			 "Failed to attach shared memory:%d", shmid1);
 }

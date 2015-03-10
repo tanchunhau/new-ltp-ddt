@@ -20,7 +20,7 @@
 
 #define ACCEPTABLEDELTA 1
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec tpundertest;
 	struct timeval tvstandard;
@@ -43,11 +43,8 @@ int main(int argc, char *argv[])
 			perror("Error calling gettimeofday()\n");
 			return PTS_UNRESOLVED;
 		}
-	} else {
-		printf("clock_gettime() failed\n");
-		return PTS_UNRESOLVED;
 	}
 
-	printf("This code should not be executed.\n");
+	printf("clock_gettime() failed\n");
 	return PTS_UNRESOLVED;
 }

@@ -21,7 +21,7 @@
 
 #define BOGUSCLOCKID 9999
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec tpset;
 
@@ -39,11 +39,8 @@ int main(int argc, char *argv[])
 			printf("errno != EINVAL\n");
 			return PTS_FAIL;
 		}
-	} else {
-		printf("clock_settime() did not return -1\n");
-		return PTS_UNRESOLVED;
 	}
 
-	printf("This test should not be executed.\n");
+	printf("clock_settime() did not return -1\n");
 	return PTS_UNRESOLVED;
 }

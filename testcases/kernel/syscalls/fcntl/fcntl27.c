@@ -99,8 +99,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "fcntl27";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fcntl27";
+int TST_TOTAL = 1;
 
 char fname[255];
 int fd;
@@ -111,7 +111,7 @@ int main(int ac, char **av)
 {
 	int lc, expected_result = -1;	/* loop counter, expected */
 	/* result from system call */
-	char *msg;
+	const char *msg;
     /***************************************************************
      * parse standard options
      ***************************************************************/
@@ -132,7 +132,7 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 #ifdef F_SETLEASE
 		/*
@@ -166,7 +166,7 @@ int main(int ac, char **av)
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -187,7 +187,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *				 completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

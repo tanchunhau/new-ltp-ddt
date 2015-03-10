@@ -73,7 +73,7 @@
 static void setup();
 static void cleanup();
 
-char *TCID = "getrusage01";	/* Test program identifier.    */
+char *TCID = "getrusage01";
 int who[2] = { RUSAGE_SELF, RUSAGE_CHILDREN };
 
 int TST_TOTAL = 2;
@@ -82,7 +82,7 @@ int main(int ac, char **av)
 {
 
 	int lc, i;
-	char *msg;
+	const char *msg;
 	struct rusage usage;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
@@ -92,7 +92,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			TEST(getrusage(who[i], &usage));
@@ -109,7 +109,7 @@ int main(int ac, char **av)
 
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -118,7 +118,7 @@ void setup()
 
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 }

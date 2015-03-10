@@ -29,9 +29,6 @@
 
  */
 
-/********************************************************************************************/
-/****************************** standard includes *****************************************/
-/********************************************************************************************/
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -43,75 +40,45 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 
-/********************************************************************************************/
-/******************************   Test framework   *****************************************/
-/********************************************************************************************/
 #include "../testfrmw/testfrmw.h"
 #include "../testfrmw/testfrmw.c"
- /* This header is responsible for defining the following macros:
-  * UNRESOLVED(ret, descr);
-  *    where descr is a description of the error and ret is an int (error code for example)
-  * FAILED(descr);
-  *    where descr is a short text saying why the test has failed.
-  * PASSED();
-  *    No parameter.
-  *
-  * Both three macros shall terminate the calling process.
-  * The testcase shall not terminate in any other maneer.
-  *
-  * The other file defines the functions
-  * void output_init()
-  * void output(char * string, ...)
-  *
-  * Those may be used to output information.
-  */
 
-/********************************************************************************************/
-/********************************** Configuration ******************************************/
-/********************************************************************************************/
 #ifndef VERBOSE
 #define VERBOSE 1
 #endif
 
-/********************************************************************************************/
-/***********************************    Test case   *****************************************/
-/********************************************************************************************/
 #ifndef WITHOUT_XOPEN
 
-pid_t *sharedpid;
+static pid_t *sharedpid;
 
 /* This will be executed by the child process */
-void child(void)
+static void child(void)
 {
 	*sharedpid = getpid();
 	exit(0);
 }
 
 /* This will be executed by the child thread */
-void *threaded(void *arg)
+static void *threaded(void *arg)
 {
 	*(pid_t *) arg = getpid();
 	return NULL;
 }
 
-/* The main test function. */
-int main(int argc, char *argv[])
+int main(void)
 {
 	int ret, status;
 	long mf;		/* Is memory mapping supported? */
 	pid_t mypid, hispid, ctlpid;
 	pthread_t child_thread;
 
-	/* Initialize output */
 	output_init();
 
-	/* Get self PID */
 	mypid = getpid();
 #if VERBOSE > 1
 	output("Main pid: %d\n", mypid);
 #endif
 
-	/* Get a child thread PID */
 	ret = pthread_create(&child_thread, NULL, threaded, &hispid);
 	if (ret != 0) {
 		UNRESOLVED(ret, "Thread creation failed");
@@ -228,7 +195,7 @@ int main(int argc, char *argv[])
 }
 
 #else /* WITHOUT_XOPEN */
-int main(int argc, char *argv[])
+int main(void)
 {
 	output_init();
 	UNTESTED("This test requires XSI features");

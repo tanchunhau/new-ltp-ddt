@@ -39,6 +39,7 @@
 
 #define TEST_MSG_IN "world"
 #define TEST_MSG_OUT "hello"
+#define TEST_MSG_ALL (TEST_MSG_OUT TEST_MSG_IN)
 
 TCID_DEFINE(sendfile08);
 int TST_TOTAL = 1;
@@ -55,7 +56,7 @@ int main(int argc, char *argv[])
 {
 	int lc;
 	int ret;
-	char *msg;
+	const char *msg;
 	char buf[BUFSIZ];
 
 	msg = parse_opts(argc, argv, NULL, NULL);
@@ -79,7 +80,7 @@ int main(int argc, char *argv[])
 			tst_brkm(TBROK | TERRNO, cleanup, "read %s failed",
 				 out_file);
 
-		if (!strcmp(buf, TEST_MSG_OUT TEST_MSG_IN))
+		if (!strncmp(buf, TEST_MSG_ALL, strlen(TEST_MSG_ALL)))
 			tst_resm(TPASS, "sendfile(2) copies data correctly");
 		else
 			tst_resm(TFAIL, "sendfile(2) copies data incorrectly."
@@ -94,6 +95,12 @@ int main(int argc, char *argv[])
 static void setup(void)
 {
 	int ret;
+
+	/* Disable test if the version of the kernel is less than 2.6.33 */
+	if ((tst_kvercmp(2, 6, 33)) < 0) {
+		tst_resm(TCONF, "The out_fd must be socket before kernel");
+		tst_brkm(TCONF, NULL, "2.6.33, see kernel commit cc56f7d");
+	}
 
 	TEST_PAUSE;
 

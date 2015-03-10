@@ -119,8 +119,8 @@ extern int sighold(int __sig);
 
 #define TIMEOUT 2		/* time used in the alarm calls as backup */
 
-char *TCID = "sighold02";	/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "sighold02";
+int TST_TOTAL = 2;
 
 char signals_received[MAXMESG];
 int pid;			/* process id of child */
@@ -139,17 +139,17 @@ struct pipe_packet {
 	struct tblock rtimes;
 } p_p;
 
-void do_child();
-void setup();
-void cleanup();
-static void getout();
-static void timeout();
+void do_child(void);
+void setup(void);
+void cleanup(void);
+static void getout(void);
+static void timeout(int sig);
 static int read_pipe(int fd);
 static int write_pipe(int fd);
 static int setup_sigs(char *mesg);
-static void handle_sigs();
+static void handle_sigs(int sig);
 static int set_timeout(char *mesg);
-static void clear_timeout();
+static void clear_timeout(void);
 
 int Timeout = 0;
 
@@ -161,7 +161,7 @@ int main(int ac, char **av)
 	int term_stat;		/* child return status */
 	int sig;		/* current signal */
 	int lc;
-	char *msg;
+	const char *msg;
 
     /***************************************************************
      * parse standard options, and exit if there is an error
@@ -184,7 +184,7 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		signals_received[0] = '\0';
 
@@ -221,10 +221,8 @@ int main(int ac, char **av)
 			if (p_p.result != TPASS) {
 				/* child setup did not go well */
 				tst_brkm(p_p.result, getout, "%s", p_p.mesg);
-			} else if (STD_FUNCTIONAL_TEST) {
+			} else {
 				tst_resm(p_p.result, "%s", p_p.mesg);
-			} else {	/* no pass results being issued */
-				Tst_count++;
 			}
 
 			/*
@@ -276,14 +274,7 @@ int main(int ac, char **av)
 				tst_brkm(TBROK, getout, "%s", p_p.mesg);
 			}
 
-			if (STD_FUNCTIONAL_TEST)
-				tst_resm(p_p.result, "%s", p_p.mesg);
-
-			else if (p_p.result != TPASS)
-				tst_resm(p_p.result, "%s", p_p.mesg);
-
-			else
-				Tst_count++;
+			tst_resm(p_p.result, "%s", p_p.mesg);
 
 			/*
 			 * wait for child
@@ -318,7 +309,7 @@ int main(int ac, char **av)
  *  do_child()
  ****************************************************************************/
 
-void do_child()
+void do_child(void)
 {
 	int rv;			/* function return value */
 	int sig;		/* current signal */
@@ -414,8 +405,7 @@ void do_child()
  *      timeout signal in case the pipe is blocked.
  ****************************************************************************/
 
-int read_pipe(fd)
-int fd;
+int read_pipe(int fd)
 {
 	int ret = -1;
 
@@ -455,8 +445,7 @@ int fd;
  *         mesg and return -1, else return 0.
  ****************************************************************************/
 
-static int write_pipe(fd)
-int fd;
+static int write_pipe(int fd)
 {
 #ifdef debug
 	printf("write_pipe: sending result:%d, mesg:%s.\n", p_p.result,
@@ -501,7 +490,7 @@ static int set_timeout(char *mesg)
  *  clear_timeout() : turn off the alarm so that SIGALRM will not get sent.
  ****************************************************************************/
 
-static void clear_timeout()
+static void clear_timeout(void)
 {
 	(void)alarm(0);
 	Timeout = 0;
@@ -513,7 +502,7 @@ static void clear_timeout()
  *      system call, a -1 will be returned by the read().
  ****************************************************************************/
 
-static void timeout()
+static void timeout(int sig)
 {
 #ifdef debug
 	printf("timeout: sigalrm caught.\n");
@@ -566,8 +555,7 @@ static int setup_sigs(char *mesg)
  *      detects this situation by a child exit value of 1.
  ****************************************************************************/
 
-static void handle_sigs(sig)
-int sig;			/* the signal causing the execution of this handler */
+static void handle_sigs(int sig)
 {
 	char string[10];
 
@@ -585,7 +573,7 @@ int sig;			/* the signal causing the execution of this handler */
  *  getout() : attempt to kill child process and call cleanup().
  ****************************************************************************/
 
-static void getout()
+static void getout(void)
 {
 	if (kill(pid, SIGKILL) < 0)
 		tst_resm(TWARN | TERRNO, "kill(%d) failed", pid);
@@ -595,7 +583,7 @@ static void getout()
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -621,7 +609,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *              completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

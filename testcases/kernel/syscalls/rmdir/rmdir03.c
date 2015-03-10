@@ -84,8 +84,8 @@ extern struct passwd *my_getpwnam(char *);
 
 char user1name[] = "nobody";
 
-char *TCID = "rmdir03";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "rmdir03";
+int TST_TOTAL = 1;
 
 char tstdir1[255];
 char tstdir2[255];
@@ -97,7 +97,7 @@ int exp_enos[] = { EPERM, EACCES, 0 };	/* List must end with 0 */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t pid;
 	struct stat buf1;
 	int e_code, status, status2;
@@ -126,7 +126,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 //test1:       $
 		/*
@@ -240,7 +240,7 @@ int main(int ac, char **av)
 /*
  * dochild1()
  */
-void dochild1()
+void dochild1(void)
 {
 	int retval = 0;
 	struct passwd *nobody = my_getpwnam(user1name);
@@ -280,7 +280,7 @@ void dochild1()
 /*
  * dochild1()
  */
-void dochild2()
+void dochild2(void)
 {
 	int retval = 0;
 	struct passwd *nobody = my_getpwnam(user1name);
@@ -319,12 +319,9 @@ void dochild2()
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
-	/* test must be run as root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "test must be run as root");
-	}
+	tst_require_root(NULL);
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
@@ -345,7 +342,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *              completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

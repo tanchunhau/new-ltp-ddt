@@ -120,8 +120,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "times01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "times01";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0, 0 };
 
@@ -130,7 +130,7 @@ struct tms mytimes;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -141,13 +141,13 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(times(&mytimes));
 
 		if (TEST_RETURN == -1)
 			tst_resm(TFAIL | TTERRNO, "times failed");
-		else if (STD_FUNCTIONAL_TEST)
+		else
 			tst_resm(TPASS, "times(&mytimes) returned %ld",
 				 TEST_RETURN);
 
@@ -157,14 +157,14 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

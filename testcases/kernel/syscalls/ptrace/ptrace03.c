@@ -93,24 +93,26 @@
 #include "test.h"
 #include "usctest.h"
 
-#define INVALID_PID 999999
-
 static void setup(void);
 static void cleanup(void);
 
 static int exp_enos[] = { EPERM, ESRCH, 0 };
 
-char *TCID = "ptrace03";	/* Test program identifier.    */
+char *TCID = "ptrace03";
+
+static pid_t init_pid = 1;
+static pid_t unused_pid;
+static pid_t zero_pid;
 
 struct test_case_t {
 	enum __ptrace_request request;
-	pid_t pid;
+	pid_t *pid;
 	int exp_errno;
 } test_cases[] = {
 	{
-	PTRACE_ATTACH, 1, EPERM}, {
-	PTRACE_ATTACH, INVALID_PID, ESRCH}, {
-PTRACE_TRACEME, 0, EPERM},};
+	PTRACE_ATTACH, &init_pid, EPERM}, {
+	PTRACE_ATTACH, &unused_pid, ESRCH}, {
+	PTRACE_TRACEME, &zero_pid, EPERM},};
 
 int TST_TOTAL = sizeof(test_cases) / sizeof(test_cases[0]);
 
@@ -118,7 +120,7 @@ int main(int ac, char **av)
 {
 
 	int lc, i;
-	char *msg;
+	const char *msg;
 	pid_t child_pid;
 	int status;
 
@@ -129,7 +131,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 
@@ -165,7 +167,7 @@ int main(int ac, char **av)
 				}
 
 				TEST(ptrace(test_cases[i].request,
-					    test_cases[i].pid, NULL, NULL));
+					    *(test_cases[i].pid), NULL, NULL));
 				if ((TEST_RETURN == -1) && (TEST_ERRNO ==
 							    test_cases
 							    [i].exp_errno)) {
@@ -203,8 +205,9 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
+	unused_pid = tst_get_unused_pid(cleanup);
 
 	/* capture signals
 	   tst_sig(FORK, DEF_HANDLER, cleanup); */
@@ -220,7 +223,7 @@ void setup()
  *cleanup() -  performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 
 	/*

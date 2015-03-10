@@ -22,13 +22,13 @@
 #                                                                              #
 ################################################################################
 
-cd $LTPROOT/testcases/bin
-
-. ./cpuset_funcs.sh
-
-export TCID="cpuset10"
+export TCID="cpuset_memory_pressure"
 export TST_TOTAL=6
 export TST_COUNT=1
+
+. cpuset_funcs.sh
+
+check
 
 exit_status=0
 
@@ -69,7 +69,7 @@ test2()
 		return 1
 	fi
 
-	./cpuset_memory_pressure $usemem
+	cpuset_memory_pressure $usemem
 
 	local i
 	for i in $(seq 0 9)
@@ -135,7 +135,7 @@ test4()
 		return 1
 	fi
 
-	./cpuset_memory_pressure $usemem
+	cpuset_memory_pressure $usemem
 
 	echo $$ > "$CPUSET/tasks" 2> $CPUSET_TMP/stderr
 	if [ $? -ne 0 ]; then
@@ -174,7 +174,7 @@ test5()
 		return 1
 	fi
 
-	./cpuset_memory_pressure $usemem
+	cpuset_memory_pressure $usemem
 	local i
 	for i in $(seq 0 9)
 	do
@@ -211,7 +211,7 @@ test6()
 		tst_resm TFAIL "attaching self to sub group failed"
 		return 1
 	fi
-	./cpuset_memory_pressure $usemem
+	cpuset_memory_pressure $usemem
 
 	echo $$ > "$CPUSET/tasks" 2> $CPUSET_TMP/stderr
 	if [ $? -ne 0 ]; then
@@ -220,7 +220,7 @@ test6()
 		return 1
 	fi
 
-	./cpuset_memory_pressure $usemem
+	cpuset_memory_pressure $usemem
 	local i
 	for i in $(seq 0 9)
 	do
@@ -254,7 +254,7 @@ do
 			fi
 		fi
 	fi
-	: $((TST_COUNT++))
+	TST_COUNT=$(($TST_COUNT + 1))
 done
 
 exit $exit_status

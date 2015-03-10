@@ -67,7 +67,7 @@ void cleanup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int pid, status, retval;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
@@ -77,8 +77,8 @@ int main(int ac, char **av)
 
 	/* Check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		if ((pid = FORK_OR_VFORK()) == -1) {
 			tst_brkm(TBROK, cleanup, "Could not fork");
@@ -87,15 +87,13 @@ int main(int ac, char **av)
 		if (pid == 0) {
 			retval = 0;
 
-			if (chroot(get_tst_tmpdir()) == -1) {
+			if (chroot(tst_get_tmpdir()) == -1) {
 				perror("chroot failed");
 				retval = 1;
 			} else {
-				if (STD_FUNCTIONAL_TEST) {
-					if (stat("/" TMP_FILENAME, &buf) == -1) {
-						retval = 1;
-						perror("stat failed");
-					}
+				if (stat("/" TMP_FILENAME, &buf) == -1) {
+					retval = 1;
+					perror("stat failed");
 				}
 			}
 
@@ -120,7 +118,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	tst_require_root(NULL);
 
@@ -140,7 +138,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

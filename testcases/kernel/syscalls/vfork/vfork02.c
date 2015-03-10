@@ -80,8 +80,8 @@
 #include "test.h"
 #include "usctest.h"
 
-char *TCID = "vfork02";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "vfork02";
+int TST_TOTAL = 1;
 int exp_enos[] = { 0 };
 
 void setup();			/* Main setup function of test */
@@ -91,12 +91,11 @@ void sig_handler();		/* signal catching function */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t cpid;		/* process id of the child process */
 	int exit_status;	/* exit status of child process */
 	sigset_t PendSig;	/* variable to hold pending signal */
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -110,7 +109,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call vfork(2) to create a child process without
@@ -124,34 +123,28 @@ int main(int ac, char **av)
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else if (cpid == 0) {	/* Child process */
 			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
+			 * Check whether the pending signal SIGUSR1
+			 * in the parent is also pending in the child
+			 * process by storing it in a variable.
 			 */
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Check whether the pending signal SIGUSR1
-				 * in the parent is also pending in the child
-				 * process by storing it in a variable.
-				 */
-				if (sigpending(&PendSig) == -1) {
-					tst_resm(TFAIL, "sigpending function "
-						 "failed in child");
-					_exit(1);
-				}
-
-				/* Check if SIGUSR1 is pending in child */
-				if (sigismember(&PendSig, SIGUSR1) != 0) {
-					tst_resm(TFAIL, "SIGUSR1 also pending "
-						 "in child process");
-					_exit(1);
-				}
-
-				/*
-				 * Exit with normal exit code if everything
-				 * fine
-				 */
-				_exit(0);
+			if (sigpending(&PendSig) == -1) {
+				tst_resm(TFAIL, "sigpending function "
+					 "failed in child");
+				_exit(1);
 			}
+
+			/* Check if SIGUSR1 is pending in child */
+			if (sigismember(&PendSig, SIGUSR1) != 0) {
+				tst_resm(TFAIL, "SIGUSR1 also pending "
+					 "in child process");
+				_exit(1);
+			}
+
+			/*
+			 * Exit with normal exit code if everything
+			 * fine
+			 */
+			_exit(0);
 		} else {	/* parent process */
 			/*
 			 * Let the parent process wait till child completes
@@ -168,7 +161,7 @@ int main(int ac, char **av)
 					 "Child process exited abnormally");
 			}
 		}
-		Tst_count++;	/* incr. TEST_LOOP counter */
+		tst_count++;	/* incr. TEST_LOOP counter */
 	}
 
 	cleanup();
@@ -183,7 +176,7 @@ int main(int ac, char **av)
  *   on hold and then sends the signal SIGUSR1 to itself so that it is in
  *   pending state.
  */
-void setup()
+void setup(void)
 {
 	sigset_t PendSig;	/* variable to hold pending signal */
 
@@ -228,7 +221,7 @@ void setup()
  *   This is a null function and used only to catch the above signal
  *   generated in parent process.
  */
-void sig_handler()
+void sig_handler(void)
 {
 }
 
@@ -238,7 +231,7 @@ void sig_handler()
  *             completion or premature exit.
  *  Release the signal 'SIGUSR1'  if still in pending state.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

@@ -43,6 +43,8 @@ void *t1_func(void *arg)
 	struct timespec timeout;
 	struct timeval curtime;
 
+	(void) arg;
+
 	if (pthread_mutex_lock(&td.mutex) != 0) {
 		fprintf(stderr, "Thread1 failed to acquire the mutex\n");
 		exit(PTS_UNRESOLVED);
@@ -94,7 +96,7 @@ void *t1_func(void *arg)
 	return NULL;
 }
 
-int main()
+int main(void)
 {
 	pthread_t thread1;
 

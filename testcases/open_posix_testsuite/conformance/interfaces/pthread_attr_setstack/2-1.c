@@ -59,7 +59,7 @@ void *thread_func()
 	return NULL;
 }
 
-int main()
+int main(void)
 {
 	pthread_t new_th;
 	pthread_attr_t attr;
@@ -77,7 +77,7 @@ int main()
 	/* Get the default stack_addr and stack_size value */
 	rc = pthread_attr_getstack(&attr, &stack_addr, &stack_size);
 	if (rc != 0) {
-		printf(ERROR_PREFIX "pthread_attr_getstack", strerror(rc));
+		printf(ERROR_PREFIX "pthread_attr_getstack: %s", strerror(rc));
 		exit(PTS_UNRESOLVED);
 	}
 

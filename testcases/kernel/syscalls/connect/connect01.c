@@ -55,7 +55,7 @@
 #include "test.h"
 #include "usctest.h"
 
-char *TCID = "connect01";	/* Test program identifier.    */
+char *TCID = "connect01";
 int testno;
 
 int s, s2;			/* socket descriptor */
@@ -110,7 +110,7 @@ struct test_case_t {		/* test case structure */
 		    "invalid address family"}
 ,};
 
-int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);	/* Total number of test cases. */
+int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);
 
 int exp_enos[] = { EBADF, EFAULT, EINVAL, ENOTSOCK, EISCONN, ECONNREFUSED,
 	EAFNOSUPPORT, 0
@@ -123,13 +123,11 @@ static char *argv0;
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 #ifdef UCLINUX
 	argv0 = argv[0];
@@ -142,7 +140,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 			tdat[testno].setup();
 
@@ -176,15 +174,11 @@ void setup(void)
 {
 	TEST_PAUSE;		/* if -p option specified */
 
-	/* initialize sockaddr's */
-	sin1.sin_family = AF_INET;
-	sin1.sin_port = htons((getpid() % 32768) + 11000);
-	sin1.sin_addr.s_addr = INADDR_ANY;
 	pid = start_server(&sin1);
 
 	sin2.sin_family = AF_INET;
 	/* this port must be unused! */
-	sin2.sin_port = htons((getpid() % 32768) + 10000);
+	sin2.sin_port = tst_get_unused_port(NULL, AF_INET, SOCK_STREAM);
 	sin2.sin_addr.s_addr = INADDR_ANY;
 
 	sin3.sin_family = AF_INET;
@@ -217,6 +211,7 @@ void setup0(void)
 
 void cleanup0(void)
 {
+	close(s);
 	s = -1;
 }
 
@@ -243,15 +238,19 @@ void setup2(void)
 
 pid_t start_server(struct sockaddr_in *sin0)
 {
-	struct sockaddr_in sin1 = *sin0;
 	pid_t pid;
+	socklen_t slen = sizeof(*sin0);
+
+	sin0->sin_family = AF_INET;
+	sin0->sin_port = 0; /* pick random free port */
+	sin0->sin_addr.s_addr = INADDR_ANY;
 
 	sfd = socket(PF_INET, SOCK_STREAM, 0);
 	if (sfd < 0) {
 		tst_brkm(TBROK | TERRNO, cleanup, "server socket failed");
 		return -1;
 	}
-	if (bind(sfd, (struct sockaddr *)&sin1, sizeof(sin1)) < 0) {
+	if (bind(sfd, (struct sockaddr *)sin0, sizeof(*sin0)) < 0) {
 		tst_brkm(TBROK | TERRNO, cleanup, "server bind failed");
 		return -1;
 	}
@@ -259,6 +258,9 @@ pid_t start_server(struct sockaddr_in *sin0)
 		tst_brkm(TBROK | TERRNO, cleanup, "server listen failed");
 		return -1;
 	}
+	if (getsockname(sfd, (struct sockaddr *)sin0, &slen) == -1)
+		tst_brkm(TBROK | TERRNO, cleanup, "getsockname failed");
+
 	switch ((pid = FORK_OR_VFORK())) {
 	case 0:		/* child */
 #ifdef UCLINUX
@@ -278,7 +280,7 @@ pid_t start_server(struct sockaddr_in *sin0)
 	return -1;
 }
 
-void do_child()
+void do_child(void)
 {
 	struct sockaddr_in fsin;
 	fd_set afds, rfds;
@@ -288,7 +290,7 @@ void do_child()
 	FD_ZERO(&afds);
 	FD_SET(sfd, &afds);
 
-	nfds = getdtablesize();
+	nfds = sfd + 1;
 
 	/* accept connections until killed */
 	while (1) {
@@ -296,8 +298,8 @@ void do_child()
 
 		memcpy(&rfds, &afds, sizeof(rfds));
 
-		if (select(nfds, &rfds, (fd_set *) 0, (fd_set *) 0,
-			   (struct timeval *)0) < 0)
+		if (select(nfds, &rfds, NULL, NULL,
+			   NULL) < 0)
 			if (errno != EINTR)
 				exit(1);
 		if (FD_ISSET(sfd, &rfds)) {
@@ -305,8 +307,10 @@ void do_child()
 
 			fromlen = sizeof(fsin);
 			newfd = accept(sfd, (struct sockaddr *)&fsin, &fromlen);
-			if (newfd >= 0)
+			if (newfd >= 0) {
 				FD_SET(newfd, &afds);
+				nfds = MAX(nfds, newfd + 1);
+			}
 		}
 		for (fd = 0; fd < nfds; ++fd)
 			if (fd != sfd && FD_ISSET(fd, &rfds)) {

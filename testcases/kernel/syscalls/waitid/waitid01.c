@@ -46,17 +46,13 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "waitid01";	/* Test program identifier. */
+char *TCID = "waitid01";
 int testno;
-int TST_TOTAL = 3;		/* total number of tests in this file.   */
+int TST_TOTAL = 3;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -76,7 +72,7 @@ int TST_TOTAL = 3;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -103,7 +99,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -126,17 +122,16 @@ int main(int ac, char **av)
 	id_t pid;
 	siginfo_t infop;
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 
 			TEST(fork());
@@ -145,9 +140,9 @@ int main(int ac, char **av)
 			} else {
 				TEST(waitid(P_ALL, getpid(), &infop, WEXITED));
 				if (TEST_RETURN == -1) {
-					tst_resm(TFAIL | TTERRNO,
+					tst_brkm(TFAIL | TTERRNO,
+						 NULL,
 						 "waitid(getpid()) failed");
-					tst_exit();
 				} else
 					display_status(&infop);	//CLD_EXITED = 1
 			}
@@ -160,9 +155,8 @@ int main(int ac, char **av)
 			} else {
 				TEST(waitid(P_ALL, 0, &infop, WEXITED));
 				if (TEST_RETURN == -1) {
-					tst_resm(TFAIL | TTERRNO,
-						 "waitid(0) failed");
-					tst_exit();
+					tst_brkm(TFAIL | TTERRNO,
+						 NULL, "waitid(0) failed");
 				} else
 					display_status(&infop);	//CLD_DUMPED = 3 ; SIGFPE = 8
 			}
@@ -175,8 +169,8 @@ int main(int ac, char **av)
 			TEST(kill(pid, SIGHUP));
 			TEST(waitid(P_ALL, 0, &infop, WEXITED));
 			if (TEST_RETURN == -1) {
-				tst_resm(TFAIL | TTERRNO, "waitid(0) failed");
-				tst_exit();
+				tst_brkm(TFAIL | TTERRNO, NULL,
+					 "waitid(0) failed");
 			} else
 				display_status(&infop);	//CLD_KILLED = 2 ; SIGHUP = 1
 		}

@@ -100,8 +100,8 @@
 #define TEST_FILE3      "tfile_3"
 #define SYM_FILE3	"t_file/sfile_3"
 
-char *TCID = "symlink03";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "symlink03";
+int TST_TOTAL = 1;
 int exp_enos[] = { ENOTDIR, ENOENT, ENAMETOOLONG, EFAULT, EEXIST, EACCES, 0 };
 
 char *bad_addr = 0;
@@ -145,19 +145,18 @@ struct test_case_t {		/* test case struct. to hold ref. test cond's */
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
 
-void setup();			/* Setup function for the test */
-void cleanup();			/* Cleanup function for the test */
+void setup();
+void cleanup();
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	char *test_file;	/* testfile name */
 	char *sym_file;		/* symbolic link file name */
 	char *test_desc;	/* test specific error message */
 	int ind;		/* counter to test different test conditions */
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -175,7 +174,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; Test_cases[ind].desc != NULL; ind++) {
 			test_file = Test_cases[ind].file;
@@ -216,7 +215,7 @@ int main(int ac, char **av)
 			}
 		}
 
-		Tst_count++;	/* incr. TEST_LOOP counter */
+		tst_count++;	/* incr. TEST_LOOP counter */
 	}
 
 	cleanup();
@@ -230,9 +229,11 @@ int main(int ac, char **av)
  *  Create a temporary directory and change directory to it.
  *  Call test specific setup functions.
  */
-void setup()
+void setup(void)
 {
 	int ind;
+
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -244,9 +245,6 @@ void setup()
 	TEST_PAUSE;
 
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	ltpuser = getpwnam(nobody_uid);
 	if (setuid(ltpuser->pw_uid) == -1)
 		tst_resm(TINFO | TERRNO, "setuid(%d) failed", ltpuser->pw_uid);
@@ -274,7 +272,7 @@ void setup()
  *              Hence, this function just returns 0.
  *  This function simply returns 0.
  */
-int no_setup()
+int no_setup(void)
 {
 	return 0;
 }
@@ -290,7 +288,7 @@ int no_setup()
  *
  *  The function returns 0.
  */
-int setup1()
+int setup1(void)
 {
 	int fd;			/* file handle for testfile */
 
@@ -320,7 +318,7 @@ int setup1()
  * int
  * setup2() - EEXIST
  */
-int setup2()
+int setup2(void)
 {
 	int fd;			/* file handle for testfile */
 
@@ -349,7 +347,7 @@ int setup2()
  *                    the MAX. length of PATH_MAX.
  *   This function retruns 0.
  */
-int longpath_setup()
+int longpath_setup(void)
 {
 	int ind;		/* counter variable */
 
@@ -368,7 +366,7 @@ int longpath_setup()
  *  create symlink file "tfile_3" under "t_file" which happens to be
  *  another symlink file.
  */
-int setup3()
+int setup3(void)
 {
 	int fd;			/* file handle for testfile */
 
@@ -392,7 +390,7 @@ int setup3()
  *  Restore the mode permissions on test directory.
  *  Remove the temporary directory created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

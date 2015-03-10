@@ -31,7 +31,7 @@ void handler(int signo)
 
 	printf("Caught SIGILL\n");
 
-	if (sigaltstack((stack_t *) 0, &ss) == -1) {
+	if (sigaltstack(NULL, &ss) == -1) {
 		perror("Unexpected error while attempting to setup test "
 		       "pre-conditions");
 		exit(-1);
@@ -43,7 +43,7 @@ void handler(int signo)
 	}
 }
 
-int main()
+int main(void)
 {
 	struct sigaction act;
 
@@ -56,7 +56,7 @@ int main()
 		return PTS_UNRESOLVED;
 	}
 
-	if ((alt_ss.ss_sp = (void *)malloc(SIGSTKSZ)) == NULL) {
+	if ((alt_ss.ss_sp = malloc(SIGSTKSZ)) == NULL) {
 		perror("Unexpected error while attempting to setup test "
 		       "pre-conditions");
 		return PTS_UNRESOLVED;
@@ -64,7 +64,7 @@ int main()
 	alt_ss.ss_size = SIGSTKSZ;
 	alt_ss.ss_flags = 0;
 
-	if (sigaltstack(&alt_ss, (stack_t *) 0) == -1) {
+	if (sigaltstack(&alt_ss, NULL) == -1) {
 		perror("Unexpected error while attempting to setup test "
 		       "pre-conditions");
 		return PTS_UNRESOLVED;

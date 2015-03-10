@@ -82,7 +82,7 @@
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
 
-TCID_DEFINE(setgroups03);	/* Test program identifier.    */
+TCID_DEFINE(setgroups03);
 int TST_TOTAL = 2;		/* Total number of test conditions */
 
 int exp_enos[] = { EINVAL, EPERM, 0 };
@@ -108,13 +108,12 @@ struct test_case_t {		/* test case struct. to hold ref. test cond's */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int gidsetsize;		/* total no. of groups */
 	int i;
 	char *test_desc;	/* test specific error message */
 	int ngroups_max = sysconf(_SC_NGROUPS_MAX);	/* max no. of groups in the current system */
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -131,7 +130,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			if (Test_cases[i].setupfunc != NULL) {
@@ -146,7 +145,7 @@ int main(int ac, char **av)
 			 * verify that it fails with -1 return value and
 			 * sets appropriate errno.
 			 */
-			TEST(SETGROUPS(gidsetsize, groups_list));
+			TEST(SETGROUPS(cleanup, gidsetsize, groups_list));
 
 			if (TEST_RETURN != -1) {
 				tst_resm(TFAIL, "setgroups(%d) returned %ld, "
@@ -181,12 +180,9 @@ int main(int ac, char **av)
  *
  *  Call individual test specific setup functions.
  */
-void setup()
+void setup(void)
 {
-
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -201,7 +197,7 @@ void setup()
  *  Get the user info. from /etc/passwd file.
  *  This function returns 0 on success.
  */
-int setup1()
+int setup1(void)
 {
 	struct passwd *user_info;	/* struct. to hold test user info */
 
@@ -230,7 +226,7 @@ int setup1()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

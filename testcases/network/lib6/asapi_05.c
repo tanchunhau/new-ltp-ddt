@@ -61,7 +61,7 @@ void icmp6_ft(void);
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
@@ -415,7 +415,7 @@ void icmp6_ft(void)
 			tst_resm(TFAIL, "%s: rv %d != expected %d",
 				 ftab[i].ft_tname, rv, ftab[i].ft_expected);
 		else
-			tst_resm(TPASS, ftab[i].ft_tname);
+			tst_resm(TPASS, "%s", ftab[i].ft_tname);
 	}
 }
 

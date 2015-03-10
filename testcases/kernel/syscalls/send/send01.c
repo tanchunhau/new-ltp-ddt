@@ -72,7 +72,6 @@ static void setup(void);
 static void setup0(void);
 static void setup1(void);
 static void setup2(void);
-static void setup3(void);
 static void cleanup0(void);
 static void cleanup1(void);
 
@@ -143,14 +142,14 @@ static struct test_case_t tdat[] = {
 #ifndef UCLINUX
 	/* Skip since uClinux does not implement memory protection */
 	{.domain = PF_INET,
-	 .type = SOCK_STREAM,
+	 .type = SOCK_DGRAM,
 	 .proto = 0,
-	 .buf = (void *)-1,
+	 .buf = buf,
 	 .buflen = sizeof(buf),
-	 .flags = -1,
+	 .flags = MSG_OOB,
 	 .retval = -1,
-	 .experrno = EFAULT,
-	 .setup = setup3,
+	 .experrno = EOPNOTSUPP,
+	 .setup = setup1,
 	 .cleanup = cleanup1,
 	 .desc = "invalid flags set"}
 #endif
@@ -166,15 +165,19 @@ static char *argv0;
 
 static pid_t start_server(struct sockaddr_in *sin0)
 {
-	struct sockaddr_in sin1 = *sin0;
 	pid_t pid;
+	socklen_t slen = sizeof(*sin0);
+
+	sin0->sin_family = AF_INET;
+	sin0->sin_port = 0; /* pick random free port */
+	sin0->sin_addr.s_addr = INADDR_ANY;
 
 	sfd = socket(PF_INET, SOCK_STREAM, 0);
 	if (sfd < 0) {
 		tst_brkm(TBROK | TERRNO, cleanup, "server socket failed");
 		return -1;
 	}
-	if (bind(sfd, (struct sockaddr *)&sin1, sizeof(sin1)) < 0) {
+	if (bind(sfd, (struct sockaddr *)sin0, sizeof(*sin0)) < 0) {
 		tst_brkm(TBROK | TERRNO, cleanup, "server bind failed");
 		return -1;
 	}
@@ -182,6 +185,9 @@ static pid_t start_server(struct sockaddr_in *sin0)
 		tst_brkm(TBROK | TERRNO, cleanup, "server listen failed");
 		return -1;
 	}
+	if (getsockname(sfd, (struct sockaddr *)sin0, &slen) == -1)
+		tst_brkm(TBROK | TERRNO, cleanup, "getsockname failed");
+
 	switch ((pid = FORK_OR_VFORK())) {
 	case 0:
 #ifdef UCLINUX
@@ -211,7 +217,7 @@ static void do_child(void)
 	FD_ZERO(&afds);
 	FD_SET(sfd, &afds);
 
-	nfds = getdtablesize();
+	nfds = sfd + 1;
 
 	/* accept connections until killed */
 	while (1) {
@@ -227,8 +233,10 @@ static void do_child(void)
 
 			fromlen = sizeof(fsin);
 			newfd = accept(sfd, (struct sockaddr *)&fsin, &fromlen);
-			if (newfd >= 0)
+			if (newfd >= 0) {
 				FD_SET(newfd, &afds);
+				nfds = MAX(nfds, newfd + 1);
+			}
 		}
 		for (fd = 0; fd < nfds; ++fd) {
 			if (fd != sfd && FD_ISSET(fd, &rfds)) {
@@ -245,7 +253,7 @@ static void do_child(void)
 int main(int ac, char *av[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -261,7 +269,7 @@ int main(int ac, char *av[])
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 			tdat[testno].setup();
@@ -300,10 +308,6 @@ static void setup(void)
 {
 	TEST_PAUSE;
 
-	/* initialize sockaddr's */
-	sin1.sin_family = AF_INET;
-	sin1.sin_port = htons((getpid() % 32768) + 11000);
-	sin1.sin_addr.s_addr = INADDR_ANY;
 	server_pid = start_server(&sin1);
 
 	signal(SIGPIPE, SIG_IGN);
@@ -351,12 +355,4 @@ static void setup2(void)
 	if (shutdown(s, 1) < 0)
 		tst_brkm(TBROK | TERRNO, cleanup, "socket setup failed connect "
 			 "test %d", testno);
-}
-
-static void setup3(void)
-{
-	setup1();
-
-	if (tst_kvercmp(3, 6, 0) >= 0)
-		tdat[testno].experrno = ENOTSUP;
 }

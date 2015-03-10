@@ -12,7 +12,7 @@
 #include <time.h>
 #include "posixtest.h"
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec tssleepfor, tsstorage, tsbefore, tsafter;
 	int sleepnsec = 3;
@@ -48,11 +48,8 @@ int main(int argc, char *argv[])
 	if ((slepts > 0) || (sleptns > sleepnsec)) {
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		printf("nanosleep() did not sleep long enough\n");
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("nanosleep() did not sleep long enough\n");
+	return PTS_FAIL;
 }

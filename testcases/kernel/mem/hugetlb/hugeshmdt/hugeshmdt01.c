@@ -84,7 +84,7 @@ static void sighandler(int sig);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(ac, av, options, &help);
 	if (msg != NULL)
@@ -95,15 +95,12 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		if (shmdt(shared) == -1) {
 			tst_resm(TFAIL | TERRNO, "shmdt");
 		} else {
-			if (STD_FUNCTIONAL_TEST)
-				check_functionality();
-			else
-				tst_resm(TPASS, "call succeeded");
+			check_functionality();
 		}
 
 		/* reattach the shared memory segment in case we are looping */

@@ -1,5 +1,5 @@
 #DESCRIPTION:Kernel system calls
-abort01 ulimit -c 1024;abort01
+abort01 abort01
 
 accept01 accept01
 accept4_01 accept4_01
@@ -9,9 +9,9 @@ access02 access02
 access03 access03
 access04 access04
 access05 access05
+access06 access06
 
 acct01 acct01
-acct02 acct02
 
 add_key01 add_key01
 add_key02 add_key02
@@ -85,6 +85,7 @@ clone04 clone04
 clone05 clone05
 clone06 clone06
 clone07 clone07
+clone08 clone08
 
 close01 close01
 close02 close02
@@ -118,6 +119,7 @@ dup204 dup204
 dup205 dup205
 
 dup3_01 dup3_01
+dup3_02 dup3_02
 
 epoll_create1_01 epoll_create1_01
 epoll01 epoll-ltp
@@ -191,6 +193,7 @@ fchown05_16 fchown05_16
 
 #fchownat test case
 fchownat01 fchownat01
+fchownat02 fchownat02
 
 fcntl01 fcntl01
 fcntl01_64 fcntl01_64
@@ -206,8 +209,6 @@ fcntl06 fcntl06
 fcntl06_64 fcntl06_64
 fcntl07 fcntl07
 fcntl07_64 fcntl07_64
-fcntl07B fcntl07B
-fcntl07B_64 fcntl07B_64
 fcntl08 fcntl08
 fcntl08_64 fcntl08_64
 fcntl09 fcntl09
@@ -250,6 +251,12 @@ fcntl27 fcntl27
 fcntl27_64 fcntl27_64
 fcntl28 fcntl28
 fcntl28_64 fcntl28_64
+fcntl29 fcntl29
+fcntl29_64 fcntl29_64
+fcntl30 fcntl30
+fcntl30_64 fcntl30_64
+fcntl31 fcntl31
+fcntl31_64 fcntl31_64
 
 fdatasync01 fdatasync01
 fdatasync02 fdatasync02
@@ -275,6 +282,7 @@ fork09 fork09
 fork10 fork10
 fork11 fork11
 fork13 fork13 -i 1000000
+fork14 fork14
 
 fpathconf01 fpathconf01
 
@@ -321,15 +329,13 @@ getcpu01 getcpu01
 getcwd01 getcwd01
 getcwd02 getcwd02
 getcwd03 getcwd03
+getcwd04 getcwd04
 
 getdents01 getdents01
-getdents01_64 getdents01_64
 getdents02 getdents02
-getdents02_64 getdents02_64
-getdents03 getdents03
-getdents03_64 getdents03_64
-getdents04 getdents04
-getdents04_64 getdents04_64
+
+getdents01_64 getdents01 -l
+getdents02_64 getdents02 -l
 
 getdomainname01 getdomainname01
 
@@ -342,6 +348,8 @@ getegid02_16 getegid02_16
 
 geteuid01 geteuid01
 geteuid01_16 geteuid01_16
+geteuid02 geteuid02
+geteuid02_16 geteuid02_16
 
 getgid01 getgid01
 getgid01_16 getgid01_16
@@ -350,12 +358,8 @@ getgid03_16 getgid03_16
 
 getgroups01 getgroups01
 getgroups01_16 getgroups01_16
-getgroups02 getgroups02
-getgroups02_16 getgroups02_16
 getgroups03 getgroups03
 getgroups03_16 getgroups03_16
-getgroups04 getgroups04
-getgroups04_16 getgroups04_16
 
 gethostid01 x=`which hostid > /dev/null;echo $?`; if [ $x -eq 0 ]; then hostid; else echo "hostid is N/A"; fi
 
@@ -416,8 +420,6 @@ gettimeofday02 gettimeofday02
 
 getuid01 getuid01
 getuid01_16 getuid01_16
-getuid02 getuid02
-getuid02_16 getuid02_16
 getuid03 getuid03
 getuid03_16 getuid03_16
 
@@ -438,8 +440,16 @@ inotify_init1_02 inotify_init1_02
 
 inotify01 inotify01
 inotify02 inotify02
-inotify03 inotify03 -D DEVICE -T DEVICE_FS_TYPE
+inotify03 inotify03
 inotify04 inotify04
+inotify05 inotify05
+
+fanotify01 fanotify01
+fanotify02 fanotify02
+fanotify03 fanotify03
+fanotify04 fanotify04
+fanotify05 fanotify05
+fanotify06 fanotify06
 
 ioperm01 ioperm01
 ioperm02 ioperm02
@@ -465,13 +475,15 @@ kill07 kill07
 kill08 kill08
 kill09 kill09
 kill10 kill10
-kill11 ulimit -c 1024;kill11
+kill11 kill11
 kill12 kill12
 
 lchown01 lchown01
 lchown01_16 lchown01_16
 lchown02  lchown02
+lchown03  lchown03
 lchown02_16 lchown02_16
+lchown03_16 lchown03_16
 
 link01 symlink01 -T link01
 link02 link02
@@ -480,14 +492,17 @@ link04 link04
 link05 link05
 link06 link06
 link07 link07
+link08 link08
 
 #linkat test cases
 linkat01 linkat01
+linkat02 linkat02
 
 listen01 listen01
 
 llseek01 llseek01
 llseek02 llseek02
+llseek03 llseek03
 
 lseek01 lseek01
 lseek02 lseek02
@@ -535,6 +550,7 @@ mkdir09 mkdir09
 
 #mkdirat test cases
 mkdirat01 mkdirat01
+mkdirat02 mkdirat02
 
 mknod01 mknod01
 mknod02 mknod02
@@ -547,7 +563,8 @@ mknod08 mknod08
 mknod09 mknod09
 
 #mknodat test cases
-mknodat01 cd $LTPROOT/testcases/bin && chown root mknodat01 && chmod 04755 mknodat01 && mknodat01
+mknodat01 mknodat01
+mknodat02 mknodat02
 
 mlock01 mlock01
 mlock02 mlock02
@@ -564,21 +581,23 @@ mmap06 mmap06
 mmap07 mmap07
 mmap08 mmap08
 mmap09 mmap09
+mmap12 mmap12
+mmap13 mmap13
+mmap14 mmap14
 # test is broken, mask it for now.
 #mmap11 mmap11 -i 30000
+mmap15 mmap15
 
 modify_ldt01 modify_ldt01
 modify_ldt02 modify_ldt02
+modify_ldt03 modify_ldt03
 
-#
-# These tests require an unmounted block device
-# to run correctly. Please see individual test
-# code for more information.
-#
-mount01 mount01 -D DEVICE -T DEVICE_FS_TYPE
-mount02 mount02 -D DEVICE -T DEVICE_FS_TYPE
-mount03 mount03 -D DEVICE -T DEVICE_FS_TYPE
-mount04 mount04 -D DEVICE -T DEVICE_FS_TYPE
+mount01 mount01
+mount02 mount02
+mount03 mount03
+mount04 mount04
+mount05 mount05
+mount06 mount06
 
 move_pages01 move_pages.sh 01
 move_pages02 move_pages.sh 02
@@ -595,8 +614,10 @@ move_pages11 cd $LTPROOT/testcases/bin && chown root move_pages11 && chmod 04755
 mprotect01 mprotect01
 mprotect02 mprotect02
 mprotect03 mprotect03
+mprotect04 mprotect04
 
 mq_notify01 mq_notify01
+mq_notify02 mq_notify02
 mq_open01 mq_open01
 mq_timedreceive01 mq_timedreceive01
 mq_timedsend01 mq_timedsend01
@@ -619,6 +640,8 @@ msgctl08 x=`which ipcs > /dev/null;echo $?`; if [ $x -eq 0 ]; then msgctl08; els
 msgctl09 x=`which ipcs > /dev/null;echo $?`; if [ $x -eq 0 ]; then msgctl09; else echo "ipcs is N/A"; fi 
 msgctl10 x=`which ipcs > /dev/null;echo $?`; if [ $x -eq 0 ]; then msgctl10; else echo "ipcs is N/A"; fi 
 msgctl11 x=`which ipcs > /dev/null;echo $?`; if [ $x -eq 0 ]; then msgctl11; else echo "ipcs is N/A"; fi 
+msgctl12 msgctl12
+msgctl13 msgctl13
 
 msgget01 msgget01
 msgget02 msgget02
@@ -631,6 +654,7 @@ msgrcv03 msgrcv03
 msgrcv04 msgrcv04
 msgrcv05 msgrcv05
 msgrcv06 msgrcv06
+msgrcv07 msgrcv07
 
 msgsnd01 msgsnd01
 msgsnd02 msgsnd02
@@ -642,8 +666,6 @@ msgsnd06 msgsnd06
 msync01 msync01
 msync02 msync02
 msync03 msync03
-msync04 msync04
-msync05 msync05
 
 munlock01 munlock01
 munlock02 munlock02
@@ -680,9 +702,12 @@ open07 open07
 open08 open08
 open09 open09
 open10 open10
+open11 open11
+open12 open12
 
 #openat test cases
 openat01 openat01
+openat02 openat02
 
 mincore01 mincore01
 mincore02 mincore02
@@ -691,6 +716,7 @@ madvise01 madvise01
 madvise02 madvise02
 madvise03 madvise03
 madvise04 madvise04
+madvise05 madvise05
 
 newuname01 newuname01
 
@@ -743,8 +769,12 @@ process_vm_readv03 process_vm_readv03
 process_vm_writev01 process_vm01 -w
 process_vm_writev02 process_vm_writev02
 
+prot_hsymlinks prot_hsymlinks
+
 pselect01 pselect01
 pselect01_64 pselect01_64
+pselect02 pselect02
+pselect02_64 pselect02_64
 
 ptrace01 ptrace01
 ptrace02 ptrace02
@@ -756,15 +786,14 @@ ptrace05 ptrace05
 
 pwrite01 pwrite01
 pwrite02 pwrite02
-pwrite03 pwrite03
 pwrite04 pwrite04
 
 pwrite01_64 pwrite01_64
 pwrite02_64 pwrite02_64
-pwrite03_64 pwrite03_64
 pwrite04_64 pwrite04_64
 
 quotactl01 quotactl01
+quotactl02 quotactl02
 
 read01 read01
 read02 read02
@@ -777,15 +806,17 @@ readahead01 readahead01
 
 readdir01 readdir01
 readdir02 readdir02
+readdir21 readdir21
 
 readlink01A symlink01 -T readlink01
 readlink01 readlink01
 readlink02 readlink02
 readlink03 readlink03
-readlink04 cp -f $LTPROOT/testcases/bin/creat_slink $TMPDIR; readlink04
+readlink04 readlink04
 
 #readlinkat test cases
 readlinkat01 readlinkat01
+readlinkat02 readlinkat02
 
 readv01 readv01
 readv02 readv02
@@ -814,6 +845,7 @@ rename07 rename07
 rename08 rename08
 rename09 rename09
 rename10 rename10
+rename11 rename11
 rename12 rename12
 rename13 rename13
 rename14 rename14
@@ -837,6 +869,7 @@ rt_sigqueueinfo01 rt_sigqueueinfo01
 rt_sigsuspend01 rt_sigsuspend01
 
 sbrk01 sbrk01
+sbrk02 sbrk02
 
 sched_get_priority_max01 sched_get_priority_max01
 sched_get_priority_max02 sched_get_priority_max02
@@ -866,6 +899,7 @@ sched_setscheduler02 sched_setscheduler02
 
 sched_yield01 sched_yield01
 
+sched_setaffinity01 sched_setaffinity01
 sched_getaffinity01 sched_getaffinity01
 
 select01 select01
@@ -908,9 +942,12 @@ sendfile07 sendfile07
 sendfile07_64 sendfile07_64
 sendfile08 sendfile08
 sendfile08_64 sendfile08_64
+sendfile09 sendfile09
+sendfile09_64 sendfile09_64
 
 
 sendmsg01 sendmsg01
+sendmsg02 sendmsg02
 
 sendto01 sendto01
 
@@ -942,6 +979,7 @@ setgid03 setgid03
 setgid03_16 setgid03_16
 
 setegid01 setegid01
+setegid02 setegid02
 
 sgetmask01 sgetmask01
 
@@ -961,6 +999,9 @@ sethostname03 sethostname03
 setitimer01 setitimer01
 setitimer02 setitimer02
 setitimer03 setitimer03
+
+setns01 setns01
+setns02 setns02
 
 setpgid01 setpgid01
 setpgid02 setpgid02
@@ -990,6 +1031,8 @@ setresgid02 setresgid02
 setresgid02_16 setresgid02_16
 setresgid03 setresgid03
 setresgid03_16 setresgid03_16
+setresgid04 setresgid04
+setresgid04_16 setresgid04_16
 
 setresuid01 setresuid01
 setresuid01_16 setresuid01_16
@@ -999,6 +1042,8 @@ setresuid03 setresuid03
 setresuid03_16 setresuid03_16
 setresuid04 setresuid04
 setresuid04_16 setresuid04_16
+setresuid05 setresuid05
+setresuid05_16 setresuid05_16
 
 setreuid01 setreuid01
 setreuid01_16 setreuid01_16
@@ -1104,11 +1149,12 @@ socketpair02 socketpair02
 
 sockioctl01 sockioctl01
 
-#splice test
 splice01 splice01
 splice02 seq 1 1000000 | splice02 splice02-temp
+splice03 splice03
 
 tee01 tee01
+tee02 tee02
 
 ssetmask01 ssetmask01
 
@@ -1133,6 +1179,7 @@ statfs03 statfs03
 statfs03_64 statfs03_64
 
 statvfs01 statvfs01
+statvfs02 statvfs02
 
 stime01 stime01
 stime02 stime02
@@ -1207,6 +1254,9 @@ times03 times03
 timerfd01 timerfd01
 timerfd02 timerfd02
 timerfd03 timerfd03
+timerfd_create01 timerfd_create01
+timerfd_gettime01 timerfd_gettime01
+timerfd_settime01 timerfd_settime01
 
 timer_getoverrun01 timer_getoverrun01
 timer_gettime01 timer_gettime01
@@ -1220,8 +1270,6 @@ truncate02 truncate02
 truncate02_64 truncate02_64
 truncate03 truncate03
 truncate03_64 truncate03_64
-truncate04 truncate04
-truncate04_64 truncate04_64
 
 # This syscall is obsolete.  The latest glibc does not even
 # include the ulimit.h file anymore.  The test will fail
@@ -1254,9 +1302,9 @@ unshare02 unshare02
 # to run correctly. Please see individual test
 # code for more information.
 #
-umount01 umount01 -D DEVICE -T DEVICE_FS_TYPE
-umount02 umount02 -D DEVICE -T DEVICE_FS_TYPE
-umount03 umount03 -D DEVICE -T DEVICE_FS_TYPE
+umount01 umount01
+umount02 umount02
+umount03 umount03
 
 ustat01 ustat01
 ustat02 ustat02
@@ -1282,7 +1330,9 @@ vhangup02 vhangup02
 
 #vmsplice test cases
 vmsplice01 vmsplice01
+vmsplice02 vmsplice02
 
+wait01 wait01
 wait02 wait02
 
 wait401 wait401
@@ -1317,3 +1367,6 @@ writev03 writev03
 writev04 writev04
 writev05 writev05
 writev06 writev06
+
+perf_event_open01 perf_event_open01
+perf_event_open02 perf_event_open02

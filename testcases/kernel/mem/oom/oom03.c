@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include "numa_helper.h"
 #include "test.h"
 #include "usctest.h"
 #include "mem.h"
@@ -40,11 +41,13 @@
 char *TCID = "oom03";
 int TST_TOTAL = 1;
 
+#if HAVE_NUMA_H && HAVE_LINUX_MEMPOLICY_H && HAVE_NUMAIF_H \
+	&& HAVE_MPOL_CONSTANTS
+
 int main(int argc, char *argv[])
 {
-	char *msg;
+	const char *msg;
 	int lc;
-	char buf[BUFSIZ], mem[BUFSIZ];
 
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL)
@@ -57,14 +60,13 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
-		snprintf(buf, BUFSIZ, "%d", getpid());
-		write_file(MEMCG_PATH_NEW "/tasks", buf);
+		SAFE_FILE_PRINTF(cleanup, MEMCG_PATH_NEW "/tasks",
+				 "%d", getpid());
+		SAFE_FILE_PRINTF(cleanup, MEMCG_LIMIT, "%ld", TESTMEM);
 
-		snprintf(mem, BUFSIZ, "%ld", TESTMEM);
-		write_file(MEMCG_PATH_NEW "/memory.limit_in_bytes", mem);
-		testoom(0, 0, 0);
+		testoom(0, 0, ENOMEM, 1);
 
 		if (access(MEMCG_SW_LIMIT, F_OK) == -1) {
 			if (errno == ENOENT)
@@ -73,8 +75,17 @@ int main(int argc, char *argv[])
 			else
 				tst_brkm(TBROK | TERRNO, cleanup, "access");
 		} else {
-			write_file(MEMCG_SW_LIMIT, mem);
-			testoom(0, 1, 0);
+			SAFE_FILE_PRINTF(cleanup, MEMCG_SW_LIMIT,
+					 "%ld", TESTMEM);
+			testoom(0, 1, ENOMEM, 1);
+		}
+
+		/* OOM for MEMCG with mempolicy */
+		if (is_numa(cleanup)) {
+			tst_resm(TINFO, "OOM on MEMCG & mempolicy...");
+			testoom(MPOL_BIND, 0, ENOMEM, 1);
+			testoom(MPOL_INTERLEAVE, 0, ENOMEM, 1);
+			testoom(MPOL_PREFERRED, 0, ENOMEM, 1);
 		}
 	}
 	cleanup();
@@ -99,3 +110,10 @@ void cleanup(void)
 
 	TEST_CLEANUP;
 }
+
+#else
+int main(void)
+{
+	tst_brkm(TCONF, NULL, "no NUMA development packages installed.");
+}
+#endif

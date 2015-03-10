@@ -70,10 +70,11 @@
 #include <errno.h>
 #include <sys/wait.h>
 
-char *TCID = "setresuid03";
+#include <compat_16.h>
+
+TCID_DEFINE(setresuid03);
 
 uid_t neg_one = -1;
-uid_t inval_user = (USHRT_MAX - 2);
 
 /* flag to tell parent if child passed or failed. */
 int flag = 0;
@@ -106,11 +107,8 @@ struct test_data_t {
 	&neg_one, &neg_one, &nobody_pw_uid, EPERM, &root, &bin, &bin,
 		    "After setresuid(-1, -1, bin),"}, {
 	&neg_one, &nobody_pw_uid, &neg_one, EPERM, &root, &bin, &bin,
-		    "After setresuid(-1, -1, bin),"}, {
-	&neg_one, &neg_one, &inval_user, EPERM, &root, &bin, &bin,
-		    "After setresuid(-1, -1, bin),"}, {
-&neg_one, &inval_user, &neg_one, EPERM, &root, &bin, &bin,
-		    "After setresuid(-1, -1, bin),"},};
+		    "After setresuid(-1, -1, bin),"}
+};
 
 int TST_TOTAL = sizeof(test_data) / sizeof(test_data[0]);
 
@@ -123,8 +121,7 @@ uid_verify(struct passwd *ru, struct passwd *eu, struct passwd *su, char *);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
-	int status;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -136,8 +133,8 @@ int main(int ac, char **av)
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		int i, pid;
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* set the appropriate ownership values */
 		if (setresuid(root_pw_uid, bin_pw_uid, bin_pw_uid)
@@ -152,7 +149,7 @@ int main(int ac, char **av)
 			for (i = 0; i < TST_TOTAL; i++) {
 
 				/* Set the real, effective or saved user id */
-				TEST(setresuid(*test_data[i].real_uid,
+				TEST(SETRESUID(NULL, *test_data[i].real_uid,
 					       *test_data[i].eff_uid,
 					       *test_data[i].sav_uid));
 
@@ -172,26 +169,14 @@ int main(int ac, char **av)
 					flag = -1;
 				}
 
-				/*
-				 * Perform functional verification if test
-				 * executed without (-f) option.
-				 */
-				if (STD_FUNCTIONAL_TEST) {
-					uid_verify(test_data[i].exp_real_usr,
-						   test_data[i].exp_eff_usr,
-						   test_data[i].exp_sav_usr,
-						   test_data[i].test_msg);
-				} else {
-					tst_resm(TPASS, "Call succeeded.");
-				}
+				uid_verify(test_data[i].exp_real_usr,
+					   test_data[i].exp_eff_usr,
+					   test_data[i].exp_sav_usr,
+					   test_data[i].test_msg);
 			}
 			exit(flag);
 		} else {	/* parent */
-			waitpid(pid, &status, 0);
-			if (WEXITSTATUS(status) != 0) {
-				tst_resm(TFAIL, "test failed within "
-					 "child process.");
-			}
+			tst_record_childstatus(cleanup, pid);
 		}
 	}
 	cleanup();
@@ -204,33 +189,26 @@ int main(int ac, char **av)
  */
 void setup(void)
 {
+	tst_require_root(NULL);
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	if (getpwnam("nobody") == NULL) {
 		tst_brkm(TBROK, NULL, "nobody must be a valid user.");
-		tst_exit();
 	}
 
 	if (getpwnam("bin") == NULL) {
 		tst_brkm(TBROK, NULL, "bin must be a valid user.");
-		tst_exit();
-	}
-
-	/* Check that the test process id is root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be root for this test!");
-		tst_exit();
 	}
 
 	root = *(getpwnam("root"));
-	root_pw_uid = root.pw_uid;
+	UID16_CHECK((root_pw_uid = root.pw_uid), "setresuid", cleanup)
 
 	nobody = *(getpwnam("nobody"));
-	nobody_pw_uid = nobody.pw_uid;
+	UID16_CHECK((nobody_pw_uid = nobody.pw_uid), "setresuid", cleanup)
 
 	bin = *(getpwnam("bin"));
-	bin_pw_uid = bin.pw_uid;
+	UID16_CHECK((bin_pw_uid = bin.pw_uid), "setresuid", cleanup)
 
 	/* Pause if that option was specified
 	 * TEST_PAUSE contains the code to fork the test with the -i option.

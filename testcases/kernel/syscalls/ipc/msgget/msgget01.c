@@ -67,20 +67,19 @@ int msg_q_1 = -1;		/* to hold the message queue ID */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	void check_functionality(void);
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
+	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Use TEST macro to make the call to create the message queue
@@ -93,16 +92,12 @@ int main(int ac, char **av)
 				 TCID, TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
 			msg_q_1 = TEST_RETURN;
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * write a message to the queue.
-				 * read back the message.
-				 * PASS the test if they are the same.
-				 */
-				check_functionality();
-			} else {
-				tst_resm(TPASS, "message queue was created");
-			}
+			/*
+			 * write a message to the queue.
+			 * read back the message.
+			 * PASS the test if they are the same.
+			 */
+			check_functionality();
 		}
 
 		/*
@@ -116,14 +111,13 @@ int main(int ac, char **av)
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
 /*
  * check_functionality() - check the functionality of the tested system call.
  */
-void check_functionality()
+void check_functionality(void)
 {
 	int i = 0;
 	MSGBUF snd_buf, rcv_buf;

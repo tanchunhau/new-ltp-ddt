@@ -111,7 +111,7 @@ static void update_mem(void);
 
 int main(int argc, char *argv[])
 {
-	char *msg;
+	const char *msg;
 	int lc;
 
 	msg = parse_opts(argc, argv, options, &usage);
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		overcommit_memory_test();
 	}

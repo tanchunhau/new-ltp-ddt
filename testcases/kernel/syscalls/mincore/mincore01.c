@@ -1,58 +1,37 @@
 /*
+ * Copyright (c) International Business Machines  Corp., 2001
+ *  Author: Rajeev Tiwari: rajeevti@in.ibm.com
+ * Copyright (c) 2004 Gernot Payer <gpayer@suse.de>
+ * Copyright (c) 2013 Cyril Hrubis <chrubis@suse.cz>
  *
- *   Copyright (c) International Business Machines  Corp., 2001
+ * This program is free software;  you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   This program is free software;  you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ * the GNU General Public License for more details.
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program;  if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /*
- * NAME
- *	mincore01.c
- *
- * DESCRIPTION
- *	Testcase to check the error conditions for mincore
- *
- * ALGORITHM
- *	test1:
- *		Invoke mincore() when the start address is not multiple of page size.
- *		EINVAL
- *	test2:
- *		Invoke mincore() when the vector points to an invalid address. EFAULT
- *	test3:
- *		Invoke mincore() when the starting address + length contained unmapped
- *		memory. ENOMEM
- *
- * USAGE:  <for command-line>
- *  mincore01 [-c n] [-e] [-i n] [-I x] [-P x] [-t]
- *     where,  -c n : Run n copies concurrently.
- *             -e   : Turn on errno logging.
- *             -i n : Execute test n times.
- *             -I x : Execute test for x seconds.
- *             -P x : Pause for x seconds between iterations.
- *             -t   : Turn on syscall timing.
- *
- * HISTORY
- *  Author: Rajeev Tiwari: rajeevti@in.ibm.com
- *	08/2004 Rajeev Tiwari : does a basic sanity check for the various error
- *  conditions possible with the mincore system call.
- *
- * 	2004/09/10 Gernot Payer <gpayer@suse.de>
- * 		code cleanup
- *$
- * RESTRICTIONS
- *	None
+ * test1:
+ *	Invoke mincore() when the start address is not multiple of page size.
+ *	EINVAL
+ * test2:
+ *	Invoke mincore() when the vector points to an invalid address. EFAULT
+ * test3:
+ *	Invoke mincore() when the starting address + length contained unmapped
+ *	memory. ENOMEM
+ * test4:
+ *      Invoke mincore() when length is greater than (TASK_SIZE - addr). ENOMEM
+ *      In Linux 2.6.11 and earlier, the error EINVAL  was  returned for this
+ *      condition.
  */
 
 #include <fcntl.h>
@@ -65,219 +44,187 @@
 #include <sys/stat.h>
 #include "test.h"
 #include "usctest.h"
+#include "safe_macros.h"
 
 static int PAGESIZE;
 static rlim_t STACK_LIMIT = 10485760;
 
 static void cleanup(void);
 static void setup(void);
-static void setup1(void);
-static void setup2(void);
-static void setup3(void);
 
 char *TCID = "mincore01";
-int TST_TOTAL = 3;
 
-static char file_name[] = "fooXXXXXX";
-static char *global_pointer = NULL;
-static unsigned char *global_vec = NULL;
-static int global_len = 0;
-static int file_desc = 0;
+static char *global_pointer;
+static unsigned char *global_vec;
+static int global_len;
 
-#if !defined(UCLINUX)
+struct test_case_t;
+static void setup1(struct test_case_t *tc);
+static void setup2(struct test_case_t *tc);
+static void setup3(struct test_case_t *tc);
+static void setup4(struct test_case_t *tc);
 
 static struct test_case_t {
 	char *addr;
-	int len;
+	size_t len;
 	unsigned char *vector;
 	int exp_errno;
-	void (*setupfunc) ();
+	void (*setupfunc) (struct test_case_t *tc);
 } TC[] = {
-	{
-	NULL, 0, NULL, EINVAL, setup1}, {
-	NULL, 0, NULL, EFAULT, setup2}, {
-NULL, 0, NULL, ENOMEM, setup3},};
+	{NULL, 0, NULL, EINVAL, setup1},
+	{NULL, 0, NULL, EFAULT, setup2},
+	{NULL, 0, NULL, ENOMEM, setup3},
+	{NULL, 0, NULL, ENOMEM, setup4}
+};
+
+static void mincore_verify(struct test_case_t *tc);
+
+int TST_TOTAL = ARRAY_SIZE(TC);
 
 int main(int ac, char **av)
 {
-	int lc;
-	int i;
-	char *msg;
+	int i, lc;
+	const char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
+	msg = parse_opts(ac, av, NULL, NULL);
+	if (msg != NULL)
 		tst_brkm(TBROK, cleanup, "error parsing options: %s", msg);
-	}
 
-	setup();		/* global setup */
+	setup();
 
-	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
+		tst_count = 0;
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
-
-		/* loop through the test cases */
-		for (i = 0; i < TST_TOTAL; i++) {
-
-			/* perform test specific setup */
-			if (TC[i].setupfunc != NULL) {
-				TC[i].setupfunc();
-			}
-			TEST(mincore(TC[i].addr, TC[i].len, TC[i].vector));
-
-			if (TEST_RETURN != -1) {
-				tst_resm(TFAIL, "call succeeded unexpectedly");
-				continue;
-			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
-
-			if (TEST_ERRNO == TC[i].exp_errno) {
-				tst_resm(TPASS, "expected failure: "
-					 "errno = %d (%s)", TEST_ERRNO,
-					 strerror(TEST_ERRNO));
-			} else {
-				tst_resm(TFAIL, "unexpected error %d (%s), "
-					 "expected %d", TEST_ERRNO,
-					 strerror(TEST_ERRNO), TC[i].exp_errno);
-			}
-		}
+		for (i = 0; i < TST_TOTAL; i++)
+			mincore_verify(&TC[i]);
 	}
+
 	cleanup();
 	tst_exit();
 }
 
-/*
- * setup1() - sets up conditions for the first test. the start address is not
- * multiple of page size
- */
-void setup1()
+static void setup1(struct test_case_t *tc)
 {
-	TC[0].addr = global_pointer + 1;
-	TC[0].len = global_len;
-	TC[0].vector = global_vec;
+	tc->addr = global_pointer + 1;
+	tc->len = global_len;
+	tc->vector = global_vec;
 }
 
-/*
- * setup2() - sets up conditions for the test 2. the vector points to an
- * invalid address.
- */
-void setup2()
+void setup2(struct test_case_t *tc)
 {
 	unsigned char *t;
 	struct rlimit limit;
 
-	/* Create pointer to invalid address */
-	if (MAP_FAILED ==
-	    (t =
-	     mmap(0, global_len, PROT_READ | PROT_WRITE,
-		  MAP_PRIVATE | MAP_ANONYMOUS, 0, 0))) {
-		tst_brkm(TBROK, cleanup, "mmaping anonymous memory failed: %s",
-			 strerror(errno));
-	}
-	munmap(t, global_len);
+	t = SAFE_MMAP(cleanup, NULL, global_len, PROT_READ | PROT_WRITE,
+		      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+	SAFE_MUNMAP(cleanup, t, global_len);
 
 	/* set stack limit so that the unmaped pointer is invalid for architectures like s390 */
 	limit.rlim_cur = STACK_LIMIT;
 	limit.rlim_max = STACK_LIMIT;
 
-	if (setrlimit(RLIMIT_STACK, &limit) != 0) {
-		tst_brkm(TBROK, cleanup, "setrlimit failed: %s",
-			 strerror(errno));
+	if (setrlimit(RLIMIT_STACK, &limit) != 0)
+		tst_brkm(TBROK | TERRNO, cleanup, "setrlimit failed");
+
+	tc->addr = global_pointer;
+	tc->len = global_len;
+	tc->vector = t;
+}
+
+static void setup3(struct test_case_t *tc)
+{
+	tc->addr = global_pointer;
+	tc->len = global_len * 2;
+	SAFE_MUNMAP(cleanup, global_pointer + global_len, global_len);
+	tc->vector = global_vec;
+}
+
+static void setup4(struct test_case_t *tc)
+{
+	struct rlimit as_lim;
+
+	if (getrlimit(RLIMIT_AS, &as_lim) == -1) {
+		tst_brkm(TBROK | TERRNO, cleanup,
+			 "getrlimit(RLIMIT_AS) failed");
 	}
 
-	TC[1].addr = global_pointer;
-	TC[1].len = global_len;
-	TC[1].vector = t;
+	tc->addr = global_pointer;
+	tc->len = as_lim.rlim_cur - (rlim_t)global_pointer + PAGESIZE;
+	tc->vector = global_vec;
+
+	/*
+	 * In linux 2.6.11 and earlier, EINVAL was returned for this condition.
+	 */
+	if (tst_kvercmp(2, 6, 11) <= 0)
+		tc->exp_errno = EINVAL;
 }
 
-/*
- *  setup3() - performs the setup for test3(the starting address + length
- *  contained unmapped memory). we give the length of mapped file equal to 5
- *  times the mapped file size.
- */
-void setup3()
-{
-	TC[2].addr = global_pointer;
-	TC[2].len = global_len * 2;
-	munmap(global_pointer + global_len, global_len);
-	TC[2].vector = global_vec;
-}
-
-/*
- * setup() - performs all ONE TIME setup for this test
- */
-void setup()
+static void setup(void)
 {
 	char *buf;
+	int fd;
 
 	PAGESIZE = getpagesize();
+
+	tst_sig(NOFORK, DEF_HANDLER, cleanup);
+
+	tst_tmpdir();
+
+	TEST_PAUSE;
 
 	/* global_pointer will point to a mmapped area of global_len bytes */
 	global_len = PAGESIZE * 2;
 
-	buf = (char *)malloc(global_len);
+	buf = SAFE_MALLOC(cleanup, global_len);
 	memset(buf, 42, global_len);
 
-	tst_sig(FORK, DEF_HANDLER, cleanup);
+	fd = SAFE_OPEN(cleanup, "mincore01", O_CREAT | O_RDWR,
+		       S_IRUSR | S_IWUSR);
 
-	TEST_PAUSE;
+	SAFE_WRITE(cleanup, 1, fd, buf, global_len);
 
-	/* create a temporary file */
-	if (-1 == (file_desc = mkstemp(file_name))) {
-		tst_brkm(TBROK, cleanup,
-			 "Error while creating temporary file: %s",
-			 strerror(errno));
-	}
-
-	/* fill the temporary file with two pages of data */
-	if (-1 == write(file_desc, buf, global_len)) {
-		tst_brkm(TBROK, cleanup,
-			 "Error while writing to temporary file: %s",
-			 strerror(errno));
-	}
 	free(buf);
 
-	/* map the file in memory */
-	if (MAP_FAILED ==
-	    (global_pointer =
-	     (char *)mmap(NULL, global_len * 2,
-			  PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED,
-			  file_desc, 0))) {
-		tst_brkm(TBROK, cleanup,
-			 "Temporary file could not be mmapped: %s",
-			 strerror(errno));
-	}
+	global_pointer = SAFE_MMAP(cleanup, NULL, global_len * 2,
+				   PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
-	/* initialize the vector buffer to collect the page info */
-	global_vec = malloc((global_len + PAGESIZE - 1) / PAGESIZE);
+	global_vec = SAFE_MALLOC(cleanup,
+				 (global_len + PAGESIZE - 1) / PAGESIZE);
+
+	SAFE_CLOSE(cleanup, fd);
 }
 
-/*
- * cleanup() - performs all the ONE TIME cleanup for this test at completion
- * or premature exit.
- */
-void cleanup()
+static void mincore_verify(struct test_case_t *tc)
 {
-	/*
-	 * print timing status if that option was specified.
-	 * print errno log if that option was specified
-	 */
+	if (tc->setupfunc)
+		tc->setupfunc(tc);
+
+	TEST(mincore(tc->addr, tc->len, tc->vector));
+
+	if (TEST_RETURN != -1) {
+		tst_resm(TFAIL, "succeeded unexpectedly");
+		return;
+	}
+
+	if (TEST_ERRNO == tc->exp_errno) {
+		tst_resm(TPASS | TTERRNO, "failed as expected");
+	} else {
+		tst_resm(TFAIL | TTERRNO,
+			"mincore failed unexpectedly; expected: "
+			"%d - %s", tc->exp_errno,
+			strerror(tc->exp_errno));
+	}
+}
+
+static void cleanup(void)
+{
 	TEST_CLEANUP;
 
 	free(global_vec);
-	munmap(global_pointer, global_len);
-	close(file_desc);
-	remove(file_name);
 
+	if (munmap(global_pointer, global_len) == -1)
+		tst_resm(TWARN | TERRNO, "munmap failed");
+
+	tst_rmdir();
 }
-
-#else
-
-int main()
-{
-	tst_resm(TINFO, "test is not available on uClinux");
-	tst_exit();
-}
-
-#endif /* if !defined(UCLINUX) */

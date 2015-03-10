@@ -22,19 +22,18 @@
 #                                                                              #
 ################################################################################
 
-cd $LTPROOT/testcases/bin
-
-. ./cpuset_funcs.sh
-
-export TCID="cpuset07"
+export TCID="cpuset_load_balance"
 export TST_TOTAL=13
 export TST_COUNT=1
 
+. cpuset_funcs.sh
+
+check 4 2
+
 exit_status=0
 
-# must >= 3 for: 1-$((nr_mems-2))
-nr_cpus=4
-nr_mems=3
+nr_cpus=$NR_CPUS
+nr_mems=$N_NODES
 
 cpus_all="$(seq -s, 0 $((nr_cpus-1)))"
 mems_all="$(seq -s, 0 $((nr_mems-1)))"
@@ -84,7 +83,7 @@ general_load_balance_test1()
 		return 1
 	fi
 
-	./cpuset_cpu_hog 2> $CPUSET_TMP/cpu-hog_stderr &
+	cpuset_cpu_hog 2> $CPUSET_TMP/cpu-hog_stderr &
 	pid=$!
 
 	read fifo < ./myfifo
@@ -209,7 +208,7 @@ general_load_balance_test2()
 		return 1
 	fi
 
-	./cpuset_cpu_hog 2> $CPUSET_TMP/cpu-hog_stderr &
+	cpuset_cpu_hog 2> $CPUSET_TMP/cpu-hog_stderr &
 	pid=$!
 
 	# wait for the parent to do prepare
@@ -307,7 +306,7 @@ base_test()
 
 		cpu_hotplug_cleanup
 	fi
-	: $((TST_COUNT++))
+	TST_COUNT=$(($TST_COUNT + 1))
 }
 
 test_general_load_balance1()

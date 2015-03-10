@@ -23,17 +23,6 @@
  *	This test case will verify basic function of faccessat
  *	added by kernel 2.6.16 or up.
  *
- * USAGE:  <for command-line>
- * faccessat01 [-c n] [-e] [-i n] [-I x] [-P x] [-t] [-p]
- * where:
- *      -c n : Run n copies simultaneously.
- *      -e   : Turn on errno logging.
- *      -i n : Execute test n times.
- *      -I x : Execute test for x seconds.
- *      -p   : Pause for SIGUSR1 before starting
- *      -P x : Pause for x seconds between iterations.
- *      -t   : Turn on syscall timing.
- *
  * Author
  *	Yi Yang <yyangcdl@cn.ibm.com>
  *
@@ -65,8 +54,8 @@ void setup();
 void cleanup();
 void setup_every_copy();
 
-char *TCID = "faccessat01";	/* Test program identifier.    */
-int TST_TOTAL = TEST_CASES;	/* Total number of test cases. */
+char *TCID = "faccessat01";
+int TST_TOTAL = TEST_CASES;
 char pathname[256] = "";
 char testfile[256] = "";
 char testfile2[256] = "";
@@ -78,13 +67,13 @@ int expected_errno[TEST_CASES] = { 0, 0, ENOTDIR, EBADF, 0, 0 };
 
 int myfaccessat(int dirfd, const char *filename, int mode)
 {
-	return syscall(__NR_faccessat, dirfd, filename, mode);
+	return ltp_syscall(__NR_faccessat, dirfd, filename, mode);
 }
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int i;
 
 	/* Disable test if the version of the kernel is less than 2.6.16 */
@@ -94,24 +83,15 @@ int main(int ac, char **av)
 		exit(0);
 	}
 
-	/***************************************************************
-	 * parse standard options
-	 ***************************************************************/
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
-	/***************************************************************
-	 * perform global setup for test
-	 ***************************************************************/
 	setup();
 
-	/***************************************************************
-	 * check looping state if -c option given
-	 ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		setup_every_copy();
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call faccessat
@@ -121,17 +101,10 @@ int main(int ac, char **av)
 
 			/* check return code */
 			if (TEST_ERRNO == expected_errno[i]) {
-
-				/***************************************************************
-				 * only perform functional verification if flag set (-f not given)
-				 ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "faccessat() returned the expected  errno %d: %s",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO));
-				}
+				tst_resm(TPASS,
+					 "faccessat() returned the expected  errno %d: %s",
+					 TEST_ERRNO,
+					 strerror(TEST_ERRNO));
 			} else {
 				TEST_ERROR_LOG(TEST_ERRNO);
 				tst_resm(TFAIL,
@@ -142,15 +115,11 @@ int main(int ac, char **av)
 
 	}
 
-	/***************************************************************
-	 * cleanup and exit
-	 ***************************************************************/
 	cleanup();
-
-	return (0);
+	tst_exit();
 }
 
-void setup_every_copy()
+void setup_every_copy(void)
 {
 	/* Initialize test dir and file names */
 	sprintf(pathname, "faccessattestdir%d", getpid());
@@ -199,10 +168,7 @@ void setup_every_copy()
 	filenames[5] = testfile3;
 }
 
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -210,23 +176,13 @@ void setup()
 	TEST_PAUSE;
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- *             completion or premature exit.
- ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/* Remove them */
 	close(fd);
 	unlink(testfile);
 	unlink(testfile2);
 	unlink(testfile3);
 	rmdir(pathname);
 
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
 	TEST_CLEANUP;
-
 }

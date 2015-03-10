@@ -201,8 +201,8 @@ void chld1_kill();		/*This routine is used by child 1 to remove itself and  */
 void setup();
 void cleanup();
 
-char *TCID = "kill02";		/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "kill02";
+int TST_TOTAL = 2;
 
 int exp_enos[] = { 0 };		/* Array of expected errnos */
 
@@ -215,7 +215,7 @@ void childB_rout_uclinux();
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -234,7 +234,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		if ((pid1 = FORK_OR_VFORK()) > 0) {
 			if ((pid2 = FORK_OR_VFORK()) > 0) {
@@ -296,7 +296,7 @@ int main(int ac, char **av)
  *  This is the parents routine.  The parent waits for the children 1 and 2 to
  *  get set up. Then sends the signal and checks the outcome.
  *********************************************************************************/
-void parent_rout()
+void parent_rout(void)
 {
 	/*
 	 *  Set to catch the alarm signal SIGALRM.
@@ -305,7 +305,6 @@ void parent_rout()
 		(void)par_kill();
 		tst_brkm(TBROK, NULL,
 			 "Could not set to catch the parents time out alarm.");
-		tst_exit();
 	}
 
 	/*
@@ -402,11 +401,8 @@ void parent_rout()
 			 *  Both processes, 1 and A, that were supposed to receive
 			 *  the signal did receive the signal.
 			 */
-			if (STD_FUNCTIONAL_TEST)
-				tst_resm(TPASS,
-					 "The signal was sent to all processes in the process group.");
-			else
-				Tst_count++;
+			tst_resm(TPASS,
+				 "The signal was sent to all processes in the process group.");
 		} else {	/*Process A didn't receive the signal. */
 			tst_resm(TFAIL,
 				 "Process A did not receive the signal.");
@@ -424,11 +420,8 @@ void parent_rout()
 			/*
 			 *  Both processes, 2 and B did not receive the signal.
 			 */
-			if (STD_FUNCTIONAL_TEST)
-				tst_resm(TPASS,
-					 "The signal was not sent to selective processes that were not in the process group.");
-			else
-				Tst_count++;
+			tst_resm(TPASS,
+				 "The signal was not sent to selective processes that were not in the process group.");
 		} else {	/*Process B received the signal. */
 			tst_resm(TFAIL, "Process B received the signal.");
 		}
@@ -448,7 +441,7 @@ void parent_rout()
 
 }				/*End of parent_rout */
 
-void child1_rout()
+void child1_rout(void)
 {
 	who_am_i = '1';
 
@@ -590,7 +583,7 @@ void child1_rout()
 /*******************************************************************************
  *  This is the routine for child 2, which should not receive the parents signal.
  ******************************************************************************/
-void child2_rout()
+void child2_rout(void)
 {
 	who_am_i = '2';
 
@@ -622,7 +615,7 @@ void child2_rout()
 /*******************************************************************************
  *  This is the routine for child A, which should receive the parents signal.
  ******************************************************************************/
-void childA_rout()
+void childA_rout(void)
 {
 	who_am_i = 'A';
 
@@ -641,7 +634,7 @@ void childA_rout()
 /*******************************************************************************
  *  This is the routine for child A after self_exec
  ******************************************************************************/
-void childA_rout_uclinux()
+void childA_rout_uclinux(void)
 {
 	/* Setup the signal handler again */
 	if (signal(SIGUSR1, usr1_rout) == SIG_ERR) {
@@ -658,7 +651,7 @@ void childA_rout_uclinux()
 /*******************************************************************************
  *  This is the routine for child B, which should not receive the parents signal.
  ******************************************************************************/
-void childB_rout()
+void childB_rout(void)
 {
 	who_am_i = 'B';
 
@@ -683,7 +676,7 @@ void childB_rout()
 /*******************************************************************************
  *  This is the routine for child B after self_exec
  ******************************************************************************/
-void childB_rout_uclinux()
+void childB_rout_uclinux(void)
 {
 	/* Setup the signal handler again */
 	if (signal(SIGUSR1, usr1_rout) == SIG_ERR) {
@@ -701,7 +694,7 @@ void childB_rout_uclinux()
  *  This routine sets up the interprocess communication pipes, signal handling,
  *  and process group information.
  ******************************************************************************/
-void setup()
+void setup(void)
 {
 	int errno_buf;		/*indicates the errno if pipe set up fails.             */
 	int err_flag = FALSE;	/*Indicates if an error has occurred in pipe set up.    */
@@ -723,13 +716,11 @@ void setup()
 	if (signal(SIGUSR1, SIG_IGN) == SIG_ERR) {
 		tst_brkm(TBROK | TFAIL, NULL,
 			 "signal(SIGUSR1, SIG_IGN) failed");
-		tst_exit();
 	}
 
 	if (signal(SIGCLD, SIG_IGN) == SIG_ERR) {
 		tst_brkm(TBROK | TERRNO, NULL,
 			 "signal(SIGCLD, SIG_IGN) failed");
-		tst_exit();
 	}
 
 	/* Indicate which errnos are expected */
@@ -769,7 +760,6 @@ void setup()
 	 */
 	if (err_flag == TRUE) {
 		tst_brkm(TBROK | TERRNO, NULL, "pipe() failed");
-		tst_exit();
 	}
 	return;
 
@@ -778,7 +768,7 @@ void setup()
 /***********************************************************
  *  This routine indicates that the process caught SIGUSR1.
  **********************************************************/
-void usr1_rout()
+void usr1_rout(void)
 {
 	switch (who_am_i) {
 	case '1':
@@ -815,7 +805,7 @@ void usr1_rout()
  *  which occurs when the child fails to notify the parent
  *  the status of set up.
  **********************************************************/
-void notify_timeout()
+void notify_timeout(void)
 {
 	alarm_flag = TRUE;
 
@@ -825,7 +815,7 @@ void notify_timeout()
  *  This routine handles the procedure for removing the
  *  children forked off during this test.
  **********************************************************/
-void par_kill()
+void par_kill(void)
 {
 	int status;
 
@@ -853,7 +843,7 @@ void par_kill()
  *  This routine is executed by child 1 when the parent tells it to
  *  remove it's children and itself.
  ********************************************************************/
-void chld1_kill()
+void chld1_kill(void)
 {
 	/*
 	 *  Remove children A & B.
@@ -878,7 +868,7 @@ void chld1_kill()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *              completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

@@ -12,7 +12,7 @@
  * - get time T0
  * - create/enable a timer to expire at T1 = T0 + TIMEROFFSET
  * - sleep SLEEPTIME seconds (SLEEPTIME should be < TIMEROFFSET,
- * 				but > ACCEPTABLEDELTA)
+ *				but > ACCEPTABLEDELTA)
  * - set time back to T0
  * - wait for the timer to expire
  * - get time T2
@@ -38,7 +38,7 @@
 
 #define SIGTOTEST SIGALRM
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct sigevent ev;
 	struct timespec tpT0, tpT2, tpreset;
@@ -124,12 +124,9 @@ int main(int argc, char *argv[])
 	if ((delta <= ACCEPTABLEDELTA) && (delta >= 0)) {
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		printf("FAIL:  Ended %d, not %d\n",
-		       (int)tpT2.tv_sec, (int)its.it_value.tv_sec);
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("FAIL:  Ended %d, not %d\n",
+	       (int)tpT2.tv_sec, (int)its.it_value.tv_sec);
+	return PTS_FAIL;
 }

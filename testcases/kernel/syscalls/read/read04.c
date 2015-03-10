@@ -67,7 +67,7 @@ int fild;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	int rfild;
 	char prbuf[BUFSIZ];
@@ -83,7 +83,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;	/* reset Tst_count while looping */
+		tst_count = 0;	/* reset tst_count while looping */
 
 		if ((rfild = open(fname, O_RDONLY)) == -1) {
 			tst_brkm(TBROK, cleanup, "can't open for reading");
@@ -95,28 +95,25 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			if (TEST_RETURN != TST_SIZE) {
-				tst_resm(TFAIL, "Bad read count - got %ld - "
-					 "expected %d", TEST_RETURN, TST_SIZE);
-				continue;
-			}
-			if (memcmp(palfa, prbuf, TST_SIZE) != 0) {
-				tst_resm(TFAIL, "read buffer not equal "
-					 "to write buffer");
-				continue;
-			}
-			tst_resm(TPASS, "functionality of read() is correct");
-		} else {
-			tst_resm(TPASS, "call succeeded");
+		if (TEST_RETURN != TST_SIZE) {
+			tst_resm(TFAIL, "Bad read count - got %ld - "
+				 "expected %d", TEST_RETURN, TST_SIZE);
+			continue;
 		}
+		if (memcmp(palfa, prbuf, TST_SIZE) != 0) {
+			tst_resm(TFAIL, "read buffer not equal "
+				 "to write buffer");
+			continue;
+		}
+		tst_resm(TPASS, "functionality of read() is correct");
+
 		if (close(rfild) == -1) {
 			tst_brkm(TBROK, cleanup, "close() failed");
 		}
 	}
+
 	cleanup();
 	tst_exit();
-
 }
 
 /*

@@ -48,7 +48,7 @@ int main(int ac, char **av)
 {
 
 	int lc, status;
-	char *msg;
+	const char *msg;
 	void *child_stack;
 	char *parent_env;
 	char buff[MAX_LINE_LENGTH];
@@ -64,7 +64,7 @@ int main(int ac, char **av)
 		tst_brkm(TBROK, cleanup, "Cannot allocate stack for child");
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		if ((pipe(pfd)) == -1)
 			tst_brkm(TBROK | TERRNO, cleanup, "pipe() failed");

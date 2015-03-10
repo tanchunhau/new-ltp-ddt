@@ -95,7 +95,7 @@ void setup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	void *ptr;
 	int retval, func;
@@ -112,8 +112,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 //block1:
 		/*
@@ -121,7 +121,7 @@ int main(int ac, char **av)
 		 */
 		tst_resm(TINFO, "Enter block 1");
 		flag = 0;
-		ptr = (void *)malloc(10);
+		ptr = malloc(10);
 		func = 100;
 		retval = modify_ldt(func, ptr, sizeof(ptr));
 		if (retval < 0) {
@@ -261,15 +261,15 @@ void cleanup(void)
 }
 
 #elif HAVE_MODIFY_LDT
-int main()
+int main(void)
 {
-	tst_resm(TCONF,
+	tst_brkm(TCONF,
+		 NULL,
 		 "modify_ldt is available but not tested on the platform than __i386__");
-	tst_exit();
 }
 
 #else
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "modify_ldt01 test only for ix86");
 	tst_exit();

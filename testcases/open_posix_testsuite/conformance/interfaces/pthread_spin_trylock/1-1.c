@@ -30,8 +30,8 @@
 #include "posixtest.h"
 
 static pthread_spinlock_t spinlock;
-volatile static int thread_state;
-int rc;
+static volatile int thread_state;
+static int rc;
 
 #define NOT_CREATED_THREAD 1
 #define ENTERED_THREAD 2
@@ -56,6 +56,8 @@ static void *fn_chld(void *arg)
 	struct sigaction act;
 	thread_state = ENTERED_THREAD;
 
+	(void) arg;
+
 	/* Set up child thread to handle SIGALRM */
 	act.sa_flags = 0;
 	act.sa_handler = sig_handler;
@@ -72,7 +74,7 @@ static void *fn_chld(void *arg)
 	return NULL;
 }
 
-int main()
+int main(void)
 {
 	pthread_t child_thread;
 

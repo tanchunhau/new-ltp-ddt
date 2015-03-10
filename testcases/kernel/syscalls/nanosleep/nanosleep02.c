@@ -80,8 +80,8 @@
 #include "test.h"
 #include "usctest.h"
 
-char *TCID = "nanosleep02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "nanosleep02";
+int TST_TOTAL = 1;
 
 struct timespec timereq;	/* time struct. buffer for nanosleep() */
 struct timespec timerem;	/* time struct. buffer for nanosleep() */
@@ -106,11 +106,10 @@ void sig_handler();		/* signal catching function */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t cpid;		/* Child process id */
 	int status;		/* child exit status */
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 #ifdef UCLINUX
@@ -122,7 +121,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Creat a child process and suspend its
@@ -173,7 +172,7 @@ int main(int ac, char **av)
 /*
  * do_child()
  */
-void do_child()
+void do_child(void)
 {
 	unsigned long req, rem, elapsed;	/* usec */
 	struct timeval otime;	/* time before child execution suspended */
@@ -231,12 +230,7 @@ void do_child()
 
 		if (TEST_RETURN == -1) {
 			tst_resm(TFAIL | TTERRNO, "nanosleep() failed");
-		}
-		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
-		 */
-		else if (STD_FUNCTIONAL_TEST) {
+		} else {
 			/*
 			 * Verify whether child execution was
 			 * actually suspended for the remaining
@@ -276,7 +270,7 @@ void do_child()
  *  to child process.
  *  Initialise time structure elements.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -304,7 +298,7 @@ void setup()
  *   to child to awake it from sleep.
  *   This function just returns without doing anything.
  */
-void sig_handler()
+void sig_handler(void)
 {
 }
 
@@ -313,7 +307,7 @@ void sig_handler()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

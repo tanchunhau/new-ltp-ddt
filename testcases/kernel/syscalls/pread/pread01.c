@@ -85,8 +85,8 @@
 #define K4              (K1 * 4)
 #define NBUFS           4
 
-char *TCID = "pread01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "pread01";
+int TST_TOTAL = 1;
 
 int fildes;			/* file descriptor for tempfile */
 char *write_buf[NBUFS];		/* buffer to hold data to be written */
@@ -101,10 +101,9 @@ void compare_bufers();		/* function to compare o/p of pread/pwrite */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int nread;		/* no. of bytes read by pread() */
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -112,8 +111,8 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* Reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* Reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Call pread() of K1 data (should be 2's) at offset K2.
@@ -169,19 +168,11 @@ int main(int ac, char **av)
 		l_seek(fildes, 0, SEEK_CUR, K1);
 
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Compare the read buffer data read
+		 * with the data written to write buffer
+		 * in the setup.
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Compare the read buffer data read
-			 * with the data written to write buffer
-			 * in the setup.
-			 */
-			compare_bufers();
-		} else {
-			tst_resm(TPASS, "calls to pread() succeeded");
-		}
+		compare_bufers();
 
 		/* reset our location to offset K4 in case we are looping */
 		l_seek(fildes, K4, SEEK_SET, K4);
@@ -189,8 +180,6 @@ int main(int ac, char **av)
 
 	cleanup();
 	tst_exit();
-	tst_exit();
-
 }
 
 /*
@@ -200,7 +189,7 @@ int main(int ac, char **av)
  *  Create a temporary directory and a file under it and
  *  write know data at different offset positions.
  */
-void setup()
+void setup(void)
 {
 	int nwrite = 0;		/* no. of bytes written by pwrite() */
 
@@ -272,14 +261,14 @@ void setup()
  *    write_buf[0] has 0's, write_buf[1] has 1's, write_buf[2] has 2's
  *    write_buf[3] has 3's.
  */
-void init_buffers()
+void init_buffers(void)
 {
 	int count;		/* counter variable for loop */
 
 	/* Allocate and Initialize read/write buffer */
 	for (count = 0; count < NBUFS; count++) {
-		write_buf[count] = (char *)malloc(K1);
-		read_buf[count] = (char *)malloc(K1);
+		write_buf[count] = malloc(K1);
+		read_buf[count] = malloc(K1);
 
 		if ((write_buf[count] == NULL) || (read_buf[count] == NULL)) {
 			tst_brkm(TBROK, NULL,
@@ -317,7 +306,7 @@ void l_seek(int fdesc, off_t offset, int whence, off_t checkoff)
  *  This function does memcmp of read/write buffer and display message
  *  about the functionality of pread().
  */
-void compare_bufers()
+void compare_bufers(void)
 {
 	int count;		/* index for the loop */
 	int err_flg = 0;	/* flag to indicate error */
@@ -343,7 +332,7 @@ void compare_bufers()
  *             Close the temporary file.
  *             Remove the temporary directory created.
  */
-void cleanup()
+void cleanup(void)
 {
 	int count;		/* index for the loop */
 

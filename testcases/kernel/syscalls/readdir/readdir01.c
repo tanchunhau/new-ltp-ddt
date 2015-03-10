@@ -130,8 +130,8 @@ void setup();
 void help();
 void cleanup();
 
-char *TCID = "readdir01";	/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "readdir01";
+int TST_TOTAL = 2;
 
 int exp_enos[] = { 0, 0 };
 
@@ -163,7 +163,7 @@ option_t options[] = {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int cnt;
 	int nfiles, fd;
 	char fname[255];
@@ -179,13 +179,11 @@ int main(int ac, char **av)
 	 */
 	if ((msg = parse_opts(ac, av, options, &help)) != 0) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
 	if (Nflag) {
 		if (sscanf(Nfilearg, "%i", &Nfiles) != 1) {
 			tst_brkm(TBROK, NULL, "--N option arg is not a number");
-			tst_exit();
 		}
 	}
 
@@ -208,7 +206,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		if (Nfiles)
 			nfiles = Nfiles;
@@ -300,7 +298,7 @@ int main(int ac, char **av)
  * standard out.  Your help function will be called after the standard options
  * have been printed
  */
-void help()
+void help(void)
 {
 	printf("  -N #files : create #files files every iteration\n");
 }
@@ -308,7 +306,7 @@ void help()
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 	/* You will want to enable some signal handling so you can capture
 	 * unexpected signals like SIGSEGV.
@@ -335,7 +333,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

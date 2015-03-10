@@ -21,16 +21,16 @@
  * This is a test case for madvise(2) system call. No error should be returned.
  */
 
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
-#include <sys/shm.h>
-#include <sys/mman.h>
-#include <fcntl.h>
 
 #include "test.h"
 #include "usctest.h"
@@ -38,9 +38,6 @@
 char *TCID = "madvise03";
 
 #ifdef MADV_REMOVE
-
-/* Uncomment the following line in DEBUG mode */
-//#define MM_DEBUG 1
 
 int TST_TOTAL = 3;
 
@@ -60,7 +57,7 @@ int main(int argc, char *argv[])
 	void *addr1;
 	long shm_size = 0;
 
-	char *msg = NULL;
+	const char *msg = NULL;
 	char filename[64];
 	char *progname = NULL;
 	char *str_for_file = "abcdefghijklmnopqrstuvwxyz12345\n";
@@ -75,12 +72,12 @@ int main(int argc, char *argv[])
 	sprintf(filename, "%s-out.%d", progname, getpid());
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		fd = open(filename, O_RDWR | O_CREAT, 0664);
 		if (fd < 0)
 			tst_brkm(TBROK, cleanup, "open failed");
-#ifdef MM_DEBUG
+#ifdef DEBUG
 		tst_resm(TINFO, "filename = %s opened successfully", filename);
 #endif
 
@@ -160,11 +157,16 @@ static void cleanup(void)
 static void check_and_print(char *advice)
 {
 	if (TEST_RETURN == -1) {
+		if (TEST_ERRNO == ENOTSUP && !strcmp(advice, "MADV_REMOVE")) {
+			tst_resm(TCONF, "madvise MADV_REMOVE returned ENOTSUP"
+				 " CONFIG_TMPFS=y not in kernel .config?");
+			return;
+		}
 		tst_resm(TFAIL,
 			 "madvise test for %s failed with "
 			 "return = %ld, errno = %d : %s",
 			 advice, TEST_RETURN, TEST_ERRNO, strerror(TEST_ERRNO));
-	} else if (STD_FUNCTIONAL_TEST) {
+	} else {
 		tst_resm(TPASS, "madvise test for %s PASSED", advice);
 	}
 }

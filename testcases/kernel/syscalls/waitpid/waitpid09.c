@@ -83,7 +83,7 @@ static void do_exit_uclinux(void);
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	int fail, pid, status, ret;
 
@@ -110,8 +110,8 @@ int main(int argc, char **argv)
 
 		/* check for looping state if -i option is given */
 		for (lc = 0; TEST_LOOPING(lc); lc++) {
-			/* reset Tst_count in case we are looping */
-			Tst_count = 0;
+			/* reset tst_count in case we are looping */
+			tst_count = 0;
 
 			intintr = 0;
 
@@ -268,7 +268,6 @@ static void setup_sigint(void)
 	if ((sig_t) signal(SIGINT, inthandlr) == SIG_ERR) {
 		tst_brkm(TFAIL, cleanup, "signal SIGINT failed, errno = %d",
 			 errno);
-		tst_exit();
 	}
 }
 
@@ -283,7 +282,7 @@ static void cleanup(void)
 	TEST_CLEANUP;
 }
 
-static void inthandlr()
+static void inthandlr(void)
 {
 	intintr++;
 }

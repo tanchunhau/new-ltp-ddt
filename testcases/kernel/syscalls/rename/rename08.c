@@ -77,7 +77,7 @@ void setup();
 void cleanup();
 extern void do_file_setup(char *);
 
-char *TCID = "rename08";	/* Test program identifier.    */
+char *TCID = "rename08";
 
 int exp_enos[] = { EFAULT, 0 };	/* List must end with 0 */
 
@@ -104,12 +104,12 @@ struct test_case_t {
 	NULL, NULL, EFAULT}
 };
 
-int TST_TOTAL = (sizeof(TC) / sizeof(*TC));
+int TST_TOTAL = ARRAY_SIZE(TC);
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int i;
 
 	/*
@@ -128,7 +128,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -162,7 +162,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -191,7 +191,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *              completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

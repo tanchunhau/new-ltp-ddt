@@ -47,7 +47,7 @@
 #define barrier() __asm__ __volatile__("": : :"memory")
 
 /* Extern Global Variables */
-extern int Tst_count;		/* to avoid compilation errors. */
+extern int tst_count;		/* to avoid compilation errors. */
 extern char *TESTDIR;		/* to avoid compilation errors. */
 
 /* Global Variables */
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 		printf("%d", PAGE_SIZE);
 		tst_exit();
 	case 2:
-		buf = (char *)malloc(MB);
+		buf = malloc(MB);
 		if (!buf) {
 			tst_resm(TINFO, "#Memory is not available\n");
 			tst_exit();

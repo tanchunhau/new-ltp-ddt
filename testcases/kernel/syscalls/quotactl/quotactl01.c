@@ -60,20 +60,16 @@
 #define BROKEN_QUOTACTL 1
 #endif
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "quotactl01";	/* Test program identifier.             */
+char *TCID = "quotactl01";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.  */
+int TST_TOTAL = 1;
 
 #define QUOTACTL(cmd, addr) \
-	syscall(__NR_quotactl, QCMD(cmd, USRQUOTA), block_dev, id, \
+	ltp_syscall(__NR_quotactl, QCMD(cmd, USRQUOTA), block_dev, id, \
 					(caddr_t) addr)
 #ifndef BROKEN_QUOTACTL
 
@@ -105,7 +101,7 @@ struct dqblk dq;
 /*		On success - Exits calling tst_exit(). With '0' return code.  */
 /*									      */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
 	TEST_CLEANUP;
@@ -139,7 +135,7 @@ extern void cleanup()
 /*		On success - returns 0.					      */
 /*									      */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 
 	/* Capture signals if any */
@@ -193,8 +189,7 @@ void setup()
 #ifdef BROKEN_QUOTACTL
 int main(void)
 {
-	tst_resm(TBROK, "This system doesn't support quota v2");
-	tst_exit();
+	tst_brkm(TBROK, NULL, "This system doesn't support quota v2");
 }
 #else
 int cmd[] = {
@@ -221,13 +216,12 @@ int main(int ac, char **av)
 	};
 
 	int newtid = -1;
-	int result;
 	int ret;
 	int i;
 	int lc;
-	char *msg;
+	const char *msg;
 
-	if ((msg = parse_opts(ac, av, (option_t *) opts, NULL)) != (char *)NULL) {
+	if ((msg = parse_opts(ac, av, (option_t *) opts, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 	}
 
@@ -235,7 +229,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 
@@ -252,7 +246,7 @@ int main(int ac, char **av)
 
 			}
 
-			TEST(result = syscall(__NR_set_tid_address, &newtid));
+			TEST(ltp_syscall(__NR_set_tid_address, &newtid));
 
 			if (TEST_RETURN == getpid()) {
 				cleanup();

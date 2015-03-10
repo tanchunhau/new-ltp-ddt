@@ -75,7 +75,7 @@ static void do_child_2_uclinux(void);
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	int status;
 	int pid;
@@ -95,8 +95,8 @@ int main(int argc, char **argv)
 
 	/* check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 		fail = 0;
 
 		pid = FORK_OR_VFORK();
@@ -208,9 +208,8 @@ static void do_child_1(void)
 	 */
 	for (i = 0; i < MAXKIDS; i++) {
 		if (kill(fork_kid_pid[i], SIGINT) < 0) {
-			tst_resm(TFAIL, "Kill of child %d "
+			tst_brkm(TFAIL, NULL, "Kill of child %d "
 				 "failed, errno = %d", i, errno);
-			tst_exit();
 		}
 	}
 
@@ -327,7 +326,7 @@ static void cleanup(void)
 	TEST_CLEANUP;
 }
 
-static void inthandlr()
+static void inthandlr(void)
 {
 	intintr++;
 }

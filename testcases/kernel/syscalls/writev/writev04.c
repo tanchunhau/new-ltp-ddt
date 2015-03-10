@@ -70,7 +70,7 @@ struct iovec wr_iovec[MAX_IOVEC] = {
 	{buf1 + (CHUNK * 6), CHUNK},
 	{(caddr_t) - 1, CHUNK},
 	{buf1 + (CHUNK * 8), CHUNK},
-	{(caddr_t) NULL, 0}
+	{NULL, 0}
 };
 
 /* 0 terminated list of expected errnos */
@@ -94,7 +94,7 @@ int fail;
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	int nbytes;
 
@@ -108,8 +108,8 @@ int main(int argc, char **argv)
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		buf_list[0] = buf1;
 		buf_list[1] = buf2;
@@ -151,10 +151,8 @@ int main(int argc, char **argv)
 		}
 
 		if ((fd[0] = open(f_name, O_RDWR, 0666)) < 0) {
-			tst_resm(TFAIL, "open failed: fname = %s, errno = %d",
+			tst_brkm(TFAIL, cleanup, "open failed: fname = %s, errno = %d",
 				 f_name, errno);
-			cleanup();
-			tst_exit();
 		}
 //block1:
 		tst_resm(TINFO, "Enter block 1");
@@ -277,7 +275,7 @@ int main(int argc, char **argv)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -294,7 +292,6 @@ void setup(void)
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	/* Set up the expected error numbers for -e option */
 	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;

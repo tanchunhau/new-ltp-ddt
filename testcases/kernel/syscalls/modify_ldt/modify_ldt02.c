@@ -92,7 +92,7 @@ void setup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	int val, pid, status;
 
@@ -108,8 +108,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 //block1:
 		tst_resm(TINFO, "Enter block 1");
@@ -234,16 +234,16 @@ void cleanup(void)
 
 }
 #elif HAVE_MODIFY_LDT
-int main()
+int main(void)
 {
-	tst_resm(TCONF,
+	tst_brkm(TCONF,
+		 NULL,
 		 "modify_ldt is available but not tested on the platform than __i386__");
-	tst_exit();
 }
 
 #else /* if defined(__i386__) */
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "modify_ldt02 test only for ix86");
 	tst_exit();

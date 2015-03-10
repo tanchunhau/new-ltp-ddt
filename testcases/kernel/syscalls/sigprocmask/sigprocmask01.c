@@ -86,8 +86,8 @@ void setup();			/* Main setup function of test */
 void cleanup();			/* cleanup function for the test */
 void sig_handler(int sig);	/* signal catching function */
 
-char *TCID = "sigprocmask01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "sigprocmask01";
+int TST_TOTAL = 1;
 int exp_enos[] = { 0 };
 
 int sig_catch = 0;		/* variable to blocked/unblocked signals */
@@ -99,10 +99,9 @@ sigset_t sigset2;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t my_pid;		/* test process id */
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -116,7 +115,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call sigprocmask() to block (SIGINT) signal
@@ -138,79 +137,70 @@ int main(int ac, char **av)
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
 			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
+			 * Check whether process received the signal.
+			 * If yes! signal handler was executed and
+			 * incremented 'sig_catch' variable.
 			 */
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Check whether process received the signal.
-				 * If yes! signal handler was executed and
-				 * incremented 'sig_catch' variable.
-				 */
-				if (sig_catch) {
-					tst_resm(TFAIL, "sigprocmask fails to "
-						 "change process's signal mask");
-				} else {
-					/*
-					 * Check whether specified signal
-					 * 'SIGINT' is pending for the process.
-					 */
-					errno = 0;
-					if (sigpending(&sigset2) == -1) {
-						tst_brkm(TFAIL, cleanup,
-							 "blocked signal not "
-							 "in pending state, "
-							 "error:%d", errno);
-					}
-
-					/*
-					 * Check whether specified signal
-					 * is the member of signal set.
-					 */
-					errno = 0;
-					if (!sigismember(&sigset2, SIGINT)) {
-						tst_brkm(TFAIL, cleanup,
-							 "sigismember() failed, "
-							 "error:%d", errno);
-					}
-
-					/*
-					 * Invoke sigprocmask() again to
-					 * unblock the specified signal.
-					 * so that, signal is delivered and
-					 * signal handler executed.
-					 */
-					errno = 0;
-					if (sigprocmask(SIG_UNBLOCK,
-							&sigset, 0) == -1) {
-						tst_brkm(TFAIL, cleanup,
-							 "sigprocmask() failed "
-							 "to unblock signal, "
-							 "error=%d", errno);
-					}
-					if (sig_catch) {
-						tst_resm(TPASS, "Functionality "
-							 "of sigprocmask() "
-							 "Successful");
-					} else {
-						tst_resm(TFAIL, "Functionality "
-							 "of sigprocmask() "
-							 "Failed");
-					}
-					/* set sig_catch back to 0 */
-					sig_catch = 0;
-				}
+			if (sig_catch) {
+				tst_resm(TFAIL, "sigprocmask fails to "
+					 "change process's signal mask");
 			} else {
-				tst_resm(TPASS, "Call succeeded");
+				/*
+				 * Check whether specified signal
+				 * 'SIGINT' is pending for the process.
+				 */
+				errno = 0;
+				if (sigpending(&sigset2) == -1) {
+					tst_brkm(TFAIL, cleanup,
+						 "blocked signal not "
+						 "in pending state, "
+						 "error:%d", errno);
+				}
+
+				/*
+				 * Check whether specified signal
+				 * is the member of signal set.
+				 */
+				errno = 0;
+				if (!sigismember(&sigset2, SIGINT)) {
+					tst_brkm(TFAIL, cleanup,
+						 "sigismember() failed, "
+						 "error:%d", errno);
+				}
+
+				/*
+				 * Invoke sigprocmask() again to
+				 * unblock the specified signal.
+				 * so that, signal is delivered and
+				 * signal handler executed.
+				 */
+				errno = 0;
+				if (sigprocmask(SIG_UNBLOCK,
+						&sigset, 0) == -1) {
+					tst_brkm(TFAIL, cleanup,
+						 "sigprocmask() failed "
+						 "to unblock signal, "
+						 "error=%d", errno);
+				}
+				if (sig_catch) {
+					tst_resm(TPASS, "Functionality "
+						 "of sigprocmask() "
+						 "Successful");
+				} else {
+					tst_resm(TFAIL, "Functionality "
+						 "of sigprocmask() "
+						 "Failed");
+				}
+				/* set sig_catch back to 0 */
+				sig_catch = 0;
 			}
 		}
 
-		Tst_count++;	/* incr TEST_LOOP counter */
+		tst_count++;	/* incr TEST_LOOP counter */
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -222,7 +212,7 @@ int main(int ac, char **av)
  * Add the signal SIGINT to the exclude list of system-defined
  * signals for the test process.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -283,7 +273,7 @@ void sig_handler(int sig)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

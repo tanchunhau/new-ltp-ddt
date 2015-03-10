@@ -99,7 +99,7 @@ static void do_child(void);
 
 int main(int ac, char **av)
 {
-	char *msg;
+	const char *msg;
 	pid_t pid;
 	int status;
 
@@ -133,7 +133,7 @@ static void do_child(void)
 	int i, lc;
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			TEST(shmctl(*(TC[i].shmid), TC[i].cmd, TC[i].sbuf));

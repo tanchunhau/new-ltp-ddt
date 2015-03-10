@@ -123,8 +123,8 @@ void setup();
 void create_file();
 void cleanup();
 
-char *TCID = "unlink06";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "unlink06";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0, 0 };
 
@@ -136,7 +136,7 @@ char Fname[255];
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
     /***************************************************************
      * parse standard options
@@ -159,7 +159,7 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		create_file();
 
@@ -173,7 +173,7 @@ int main(int ac, char **av)
 			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL, "unlink(%s) Failed, errno=%d : %s",
 				 Fname, TEST_ERRNO, strerror(TEST_ERRNO));
-		} else if (STD_FUNCTIONAL_TEST) {
+		} else {
 			if (access(Fname, F_OK) != -1) {
 				tst_resm(TFAIL,
 					 "unlink(%s) returned %ld, but access says file still exists.",
@@ -182,23 +182,17 @@ int main(int ac, char **av)
 				tst_resm(TPASS, "unlink(%s) returned %ld",
 					 Fname, TEST_RETURN);
 			}
-		} else
-			Tst_count++;
-
+		}
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -215,7 +209,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.
@@ -230,7 +224,7 @@ void cleanup()
 /******************************************************************
  *
  ******************************************************************/
-void create_file()
+void create_file(void)
 {
 	if (mkfifo(Fname, 0777) == -1) {
 		tst_brkm(TBROK, cleanup,

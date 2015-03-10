@@ -78,7 +78,7 @@ ssize_t safe_read(int fd, void *buf, size_t count)
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t c1pid, c2pid;
 	int wtstatus;
 	int bytesread;
@@ -97,8 +97,8 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		if (pipe(fildes) == -1)
 			tst_brkm(TBROK, cleanup, "pipe() failed - errno %d",
@@ -207,7 +207,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -219,7 +219,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.
@@ -228,7 +228,7 @@ void cleanup()
 	TEST_CLEANUP;
 }
 
-void c1func()
+void c1func(void)
 {
 	if (close(fildes[0]) == -1)
 		tst_resm(TWARN, "Could not close fildes[0] - errno %d", errno);
@@ -237,7 +237,7 @@ void c1func()
 			tst_resm(TBROK | TERRNO, "[child 1] pipe write failed");
 }
 
-void c2func()
+void c2func(void)
 {
 	if (close(fildes[0]) == -1)
 		tst_resm(TWARN, "Could not close fildes[0] - errno %d", errno);

@@ -78,8 +78,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "munlock02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "munlock02";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { ENOMEM, 0 };
 
@@ -101,11 +101,10 @@ NULL, 0, ENOMEM, "address range out of address space"},};
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
 	setup();
@@ -113,7 +112,7 @@ int main(int ac, char **av)
 	/* check looping state */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 		for (i = 0; i < TST_TOTAL; i++) {
 #ifdef __ia64__
 			TC[0].len = 8 * getpagesize();
@@ -153,7 +152,7 @@ int main(int ac, char **av)
 
 /* setup() - performs all ONE TIME setup for this test. */
 
-void setup()
+void setup(void)
 {
 
 	char *address;
@@ -191,7 +190,7 @@ void setup()
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -203,7 +202,7 @@ int main()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

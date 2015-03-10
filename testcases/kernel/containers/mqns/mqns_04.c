@@ -40,6 +40,7 @@
 #include <string.h>
 #include <errno.h>
 #include "mqns.h"
+#include "mqns_helper.h"
 
 char *TCID = "posixmq_namespace_04";
 int TST_TOTAL = 1;
@@ -56,14 +57,15 @@ int check_mqueue(void *vtest)
 	mqd_t mqd;
 	int rc;
 
+	(void) vtest;
+
 	close(p1[1]);
 	close(p2[0]);
 
 	read(p1[0], buf, 3);	/* go */
 
-	mqd =
-	    syscall(__NR_mq_open, NOSLASH_MQ1, O_RDWR | O_CREAT | O_EXCL, 0755,
-		    NULL);
+	mqd = ltp_syscall(__NR_mq_open, NOSLASH_MQ1, O_RDWR | O_CREAT | O_EXCL,
+		0755, NULL);
 	if (mqd == -1) {
 		write(p2[1], "mqfail", 7);
 		tst_exit();
@@ -84,6 +86,12 @@ int check_mqueue(void *vtest)
 	tst_exit();
 }
 
+static void setup(void)
+{
+	tst_require_root(NULL);
+	check_mqns();
+}
+
 int main(int argc, char *argv[])
 {
 	int rc;
@@ -91,6 +99,8 @@ int main(int argc, char *argv[])
 	char buf[30];
 	struct stat statbuf;
 	int use_clone = T_UNSHARE;
+
+	setup();
 
 	if (argc == 2 && strcmp(argv[1], "-clone") == 0) {
 		tst_resm(TINFO,

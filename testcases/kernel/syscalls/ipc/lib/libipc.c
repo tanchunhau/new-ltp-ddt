@@ -30,7 +30,6 @@
  *	rm_queue()
  *	init_buf()
  *	rm_sema()
- *	check_root()
  *	getuserid()
  *	rm_shm()
  */
@@ -48,7 +47,7 @@
  * getipckey() - generates and returns a message key used by the "get"
  *		 calls to create an IPC resource.
  */
-key_t getipckey()
+key_t getipckey(void)
 {
 	const char a = 'a';
 	int ascii_a = (int)a;
@@ -138,16 +137,6 @@ void rm_sema(int sem_id)
 }
 
 /*
- * check_root() - make sure the process ID is root
- */
-void check_root()
-{
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, cleanup, "test must be run as root");
-	}
-}
-
-/*
  * getuserid() - return the integer value for the "user" id
  */
 int getuserid(char *user)
@@ -155,7 +144,7 @@ int getuserid(char *user)
 	struct passwd *ent;
 
 	/* allocate some space for the passwd struct */
-	if ((ent = (struct passwd *)malloc(sizeof(struct passwd))) == NULL) {
+	if ((ent = malloc(sizeof(struct passwd))) == NULL) {
 		tst_brkm(TBROK, cleanup, "couldn't allocate space for passwd"
 			 " structure");
 	}
@@ -194,7 +183,7 @@ void rm_shm(int shm_id)
 /*
  * Get the number of message queues already in use
  */
-int get_used_msgqueues()
+int get_used_msgqueues(void)
 {
 	FILE *f;
 	int used_queues;
@@ -217,7 +206,7 @@ int get_used_msgqueues()
 /*
  * Get the max number of message queues allowed on system
  */
-int get_max_msgqueues()
+int get_max_msgqueues(void)
 {
 	FILE *f;
 	char buff[BUFSIZE];

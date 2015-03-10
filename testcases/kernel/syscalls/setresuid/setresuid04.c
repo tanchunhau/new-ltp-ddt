@@ -53,8 +53,9 @@
 #include "test.h"
 #include "usctest.h"
 #include <pwd.h>
+#include "compat_16.h"
 
-char *TCID = "setresuid04";
+TCID_DEFINE(setresuid04);
 int TST_TOTAL = 1;
 char nobody_uid[] = "nobody";
 char testfile[256] = "";
@@ -71,8 +72,7 @@ void do_master_child();
 int main(int ac, char **av)
 {
 	pid_t pid;
-	char *msg;
-	int status;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -87,10 +87,7 @@ int main(int ac, char **av)
 	if (pid == 0)
 		do_master_child();
 
-	if (waitpid(pid, &status, 0) == -1)
-		tst_resm(TBROK | TERRNO, "waitpid failed");
-	if (!WIFEXITED(status) || (WEXITSTATUS(status) != 0))
-		tst_resm(TFAIL, "child process terminated abnormally");
+	tst_record_childstatus(cleanup, pid);
 
 	cleanup();
 	tst_exit();
@@ -99,7 +96,7 @@ int main(int ac, char **av)
 /*
  * do_master_child()
  */
-void do_master_child()
+void do_master_child(void)
 {
 	int lc;
 	int pid;
@@ -108,12 +105,12 @@ void do_master_child()
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		int tst_fd;
 
-		/* Reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* Reset tst_count in case we are looping */
+		tst_count = 0;
 
-		if (setresuid(0, ltpuser->pw_uid, 0) == -1) {
-			perror("setfsuid failed");
-			exit(1);
+		if (SETRESUID(NULL, 0, ltpuser->pw_uid, 0) == -1) {
+			perror("setresuid failed");
+			exit(TFAIL);
 		}
 
 		/* Test 1: Check the process with new uid cannot open the file
@@ -124,14 +121,14 @@ void do_master_child()
 		if (TEST_RETURN != -1) {
 			printf("open succeeded unexpectedly\n");
 			close(tst_fd);
-			exit(1);
+			exit(TFAIL);
 		}
 
 		if (TEST_ERRNO == EACCES) {
 			printf("open failed with EACCES as expected\n");
 		} else {
 			perror("open failed unexpectedly");
-			exit(1);
+			exit(TFAIL);
 		}
 
 		/* Test 2: Check a son process cannot open the file
@@ -139,7 +136,7 @@ void do_master_child()
 		 */
 		pid = FORK_OR_VFORK();
 		if (pid < 0)
-			tst_brkm(TBROK, cleanup, "Fork failed");
+			tst_brkm(TBROK, NULL, "Fork failed");
 
 		if (pid == 0) {
 			int tst_fd2;
@@ -150,48 +147,52 @@ void do_master_child()
 			if (TEST_RETURN != -1) {
 				printf("call succeeded unexpectedly\n");
 				close(tst_fd2);
-				exit(1);
+				exit(TFAIL);
 			}
 
 			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == EACCES) {
 				printf("open failed with EACCES as expected\n");
-				exit(0);
+				exit(TPASS);
 			} else {
 				printf("open failed unexpectedly\n");
-				exit(1);
+				exit(TFAIL);
 			}
 		} else {
 			/* Wait for son completion */
 			if (waitpid(pid, &status, 0) == -1) {
 				perror("waitpid failed");
-				exit(1);
+				exit(TFAIL);
 			}
-			if (!WIFEXITED(status) || (WEXITSTATUS(status) != 0))
+
+			if (!WIFEXITED(status))
+				exit(TFAIL);
+
+			if (WEXITSTATUS(status) != TPASS)
 				exit(WEXITSTATUS(status));
 		}
 
 		/* Test 3: Fallback to initial uid and check we can again open
 		 *         the file with RDWR permissions.
 		 */
-		Tst_count++;
-		if (setresuid(0, 0, 0) == -1) {
-			perror("setfsuid failed");
-			exit(1);
+		tst_count++;
+		if (SETRESUID(NULL, 0, 0, 0) == -1) {
+			perror("setresuid failed");
+			exit(TFAIL);
 		}
 
 		TEST(tst_fd = open(testfile, O_RDWR));
 
 		if (TEST_RETURN == -1) {
 			perror("open failed unexpectedly");
-			exit(1);
+			exit(TFAIL);
 		} else {
 			printf("open call succeeded\n");
 			close(tst_fd);
 		}
 	}
-	exit(0);
+	exit(TPASS);
 }
 
 /*
@@ -202,6 +203,8 @@ void setup(void)
 	tst_require_root(NULL);
 
 	ltpuser = getpwnam(nobody_uid);
+
+	UID16_CHECK(ltpuser->pw_uid, "setresuid", cleanup)
 
 	tst_tmpdir();
 

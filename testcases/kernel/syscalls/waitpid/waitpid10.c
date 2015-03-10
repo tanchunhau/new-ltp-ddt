@@ -97,7 +97,7 @@ int main(int ac, char **av)
 	int runtime;		/* time(sec) to run this process */
 
 	int lc;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL)
@@ -128,8 +128,8 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 		fail = 0;
 
 		if (signal(SIGALRM, alrmhandlr) == SIG_ERR) {
@@ -408,12 +408,12 @@ static void cleanup(void)
 	TEST_CLEANUP;
 }
 
-static void alrmhandlr()
+static void alrmhandlr(void)
 {
 	alrmintr++;
 }
 
-static void inthandlr()
+static void inthandlr(void)
 {
 	intintr++;
 }
@@ -467,14 +467,13 @@ static void do_fork(void)
 	for (i = 0; i < 50; i++) {
 		fork_pid = FORK_OR_VFORK();
 		if (fork_pid < 0) {
-			tst_resm(TFAIL, "Fork failed");
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "Fork failed");
 		}
 		if (fork_pid == 0) {
 #ifdef UCLINUX
 			if (self_exec(argv0, "n", 5) < 0) {
-				tst_resm(TFAIL, "do_fork self_exec failed");
-				tst_exit();
+				tst_brkm(TFAIL, NULL,
+					 "do_fork self_exec failed");
 			}
 #else
 			do_mkdir();

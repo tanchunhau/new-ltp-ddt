@@ -1,91 +1,61 @@
 /*
+ * Copyright (c) International Business Machines  Corp., 2001
+ *  Ported by Wayne Boyer
  *
- *   Copyright (c) International Business Machines  Corp., 2001
+ * This program is free software;  you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   This program is free software;  you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ * the GNU General Public License for more details.
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program;  if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /*
- * NAME
- * 	setgid03.c
- *
- * CALLS
- * 	setgid(1) getgid(2)
- *
  * ALGORITHM
- * 	As root sets the current group id to ltpuser1, verify the results
- *
- * USAGE:  <for command-line>
- *  setgid03 [-c n] [-f] [-i n] [-I x] [-P x] [-t]
- *     where,  -c n : Run n copies concurrently.
- *             -f   : Turn off functionality Testing.
- *             -i n : Execute test n times.
- *             -I x : Execute test for x seconds.
- *             -P x : Pause for x seconds between iterations.
- *             -t   : Turn on syscall timing.
- *
- * HISTORY
- *	07/2001 Ported by Wayne Boyer
- *
- * RESTRICTIONS
- * 	Test must be run as root.
+ *	As root sets the current group id to ltpuser1, verify the results
  */
 #include <pwd.h>
 #include <errno.h>
+
 #include "test.h"
 #include "usctest.h"
+#include <compat_16.h>
 
 TCID_DEFINE(setgid03);
 int TST_TOTAL = 1;
 
-char ltpuser1[] = "nobody";
-char root[] = "root";
-struct passwd *getpwnam(), *ltpuser1pwent, *rootpwent;
-int mygid;
+static char ltpuser1[] = "nobody";
+static char root[] = "root";
+static struct passwd *ltpuser1pwent, *rootpwent;
+static gid_t mygid;
 
 static void setup(void);
 static void cleanup(void);
 
-#include "compat_16.h"
-
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
+	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
 
 	setup();
 
-	/* Check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
+		tst_count = 0;
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
-
-		TEST(setgid(ltpuser1pwent->pw_gid));
+		TEST(SETGID(cleanup, ltpuser1pwent->pw_gid));
 
 		if (TEST_RETURN == -1) {
 			tst_resm(TFAIL, "call failed unexpectedly");
-			continue;
-		}
-
-		if (!STD_FUNCTIONAL_TEST) {
-			tst_resm(TPASS, "call succeeded");
 			continue;
 		}
 
@@ -96,21 +66,14 @@ int main(int ac, char **av)
 			tst_resm(TPASS, "functionality of getgid() is correct");
 		}
 	}
+
 	cleanup();
 	tst_exit();
-	tst_exit();
-
 }
 
-/*
- * setup() - performs all ONE TIME setup for this test.
- */
-void setup()
+static void setup(void)
 {
-	/* test must be run as root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -132,25 +95,10 @@ void setup()
 			 "id %s", ltpuser1);
 	}
 
-	if (!(GID_SIZE_CHECK(rootpwent->pw_gid))) {
-		tst_brkm(TBROK,
-			 cleanup,
-			 "gid for `%s' is too large for testing setgid16",
-			 root);
-	}
-
+	GID16_CHECK(ltpuser1pwent->pw_gid, setgid, cleanup);
 }
 
-/*
- * cleanup() - performs all ONE TIME cleanup for this test at
- *	       completion or premature exit.
- */
-void cleanup()
+static void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
 	TEST_CLEANUP;
-
 }

@@ -54,7 +54,7 @@
 #include "test.h"
 #include "usctest.h"
 
-char *TCID = "socketpair01";	/* Test program identifier.    */
+char *TCID = "socketpair01";
 int testno;
 int exp_enos[] = { EINVAL, EPERM, EFAULT, EOPNOTSUPP, EPROTONOSUPPORT, 0 };
 
@@ -90,12 +90,12 @@ struct test_case_t {		/* test case structure */
 	PF_INET, SOCK_STREAM, 6, sv, -1, EOPNOTSUPP, "TCP socket"}, {
 PF_INET, SOCK_STREAM, 1, sv, -1, ESOCKTNOSUPPORT, "ICMP stream"},};
 
-int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);	/* Total number of test cases. */
+int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);
 
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int s;
 
 	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 			TEST((s = socketpair(tdat[testno].domain,
 					     tdat[testno].type,
@@ -143,7 +143,7 @@ void setup(void)
 	/* set the expected errnos... */
 	TEST_EXP_ENOS(exp_enos);
 
-	TEST_PAUSE;		/* if -P option specified */
+	TEST_PAUSE;
 }
 
 void cleanup(void)

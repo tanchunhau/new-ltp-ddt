@@ -45,8 +45,11 @@
  *               0   - on success
  *              -1  - on failure
  *
- * Description: Unlike the above commands tst_kvercmp has an unusual exit status
- *              tst_kvercmp - Compare running kernel to specified version
+ * Description: Unlike the above commands tst_kvercmp, tst_kvercmp2 have an unusual
+ *              exit status
+ *              tst_kvercmp  - Compare running kernel to specified version
+ *              tst_kvercmp2 - Compare running kernel to specified vanilla version
+ *                             or distribution specific version
  * Exit:
  *               2 - running newer kernel
  *               1 - running same age kernel
@@ -58,23 +61,30 @@
  *               TCID and TST_TOTAL were set did not print usage message.
  *               Modified code to print usage message in each case.
  * Dec 16 2002 - Modified - Code to get the test number, gets environment
- *               variable TST_COUNT and initializes Tst_count.
+ *               variable TST_COUNT and initializes tst_count.
  * Dec 16 2002 - Documentation and comment changes.
- * Feb 11 2003 - Tst_count was set to -1 during init or setup in the script.
+ * Feb 11 2003 - tst_count was set to -1 during init or setup in the script.
  *               this was causing tst_resm to issue a warning message.
  *               This bug is now fixed.
  *
  */
 
+#include <sys/socket.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "test.h"
 #include "usctest.h"
 #include "safe_macros.h"
 
 char *TCID;			/* Name of the testcase */
 int TST_TOTAL;			/* Total number of testcases */
+
+static char cmd_name[1024];	/* name by which this program is invoked tst_brk etc */
+static char *tst_total;		/* total number of tests in the file. */
+static char *tst_cntstr;	/* sets the value of tst_count with this value */
+
 
 /*
  * Function:    ident_ttype - Return test result type.
@@ -83,7 +93,7 @@ int TST_TOTAL;			/* Total number of testcases */
  *              the string that is entered by the user to an integer value that
  *              is understood by the API's.
  *
- * Return:      test type TPASS, TFAIL, TBROK, TCONF, TRETR, TWARN, or TINFO
+ * Return:      test type TPASS, TFAIL, TBROK, TCONF, TWARN, or TINFO
  *              on success
  *              -1 on failure
  */
@@ -98,14 +108,255 @@ int ident_ttype(char *tstype)
 		return TPASS;
 	else if (strcmp(tstype, "TCONF") == 0)
 		return TCONF;
-	else if (strcmp(tstype, "TRETR") == 0)
-		return TRETR;
 	else if (strcmp(tstype, "TWARN") == 0)
 		return TWARN;
 	else if (strcmp(tstype, "TINFO") == 0)
 		return TINFO;
 	else
 		return -1;
+}
+
+void apicmd_brk(int argc, char *argv[])
+{
+	int trestype;
+	char *file_name;
+
+	if (argc < 5) {
+		fprintf(stderr, "Usage: %s TTYPE FNAME FUNC STRING\n"
+			"\tTTYPE  - Test Result Type; one of TFAIL, TBROK "
+			"and TCONF.\n"
+			"\tFNAME  - Print contents of this file after the message\n"
+			"\tFUNC   - Cleanup function (ignored), but MUST be provided\n"
+			"\tSTRING - Message explaining the test result\n",
+			cmd_name);
+		exit(1);
+	}
+	trestype = ident_ttype((argv++)[0]);
+	file_name = (argv++)[0];
+	argv++;
+	tst_brk(trestype, file_name, NULL, "%s", *argv);
+}
+
+void apicmd_res(int argc, char *argv[])
+{
+	int trestype;
+	char *file_name;
+
+	if (argc < 4) {
+		fprintf(stderr, "Usage: %s TTYPE FNAME STRING\n"
+			"\tTTYPE  - Test Result Type; one of TFAIL, TBROK "
+			"and  TCONF.\n"
+			"\tFNAME  - Print contents of this file after the message\n"
+			"\tSTRING - Message explaining the test result\n",
+			cmd_name);
+		exit(1);
+	}
+	trestype = ident_ttype((argv++)[0]);
+	file_name = (argv++)[0];
+	tst_res(trestype, file_name, "%s", *argv);
+}
+
+void apicmd_brkm(int argc, char *argv[])
+{
+	int trestype;
+
+	if (argc < 4) {
+		fprintf(stderr, "Usage: %s TTYPE FUNC STRING\n"
+			"\tTTYPE  - Test Result Type; one of TFAIL, TBROK "
+			"and TCONF.\n"
+			"\tFUNC   - Cleanup function (ignored), but MUST be provided\n"
+			"\tSTRING - Message explaining the test result\n",
+			cmd_name);
+		exit(1);
+	}
+	trestype = ident_ttype((argv++)[0]);
+	argv++;
+	tst_brkm(trestype, NULL, "%s", *argv);
+}
+
+void apicmd_resm(int argc, char *argv[])
+{
+	int trestype;
+
+	if (argc < 3) {
+		fprintf(stderr, "Usage: %s TTYPE STRING\n"
+			"\tTTYPE  - Test Result Type; one of TFAIL, TBROK"
+			"and TCONF.\n"
+			"\tSTRING - Message explaining the test result\n",
+			cmd_name);
+		exit(1);
+	}
+	trestype = ident_ttype((argv++)[0]);
+	tst_resm(trestype, "%s", *argv);
+}
+
+void apicmd_kvercmp(int argc, char *argv[])
+{
+	int exit_value;
+
+	if (argc < 4) {
+		fprintf(stderr, "Usage: %s NUM NUM NUM\n"
+			"Compares to the running kernel version.\n\n"
+			"\tNUM - A positive integer.\n"
+			"\tThe first NUM is the kernel VERSION\n"
+			"\tThe second NUM is the kernel PATCHLEVEL\n"
+			"\tThe third NUM is the kernel SUBLEVEL\n\n"
+			"\tExit status is 0 if the running kernel is older than the\n"
+			"\t\tkernel specified by NUM NUM NUM.\n"
+			"\tExit status is 1 for kernels of the same age.\n"
+			"\tExit status is 2 if the running kernel is newer.\n",
+			cmd_name);
+		exit(1);
+	}
+	exit_value = tst_kvercmp(atoi(argv[0]), atoi(argv[1]),
+				atoi(argv[2]));
+	if (exit_value < 0)
+		exit_value = 0;
+	else if (exit_value == 0)
+		exit_value = 1;
+	else if (exit_value > 0)
+		exit_value = 2;
+	exit(exit_value);
+}
+
+void apicmd_kvercmp2(int argc, char *argv[])
+{
+	int exit_value;
+
+	struct tst_kern_exv vers[100];
+	unsigned int count;
+
+	char *saveptr1 = NULL;
+	char *saveptr2 = NULL;
+	char *token1;
+
+	if (TCID == NULL)
+		TCID = "outoftest";
+	if (tst_cntstr == NULL)
+		tst_count = 0;
+
+	if (argc < 5) {
+		fprintf(stderr, "Usage: %s NUM NUM NUM KVERS\n"
+			"Compares to the running kernel version\n"
+			"based on vanilla kernel version NUM NUM NUM\n"
+			"or distribution specific kernel version KVERS\n\n"
+			"\tNUM - A positive integer.\n"
+			"\tThe first NUM is the kernel VERSION\n"
+			"\tThe second NUM is the kernel PATCHLEVEL\n"
+			"\tThe third NUM is the kernel SUBLEVEL\n\n"
+			"\tKVERS is a string of the form "
+			"\"DISTR1:VERS1 DISTR2:VERS2\",\n"
+			"\twhere DISTR1 is a distribution name\n"
+			"\tand VERS1 is the corresponding kernel version.\n"
+			"\tExample: \"RHEL6:2.6.39-400.208\"\n\n"
+			"\tIf running kernel matches a distribution in KVERS then\n"
+			"\tcomparison is performed based on version in KVERS,\n"
+			"\totherwise - based on NUM NUM NUM.\n\n"
+			"\tExit status is 0 if the running kernel is older.\n"
+			"\tExit status is 1 for kernels of the same age.\n"
+			"\tExit status is 2 if the running kernel is newer.\n",
+			cmd_name);
+		exit(3);
+	}
+
+	count = 0;
+	token1 = strtok_r(argv[3], " ", &saveptr1);
+	while ((token1 != NULL) && (count < 99)) {
+		vers[count].dist_name = strtok_r(token1, ":", &saveptr2);
+		vers[count].extra_ver = strtok_r(NULL, ":", &saveptr2);
+
+		if (vers[count].extra_ver == NULL) {
+			fprintf(stderr, "Incorrect KVERS format\n");
+			exit(3);
+		}
+
+		count++;
+
+		token1 = strtok_r(NULL, " ", &saveptr1);
+	}
+	vers[count].dist_name = NULL;
+	vers[count].extra_ver = NULL;
+
+	exit_value = tst_kvercmp2(atoi(argv[0]), atoi(argv[1]),
+				atoi(argv[2]), vers);
+
+	if (exit_value < 0)
+		exit_value = 0;
+	else if (exit_value == 0)
+		exit_value = 1;
+	else if (exit_value > 0)
+		exit_value = 2;
+	exit(exit_value);
+}
+
+struct param_pair {
+	char *cmd;
+	int value;
+};
+
+unsigned short apicmd_get_unused_port(int argc, char *argv[])
+{
+	if (argc != 3)
+		goto err;
+
+	const struct param_pair params[][3] = {
+		{{"ipv4", AF_INET}, {"ipv6", AF_INET6}, {NULL, 0}},
+		{{"stream", SOCK_STREAM}, {"dgram", SOCK_DGRAM}, {NULL, 0}}
+	};
+
+	int i;
+	const struct param_pair *p[2];
+	for (i = 0; i < 2; ++i) {
+		for (p[i] = params[i]; p[i]->cmd; ++p[i]) {
+			if (!strcmp(p[i]->cmd, argv[i]))
+				break;
+		}
+		if (!p[i]->cmd)
+			goto err;
+	}
+	return  tst_get_unused_port(NULL, p[0]->value, p[1]->value);
+
+err:
+	fprintf(stderr, "Usage: tst_get_unused_port FAMILY TYPE\n"
+		"where FAMILY := { ipv4 | ipv6 }\n"
+		"      TYPE := { stream | dgram }\n");
+	exit(1);
+}
+
+int apicmd_fs_has_free(int argc, char *argv[])
+{
+	if (argc != 3) {
+		fprintf(stderr, "Usage: tst_fs_has_free path required_bytes\n"
+			"path: the pathname of the mounted filesystem\n"
+			"required_bytes: the required free space"
+			" (supports kB, MB and GB suffixes)\n");
+		exit(2);
+	}
+
+	char *endptr;
+	unsigned int required_kib = strtoull(argv[1], &endptr, 0);
+	unsigned int mul = TST_BYTES;
+
+	if (*argv[1] == '\0')
+		goto fs_has_free_err;
+
+	if (*endptr != '\0') {
+		if (!strcasecmp(endptr, "kB")) {
+			mul = TST_KB;
+		} else if (!strcasecmp(endptr, "MB")) {
+			mul = TST_MB;
+		} else if (!strcasecmp(endptr, "GB")) {
+			mul = TST_GB;
+		} else {
+			goto fs_has_free_err;
+		}
+	}
+
+	exit(!tst_fs_has_free(NULL, argv[0], required_kib, mul));
+
+fs_has_free_err:
+	fprintf(stderr, "%s is not a valid size\n", argv[1]);
+	exit(2);
 }
 
 /*
@@ -128,30 +379,23 @@ int ident_ttype(char *tstype)
  *              set the value for TST_TOTAL for total number of tests this is
  *              required in case one test breaks and all following tests also
  *              should be reported as broken.
- *              Set Tst_count before every individual test.
+ *              Set tst_count before every individual test.
  *
  * Exit:        0 on success
  *              -1 on failure
  */
 int main(int argc, char *argv[])
 {
-	int trestype;		/* test result type TFAIL, TPASS, TINFO etc */
-	char *arg_fmt;		/* message string printed along with test type */
-	char *cmd_name;		/* name by which this program is invoked tst_brk etc */
-	char *tst_total;	/* total number of tests in the file. */
-	char *tst_count;	/* sets the value of Tst_count with this value */
-	char *file_name;	/* contents of this file are printed; see tst_res() */
-
-	arg_fmt = SAFE_MALLOC(NULL, 1024);
-	cmd_name = SAFE_MALLOC(NULL, 1024);
-
 	strcpy(cmd_name, SAFE_BASENAME(NULL, (argv++)[0]));
 
 	TCID = getenv("TCID");
 	tst_total = getenv("TST_TOTAL");
-	tst_count = getenv("TST_COUNT");
-	if (TCID == NULL || tst_total == NULL || tst_count == NULL) {
-		if (strcmp(cmd_name, "tst_kvercmp") != 0) {
+	tst_cntstr = getenv("TST_COUNT");
+	if (TCID == NULL || tst_total == NULL || tst_cntstr == NULL) {
+		if (!strcmp(cmd_name, "tst_kvercmp") &&
+		    !strcmp(cmd_name, "tst_kvercmp2") &&
+		    !strcmp(cmd_name, "tst_fs_has_free") &&
+		    !strcmp(cmd_name, "tst_get_unused_port")) {
 			fprintf(stderr,
 				"\nSet variables TCID, TST_TOTAL, and TST_COUNT before each test:\n"
 				"export TCID=<test name>\n"
@@ -162,9 +406,9 @@ int main(int argc, char *argv[])
 		}
 	} else {
 		TST_TOTAL = atoi(tst_total);
-		Tst_count = atoi(tst_count);
-		if (Tst_count > 0)
-			Tst_count--;
+		tst_count = atoi(tst_cntstr);
+		if (tst_count > 0)
+			tst_count--;
 
 		if (strcmp(TCID, " ") == 0) {
 			fprintf(stderr,
@@ -180,95 +424,31 @@ int main(int argc, char *argv[])
 	}
 
 	if (strcmp(cmd_name, "tst_brk") == 0) {
-		if (argc < 5) {
-			fprintf(stderr, "Usage: %s TTYPE FNAME FUNC STRING\n"
-				"\tTTYPE  - Test Result Type; one of TFAIL, TBROK, TCONF, "
-				"and TRETR.\n"
-				"\tFNAME  - Print contents of this file after the message\n"
-				"\tFUNC   - Cleanup function (ignored), but MUST be provided\n"
-				"\tSTRING - Message explaining the test result\n",
-				cmd_name);
-			exit(1);
-		}
-		trestype = ident_ttype((argv++)[0]);
-		file_name = (argv++)[0];
-		argv++;
-		strcpy(arg_fmt, *argv);
-		tst_brk(trestype, file_name, NULL, arg_fmt);
+		apicmd_brk(argc, argv);
 	} else if (strcmp(cmd_name, "tst_res") == 0) {
-		if (argc < 4) {
-			fprintf(stderr, "Usage: %s TTYPE FNAME STRING\n"
-				"\tTTYPE  - Test Result Type; one of TFAIL, TBROK, TCONF, "
-				"and  TRETR.\n"
-				"\tFNAME  - Print contents of this file after the message\n"
-				"\tSTRING - Message explaining the test result\n",
-				cmd_name);
-			exit(1);
-		}
-		trestype = ident_ttype((argv++)[0]);
-		file_name = (argv++)[0];
-		strcpy(arg_fmt, *argv);
-		tst_res(trestype, file_name, arg_fmt);
+		apicmd_res(argc, argv);
 	} else if (strcmp(cmd_name, "tst_brkm") == 0) {
-		if (argc < 4) {
-			fprintf(stderr, "Usage: %s TTYPE FUNC STRING\n"
-				"\tTTYPE  - Test Result Type; one of TFAIL, TBROK, TCONF, "
-				"and TRETR.\n"
-				"\tFUNC   - Cleanup function (ignored), but MUST be provided\n"
-				"\tSTRING - Message explaining the test result\n",
-				cmd_name);
-			exit(1);
-		}
-		trestype = ident_ttype((argv++)[0]);
-		argv++;
-		strcpy(arg_fmt, *argv);
-		tst_brkm(trestype, NULL, arg_fmt);
+		apicmd_brkm(argc, argv);
 	} else if (strcmp(cmd_name, "tst_resm") == 0) {
-		if (argc < 3) {
-			fprintf(stderr, "Usage: %s TTYPE STRING\n"
-				"\tTTYPE  - Test Result Type; one of TFAIL, TBROK, TCONF, "
-				"and TRETR.\n"
-				"\tSTRING - Message explaining the test result\n",
-				cmd_name);
-			exit(1);
-		}
-		trestype = ident_ttype((argv++)[0]);
-		strcpy(arg_fmt, *argv);
-		tst_resm(trestype, arg_fmt);
+		apicmd_resm(argc, argv);
 	} else if (strcmp(cmd_name, "tst_exit") == 0) {
 		tst_exit();
 	} else if (strcmp(cmd_name, "tst_flush") == 0) {
 		tst_flush();
 	} else if (strcmp(cmd_name, "tst_kvercmp") == 0) {
-		int exit_value;
-
-		if (argc < 4) {
-			fprintf(stderr, "Usage: %s NUM NUM NUM\n"
-				"Compares to the running kernel version.\n\n"
-				"\tNUM - A positive integer.\n"
-				"\tThe first NUM is the kernel VERSION\n"
-				"\tThe second NUM is the kernel PATCHLEVEL\n"
-				"\tThe third NUM is the kernel SUBLEVEL\n\n"
-				"\tExit status is 0 if the running kernel is older than the\n"
-				"\t\tkernel specified by NUM NUM NUM.\n"
-				"\tExit status is 1 for kernels of the same age.\n"
-				"\tExit status is 2 if the running kernel is newer.\n",
-				cmd_name);
-			exit(1);
-		}
-		exit_value = tst_kvercmp(atoi(argv[0]), atoi(argv[1]),
-					 atoi(argv[2]));
-		if (exit_value < 0)
-			exit_value = 0;
-		else if (exit_value == 0)
-			exit_value = 1;
-		else if (exit_value > 0)
-			exit_value = 2;
-		exit(exit_value);
+		apicmd_kvercmp(argc, argv);
+	} else if (strcmp(cmd_name, "tst_kvercmp2") == 0) {
+		apicmd_kvercmp2(argc, argv);
 	} else if (strcmp(cmd_name, "tst_ncpus") == 0) {
 		printf("%li\n", tst_ncpus());
+	} else if (strcmp(cmd_name, "tst_ncpus_conf") == 0) {
+		printf("%li\n", tst_ncpus_conf());
 	} else if (strcmp(cmd_name, "tst_ncpus_max") == 0) {
 		printf("%li\n", tst_ncpus_max());
+	} else if (strcmp(cmd_name, "tst_get_unused_port") == 0) {
+		printf("%u\n", apicmd_get_unused_port(argc, argv));
+	} else if (strcmp(cmd_name, "tst_fs_has_free") == 0) {
+		apicmd_fs_has_free(argc, argv);
 	}
 
 	exit(0);

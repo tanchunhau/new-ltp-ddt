@@ -69,7 +69,7 @@ int TST_TOTAL = 1;
 
 void cleanup(void);
 void setup(void);
-char *getpwd();
+char *getpwd(void);
 
 int main(int ac, char **av)
 {
@@ -79,7 +79,7 @@ int main(int ac, char **av)
 	char link2[BUFSIZ];
 	int n;
 	int lc;
-	char *msg;		/* parse_opts() return message */
+	const char *msg;		/* parse_opts() return message */
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -91,7 +91,7 @@ int main(int ac, char **av)
 	 * The following loop checks looping state if -i option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		flag = 0;
 
@@ -109,8 +109,7 @@ int main(int ac, char **av)
 
 		pwd1 = getpwd();
 		if (getcwd(cwd1, sizeof cwd1) == NULL) {
-			tst_resm(TFAIL, "getcwd() failed unexpectedly: "
-				 "errno = %d\n", errno);
+			tst_resm(TFAIL|TERRNO, "getcwd() failed unexpectedly");
 			flag = FAILED;
 		}
 		if ((flag != FAILED) && (strcmp(pwd1, cwd1) != 0)) {
@@ -142,8 +141,7 @@ int main(int ac, char **av)
 
 		pwd2 = getpwd();
 		if (getcwd(cwd2, sizeof cwd2) == NULL) {
-			tst_resm(TFAIL, "getcwd() failed unexpectedly: "
-				 "errno = %d\n", errno);
+			tst_resm(TFAIL|TERRNO, "getcwd() failed unexpectedly");
 			flag = FAILED;
 		}
 
@@ -203,9 +201,8 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
-
 	/* FORK is set here because of the popen() call below */
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
@@ -215,24 +212,23 @@ void setup()
 	tst_tmpdir();
 }
 
-void cleanup()
+void cleanup(void)
 {
 	/* remove the test directory */
 	tst_rmdir();
 
 	/* print timing stats if that option was specified */
 	TEST_CLEANUP;
-
 }
 
-char *getpwd()
+char *getpwd(void)
 {
 	FILE *fin;
 	char *pwd = "/bin/pwd";
-	char *cp, *cp_cur;
+	char *cp;
 	char *buf;
 
-	buf = (char *)malloc(BUFSIZ);
+	buf = malloc(BUFSIZ);
 	if ((fin = popen(pwd, "r")) == NULL) {
 		tst_resm(TINFO, "%s: can't run %s", TCID, pwd);
 		tst_brkm(TBROK, cleanup, "%s FAILED", TCID);
@@ -242,7 +238,6 @@ char *getpwd()
 			tst_brkm(TBROK, cleanup, "pwd output too long");
 		}
 		*cp = 0;
-		cp_cur = buf;
 	}
 	pclose(fin);
 	return buf;

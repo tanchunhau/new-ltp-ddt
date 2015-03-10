@@ -100,7 +100,7 @@ void *threaded(void *arg)
 
 	/* wait for the cond - bind the cond to the mutex m1 */
 	do {
-		if (arg == (void *)0)
+		if (arg == NULL)
 			ret = pthread_cond_wait(&(data.cnd), &(data.mtx1));
 		else
 			ret = pthread_cond_timedwait(&(data.cnd), &(data.mtx1),
@@ -135,7 +135,7 @@ void *threaded(void *arg)
 
 	/* wait for the cond - bind the cond to the mutex m2 */
 	do {
-		if (arg == (void *)0)
+		if (arg == NULL)
 			ret = pthread_cond_wait(&(data.cnd), &(data.mtx2));
 		else
 			ret = pthread_cond_timedwait(&(data.cnd), &(data.mtx2),
@@ -167,9 +167,10 @@ void *threaded(void *arg)
 	return NULL;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
-	int ret, i, j;
+	int ret, j;
+	unsigned int i;
 	pthread_mutexattr_t ma;
 	pthread_condattr_t ca;
 	pthread_t th[NTHREADS];
@@ -378,7 +379,7 @@ int main(int argc, char *argv[])
 }
 
 #else /* WITHOUT_XOPEN */
-int main(int argc, char *argv[])
+int main(void)
 {
 	output_init();
 	UNTESTED("This test requires XSI features");

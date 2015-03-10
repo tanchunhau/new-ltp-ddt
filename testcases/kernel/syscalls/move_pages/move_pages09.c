@@ -69,7 +69,7 @@ int TST_TOTAL = 1;
 
 int main(int argc, char **argv)
 {
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL)
@@ -93,8 +93,8 @@ int main(int argc, char **argv)
 		int nodes[TEST_PAGES];
 		int status[TEST_PAGES];
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		ret = alloc_pages_on_node(pages, TEST_PAGES, from_node);
 		if (ret == -1)
@@ -105,7 +105,6 @@ int main(int argc, char **argv)
 
 		ret = numa_move_pages(0, TEST_PAGES, pages, nodes,
 				      status, MPOL_MF_MOVE);
-		TEST_ERRNO = errno;
 
 		/*
 		 * commit e78bbfa8262424417a29349a8064a535053912b9
@@ -123,7 +122,8 @@ int main(int argc, char **argv)
 				tst_resm(TPASS, "move_pages failed with "
 					 "ENOENT as expected");
 			else
-				tst_resm(TFAIL | TERRNO, "move_pages");
+				tst_resm(TFAIL | TERRNO, "move_pages did not "
+					"fail with ENOENT ret: %d", ret);
 		}
 
 		free_pages(pages, TEST_PAGES);

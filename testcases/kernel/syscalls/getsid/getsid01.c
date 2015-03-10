@@ -74,7 +74,7 @@ pid_t p_sid;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	pid_t pid, c_pid, c_sid;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
@@ -86,8 +86,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* call the system call with the TEST() macro */
 
@@ -99,52 +99,46 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
+		/* save the return value in a global variable */
+		p_sid = TEST_RETURN;
 
-			/* save the return value in a global variable */
-			p_sid = TEST_RETURN;
+		if ((pid = FORK_OR_VFORK()) == -1) {
+			tst_brkm(TBROK, cleanup, "could not fork");
+		}
 
-			if ((pid = FORK_OR_VFORK()) == -1) {
-				tst_brkm(TBROK, cleanup, "could not fork");
+		if (pid == 0) {	/* child */
+			if ((c_pid = getpid()) == -1) {
+				tst_resm(TINFO, "getpid failed in "
+					 "functionality test");
+				exit(1);
 			}
 
-			if (pid == 0) {	/* child */
-				if ((c_pid = getpid()) == -1) {
-					tst_resm(TINFO, "getpid failed in "
-						 "functionality test");
-					exit(1);
-				}
+			/*
+			 * if the session ID of the child is the
+			 * same as the parent then things look good
+			 */
 
-				/*
-				 * if the session ID of the child is the
-				 * same as the parent then things look good
-				 */
+			if ((c_sid = getsid(0)) == -1) {
+				tst_resm(TINFO, "getsid failed in "
+					 "functionality test");
+				exit(2);
+			}
 
-				if ((c_sid = getsid(0)) == -1) {
-					tst_resm(TINFO, "getsid failed in "
-						 "functionality test");
-					exit(2);
-				}
-
-				if (c_sid == p_sid) {
-					tst_resm(TPASS, "session ID is "
-						 "correct");
-				} else {
-					tst_resm(TFAIL, "session ID is "
-						 "not correct");
-				}
-				exit(0);
-
+			if (c_sid == p_sid) {
+				tst_resm(TPASS, "session ID is "
+					 "correct");
 			} else {
-				waitpid(pid, NULL, 0);
+				tst_resm(TFAIL, "session ID is "
+					 "not correct");
 			}
+			exit(0);
+
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			waitpid(pid, NULL, 0);
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 

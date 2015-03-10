@@ -70,7 +70,7 @@ struct iovec wr_iovec[MAX_IOVEC] = {
 	{buf1 + (CHUNK * 6), CHUNK},
 	{(caddr_t) - 1, CHUNK},
 	{buf1 + (CHUNK * 8), CHUNK},
-	{(caddr_t) NULL, 0}
+	{NULL, 0}
 };
 
 /* 0 terminated list of expected errnos */
@@ -91,7 +91,7 @@ void cleanup(void);
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	int nbytes;
 
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		buf_list[0] = buf1;
 		buf_list[1] = buf2;
@@ -219,7 +219,6 @@ void setup(void)
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	/* Set up the expected error numbers for -e option */
 	TEST_EXP_ENOS(exp_enos);
 
 	/* Pause if that option was specified.

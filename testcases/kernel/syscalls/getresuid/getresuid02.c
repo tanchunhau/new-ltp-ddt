@@ -81,8 +81,8 @@
 
 extern int getresuid(uid_t *, uid_t *, uid_t *);
 
-char *TCID = "getresuid02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "getresuid02";
+int TST_TOTAL = 1;
 uid_t pr_uid, pe_uid, ps_uid;	/* calling process real/effective/saved uid */
 
 void setup();			/* Main setup function of test */
@@ -91,11 +91,10 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	uid_t real_uid,		/* real/eff./saved user id from getresuid() */
 	 eff_uid, sav_uid;
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -106,7 +105,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call getresuid() to get the real/effective/saved
@@ -120,32 +119,19 @@ int main(int ac, char **av)
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 			continue;
 		}
-		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
-		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Verify the real/effective/saved uid
-			 * values returned by getresuid with the
-			 * expected values.
-			 */
-			if ((real_uid != pr_uid) || (eff_uid != pe_uid) ||
-			    (sav_uid != ps_uid)) {
-				tst_resm(TFAIL, "real:%d, effective:%d, "
-					 "saved-user:%d ids differ",
-					 real_uid, eff_uid, sav_uid);
-			} else {
-				tst_resm(TPASS, "Functionality of getresuid() "
-					 "successful");
-			}
+
+		if ((real_uid != pr_uid) || (eff_uid != pe_uid) ||
+		    (sav_uid != ps_uid)) {
+			tst_resm(TFAIL, "real:%d, effective:%d, "
+				 "saved-user:%d ids differ",
+				 real_uid, eff_uid, sav_uid);
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			tst_resm(TPASS, "Functionality of getresuid() "
+				 "successful");
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -154,18 +140,15 @@ int main(int ac, char **av)
  * setup() - performs all ONE TIME setup for this test.
  *	     Get the real/effective/saved user id of the calling process.
  */
-void setup()
+void setup(void)
 {
 	struct passwd *user_id;	/* passwd struct for test user */
+
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
-
-	/* Check that the test process id is super/root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, cleanup, "Must be super/root for this test!");
-	}
 
 	/* Real user-id of the calling process */
 	pr_uid = getuid();
@@ -199,7 +182,7 @@ void setup()
  *             completion or premature exit.
  *	       Restore the test process uid to root.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

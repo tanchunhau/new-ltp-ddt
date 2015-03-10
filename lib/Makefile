@@ -24,11 +24,7 @@ top_srcdir		?= ..
 
 include $(top_srcdir)/include/mk/env_pre.mk
 
-ifeq ($(UCLINUX),1)
-CFLAGS			+= -D_USC_LIB_
-endif
-
-#CPPFLAGS		+= -DGARRETT_IS_A_PEDANTIC_BASTARD
+CFLAGS			+= -I.
 
 FILTER_OUT_LIBSRCS	:= mount_utils.c
 

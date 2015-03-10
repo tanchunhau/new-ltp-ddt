@@ -82,7 +82,7 @@ static struct timespec saved;	/* Used to reset the time */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	struct timespec spec;	/* Used to specify time for test */
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
@@ -92,12 +92,12 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		spec.tv_sec = 1;
 		spec.tv_nsec = 0;
 
-		TEST(syscall(__NR_clock_settime, CLOCK_REALTIME, &spec));
+		TEST(ltp_syscall(__NR_clock_settime, CLOCK_REALTIME, &spec));
 		tst_resm((TEST_RETURN < 0 ? TFAIL | TTERRNO : TPASS),
 			 "clock_settime %s",
 			 (TEST_RETURN == 0 ? "passed" : "failed"));
@@ -118,7 +118,7 @@ void setup(void)
 		tst_brkm(TBROK, NULL, "Test must be run as root");
 	}
 	/* Save the current time specifications */
-	if (syscall(__NR_clock_gettime, CLOCK_REALTIME, &saved) < 0)
+	if (ltp_syscall(__NR_clock_gettime, CLOCK_REALTIME, &saved) < 0)
 		tst_brkm(TBROK, NULL, "Could not save the current time");
 
 	TEST_PAUSE;

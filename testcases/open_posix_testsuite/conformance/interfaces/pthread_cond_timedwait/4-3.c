@@ -30,9 +30,6 @@
  /* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
 #define _POSIX_C_SOURCE 200112L
 
- /********************************************************************************************/
-/****************************** standard includes *****************************************/
-/********************************************************************************************/
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -44,32 +41,9 @@
 #include <signal.h>
 #include <time.h>
 
-/********************************************************************************************/
-/******************************   Test framework   *****************************************/
-/********************************************************************************************/
 #include "../testfrmw/testfrmw.h"
 #include "../testfrmw/testfrmw.c"
- /* This header is responsible for defining the following macros:
-  * UNRESOLVED(ret, descr);
-  *    where descr is a description of the error and ret is an int (error code for example)
-  * FAILED(descr);
-  *    where descr is a short text saying why the test has failed.
-  * PASSED();
-  *    No parameter.
-  *
-  * Both three macros shall terminate the calling process.
-  * The testcase shall not terminate in any other maneer.
-  *
-  * The other file defines the functions
-  * void output_init()
-  * void output(char * string, ...)
-  *
-  * Those may be used to output information.
-  */
 
-/********************************************************************************************/
-/********************************** Configuration ******************************************/
-/********************************************************************************************/
 #define WITH_SYNCHRO
 #ifndef VERBOSE
 #define VERBOSE 2
@@ -77,10 +51,6 @@
 
 #define TIMEOUT (1000)		/* ns, timeout parameter for pthread_cond_timedwait */
 #define INTERVAL (700)		/* ns, frequency (actually, period) for the condition signaling */
-
-/********************************************************************************************/
-/***********************************    Test case   *****************************************/
-/********************************************************************************************/
 
 char do_it = 1;
 unsigned long count_cnd_sig = 0, count_cnd_wup = 0;
@@ -142,6 +112,7 @@ void *sendsig(void *arg)
 /* This one is registered for signal SIGUSR1 */
 void sighdl1(int sig)
 {
+	(void) sig;
 #ifdef WITH_SYNCHRO
 	if (sem_post(&semsig1)) {
 		UNRESOLVED(errno, "Sem_post in signal handler 1");
@@ -152,6 +123,7 @@ void sighdl1(int sig)
 /* This one is registered for signal SIGUSR2 */
 void sighdl2(int sig)
 {
+	(void) sig;
 #ifdef WITH_SYNCHRO
 	if (sem_post(&semsig2)) {
 		UNRESOLVED(errno, "Sem_post in signal handler 2");
@@ -165,6 +137,8 @@ void *waiter(void *arg)
 {
 	int ret;
 	struct timespec ts;
+
+	(void) arg;
 
 	/* We don't block the signals SIGUSR1 and SIGUSR2 for this THREAD */
 	ret = pthread_sigmask(SIG_UNBLOCK, &usersigs, NULL);
@@ -219,8 +193,9 @@ void *waiter(void *arg)
 void *worker(void *arg)
 {
 	int ret = 0;
-
 	struct timespec ts, tsrem;
+
+	(void) arg;
 
 	/* We block the signals SIGUSR1 and SIGUSR2 for this THREAD */
 	ret = pthread_sigmask(SIG_BLOCK, &usersigs, NULL);
@@ -256,7 +231,7 @@ void *worker(void *arg)
 }
 
 /* Main function */
-int main(int argc, char *argv[])
+int main(void)
 {
 	int ret;
 	pthread_t th_waiter, th_worker, th_sig1, th_sig2;

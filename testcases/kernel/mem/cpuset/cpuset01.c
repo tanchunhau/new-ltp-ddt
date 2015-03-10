@@ -71,7 +71,7 @@ static long count_cpu(void);
 
 int main(int argc, char *argv[])
 {
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL)
@@ -93,28 +93,30 @@ static void testcpuset(void)
 {
 	int lc;
 	int child, i, status;
-	unsigned long nmask = 0;
+	unsigned long nmask[MAXNODES / BITS_PER_LONG] = { 0 };
 	char mems[BUFSIZ], buf[BUFSIZ];
 
 	read_cpuset_files(CPATH, "cpus", buf);
 	write_cpuset_files(CPATH_NEW, "cpus", buf);
 	read_cpuset_files(CPATH, "mems", mems);
 	write_cpuset_files(CPATH_NEW, "mems", mems);
-	snprintf(buf, BUFSIZ, "%d", getpid());
-	write_file(CPATH_NEW "/tasks", buf);
+	SAFE_FILE_PRINTF(cleanup, CPATH_NEW "/tasks", "%d", getpid());
 
 	switch (child = fork()) {
 	case -1:
 		tst_brkm(TBROK | TERRNO, cleanup, "fork");
 	case 0:
-		for (i = 0; i < nnodes; i++)
-			nmask += 1 << nodes[i];
-		if (set_mempolicy(MPOL_BIND, &nmask, MAXNODES) == -1)
+		for (i = 0; i < nnodes; i++) {
+			if (nodes[i] >= MAXNODES)
+				continue;
+			set_node(nmask, nodes[i]);
+		}
+		if (set_mempolicy(MPOL_BIND, nmask, MAXNODES) == -1)
 			tst_brkm(TBROK | TERRNO, cleanup, "set_mempolicy");
 		exit(mem_hog_cpuset(ncpus > 1 ? ncpus : 1));
 	}
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		snprintf(buf, BUFSIZ, "%d", nodes[0]);
 		write_cpuset_files(CPATH_NEW, "mems", buf);
 		snprintf(buf, BUFSIZ, "%d", nodes[1]);

@@ -34,7 +34,7 @@
 
 #define TNAME "aio_error/3-1.c"
 
-int main()
+int main(void)
 {
 
 	char tmpfname[256];
@@ -70,7 +70,7 @@ int main()
 	if (ret != EINVAL) {
 		printf(TNAME " return code didn't match expected "
 		       "value (%d != %d).\n", ret, EINVAL);
-		return PTS_UNRESOLVED;
+		return PTS_UNTESTED;
 	}
 
 	close(fd);

@@ -155,10 +155,10 @@ void record_status(unsigned int n);
 
 int main(int argc, char *argv[])
 {
-	char *msg;
+	const char *msg;
 	int lc;
 
-	if ((msg = parse_opts(argc, argv, options, help)) != (char *)NULL)
+	if ((msg = parse_opts(argc, argv, options, help)) != NULL)
 		tst_brkm(TBROK, cleanup, "OPTION PARSING ERROR - %s", msg);
 
 	if (v_opt)
@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		tst_resm(TINFO, "crashme %s%d.%d %d %d",
 			 (malloc_flag == 0) ? "" : "+", nbytes, incptr, nseed,
@@ -351,7 +351,7 @@ void badboy_loop()
 char *bad_malloc(int n)
 {
 	char *data;
-	data = (char *)malloc(n);
+	data = malloc(n);
 #ifdef pyr
 	if (mprotect(((int)data / PAGSIZ) * PAGSIZ, (n / PAGSIZ + 1) * PAGSIZ,
 		     PROT_READ | PROT_WRITE | PROT_EXEC))

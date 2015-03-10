@@ -85,12 +85,14 @@ static const struct mapping known_issues[] = {
 	{"open", "/proc/sal/cmc/data", EBUSY},
 	{"open", "/proc/sal/init/data", EBUSY},
 	{"open", "/proc/sal/mca/data", EBUSY},
+	{"open", "/proc/fs/nfsd/pool_stats", ENODEV},
 	{"read", "/proc/acpi/event", EAGAIN},
 	{"read", "/proc/kmsg", EAGAIN},
 	{"read", "/proc/sal/cpe/event", EAGAIN},
 	{"read", "/proc/sal/cmc/event", EAGAIN},
 	{"read", "/proc/sal/init/event", EAGAIN},
 	{"read", "/proc/sal/mca/event", EAGAIN},
+	{"read", "/proc/xen/privcmd", EIO},
 	{"read", "/proc/xen/privcmd", EINVAL},
 	{"read", "/proc/self/mem", EIO},
 	{"read", "/proc/self/task/[0-9]*/mem", EIO},
@@ -105,6 +107,7 @@ static const struct mapping known_issues[] = {
 	{"read", "/proc/fs/nfsd/filehandle", EINVAL},
 	{"read", "/proc/fs/nfsd/.getfs", EINVAL},
 	{"read", "/proc/fs/nfsd/.getfd", EINVAL},
+	{"read", "/proc/self/net/rpc/use-gss-proxy", EAGAIN},
 	{"", "", 0}
 };
 
@@ -428,7 +431,7 @@ static long readproc(const char *obj)
 
 int main(int argc, char *argv[])
 {
-	char *msg;
+	const char *msg;
 	int lc;
 
 	msg = parse_opts(argc, argv, options, help);
@@ -454,7 +457,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(readproc(procpath));
 

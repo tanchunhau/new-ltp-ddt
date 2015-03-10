@@ -45,7 +45,7 @@ void sigrt1_handler(int signum, siginfo_t * info, void *context)
 	received_all = 1;
 }
 
-int main()
+int main(void)
 {
 	char tmpfname[256];
 	int fd;
@@ -75,7 +75,7 @@ int main()
 
 	unlink(tmpfname);
 
-	bufs = (char *)malloc(NUM_AIOCBS * BUF_SIZE);
+	bufs = malloc(NUM_AIOCBS * BUF_SIZE);
 
 	if (bufs == NULL) {
 		printf(TNAME " Error at malloc(): %s\n", strerror(errno));
@@ -83,12 +83,12 @@ int main()
 		exit(PTS_UNRESOLVED);
 	}
 
-	aiocbs = (struct aiocb **)malloc(sizeof(struct aiocb *) * NUM_AIOCBS);
+	aiocbs = malloc(sizeof(struct aiocb *) * NUM_AIOCBS);
 
 	/* Queue up a bunch of aio writes */
 	for (i = 0; i < NUM_AIOCBS; i++) {
 
-		aiocbs[i] = (struct aiocb *)malloc(sizeof(struct aiocb));
+		aiocbs[i] = malloc(sizeof(struct aiocb));
 		memset(aiocbs[i], 0, sizeof(struct aiocb));
 
 		aiocbs[i]->aio_fildes = fd;

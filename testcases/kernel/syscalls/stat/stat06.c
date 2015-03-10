@@ -126,7 +126,7 @@
 void setup();
 void cleanup();
 
-char *TCID = "stat06";		/* Test program identifier.    */
+char *TCID = "stat06";
 
 int exp_enos[] = { 0, 0 };
 
@@ -170,7 +170,7 @@ struct test_case_t {
 	NULL, NULL, NULL, 0, no_setup}
 };
 
-int TST_TOTAL = sizeof(Test_cases) / sizeof(*Test_cases);
+int TST_TOTAL = ARRAY_SIZE(Test_cases);
 
 /***********************************************************************
  * Main
@@ -178,7 +178,7 @@ int TST_TOTAL = sizeof(Test_cases) / sizeof(*Test_cases);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	char *fname;
 	char *desc;
 	int ind;
@@ -190,7 +190,6 @@ int main(int ac, char **av)
      ***************************************************************/
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
     /***************************************************************
@@ -206,7 +205,7 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; Test_cases[ind].desc != NULL; ind++) {
 
@@ -240,20 +239,17 @@ int main(int ac, char **av)
 
 			/* check return code */
 			if (TEST_RETURN == -1) {
-				if (STD_FUNCTIONAL_TEST) {
-					if (TEST_ERRNO ==
-					    Test_cases[ind].exp_errno)
-						tst_resm(TPASS,
-							 "stat(<%s>, &stbuf) Failed, errno=%d",
-							 desc, TEST_ERRNO);
-					else
-						tst_resm(TFAIL,
-							 "stat(<%s>, &stbuf) Failed, errno=%d, expected errno:%d",
-							 desc, TEST_ERRNO,
-							 Test_cases
-							 [ind].exp_errno);
-				} else
-					Tst_count++;
+				if (TEST_ERRNO ==
+				    Test_cases[ind].exp_errno)
+					tst_resm(TPASS,
+						 "stat(<%s>, &stbuf) Failed, errno=%d",
+						 desc, TEST_ERRNO);
+				else
+					tst_resm(TFAIL,
+						 "stat(<%s>, &stbuf) Failed, errno=%d, expected errno:%d",
+						 desc, TEST_ERRNO,
+						 Test_cases
+						 [ind].exp_errno);
 			} else {
 				tst_resm(TFAIL,
 					 "stat(<%s>, &stbuf) returned %ld, expected -1, errno:%d",
@@ -264,18 +260,14 @@ int main(int ac, char **av)
 
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
-
 	tst_exit();
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 	int ind;
 
@@ -304,7 +296,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.
@@ -319,7 +311,7 @@ void cleanup()
 /******************************************************************
  * no_setup() - does nothing
  ******************************************************************/
-int no_setup()
+int no_setup(void)
 {
 	return 0;
 }
@@ -329,7 +321,7 @@ int no_setup()
 /******************************************************************
  * high_address_setup() - generates an address that should cause a segfault
  ******************************************************************/
-int high_address_setup()
+int high_address_setup(void)
 {
 	int ind;
 
@@ -348,7 +340,7 @@ int high_address_setup()
 /******************************************************************
  * longpath_setup() - creates a filename that is too long
  ******************************************************************/
-int longpath_setup()
+int longpath_setup(void)
 {
 	int ind;
 
@@ -362,7 +354,7 @@ int longpath_setup()
 /******************************************************************
  * filepath_setup() creates a file the exists that we will treat as a directory
  ******************************************************************/
-int filepath_setup()
+int filepath_setup(void)
 {
 	int fd;
 

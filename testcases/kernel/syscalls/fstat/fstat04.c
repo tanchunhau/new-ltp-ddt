@@ -82,8 +82,8 @@
 #define BUF_SIZE	256
 #define MASK		0777
 
-char *TCID = "fstat04";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fstat04";
+int TST_TOTAL = 1;
 uid_t user_id;			/* user id/group id of test process */
 gid_t group_id;
 int fildes;			/* File descriptor of testfile */
@@ -91,16 +91,15 @@ int fildes;			/* File descriptor of testfile */
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
 
-void setup();			/* Setup function for the test */
-void cleanup();			/* Cleanup function for the test */
+void setup();
+void cleanup();
 
 int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat structure buffer */
 	int lc;
-	char *msg;
+	const char *msg;
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -108,7 +107,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call fstat(2) to get the status of
@@ -122,28 +121,20 @@ int main(int ac, char **av)
 			continue;
 		}
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Verify the data returned by fstat(2)
+		 * aganist the expected data.
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Verify the data returned by fstat(2)
-			 * aganist the expected data.
-			 */
-			if (stat_buf.st_uid != user_id ||
-			    stat_buf.st_gid != group_id ||
-			    stat_buf.st_size != FILE_SIZE ||
-			    (stat_buf.st_mode & MASK) != FILE_MODE) {
-				tst_resm(TFAIL,
-					 "fstat functionality incorrect");
-			} else
-				tst_resm(TPASS, "fstat functionality correct");
+		if (stat_buf.st_uid != user_id ||
+		    stat_buf.st_gid != group_id ||
+		    stat_buf.st_size != FILE_SIZE ||
+		    (stat_buf.st_mode & MASK) != FILE_MODE) {
+			tst_resm(TFAIL,
+				 "fstat functionality incorrect");
 		} else
-			tst_resm(TPASS, "call succeeded");
+			tst_resm(TPASS, "fstat functionality correct");
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -154,7 +145,7 @@ int main(int ac, char **av)
  *  Creat a test file and write some data into it.
  *  Get the user/group id info. of test process.
  */
-void setup()
+void setup(void)
 {
 	char tst_buff[BUF_SIZE];	/* data buffer */
 	int wbytes;		/* no. of bytes written */
@@ -192,7 +183,7 @@ void setup()
 
 }
 
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

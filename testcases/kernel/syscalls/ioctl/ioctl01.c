@@ -112,7 +112,7 @@ int main(int ac, char **av)
 {
 	int lc;
 	int i;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(ac, av, options, &help);
 	if (msg != NULL)
@@ -134,7 +134,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -163,7 +163,6 @@ int main(int ac, char **av)
 
 static void help(void)
 {
-
 	printf("  -D <tty device> : for example, /dev/tty[0-9]\n");
 }
 

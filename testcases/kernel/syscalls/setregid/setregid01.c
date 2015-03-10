@@ -29,145 +29,66 @@
  *
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  *
+ * Author: William Roske
+ * Co-pilot: Dave Fenner
  */
-/* $Id: setregid01.c,v 1.6 2009/11/02 13:57:18 subrata_modak Exp $ */
-/**********************************************************
- *
- *    OS Test - Silicon Graphics, Inc.
- *
- *    TEST IDENTIFIER	: setregid01
- *
- *    EXECUTED BY	: anyone
- *
- *    TEST TITLE	: Basic test for setregid(2)
- *
- *    PARENT DOCUMENT	: usctpl01
- *
- *    TEST CASE TOTAL	: 5
- *
- *    WALL CLOCK TIME	: 1
- *
- *    CPU TYPES		: ALL
- *
- *    AUTHOR		: William Roske
- *
- *    CO-PILOT		: Dave Fenner
- *
- *    DATE STARTED	: 05/13/92
- *
- *    INITIAL RELEASE	: UNICOS 7.0
- *
- *    TEST CASES
- *
- * 	1.) setregid(2) returns...(See Description)
- *
- *    INPUT SPECIFICATIONS
- * 	The standard options for system call tests are accepted.
- *	(See the parse_opts(3) man page).
- *
- *    OUTPUT SPECIFICATIONS
- *
- *    DURATION
- * 	Terminates - with frequency and infinite modes.
- *
- *    SIGNALS
- * 	Uses SIGUSR1 to pause before test if option set.
- * 	(See the parse_opts(3) man page).
- *
- *    RESOURCES
- * 	None
- *
- *    ENVIRONMENTAL NEEDS
- *      No run-time environmental needs.
- *
- *    SPECIAL PROCEDURAL REQUIREMENTS
- * 	None
- *
- *    INTERCASE DEPENDENCIES
- * 	None
- *
- *    DETAILED DESCRIPTION
- *	This is a Phase I test for the setregid(2) system call.  It is intended
- *	to provide a limited exposure of the system call, for now.  It
- *	should/will be extended when full functional tests are written for
- *	setregid(2).
- *
- * 	Setup:
- * 	  Setup signal handling.
- *	  Pause for SIGUSR1 if option specified.
- *
- * 	Test:
- *	 Loop if the proper options are given.
- * 	  Execute system call
- *	  Check return code, if system call failed (return=-1)
- *		Log the errno and Issue a FAIL message.
- *	  Otherwise, Issue a PASS message.
- *
- * 	Cleanup:
- * 	  Print errno log and/or timing stats if options given
- *
- *
- *#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#**/
+
+/*
+ * Testcase to test the basic functionality of setregid(2) systemm call.
+ */
 
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
-
 #include <sys/types.h>
 
 #include "test.h"
 #include "usctest.h"
+#include "compat_16.h"
 
-void setup();
-void cleanup();
+static void setup(void);
+static void cleanup(void);
 
-char *TCID = "setregid01";	/* Test program identifier.    */
-int TST_TOTAL = 5;		/* Total number of test cases. */
+TCID_DEFINE(setregid01);
+int TST_TOTAL = 5;
 
-int exp_enos[] = { 0, 0 };	/* Zero terminated list of expected errnos */
-
-int gid, egid;			/* current real and effective group id */
+static gid_t gid, egid;	/* current real and effective group id */
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * TEST CASE:
 		 *  Dont change either real or effective gid
 		 */
 		gid = getgid();
+		GID16_CHECK(gid, setregid, cleanup);
+
 		egid = getegid();
+		GID16_CHECK(egid, setregid, cleanup);
 
-		/* Call setregid(2) */
-		TEST(setregid(-1, -1));
+		TEST(SETREGID(cleanup, -1, -1));
 
-		/* check return code */
 		if (TEST_RETURN == -1) {
 			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL,
 				 "setregid -  Dont change either real or effective gid failed, errno=%d : %s",
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS,
-					 "setregid -  Dont change either real or effective gid returned %ld",
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS,
+				 "setregid -  Dont change either real or effective gid returned %ld",
+				 TEST_RETURN);
 		}
 
 		/*
@@ -175,22 +96,17 @@ int main(int ac, char **av)
 		 *  change effective to effective gid
 		 */
 
-		/* Call setregid(2) */
-		TEST(setregid(-1, egid));
+		TEST(SETREGID(cleanup, -1, egid));
 
-		/* check return code */
 		if (TEST_RETURN == -1) {
 			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL,
 				 "setregid -  change effective to effective gid failed, errno=%d : %s",
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS,
-					 "setregid -  change effective to effective gid returned %ld",
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS,
+				 "setregid -  change effective to effective gid returned %ld",
+				 TEST_RETURN);
 		}
 
 		/*
@@ -198,22 +114,17 @@ int main(int ac, char **av)
 		 *  change real to real gid
 		 */
 
-		/* Call setregid(2) */
-		TEST(setregid(gid, -1));
+		TEST(SETREGID(cleanup, gid, -1));
 
-		/* check return code */
 		if (TEST_RETURN == -1) {
 			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL,
 				 "setregid -  change real to real gid failed, errno=%d : %s",
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS,
-					 "setregid -  change real to real gid returned %ld",
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS,
+				 "setregid -  change real to real gid returned %ld",
+				 TEST_RETURN);
 		}
 
 		/*
@@ -221,22 +132,17 @@ int main(int ac, char **av)
 		 *  change effective to real gid
 		 */
 
-		/* Call setregid(2) */
-		TEST(setregid(-1, gid));
+		TEST(SETREGID(cleanup, -1, gid));
 
-		/* check return code */
 		if (TEST_RETURN == -1) {
 			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL,
 				 "setregid -  change effective to real gid failed, errno=%d : %s",
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS,
-					 "setregid -  change effective to real gid returned %ld",
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS,
+				 "setregid -  change effective to real gid returned %ld",
+				 TEST_RETURN);
 		}
 
 		/*
@@ -244,53 +150,33 @@ int main(int ac, char **av)
 		 *  try to change real to current real
 		 */
 
-		/* Call setregid(2) */
-		TEST(setregid(gid, gid));
+		TEST(SETREGID(cleanup, gid, gid));
 
-		/* check return code */
 		if (TEST_RETURN == -1) {
 			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL | TTERRNO, "setregid failed");
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS, "setregid return %ld",
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS, "setregid return %ld",
+				 TEST_RETURN);
 		}
 
 	}
 
 	cleanup();
 	tst_exit();
-	tst_exit();
-
 }
 
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- ***************************************************************/
-void setup()
+static void setup(void)
 {
-
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 
-	/* make a temp dir and cd to it */
 	tst_tmpdir();
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- *		completion or premature exit.
- ***************************************************************/
-void cleanup()
+static void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
 	TEST_CLEANUP;
 
 	tst_rmdir();

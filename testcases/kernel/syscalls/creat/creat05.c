@@ -73,7 +73,7 @@ char fname[40];
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -85,8 +85,8 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		TEST(creat(fname, MODE));
 
@@ -114,7 +114,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	int max_open;
 
@@ -142,7 +142,7 @@ void setup()
 	/* get the maximum number of files that we can open */
 	max_open = getdtablesize();
 	/* Allocate memory for stat and ustat structure variables */
-	if ((buf = (int *)malloc(sizeof(int) * max_open - first)) == NULL) {
+	if ((buf = malloc(sizeof(int) * max_open - first)) == NULL) {
 		tst_brkm(TBROK, NULL, "Failed to allocate Memory");
 	}
 
@@ -181,7 +181,7 @@ void remove_files(int nfiles)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

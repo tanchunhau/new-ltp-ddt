@@ -87,7 +87,7 @@ static void usage(void);
 int main(int argc, char **argv)
 {
 	int lc, node, err;
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, options, usage);
 	if (msg != NULL)
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		case4();
 		case5();

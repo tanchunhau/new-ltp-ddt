@@ -71,9 +71,11 @@
 
 #include "test.h"
 #include "usctest.h"
+#include "tst_fs_type.h"
 
 char *TCID = "diotest4";	/* Test program identifier.    */
 int TST_TOTAL = 17;		/* Total number of test conditions */
+int NO_NFS = 1;			/* Test on NFS or not */
 
 #ifdef O_DIRECT
 
@@ -105,6 +107,7 @@ runtest_f(int fd, char *buf, int offset, int count, int errnum, int testnum,
 			l_fail = TRUE;
 		}
 	} else {
+		errno = 0;
 		ret = read(fd, buf, count);
 		if (ret >= 0 || errno != errnum) {
 			tst_resm(TFAIL, "read allows %s. returns %d: %s",
@@ -119,6 +122,7 @@ runtest_f(int fd, char *buf, int offset, int count, int errnum, int testnum,
 			l_fail = TRUE;
 		}
 	} else {
+		errno = 0;
 		ret = write(fd, buf, count);
 		if (ret >= 0 || errno != errnum) {
 			tst_resm(TFAIL, "write allows %s.returns %d: %s",
@@ -169,6 +173,16 @@ void prg_usage()
 {
 	fprintf(stderr, "Usage: diotest4 [-b filesize_in_blocks]\n");
 	exit(1);
+}
+
+static void testcheck_end(int ret, int *failed, int *fail_count, char *msg)
+{
+	if (ret != 0) {
+		*failed = TRUE;
+		(*fail_count)++;
+		tst_resm(TFAIL, msg);
+	} else
+		tst_resm(TPASS, msg);
 }
 
 static void setup(void);
@@ -235,6 +249,7 @@ int main(int argc, char *argv[])
 	/* Test-1: Negative Offset */
 	offset = -1;
 	count = bufsize;
+	errno = 0;
 	ret = lseek(fd, offset, SEEK_SET);
 	if ((ret >= 0) || (errno != EINVAL)) {
 		tst_resm(TFAIL, "lseek allows negative offset. returns %d:%s",
@@ -255,13 +270,12 @@ int main(int argc, char *argv[])
 	if (write(fd, buf2, 4096) == -1) {
 		tst_resm(TFAIL, "can't write to file %d", ret);
 	}
-	ret = runtest_f(fd, buf2, offset, count, EINVAL, 3, "odd count");
-	if (ret != 0) {
-		failed = TRUE;
-		fail_count++;
-		tst_resm(TFAIL, "Odd count of read and write");
+	if (NO_NFS) {
+		ret = runtest_f(fd, buf2, offset, count, EINVAL, 3, "odd count");
+		testcheck_end(ret, &failed, &fail_count,
+					"Odd count of read and write");
 	} else
-		tst_resm(TPASS, "Odd count of read and write");
+		tst_resm(TCONF, "NFS support odd count IO");
 	total++;
 
 	/* Test-4: Read beyond the file size */
@@ -273,6 +287,7 @@ int main(int argc, char *argv[])
 		fail_count++;
 		tst_resm(TFAIL, "Read beyond the file size");
 	} else {
+		errno = 0;
 		ret = read(fd, buf2, count);
 		if (ret > 0 || (ret < 0 && errno != EINVAL)) {
 			tst_resm(TFAIL,
@@ -290,12 +305,7 @@ int main(int argc, char *argv[])
 	count = bufsize;
 	newfd = -1;
 	ret = runtest_f(newfd, buf2, offset, count, EBADF, 5, "negative fd");
-	if (ret != 0) {
-		failed = TRUE;
-		fail_count++;
-		tst_resm(TFAIL, "Invalid file descriptor");
-	} else
-		tst_resm(TPASS, "Invalid file descriptor");
+	testcheck_end(ret, &failed, &fail_count, "Invalid file descriptor");
 	total++;
 
 	/* Test-6: Out of range file descriptor */
@@ -306,15 +316,10 @@ int main(int argc, char *argv[])
 		failed = TRUE;
 		tst_resm(TFAIL, "Out of range file descriptor");
 	} else {
-		ret =
-		    runtest_f(newfd, buf2, offset, count, EBADF, 6,
+		ret = runtest_f(newfd, buf2, offset, count, EBADF, 6,
 			      "out of range fd");
-		if (ret != 0) {
-			failed = TRUE;
-			fail_count++;
-			tst_resm(TFAIL, "Out of range file descriptor");
-		} else
-			tst_resm(TPASS, "Out of range file descriptor");
+		testcheck_end(ret, &failed, &fail_count,
+					"Out of range file descriptor");
 	}
 	close(newfd);
 	total++;
@@ -327,12 +332,7 @@ int main(int argc, char *argv[])
 			 strerror(errno));
 	}
 	ret = runtest_f(fd, buf2, offset, count, EBADF, 7, "closed fd");
-	if (ret != 0) {
-		failed = TRUE;
-		fail_count++;
-		tst_resm(TFAIL, "Closed file descriptor");
-	} else
-		tst_resm(TPASS, "Closed file descriptor");
+	testcheck_end(ret, &failed, &fail_count, "Closed file descriptor");
 	total++;
 
 	/* Test-9: removed */
@@ -345,12 +345,8 @@ int main(int argc, char *argv[])
 		tst_resm(TCONF, "Direct I/O on /dev/null is not supported");
 	} else {
 		ret = runtest_s(newfd, buf2, offset, count, 9, "/dev/null");
-		if (ret != 0) {
-			failed = TRUE;
-			fail_count++;
-			tst_resm(TFAIL, "character device read, write");
-		} else
-			tst_resm(TPASS, "character device read, write");
+		testcheck_end(ret, &failed, &fail_count,
+					"character device read, write");
 	}
 	close(newfd);
 	total++;
@@ -373,12 +369,8 @@ int main(int argc, char *argv[])
 			 strerror(errno));
 	}
 	ret = runtest_s(fd, buf2, offset, count, 10, "mmapped file");
-	if (ret != 0) {
-		failed = TRUE;
-		fail_count++;
-		tst_resm(TFAIL, "read, write to a mmaped file");
-	} else
-		tst_resm(TPASS, "read, write to a mmaped file");
+	testcheck_end(ret, &failed, &fail_count,
+				"read, write to a mmaped file");
 	total++;
 
 	/* Test-11: read, write to an unmaped file with munmap */
@@ -387,12 +379,8 @@ int main(int argc, char *argv[])
 			 strerror(errno));
 	}
 	ret = runtest_s(fd, buf2, offset, count, 11, "unmapped file");
-	if (ret != 0) {
-		failed = TRUE;
-		fail_count++;
-		tst_resm(TFAIL, "read, write to an unmapped file");
-	} else
-		tst_resm(TPASS, "read, write to an unmapped file");
+	testcheck_end(ret, &failed, &fail_count,
+				"read, write to an unmapped file");
 	close(fd);
 	total++;
 
@@ -408,6 +396,7 @@ int main(int argc, char *argv[])
 		failed = TRUE;
 		fail_count++;
 	} else {
+		errno = 0;
 		ret = read(fd, buf2, count);
 		if (ret >= 0 || errno != EBADF) {
 			tst_resm(TFAIL,
@@ -433,6 +422,7 @@ int main(int argc, char *argv[])
 		failed = TRUE;
 		fail_count++;
 	} else {
+		errno = 0;
 		ret = write(fd, buf2, count);
 		if (ret >= 0 || errno != EBADF) {
 			tst_resm(TFAIL,
@@ -449,43 +439,19 @@ int main(int argc, char *argv[])
 	/* Test-14: read, write with non-aligned buffer */
 	offset = 4096;
 	count = bufsize;
-	l_fail = 0;
 	if ((fd = open(filename, O_DIRECT | O_RDWR)) < 0) {
 		tst_brkm(TBROK, cleanup, "can't open %s: %s",
 			 filename, strerror(errno));
 	}
-	if (lseek(fd, offset, SEEK_SET) < 0) {
-		tst_resm(TFAIL, "lseek before read failed: %s",
-			 strerror(errno));
-		l_fail = TRUE;
-	} else {
-		if ((ret = read(fd, buf2 + 1, count)) != -1) {
-			tst_resm(TFAIL,
-				 "allows read nonaligned buf. returns %d: %s",
-				 ret, strerror(errno));
-			l_fail = TRUE;
-		}
-	}
-	if (lseek(fd, offset, SEEK_SET) < 0) {
-		tst_resm(TFAIL, "lseek before read failed: %s",
-			 strerror(errno));
-		l_fail = TRUE;
-	} else {
-		if ((ret = write(fd, buf2 + 1, count)) != -1) {
-			tst_resm(TFAIL,
-				 "allows write nonaligned buf. returns %d: %s",
-				 ret, strerror(errno));
-			l_fail = TRUE;
-		}
-	}
-	if (l_fail) {
-		failed = TRUE;
-		fail_count++;
-		tst_resm(TFAIL, "read, write with non-aligned buffer");
+	if (NO_NFS) {
+		ret = runtest_f(fd, buf2 + 1, offset, count, EINVAL, 14,
+					" nonaligned buf");
+		testcheck_end(ret, &failed, &fail_count,
+				"read, write with non-aligned buffer");
 	} else
-		tst_resm(TPASS, "read, write with non-aligned buffer");
-	total++;
+		tst_resm(TCONF, "NFS support read, write with non-aligned buffer");
 	close(fd);
+	total++;
 
 	/* Test-15: read, write buffer in read-only space */
 	offset = 4096;
@@ -500,8 +466,8 @@ int main(int argc, char *argv[])
 			 strerror(errno));
 		l_fail = TRUE;
 	} else {
-		ret =
-		    read(fd, (char *)((ulong) ADDRESS_OF_MAIN & pagemask),
+		errno = 0;
+		ret = read(fd, (char *)((ulong) ADDRESS_OF_MAIN & pagemask),
 			 count);
 		if (ret >= 0 || errno != EFAULT) {
 			tst_resm(TFAIL,
@@ -515,8 +481,7 @@ int main(int argc, char *argv[])
 			 strerror(errno));
 		l_fail = TRUE;
 	} else {
-		ret =
-		    write(fd, (char *)((ulong) ADDRESS_OF_MAIN & pagemask),
+		ret = write(fd, (char *)((ulong) ADDRESS_OF_MAIN & pagemask),
 			  count);
 		if (ret < 0) {
 			tst_resm(TFAIL,
@@ -525,12 +490,8 @@ int main(int argc, char *argv[])
 			l_fail = TRUE;
 		}
 	}
-	if (l_fail) {
-		failed = TRUE;
-		fail_count++;
-		tst_resm(TFAIL, "read, write buffer in read-only space");
-	} else
-		tst_resm(TPASS, "read, write buffer in read-only space");
+	testcheck_end(l_fail, &failed, &fail_count,
+				"read, write buffer in read-only space");
 	close(fd);
 	total++;
 
@@ -545,15 +506,10 @@ int main(int argc, char *argv[])
 		tst_brkm(TBROK | TERRNO, cleanup,
 			 "open(%s, O_DIRECT|O_RDWR) failed", filename);
 	}
-	ret =
-	    runtest_f(fd, buf1, offset, count, EFAULT, 16,
+	ret = runtest_f(fd, buf1, offset, count, EFAULT, 16,
 		      " nonexistant space");
-	if (ret != 0) {
-		failed = TRUE;
-		fail_count++;
-		tst_resm(TFAIL, "read, write in non-existant space");
-	} else
-		tst_resm(TPASS, "read, write in non-existant space");
+	testcheck_end(ret, &failed, &fail_count,
+				"read, write in non-existant space");
 	total++;
 	close(fd);
 
@@ -565,12 +521,8 @@ int main(int argc, char *argv[])
 			 "open(%s, O_DIRECT|O_RDWR|O_SYNC failed)", filename);
 	}
 	ret = runtest_s(fd, buf2, offset, count, 17, "opened with O_SYNC");
-	if (ret != 0) {
-		failed = TRUE;
-		fail_count++;
-		tst_resm(TFAIL, "read, write for file with O_SYNC");
-	} else
-		tst_resm(TPASS, "read, write for file with O_SYNC");
+	testcheck_end(ret, &failed, &fail_count,
+				"read, write for file with O_SYNC");
 	total++;
 	close(fd);
 
@@ -591,6 +543,8 @@ static void setup(void)
 	tst_tmpdir();
 
 	act.sa_handler = SIG_IGN;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
 	(void)sigaction(SIGXFSZ, &act, NULL);
 	sprintf(filename, "testdata-4.%ld", syscall(__NR_gettid));
 
@@ -607,6 +561,10 @@ static void setup(void)
 			 strerror(errno));
 	}
 	close(fd1);
+
+	/* On NFS or not */
+	if (tst_fs_type(cleanup, ".") == TST_NFS_MAGIC)
+		NO_NFS = 0;
 }
 
 static void cleanup(void)

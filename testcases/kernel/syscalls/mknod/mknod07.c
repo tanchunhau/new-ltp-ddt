@@ -1,6 +1,7 @@
 /*
  *
  *   Copyright (c) International Business Machines  Corp., 2001
+ *   07/2001 Ported by Wayne Boyer
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -13,12 +14,11 @@
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *   along with this program;  if not, write to the Free Software Foundation,
+ *   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /*
- * Test Name: mknod07
  *
  * Test Description:
  * Verify that,
@@ -26,45 +26,11 @@
  *	the caller is not super-user.
  *   2) mknod(2) returns -1 and sets errno to EACCES if parent directory
  *	does not allow  write  permission  to  the process.
+ *   3) mknod(2) returns -1 and sets errno to EROFS if pathname refers to
+ *	a file on a read-only file system.
+ *   4) mknod(2) returns -1 and sets errno to ELOOP if too many symbolic
+ *	links were encountered in resolving pathname.
  *
- * Expected Result:
- *  mknod() should fail with return value -1 and set expected errno.
- *
- * Algorithm:
- *  Setup:
- *   Setup signal handling.
- *   Create temporary directory.
- *   Pause for SIGUSR1 if option specified.
- *
- *  Test:
- *   Loop if the proper options are given.
- *   Execute system call
- *   Check return code, if system call failed (return=-1)
- *	if errno set == expected errno
- *		Issue sys call fails with expected return value and errno.
- *	Otherwise,
- *		Issue sys call fails with unexpected errno.
- *   Otherwise,
- *	Issue sys call returns unexpected value.
- *
- *  Cleanup:
- *   Print errno log and/or timing stats if options given
- *   Delete the temporary directory(s)/file(s) created.
- *
- * Usage:  <for command-line>
- *  mknod07 [-c n] [-e] [-i n] [-I x] [-P x] [-t]
- *     where,  -c n : Run n copies concurrently.
- *             -e   : Turn on errno logging.
- *	       -i n : Execute test n times.
- *	       -I x : Execute test for x seconds.
- *	       -P x : Pause for x seconds between iterations.
- *	       -t   : Turn on syscall timing.
- *
- * HISTORY
- *	07/2001 Ported by Wayne Boyer
- *
- * RESTRICTIONS:
- *  This test should be executed by non-super-user only.
  */
 
 #include <stdio.h>
@@ -76,128 +42,152 @@
 #include <pwd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/mount.h>
 
 #include "test.h"
 #include "usctest.h"
+#include "safe_macros.h"
 
-#define MODE_RWX	S_IFIFO | S_IRWXU | S_IRWXG | S_IRWXO
-#define NEWMODE		S_IFIFO | S_IRUSR | S_IRGRP | S_IROTH
-#define SOCKET_MODE	S_IFSOCK| S_IRWXU | S_IRWXG | S_IRWXO
-#define DIR_TEMP	"testdir_1"
+#define DIR_TEMP		"testdir_1"
+#define DIR_TEMP_MODE		(S_IRUSR | S_IXUSR)
+#define DIR_MODE		(S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP| \
+				 S_IXGRP|S_IROTH|S_IXOTH)
+#define MNT_POINT		"mntpoint"
 
-void setup2();			/* setup function to test mknod for EACCES */
+#define FIFO_MODE	(S_IFIFO | S_IRUSR | S_IRGRP | S_IROTH)
+#define SOCKET_MODE	(S_IFSOCK | S_IRWXU | S_IRWXG | S_IRWXO)
+#define CHR_MODE	(S_IFCHR | S_IRUSR | S_IWUSR)
+#define BLK_MODE	(S_IFBLK | S_IRUSR | S_IWUSR)
 
-struct test_case_t {		/* test case struct. to hold ref. test cond's */
+#define ELOPFILE	"/test_eloop"
+
+static char elooppathname[sizeof(ELOPFILE) * 43] = ".";
+
+static const char *device;
+static int mount_flag;
+
+static struct test_case_t {
 	char *pathname;
 	int mode;
 	int exp_errno;
-	void (*setupfunc) (void);
 } test_cases[] = {
-	{
-	"tnode_1", SOCKET_MODE, EACCES, NULL}, {
-"tnode_2", NEWMODE, EACCES, setup2},};
+	{ "testdir_1/tnode_1", SOCKET_MODE, EACCES },
+	{ "testdir_1/tnode_2", FIFO_MODE, EACCES },
+	{ "tnode_3", CHR_MODE, EPERM },
+	{ "tnode_4", BLK_MODE, EPERM },
+	{ "mntpoint/tnode_5", SOCKET_MODE, EROFS },
+	{ elooppathname, FIFO_MODE, ELOOP },
+};
 
-char *TCID = "mknod07";		/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
-int exp_enos[] = { EPERM, EACCES, 0 };
+char *TCID = "mknod07";
+int TST_TOTAL = ARRAY_SIZE(test_cases);
+static int exp_enos[] = { EPERM, EACCES, EROFS, ELOOP, 0 };
 
-char nobody_uid[] = "nobody";
-struct passwd *ltpuser;
-
-void setup();			/* setup function for the tests */
-void cleanup();			/* cleanup function for the tests */
+static void setup(void);
+static void mknod_verify(const struct test_case_t *test_case);
+static void cleanup(void);
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
-	char *node_name;	/* ptr. for node name created */
+	const char *msg;
 	int i;
-	int mode;		/* creation mode for the node created */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
+	msg = parse_opts(ac, av, NULL, NULL);
+	if (msg != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
+		tst_count = 0;
 
-		Tst_count = 0;
-
-		for (i = 0; i < TST_TOTAL; i++) {
-			node_name = test_cases[i].pathname;
-			mode = test_cases[i].mode;
-
-			TEST(mknod(node_name, mode, 0));
-
-			if (TEST_RETURN != -1) {
-				tst_resm(TFAIL, "mknod succeeded unexpectedly");
-				continue;
-			}
-
-			if (TEST_ERRNO == test_cases[i].exp_errno)
-				tst_resm(TPASS | TTERRNO,
-					 "mknod failed as expected");
-			else
-				tst_resm(TFAIL | TTERRNO,
-					 "mknod failed unexpectedly; expected: "
-					 "%d - %s", test_cases[i].exp_errno,
-					 strerror(test_cases[i].exp_errno));
-		}
-
+		for (i = 0; i < TST_TOTAL; i++)
+			mknod_verify(&test_cases[i]);
 	}
 
 	cleanup();
 	tst_exit();
 }
 
-void setup()
+static void setup(void)
 {
 	int i;
+	struct passwd *ltpuser;
+	const char *fs_type;
 
 	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	ltpuser = getpwnam(nobody_uid);
-	if (ltpuser == NULL)
-		tst_brkm(TBROK | TERRNO, NULL, "getpwnam failed");
-	if (seteuid(ltpuser->pw_uid) == -1)
-		tst_brkm(TBROK | TERRNO, NULL, "setuid failed");
-
-	TEST_PAUSE;
+	TEST_EXP_ENOS(exp_enos);
 
 	tst_tmpdir();
 
-	if (mkdir(DIR_TEMP, MODE_RWX) < 0)
-		tst_brkm(TBROK | TERRNO, cleanup, "mkdir failed");
+	fs_type = tst_dev_fs_type();
+	device = tst_acquire_device(cleanup);
 
-	if (chmod(DIR_TEMP, MODE_RWX) < 0)
-		tst_brkm(TBROK | TERRNO, cleanup, "chmod failed");
+	if (!device)
+		tst_brkm(TCONF, cleanup, "Failed to acquire device");
 
-	if (chdir(DIR_TEMP) < 0)
-		tst_brkm(TBROK | TERRNO, cleanup, "chdir failed");
+	tst_mkfs(cleanup, device, fs_type, NULL);
 
-	for (i = 0; i < TST_TOTAL; i++)
-		if (test_cases[i].setupfunc != NULL)
-			test_cases[i].setupfunc();
+	TEST_PAUSE;
+
+	/* mount a read-only file system for EROFS test */
+	SAFE_MKDIR(cleanup, MNT_POINT, DIR_MODE);
+	if (mount(device, MNT_POINT, fs_type, MS_RDONLY, NULL) < 0) {
+		tst_brkm(TBROK | TERRNO, cleanup,
+			 "mount device:%s failed", device);
+	}
+	mount_flag = 1;
+
+	ltpuser = SAFE_GETPWNAM(cleanup, "nobody");
+	SAFE_SETEUID(cleanup, ltpuser->pw_uid);
+
+	SAFE_MKDIR(cleanup, DIR_TEMP, DIR_TEMP_MODE);
+
+	/*
+	 * NOTE: the ELOOP test is written based on that the consecutive
+	 * symlinks limits in kernel is hardwired to 40.
+	 */
+	SAFE_MKDIR(cleanup, "test_eloop", DIR_MODE);
+	SAFE_SYMLINK(cleanup, "../test_eloop", "test_eloop/test_eloop");
+	for (i = 0; i < 43; i++)
+		strcat(elooppathname, ELOPFILE);
 }
 
-void setup2()
+static void mknod_verify(const struct test_case_t *test_case)
 {
-	if (chmod(".", NEWMODE) < 0)
-		tst_brkm(TBROK, cleanup, "chmod failed");
+	TEST(mknod(test_case->pathname, test_case->mode, 0));
+
+	if (TEST_RETURN != -1) {
+		tst_resm(TFAIL, "mknod succeeded unexpectedly");
+		return;
+	}
+
+	if (TEST_ERRNO == test_case->exp_errno) {
+		tst_resm(TPASS | TTERRNO, "mknod failed as expected");
+	} else {
+		tst_resm(TFAIL | TTERRNO,
+			 "mknod failed unexpectedly; expected: "
+			 "%d - %s", test_case->exp_errno,
+			 strerror(test_case->exp_errno));
+	}
 }
 
-void cleanup()
+static void cleanup(void)
 {
 	TEST_CLEANUP;
 
 	if (seteuid(0) == -1)
-		tst_resm(TBROK, "seteuid(0) failed");
+		tst_resm(TWARN | TERRNO, "seteuid(0) failed");
+
+	if (mount_flag && umount(MNT_POINT) < 0)
+		tst_resm(TWARN | TERRNO, "umount device:%s failed", device);
+
+	if (device)
+		tst_release_device(NULL, device);
 
 	tst_rmdir();
-
 }

@@ -34,8 +34,8 @@
  *These globals must be defined in the test.
  */
 
-char *TCID = "syslogtst";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "syslogtst";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0 };		/* List must end with 0 */
 
@@ -169,9 +169,9 @@ int main(int argc, char *argv[])
 #endif
 			flag3 = 1;
 		} else {
-			tst_resm(TFAIL,
+			tst_brkm(TFAIL,
+				 NULL,
 				 "Cannot move /var/log/messages. Setup failed...exiting...");
-			tst_exit();
 		}
 		sleep(10);
 
@@ -190,9 +190,9 @@ int main(int argc, char *argv[])
 			status = 0;
 #endif
 			if (status != 0) {
-				tst_resm(TFAIL,
-					 "Restoring /var/log/messages failed...");
-				tst_exit();
+				tst_brkm(TFAIL,
+					 NULL,
+				         "Restoring /var/log/messages failed...");
 			}
 #ifdef DEBUG
 			else

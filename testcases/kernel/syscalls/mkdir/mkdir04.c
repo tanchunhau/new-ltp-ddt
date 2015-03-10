@@ -88,8 +88,8 @@ int fail;
 char user1name[] = "nobody";
 char user2name[] = "bin";
 
-char *TCID = "mkdir04";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "mkdir04";
+int TST_TOTAL = 1;
 int fail;
 
 char tstdir1[100];
@@ -100,7 +100,7 @@ int exp_enos[] = { EACCES, 0 };	/* List must end with 0 */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int rval;
 	pid_t pid, pid1;
 	int status;
@@ -126,7 +126,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* Initialize the test directories name */
 		sprintf(tstdir1, "tstdir1.%d", getpid());
@@ -217,12 +217,9 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
-	/* must run as root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must run this as root");
-	}
+	tst_require_root(NULL);
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
@@ -238,7 +235,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

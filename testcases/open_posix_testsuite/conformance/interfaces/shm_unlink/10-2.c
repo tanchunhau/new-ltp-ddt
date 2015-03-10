@@ -27,7 +27,7 @@
 /* Ensure that each component length is short enough */
 #define COMPONENT_SIZE _POSIX_NAME_MAX
 
-int main()
+int main(void)
 {
 	int result, i, path_max;
 	char *shm_name;
@@ -41,7 +41,7 @@ int main()
 
 	for (i = 0; i < path_max; i++)
 		shm_name[i] = (i + 1) % COMPONENT_SIZE ? 'a' : '/';
-	shm_name[path_max + 1] = 0;
+	shm_name[path_max] = 0;
 
 	result = shm_unlink(shm_name);
 
@@ -49,10 +49,15 @@ int main()
 		printf("Test PASSED\n");
 		return PTS_PASS;
 	} else if (result != -1) {
-		printf("shm_unlink() success.\n");
+		printf("FAILED: shm_unlink() succeeded.\n");
 		return PTS_FAIL;
 	}
 
-	perror("shm_unlink");
+	if (sysconf(_SC_VERSION) >= 200800L) {
+		printf("UNTESTED: shm_open() did not fail with ENAMETOLONG\n");
+		return PTS_UNTESTED;
+	}
+
+	perror("FAILED: shm_unlink");
 	return PTS_FAIL;
 }

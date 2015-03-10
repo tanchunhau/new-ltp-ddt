@@ -16,7 +16,7 @@
 #include <errno.h>
 #include "posixtest.h"
 
-int main(int argc, char **argv)
+int main(void)
 {
 	int result = -1;
 
@@ -27,11 +27,8 @@ int main(int argc, char **argv)
 		       result);
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		perror("An error occurs");
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	perror("An error occurs");
+	return PTS_FAIL;
 }

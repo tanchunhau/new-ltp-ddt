@@ -70,7 +70,7 @@ static void *p;
 
 int main(int argc, char **argv)
 {
-	char *msg;
+	const char *msg;
 	int lc;
 
 	msg = parse_opts(argc, argv, NULL, NULL);
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		check_vma();
 	}
@@ -192,7 +192,13 @@ static void check_status(int status)
 		tst_resm(TPASS, "two 3*ps VMAs found.");
 		break;
 	case 1:
-		tst_resm(TFAIL, "A single 6*ps VMA found.");
+		if (tst_kvercmp(3, 0, 0) < 0) {
+			tst_resm(TCONF, "A single 6*ps VMA found. You may need"
+					" to back port kernel commit 965f55d "
+					"to fix this scalability issue.");
+		} else {
+			tst_resm(TFAIL, "A single 6*ps VMA found.");
+		}
 		break;
 	default:
 		tst_brkm(TBROK, cleanup, "unexpected VMA found.");

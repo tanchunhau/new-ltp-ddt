@@ -23,17 +23,6 @@
  *	This test case will verify basic function of unlinkat
  *	added by kernel 2.6.16 or up.
  *
- * USAGE:  <for command-line>
- * unlinkat01 [-c n] [-e] [-i n] [-I x] [-P x] [-t] [-p]
- * where:
- *      -c n : Run n copies simultaneously.
- *      -e   : Turn on errno logging.
- *      -i n : Execute test n times.
- *      -I x : Execute test for x seconds.
- *      -p   : Pause for SIGUSR1 before starting
- *      -P x : Pause for x seconds between iterations.
- *      -t   : Turn on syscall timing.
- *
  * Author
  *	Yi Yang <yyangcdl@cn.ibm.com>
  *
@@ -69,8 +58,8 @@ void setup();
 void cleanup();
 void setup_every_copy();
 
-char *TCID = "unlinkat01";	/* Test program identifier.    */
-int TST_TOTAL = TEST_CASES;	/* Total number of test cases. */
+char *TCID = "unlinkat01";
+int TST_TOTAL = TEST_CASES;
 char pathname[256];
 char subpathname[256];
 char testfile[256];
@@ -84,13 +73,13 @@ int flags[TEST_CASES] = { 0, 0, 0, 0, 9999, 0, AT_REMOVEDIR };
 
 int myunlinkat(int dirfd, const char *filename, int flags)
 {
-	return syscall(__NR_unlinkat, dirfd, filename, flags);
+	return ltp_syscall(__NR_unlinkat, dirfd, filename, flags);
 }
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int i;
 
 	/* Disable test if the version of the kernel is less than 2.6.16 */
@@ -100,44 +89,23 @@ int main(int ac, char **av)
 		exit(0);
 	}
 
-	/***************************************************************
-	 * parse standard options
-	 ***************************************************************/
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
-	/***************************************************************
-	 * perform global setup for test
-	 ***************************************************************/
 	setup();
 
-	/***************************************************************
-	 * check looping state if -c option given
-	 ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		setup_every_copy();
 
-		Tst_count = 0;
+		tst_count = 0;
 
-		/*
-		 * Call unlinkat
-		 */
 		for (i = 0; i < TST_TOTAL; i++) {
 			TEST(myunlinkat(fds[i], filenames[i], flags[i]));
 
-			/* check return code */
 			if (TEST_ERRNO == expected_errno[i]) {
-
-				/***************************************************************
-				 * only perform functional verification if flag set (-f not given)
-				 ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "unlinkat() returned the expected  errno %d: %s",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO));
-				}
+				tst_resm(TPASS,
+					 "unlinkat() returned the expected  errno %d: %s",
+					 TEST_ERRNO, strerror(TEST_ERRNO));
 			} else {
 				TEST_ERROR_LOG(TEST_ERRNO);
 				tst_resm(TFAIL,
@@ -148,15 +116,11 @@ int main(int ac, char **av)
 
 	}
 
-	/***************************************************************
-	 * cleanup and exit
-	 ***************************************************************/
 	cleanup();
-
-	return (0);
+	tst_exit();
 }
 
-void setup_every_copy()
+void setup_every_copy(void)
 {
 	/* Initialize test dir and file names */
 	char tmppathname[256] = "";
@@ -217,24 +181,14 @@ void setup_every_copy()
 	filenames[6] = subpathname;
 }
 
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- ***************************************************************/
-void setup()
+void setup(void)
 {
-
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
 	TEST_PAUSE;
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- *             completion or premature exit.
- ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/* Remove them */
 	char tmppathname[256] = "";
 	strcat(strcat(strcat(tmppathname, pathname), "/"), subpathname);
 	rmdir(tmppathname);
@@ -242,11 +196,5 @@ void cleanup()
 	unlink(testfile3);
 	unlink(testfile);
 	rmdir(pathname);
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
 	TEST_CLEANUP;
-
 }

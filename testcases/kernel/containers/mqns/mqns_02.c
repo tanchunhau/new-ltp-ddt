@@ -40,6 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "mqns.h"
+#include "mqns_helper.h"
 
 char *TCID = "posixmq_namespace_02";
 int TST_TOTAL = 1;
@@ -52,6 +53,8 @@ int check_mqueue(void *vtest)
 	char buf[30];
 	mqd_t mqd;
 
+	(void) vtest;
+
 	close(p1[1]);
 	close(p2[0]);
 
@@ -61,7 +64,7 @@ int check_mqueue(void *vtest)
 	} else {
 
 		mqd =
-		    syscall(__NR_mq_open, NOSLASH_MQ1,
+		    ltp_syscall(__NR_mq_open, NOSLASH_MQ1,
 			    O_RDWR | O_CREAT | O_EXCL, 0777, NULL);
 		if (mqd == -1) {
 			if (write(p2[1], "mqfail", strlen("mqfail") + 1) < 0) {
@@ -84,7 +87,7 @@ int check_mqueue(void *vtest)
 					if (mq_close(mqd) < 0) {
 						perror("mq_close(mqd) failed");
 						exit(1);
-					} else if (syscall(__NR_mq_unlink,
+					} else if (ltp_syscall(__NR_mq_unlink,
 							   NOSLASH_MQ1) < 0) {
 						perror("mq_unlink(" NOSLASH_MQ1
 						       ") failed");
@@ -108,12 +111,20 @@ int check_mqueue(void *vtest)
 
 }
 
+static void setup(void)
+{
+	tst_require_root(NULL);
+	check_mqns();
+}
+
 int main(int argc, char *argv[])
 {
 	int r;
 	mqd_t mqd;
 	char buf[30];
 	int use_clone = T_UNSHARE;
+
+	setup();
 
 	if (argc == 2 && strcmp(argv[1], "-clone") == 0) {
 		tst_resm(TINFO,
@@ -150,7 +161,7 @@ int main(int argc, char *argv[])
 		tst_resm(TFAIL, "child process could not create mqueue");
 		umount(DEV_MQUEUE);
 	} else {
-		mqd = syscall(__NR_mq_open, NOSLASH_MQ1, O_RDONLY);
+		mqd = ltp_syscall(__NR_mq_open, NOSLASH_MQ1, O_RDONLY);
 		if (mqd == -1) {
 			tst_resm(TPASS,
 				 "Parent process can't see the mqueue");

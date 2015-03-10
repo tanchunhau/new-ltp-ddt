@@ -96,7 +96,7 @@ int testcase[] = {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL))
 	    != NULL) {
@@ -109,13 +109,13 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
 			/* Set up individual tests */
 			setup_test(i);
-			TEST(syscall(__NR_timer_settime, tim, 0, new_temp,
+			TEST(ltp_syscall(__NR_timer_settime, tim, 0, new_temp,
 				     old_temp));
 
 			/* check return code */
@@ -142,7 +142,7 @@ void setup_test(int option)
 	switch (option) {
 	case 0:
 		/* Pass NULL structure as new setting */
-		new_temp = (struct itimerspec *)NULL;
+		new_temp = NULL;
 		tim = timer;
 		old_temp = &old_set;
 		break;
@@ -182,7 +182,7 @@ void setup(void)
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	if (syscall(__NR_timer_create, CLOCK_REALTIME, NULL, &timer) < 0) {
+	if (ltp_syscall(__NR_timer_create, CLOCK_REALTIME, NULL, &timer) < 0) {
 		tst_brkm(TBROK, NULL, "Timer create failed. Cannot"
 			 " setup test");
 	}

@@ -89,8 +89,8 @@ int compare(char s1[], char s2[]);
 void cleanup_test(int);
 void cleanup();
 
-char *TCID = "mlockall03";	/* Test program identifier.    */
-int TST_TOTAL = 3;		/* Total number of test cases. */
+char *TCID = "mlockall03";
+int TST_TOTAL = 3;
 
 #if !defined(UCLINUX)
 
@@ -112,19 +112,16 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
+	const char *msg;
 	struct utsname *buf;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 	}
 
 	/* allocate some space for buf */
-	if ((buf = (struct utsname *)malloc((size_t)
-					    sizeof(struct utsname))) == NULL) {
-		tst_resm(TFAIL, "malloc failed for buf");
-		tst_exit();
+	if ((buf = malloc((size_t)sizeof(struct utsname))) == NULL) {
+		tst_brkm(TFAIL, NULL, "malloc failed for buf");
 	}
 
 	if (uname(buf) < 0) {
@@ -132,9 +129,9 @@ int main(int ac, char **av)
 	}
 
 	if ((compare(ref_release, buf->release)) <= 0) {
-		tst_resm(TCONF,
+		tst_brkm(TCONF,
+			 NULL,
 			 "In Linux 2.6.8 and earlier this test will not run.");
-		tst_exit();
 	}
 
 	setup();
@@ -142,7 +139,7 @@ int main(int ac, char **av)
 	/* check looping state */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -189,7 +186,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -309,7 +306,7 @@ void cleanup_test(int i)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -321,7 +318,7 @@ int main()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	TEST_CLEANUP;
 

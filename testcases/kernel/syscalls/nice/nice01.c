@@ -77,8 +77,8 @@
 #define	NICEINC		-12
 #define TEMPFILE	"temp_file"
 
-char *TCID = "nice01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "nice01";
+int TST_TOTAL = 1;
 
 int Org_nice;			/* original priority of the test process */
 FILE *fp;
@@ -89,11 +89,10 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 	int New_nice;		/* priority of process after nice() */
 	int rval;
 
-	/* Parse standard options given to run the test. */
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
 
@@ -101,7 +100,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call nice(2) with an 'incr' parameter set
@@ -116,23 +115,15 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
-		 */
-		if (STD_FUNCTIONAL_TEST) {
-			New_nice = getpriority(PRIO_PROCESS, 0);
+		New_nice = getpriority(PRIO_PROCESS, 0);
 
-			/* Validate functionality of the nice() */
-			if (New_nice != (Org_nice + NICEINC)) {
-				tst_resm(TFAIL, "nice() fails to modify the "
-					 "priority of process");
-			} else {
-				tst_resm(TPASS, "Functionality of nice(%d) "
-					 "successful", NICEINC);
-			}
+		/* Validate functionality of the nice() */
+		if (New_nice != (Org_nice + NICEINC)) {
+			tst_resm(TFAIL, "nice() fails to modify the "
+				 "priority of process");
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			tst_resm(TPASS, "Functionality of nice(%d) "
+				 "successful", NICEINC);
 		}
 
 		/* return the process to the original priority */
@@ -142,7 +133,6 @@ int main(int ac, char **av)
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -150,7 +140,7 @@ int main(int ac, char **av)
  *  	     Make sure the test process uid is super user.
  *  	     Get the current priority value.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -170,7 +160,7 @@ void setup()
  *             completion or premature exit.
  *  	       Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

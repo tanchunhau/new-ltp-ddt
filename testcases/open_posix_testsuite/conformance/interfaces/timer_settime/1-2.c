@@ -33,7 +33,7 @@ void handler(int signo)
 	printf("Caught signal\n");
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct sigevent ev;
 	struct sigaction act;
@@ -105,11 +105,8 @@ int main(int argc, char *argv[])
 	if (failure) {
 		printf("At least one test FAILED\n");
 		return PTS_FAIL;
-	} else {
-		printf("All tests PASSED\n");
-		return PTS_PASS;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("All tests PASSED\n");
+	return PTS_PASS;
 }

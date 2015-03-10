@@ -49,12 +49,12 @@ static int fd;
 static int whences[] = { 5, -1, 7 };
 
 char *TCID = "lseek03";
-int TST_TOTAL = sizeof(whences) / sizeof(*whences);
+int TST_TOTAL = ARRAY_SIZE(whences);
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -64,32 +64,27 @@ int main(int ac, char **av)
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		int i;
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
 			/* Call lseek(2) */
 			TEST(lseek(fd, (off_t) 1, whences[i]));
 
-			/* check return code */
 			if (TEST_RETURN == -1) {
-				if (STD_FUNCTIONAL_TEST) {
-					if (TEST_ERRNO == EINVAL) {
-						tst_resm(TPASS,
-							 "lseek(%s, 1, %d) Failed, errno=%d : %s",
-							 fname, whences[i],
-							 TEST_ERRNO,
-							 strerror(TEST_ERRNO));
-					} else {
-						tst_resm(TFAIL,
-							 "lseek(%s, 1, %d) Failed, errno=%d %s, expected %d(EINVAL)",
-							 fname, whences[i],
-							 TEST_ERRNO,
-							 strerror(TEST_ERRNO),
-							 EINVAL);
-					}
+				if (TEST_ERRNO == EINVAL) {
+					tst_resm(TPASS,
+						 "lseek(%s, 1, %d) Failed, errno=%d : %s",
+						 fname, whences[i],
+						 TEST_ERRNO,
+						 strerror(TEST_ERRNO));
 				} else {
-					Tst_count++;
+					tst_resm(TFAIL,
+						 "lseek(%s, 1, %d) Failed, errno=%d %s, expected %d(EINVAL)",
+						 fname, whences[i],
+						 TEST_ERRNO,
+						 strerror(TEST_ERRNO),
+						 EINVAL);
 				}
 			} else {
 				tst_resm(TFAIL, "lseek(%s, 1, %d) returned %ld",

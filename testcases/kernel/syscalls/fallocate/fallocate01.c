@@ -85,7 +85,8 @@
  *
 *************************************************************************/
 
-/* Standard Include Files */
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <endian.h>
@@ -99,20 +100,18 @@
 #include <inttypes.h>
 #include <sys/utsname.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "fallocate.h"
+#include "lapi/fcntl.h"
 
 #define BLOCKS_WRITTEN 12
 
-/* Local Function */
-static inline long fallocate();
 void get_blocksize(int);
 void populate_files(int fd);
 void runtest(int, int, loff_t);
 
-char *TCID = "fallocate01";	/* test program identifier */
+char *TCID = "fallocate01";
 char fname_mode1[255], fname_mode2[255];	/* Files used for testing */
 int fd_mode1, fd_mode2;
 int TST_TOTAL = 2;
@@ -125,7 +124,7 @@ int buf_size;
  * files, removes all temporary directories exits the test with
  * appropriate return code by calling tst_exit() function.
 ******************************************************************************/
-void cleanup()
+void cleanup(void)
 {
 
 	if (close(fd_mode1) == -1)
@@ -140,7 +139,7 @@ void cleanup()
  * used to create temporary dirs and temporary files
  * that may be used in the course of this test
  ******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Create temporary directories */
 	TEST_PAUSE;
@@ -185,15 +184,9 @@ void get_blocksize(int fd)
 void populate_files(int fd)
 {
 	char buf[buf_size + 1];
-	char *fname;
 	int index;
 	int blocks;
 	int data;
-
-	if (fd == fd_mode1)
-		fname = fname_mode1;
-	else
-		fname = fname_mode2;
 
 	for (blocks = 0; blocks < BLOCKS_WRITTEN; blocks++) {
 		for (index = 0; index < buf_size; index++)
@@ -206,11 +199,9 @@ void populate_files(int fd)
 
 int main(int ac, char **av)
 {
-	int fd;
-	enum { DEFAULT, FALLOC_FL_KEEP_SIZE } mode;
 	loff_t expected_size;
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -218,40 +209,17 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
+		tst_count = 0;
 
-		Tst_count = 0;
+		expected_size = BLOCKS_WRITTEN * block_size + block_size;
+		runtest(0, fd_mode1, expected_size);
 
-		for (mode = DEFAULT; mode <= FALLOC_FL_KEEP_SIZE; mode++) {
-			switch (mode) {
-			case DEFAULT:
-				fd = fd_mode1;
-				expected_size =
-				    BLOCKS_WRITTEN * block_size + block_size;
-				break;
-			case FALLOC_FL_KEEP_SIZE:
-				fd = fd_mode2;
-				expected_size = BLOCKS_WRITTEN * block_size;
-				break;
-			}
-			runtest(mode, fd, expected_size);
-		}
+		expected_size = BLOCKS_WRITTEN * block_size;
+		runtest(FALLOC_FL_KEEP_SIZE, fd_mode2, expected_size);
 	}
 
 	cleanup();
 	tst_exit();
-}
-
-static inline long fallocate(int fd, int mode, loff_t offset, loff_t len)
-{
-#if __WORDSIZE == 32
-	return (long)syscall(__NR_fallocate, fd, mode,
-			     __LONG_LONG_PAIR((off_t) (offset >> 32),
-					      (off_t) offset),
-			     __LONG_LONG_PAIR((off_t) (len >> 32),
-					      (off_t) len));
-#else
-	return syscall(__NR_fallocate, fd, mode, offset, len);
-#endif
 }
 
 /*****************************************************************************
@@ -279,13 +247,10 @@ void runtest(int mode, int fd, loff_t expected_size)
 			 fd, mode, offset, len);
 		return;
 	} else {
-		if (STD_FUNCTIONAL_TEST) {
-			/* No Verification test, yet... */
-			tst_resm(TPASS,
-				 "fallocate(%d, %d, %" PRId64 ", %" PRId64
-				 ") returned %ld", fd, mode, offset, len,
-				 TEST_RETURN);
-		}
+		tst_resm(TPASS,
+			 "fallocate(%d, %d, %" PRId64 ", %" PRId64
+			 ") returned %ld", fd, mode, offset, len,
+			 TEST_RETURN);
 	}
 
 	if (fstat(fd, &file_stat) < 0)
@@ -313,12 +278,9 @@ void runtest(int mode, int fd, loff_t expected_size)
 			 "write fails in fallocate(%d, %d, %" PRId64 ", %"
 			 PRId64 ") failed", fd, mode, offset, len);
 	} else {
-		if (STD_FUNCTIONAL_TEST) {
-			/* No Verification test, yet... */
-			tst_resm(TPASS,
-				 "write operation on fallocated(%d, %d, %"
-				 PRId64 ", %" PRId64 ") returned %ld", fd, mode,
-				 offset, len, TEST_RETURN);
-		}
+		tst_resm(TPASS,
+			 "write operation on fallocated(%d, %d, %"
+			 PRId64 ", %" PRId64 ") returned %ld", fd, mode,
+			 offset, len, TEST_RETURN);
 	}
 }

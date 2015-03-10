@@ -107,12 +107,11 @@ void child(void **pages, sem_t * sem)
 
 int main(int argc, char **argv)
 {
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
 
 	}
 
@@ -137,8 +136,8 @@ int main(int argc, char **argv)
 		pid_t cpid;
 		sem_t *sem;
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		ret = alloc_shared_pages_on_node(pages, TEST_PAGES, from_node);
 		if (ret == -1)
@@ -173,13 +172,12 @@ int main(int argc, char **argv)
 
 		ret = numa_move_pages(0, TEST_PAGES, pages, nodes,
 				      status, MPOL_MF_MOVE_ALL);
-		TEST_ERRNO = errno;
 		if (ret == -1 && errno == EPERM)
 			tst_resm(TPASS, "move_pages failed with "
 				 "EPERM as expected");
 		else
-			tst_resm(TFAIL, "move_pages did not fail "
-				 "with EPERM");
+			tst_resm(TFAIL|TERRNO, "move_pages did not fail "
+				 "with EPERM ret: %d", ret);
 
 		/* Test done. Ask child to terminate. */
 		if (sem_post(&sem[SEM_PARENT_TEST]) == -1)
@@ -208,23 +206,19 @@ void setup(void)
 {
 	struct passwd *ltpuser;
 
+	tst_require_root(NULL);
+
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	check_config(TEST_NODES);
 
-	if (geteuid() != 0) {
-		tst_resm(TBROK, "test must be run as root");
-		tst_exit();
-	}
-
 	if ((ltpuser = getpwnam("nobody")) == NULL) {
-		tst_resm(TBROK, "'nobody' user not present");
-		tst_exit();
+		tst_brkm(TBROK, NULL, "'nobody' user not present");
 	}
 
 	if (seteuid(ltpuser->pw_uid) == -1) {
-		tst_resm(TBROK, "setting uid to %d failed", ltpuser->pw_uid);
-		tst_exit();
+		tst_brkm(TBROK, NULL, "setting uid to %d failed",
+			 ltpuser->pw_uid);
 	}
 
 	/* Pause if that option was specified

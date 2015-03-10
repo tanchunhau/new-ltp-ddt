@@ -122,8 +122,8 @@
 void setup();
 void cleanup();
 
-char *TCID = "lseek04";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "lseek04";
+int TST_TOTAL = 1;
 
 int exp_enos[] = { 0, 0 };
 
@@ -133,7 +133,7 @@ int Fd;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	const char *msg;
 
     /***************************************************************
      * parse standard options
@@ -156,7 +156,7 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 *  Call lseek(2)
@@ -165,20 +165,16 @@ int main(int ac, char **av)
 
 		/* check return code */
 		if (TEST_RETURN == -1) {
-			if (STD_FUNCTIONAL_TEST) {
-
-				if (TEST_ERRNO == ESPIPE)
-					tst_resm(TPASS,
-						 "lseek(fifofd, 1, SEEK_SET) Failed, errno=%d : %s",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO));
-				else
-					tst_resm(TFAIL,
-						 "lseek(fifofd, 1, SEEK_SET) Failed, errno=%d %s, expected %d(ESPIPE)",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO), EINVAL);
-			} else
-				Tst_count++;
+			if (TEST_ERRNO == ESPIPE)
+				tst_resm(TPASS,
+					 "lseek(fifofd, 1, SEEK_SET) Failed, errno=%d : %s",
+					 TEST_ERRNO,
+					 strerror(TEST_ERRNO));
+			else
+				tst_resm(TFAIL,
+					 "lseek(fifofd, 1, SEEK_SET) Failed, errno=%d %s, expected %d(ESPIPE)",
+					 TEST_ERRNO,
+					 strerror(TEST_ERRNO), EINVAL);
 		} else {
 
 			tst_resm(TFAIL,
@@ -188,18 +184,14 @@ int main(int ac, char **av)
 
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -226,7 +218,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

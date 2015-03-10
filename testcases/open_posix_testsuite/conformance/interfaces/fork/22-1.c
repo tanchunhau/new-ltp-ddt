@@ -27,9 +27,6 @@
 
 */
 
-/********************************************************************************************/
-/****************************** standard includes *****************************************/
-/********************************************************************************************/
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -41,42 +38,15 @@
 #include <errno.h>
 
 #include <time.h>
-/********************************************************************************************/
-/******************************   Test framework   *****************************************/
-/********************************************************************************************/
+
 #include "../testfrmw/testfrmw.h"
 #include "../testfrmw/testfrmw.c"
-/* This header is responsible for defining the following macros:
- * UNRESOLVED(ret, descr);
- *    where descr is a description of the error and ret is an int (error code for example)
- * FAILED(descr);
- *    where descr is a short text saying why the test has failed.
- * PASSED();
- *    No parameter.
- *
- * Both three macros shall terminate the calling process.
- * The testcase shall not terminate in any other maneer.
- *
- * The other file defines the functions
- * void output_init()
- * void output(char * string, ...)
- *
- * Those may be used to output information.
- */
 
-/********************************************************************************************/
-/********************************** Configuration ******************************************/
-/********************************************************************************************/
 #ifndef VERBOSE
 #define VERBOSE 1
 #endif
 
-/********************************************************************************************/
-/***********************************    Test case   *****************************************/
-/********************************************************************************************/
-
-/* The main test function. */
-int main(int argc, char *argv[])
+int main(void)
 {
 	int ret, status;
 	pid_t child, ctl;
@@ -86,7 +56,6 @@ int main(int argc, char *argv[])
 
 	struct timespec tp;
 
-	/* Initialize output */
 	output_init();
 
 	ctp = sysconf(_SC_CPUTIME);
@@ -193,7 +162,6 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		/* We're done */
 		exit(PTS_PASS);
 	}
 
@@ -208,10 +176,8 @@ int main(int argc, char *argv[])
 		FAILED("Child exited abnormally");
 	}
 
-	/* Test passed */
 #if VERBOSE > 0
 	output("Test passed\n");
-
 #endif
 	PASSED;
 }

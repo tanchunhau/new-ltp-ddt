@@ -22,19 +22,18 @@
 #                                                                              #
 ################################################################################
 
-cd $LTPROOT/testcases/bin
-
-. ./cpuset_funcs.sh
-
-export TCID="cpuset06"
+export TCID="cpuset_sched_domains"
 export TST_TOTAL=19
 export TST_COUNT=1
 
+. cpuset_funcs.sh
+
+check 4 2
+
 exit_status=0
 
-# must >= 3 for: 1-$((nr_mems-2))
-nr_cpus=4
-nr_mems=3
+nr_cpus=$NR_CPUS
+nr_mems=$N_NODES
 
 cpus_all="$(seq -s, 0 $((nr_cpus-1)))"
 mems_all="$(seq -s, 0 $((nr_mems-1)))"
@@ -76,7 +75,7 @@ root_load_balance_test()
 
 	# check sched domains of every CPU
 	sleep 1
-	./cpuset_sched_domains_check 2> $CPUSET_TMP/stderr
+	cpuset_sched_domains_check 2> $CPUSET_TMP/stderr
 	ret=$?
 	if [ $ret -ne 0 ]; then
 		cpuset_log_error $CPUSET_TMP/stderr
@@ -119,7 +118,7 @@ general_load_balance_test1()
 
 	# check sched domains of every CPU
 	sleep 1
-	./cpuset_sched_domains_check 2> $CPUSET_TMP/stderr
+	cpuset_sched_domains_check 2> $CPUSET_TMP/stderr
 	if [ $? -ne 0 ]; then
 		cpuset_log_error $CPUSET_TMP/stderr
 		tst_resm TFAIL "partition sched domains failed."
@@ -195,7 +194,7 @@ general_load_balance_test2()
 
 	# check sched domains of every CPU
 	sleep 1
-	./cpuset_sched_domains_check > $CPUSET_TMP/stdout
+	cpuset_sched_domains_check > $CPUSET_TMP/stdout
 	if [ $? -ne 0 ]; then
 		cpuset_log_error $CPUSET_TMP/stdout
 		tst_resm TFAIL "partition sched domains failed."
@@ -222,7 +221,7 @@ base_test()
 
 		cpu_hotplug_cleanup
 	fi
-	: $((TST_COUNT++))
+	TST_COUNT=$(($TST_COUNT + 1))
 }
 
 # Casee 1-6
@@ -236,7 +235,6 @@ test_root_load_balance()
 	while read isbalance level hotplug
 	do
 		base_test $isbalance $hotplug
-		: $((file_case_num++))
 	done <<- EOF
 		0	none
 		1	none

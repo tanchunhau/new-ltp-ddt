@@ -41,7 +41,7 @@ int main(int ac, char **av)
 	int pid, npid, sig, nsig, exno, nexno, status;
 	int rval = 0;
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
 		tst_brkm(TBROK, cleanup, "OPTION PARSIkNG ERROR - %s", msg);
@@ -51,7 +51,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		sig = 0;
 		exno = 1;

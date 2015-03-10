@@ -75,7 +75,7 @@ typedef void (*sighandler_t) (int);
 
 int main(int argc, char **argv)
 {
-	char *msg;
+	const char *msg;
 
 	msg = parse_opts(argc, argv, NULL, NULL);
 	if (msg != NULL) {
@@ -103,8 +103,8 @@ int main(int argc, char **argv)
 		int status[TEST_PAGES];
 		unsigned long onepage = get_page_size();
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		ret = alloc_pages_on_node(pages, TOUCHED_PAGES, from_node);
 		if (ret == -1)
@@ -123,7 +123,6 @@ int main(int argc, char **argv)
 
 		ret = numa_move_pages(0, TEST_PAGES, pages, nodes,
 				      status, MPOL_MF_MOVE);
-		TEST_ERRNO = errno;
 		if (ret == -1) {
 			tst_resm(TFAIL | TERRNO,
 				 "move_pages unexpectedly failed");

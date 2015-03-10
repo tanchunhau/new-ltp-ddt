@@ -92,7 +92,7 @@ int testcase[6] = {
 int main(int ac, char **av)
 {
 	int i, lc;		/* loop counter */
-	char *msg;
+	const char *msg;
 	struct timespec spec, *temp;
 
 	clockid_t clocks[] = {
@@ -125,7 +125,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			temp = &spec;
@@ -133,12 +133,12 @@ int main(int ac, char **av)
 			if (i == 0) {
 				temp = (struct timespec *)-1;
 			} else if (i == 1) {
-				temp = (struct timespec *)NULL;
+				temp = NULL;
 			} else if ((i >= 4) && (tst_kvercmp(2, 6, 12) >= 0)) {
-				temp = (struct timespec *)NULL;
+				temp = NULL;
 			}
 
-			TEST(syscall(__NR_clock_gettime, clocks[i], temp));
+			TEST(ltp_syscall(__NR_clock_gettime, clocks[i], temp));
 
 			/* check return code */
 			if (TEST_RETURN == -1 && TEST_ERRNO == testcase[i]) {

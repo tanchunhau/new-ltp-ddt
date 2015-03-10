@@ -83,7 +83,7 @@
 #define FILE_SIZE	1024	/* test file size */
 #define TRUNC_LEN	256	/* truncation length */
 
-TCID_DEFINE(ftruncate01);	/* Test program identifier.    */
+TCID_DEFINE(ftruncate01);
 int TST_TOTAL = 1;		/* Total number of test conditions */
 int fildes;			/* file descriptor for test file */
 
@@ -94,10 +94,9 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat(2) struct contents */
 	int lc;
-	char *msg;
+	const char *msg;
 	off_t file_length;	/* test file length */
 
-	/* Parse standard options given to run the test. */
 	msg = parse_opts(ac, av, NULL, NULL);
 	if (msg != NULL) {
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -108,7 +107,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call ftruncate(2) to truncate a test file to a
@@ -122,42 +121,33 @@ int main(int ac, char **av)
 			continue;
 		}
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Get the testfile information using
+		 * fstat(2).
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Get the testfile information using
-			 * fstat(2).
-			 */
-			if (fstat(fildes, &stat_buf) < 0) {
-				tst_brkm(TFAIL, cleanup,
-					 "stat(2) of %s failed, error:%d",
-					 TESTFILE, errno);
-			}
-			stat_buf.st_mode &= ~S_IFREG;
-			file_length = stat_buf.st_size;
+		if (fstat(fildes, &stat_buf) < 0) {
+			tst_brkm(TFAIL, cleanup,
+				 "stat(2) of %s failed, error:%d",
+				 TESTFILE, errno);
+		}
+		stat_buf.st_mode &= ~S_IFREG;
+		file_length = stat_buf.st_size;
 
-			/*
-			 * Check for expected size of testfile after
-			 * truncate(2) on it.
-			 */
-			if (file_length != TRUNC_LEN) {
-				tst_resm(TFAIL,
-					 "%s: Incorrect file size %" PRId64 ", "
-					 "Expected %d", TESTFILE,
-					 (int64_t) file_length, TRUNC_LEN);
-			} else {
-				tst_resm(TPASS, "Functionality of ftruncate() "
-					 "on %s successful", TESTFILE);
-			}
+		/*
+		 * Check for expected size of testfile after
+		 * truncate(2) on it.
+		 */
+		if (file_length != TRUNC_LEN) {
+			tst_resm(TFAIL,
+				 "%s: Incorrect file size %" PRId64 ", "
+				 "Expected %d", TESTFILE,
+				 (int64_t) file_length, TRUNC_LEN);
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			tst_resm(TPASS, "Functionality of ftruncate() "
+				 "on %s successful", TESTFILE);
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -168,7 +158,7 @@ int main(int ac, char **av)
  *  Create a test file under temporary directory and write some
  *  data into it.
  */
-void setup()
+void setup(void)
 {
 	int i;
 	int c, c_total = 0;	/* bytes to be written to file */
@@ -210,7 +200,7 @@ void setup()
  *  Close the temporary file.
  *  Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.

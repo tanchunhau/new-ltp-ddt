@@ -63,7 +63,7 @@
  *
  ****************************************************************/
 
-char *TCID = "ioperm01";	/* Test program identifier.    */
+char *TCID = "ioperm01";
 
 #if defined __i386__ || defined(__x86_64__)
 
@@ -85,13 +85,13 @@ unsigned long io_addr;		/*kernel version dependant io start address */
 static void setup();
 static void cleanup();
 
-int TST_TOTAL = 1;		/* Total number of test cases. */
+int TST_TOTAL = 1;
 
 int main(int ac, char **av)
 {
 
 	int lc;
-	char *msg;
+	const char *msg;
 
 	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
 		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
@@ -100,7 +100,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Test the system call.
@@ -125,15 +125,11 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
+	tst_require_root(NULL);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Check whether we are root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be root for this test!");
-	}
 
 	/*
 	 * The value of IO_BITMAP_BITS (include/asm-i386/processor.h) changed
@@ -157,7 +153,7 @@ void setup()
  *cleanup() -  performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 
 	/*
@@ -180,13 +176,12 @@ void cleanup()
 #include "test.h"
 #include "usctest.h"
 
-int TST_TOTAL = 0;		/* Total number of test cases. */
+int TST_TOTAL = 0;
 
-int main()
+int main(void)
 {
 	tst_resm(TPASS,
 		 "LSB v1.3 does not specify ioperm() for this architecture.");
-	tst_exit();
 	tst_exit();
 }
 

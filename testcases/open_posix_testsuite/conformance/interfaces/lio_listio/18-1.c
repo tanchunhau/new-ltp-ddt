@@ -37,7 +37,7 @@
 #define NUM_AIOCBS	1
 #define BUF_SIZE	1024
 
-int main()
+int main(void)
 {
 	char tmpfname[256];
 	int fd;
@@ -62,7 +62,7 @@ int main()
 
 	unlink(tmpfname);
 
-	bufs = (char *)malloc(NUM_AIOCBS * BUF_SIZE);
+	bufs = malloc(NUM_AIOCBS * BUF_SIZE);
 
 	if (bufs == NULL) {
 		printf(TNAME " Error at malloc(): %s\n", strerror(errno));
@@ -70,7 +70,7 @@ int main()
 		exit(PTS_UNRESOLVED);
 	}
 
-	aiocbs[0] = (struct aiocb *)malloc(sizeof(struct aiocb));
+	aiocbs[0] = malloc(sizeof(struct aiocb));
 	memset(aiocbs[0], 0, sizeof(struct aiocb));
 
 	aiocbs[0]->aio_fildes = fd;
