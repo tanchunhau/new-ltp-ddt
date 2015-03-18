@@ -29,6 +29,7 @@ source "st_log.sh"
 
 
 ############# Do the work ###########################################
+card_found=0
 usb_interface=$2
 playcmd="aplay -l"
 reccmd="arecord -l"
@@ -44,9 +45,14 @@ then
         then
             #echo "Found a match $reccard and $playcard"
            audiodev=$reccard
+	   card_found=1
            break
         fi 
       done
+      if [ "$1" = "record" ] && [ "$card_found" = 0 ];                          
+      then                                                                      
+        audiodev=$reccard                                                       
+      fi
   done
 else
   for playcard in $audioplaydev                                                   
@@ -57,6 +63,7 @@ else
         then                                                                    
             #echo "Found a match $reccard and $playcard"                        
            audiodev=$playcard                                                    
+	   card_found=1
            break                                                                
         fi                                                                      
       done                                                                      
