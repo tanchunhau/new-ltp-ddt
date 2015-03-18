@@ -260,6 +260,24 @@ case $MACHINE in
           esac
       ;;
 
+      am57xx-evm)
+
+          case $SLAVE_DEVICE in
+              temp_sensor)
+                  SLAVE_ADDR=0x48
+              ;;
+              eeprom)
+                  SLAVE_ADDR=0x50 
+              ;;
+              default)
+                  SLAVE_ADDR=0x48
+              ;;
+              *)
+                  die "Unknown slave device! Can not get slave address."
+              ;;
+          esac
+      ;;
+
       am43xx-gpevm)
 
           case $SLAVE_DEVICE in
