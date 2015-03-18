@@ -13,7 +13,11 @@
 # 
 
 # This script is to use i2cset and i2cget to i2c read write
-# Input  
+# At the end, restore to the original value
+#
+# WARNING: be carefull with i2c slave. Writing them may result unexpected
+#    behavior if you don't know them!
+#    only use the i2c slave you know to test!!!
 
 source "common.sh"
 
@@ -66,22 +70,22 @@ do
   test_print_trc "=====i2c set get loop: $x====="
 
   # display the orignal values before running test 
-  do_cmd "i2cdump -y -r 0-3 "$I2CBUS" "$SLAVE_ADDRESS" "
+  do_cmd "i2cdump -f -y -r 0-3 "$I2CBUS" "$SLAVE_ADDRESS" "
 
   # save the original value so it can be restored after the test
-  orig_val=`i2cget -y "$I2CBUS" "$SLAVE_ADDRESS" "$REGOFFSET"`
+  orig_val=`i2cget -f -y "$I2CBUS" "$SLAVE_ADDRESS" "$REGOFFSET"`
 
-  do_cmd i2cset -y "$I2CBUS" "$SLAVE_ADDRESS" "$REGOFFSET" "$REGVALUE" 
-  do_cmd "i2cget -y "$I2CBUS" "$SLAVE_ADDRESS" "$REGOFFSET" | grep "$REGVALUE""
+  do_cmd i2cset -f -y "$I2CBUS" "$SLAVE_ADDRESS" "$REGOFFSET" "$REGVALUE" 
+  do_cmd "i2cget -f -y "$I2CBUS" "$SLAVE_ADDRESS" "$REGOFFSET" | grep "$REGVALUE""
 
   # display the modified value after the test
-  do_cmd "i2cdump -y -r 0-3 "$I2CBUS" "$SLAVE_ADDRESS" "
+  do_cmd "i2cdump -f -y -r 0-3 "$I2CBUS" "$SLAVE_ADDRESS" "
 
   # restore the value
-  do_cmd i2cset -y "$I2CBUS" "$SLAVE_ADDRESS" "$REGOFFSET" "$orig_val"
+  do_cmd i2cset -f -y "$I2CBUS" "$SLAVE_ADDRESS" "$REGOFFSET" "$orig_val"
 
   # display the value after restore
-  do_cmd "i2cdump -y -r 0-3 "$I2CBUS" "$SLAVE_ADDRESS" "
+  do_cmd "i2cdump -f -y -r 0-3 "$I2CBUS" "$SLAVE_ADDRESS" "
 
   x=$((x+1))
 done
