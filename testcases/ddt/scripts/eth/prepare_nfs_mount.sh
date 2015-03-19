@@ -24,7 +24,7 @@ then
   `check_env_var 'NFS_ROOT_PATH'`
   mkdir -p $mount_point
   umount $mount_point
-  mount -t nfs -o nolock $NFS_SERVER':'$NFS_ROOT_PATH $mount_point
+  mount -t nfs -o nolock,addr=$NFS_SERVER $NFS_SERVER':'$NFS_ROOT_PATH $mount_point
 else
     die "NFS mount point needs to be provided as parameter to script"
 fi
