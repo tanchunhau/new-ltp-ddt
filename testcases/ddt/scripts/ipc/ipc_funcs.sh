@@ -165,6 +165,28 @@ get_num_remote_procs()
   esac
 }
 
+# Function to obtain valid rproc ids for a given SOC.
+# Inputs:
+#   $1: The number of remote processor to get ids for
+# Returns:
+#  The proc ids of the remote procs
+get_rpmsg_proto_rproc_ids()
+{ 
+  case $SOC in
+    *dra7xx)
+      rids=( `seq 1 4` )
+      ;;
+    *j6eco)
+      rids=( 1 2 4 )
+      ;;
+    *)
+      echo "SOC ${SOC} not supported"
+      return 1
+      ;;           
+  esac
+  echo ${rids[@]::$1}
+}
+
 # Funtion to run the RPMSG-RPC test
 # Inputs:
 #   -p: The number of remote processor to use in the test
@@ -277,7 +299,7 @@ rpmsg_rpc_test()
 kill_lad()
 {
   case $MACHINE in
-    *dra7xx-evm)
+    *dra7xx-evm|*am57xx-evm)
       killall lad_dra7xx
       ;;
     *)
@@ -293,7 +315,7 @@ kill_lad()
 start_lad()
 {
   case $MACHINE in
-    *dra7xx-evm)
+    *dra7xx-evm|*am57xx-evm)
       lad_dra7xx
       ;;
     *)
@@ -561,7 +583,7 @@ rpmsg_recovery_event()
   local __command=""
   
   case $MACHINE in
-    *dra7xx-evm)
+    *dra7xx-evm|*am57xx-evm)
       __mbox_q_addr=('0x48840044' '0x48840050' '0x48842044' '0x48842050')
       ;;
     *)
