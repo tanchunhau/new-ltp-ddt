@@ -41,7 +41,7 @@ setup_firmware()
   local __fw_files=$(find $__fw_dir -type f -name "${__fw_pattern}" -exec basename {} \;)
   echo "Found $__fw_files fw files..."
   case $MACHINE in
-    dra7xx-evm)
+    dra7xx-evm|am57xx*)
       save_firmware dra7-dsp1-fw.xe66 dra7-dsp2-fw.xe66 dra7-ipu2-fw.xem4 dra7-ipu1-fw.xem4
       for __fw in $__fw_files
       do
