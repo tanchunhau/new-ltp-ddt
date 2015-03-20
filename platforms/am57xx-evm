@@ -1,5 +1,5 @@
 armv7l
-j6eco
+dra7xx
 am57xx-evm
 crypto/crypto-omap
 crypto/crypto-omap/aes
