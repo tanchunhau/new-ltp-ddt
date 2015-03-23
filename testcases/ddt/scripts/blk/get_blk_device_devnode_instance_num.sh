@@ -25,6 +25,7 @@ if [ $# -ne 1 ]; then
 fi
 
 instance_num=''
+signature='mmcblk*p1' # MMC signature by default
 device_type=$1
 ############################ USER-DEFINED Params ##############################
 # Try to avoid defining values here, instead see if possible
@@ -36,20 +37,14 @@ esac
 case $SOC in
 esac
 case $MACHINE in
-  dra7xx-evm) 
-    if [ "$device_type" == 'mmc' ]; then
-      instance_num=2
-    elif [ "$device_type" == 'emmc' ]; then
-      instance_num=0
-    fi
-  ;;
 esac
 
 ######################### Logic here ###########################################
+if [ "$device_type" == 'emmc' ]; then
+  signature='mmcblk*boot*'
+fi
 if [ -z $instance_num ]; then
-  dev_node=`get_blk_device_node.sh "$device_type"` || die "Failed to get device node for $device_type: "$dev_node" " 
-  devnode_entry=`get_devnode_entry.sh "$dev_node" "$device_type"` || die "Failed to get dev node entry for $dev_node: $devnode_entry"
-  instance_num=`get_devnode_instance_num "$devnode_entry"` || die "Failed to get instance number for $devnode_entry: $instance_num"
+  instance_num=`find /sys/devices/ -type d -name $signature | egrep "mmc[[:digit:]]+" -o | head -n 1 | egrep "[[:digit:]]+" -o` || die "Failed to get instance number for $device_type"
 fi
 
 echo $instance_num
