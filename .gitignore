@@ -8,6 +8,9 @@ core
 .gdb_history
 .gdbinit
 lib*.a
+*.cmd
+*.ko
+*.mod.c
 
 /aclocal.m4
 autom4te.cache
