@@ -290,6 +290,8 @@ check_env_var() {
 #     which is CONFIG1^CONFIG2:module1 CONFIG3:module2 
 check_config_options()
 {
+  config_cmd='zcat /proc/config.gz'
+  ls /boot/config-`uname -r` &> /dev/null && config_cmd="cat /boot/config-"`uname -r`
   case $1 in
     y) check='=y';;
     m) check='=m';;
@@ -311,7 +313,7 @@ check_config_options()
   IFS='^';y=${y[@]}
   IFS=' '
   for option in $y; do
-     zcat /proc/config.gz | egrep "$option$check" && continue ||  (IFS=$OIFS; \
+     $config_cmd | egrep "$option$check" && continue ||  (IFS=$OIFS; \
      if is_opt_config "$option"; then skip_test "optional $option not enabled"; else die "$option is not $check"; fi); exit $?
   done
   IFS=$OIFS
@@ -406,6 +408,7 @@ opt_config_values=(
 "CONFIG_RTC_DEBUG" \
 "CONFIG_TIGON3" \
 "CONFIG_AHCI" \
+"CONFIG_HUGETLB_PAGE" \
 )
 
 # $1: CONFIG option to check
