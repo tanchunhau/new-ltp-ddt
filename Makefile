@@ -280,6 +280,9 @@ help:
 	@echo "Please read the Configuration section in $(top_srcdir)/INSTALL"
 	@exit 1
 
+cscope: $(COMMON_TARGETS)
+	cscope -R -b
+
 ## Menuconfig
 menuconfig:
 	@$(SHELL) "$(top_srcdir)/ltpmenu"
