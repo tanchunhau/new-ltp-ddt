@@ -9,3 +9,4 @@ chdir01A
 fanotify01
 fanotify02
 fanotify04
+prot_hsymlinks
