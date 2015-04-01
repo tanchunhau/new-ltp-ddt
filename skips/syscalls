@@ -5,3 +5,4 @@ ioctl03
 quotactl01
 sysctl03
 utimensat01
+chdir01A
