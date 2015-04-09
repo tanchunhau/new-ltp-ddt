@@ -32,55 +32,55 @@ EXTRA_PARAM=$2
 # this function is to get SCSI device usb or sata node based on by-id
 # input is either 'sata' or 'usb' or 'usbxhci'
  
-find_scsi_node() {
+find_scsi_basenode() {
   SCSI_DEVICE=$1
     case $SCSI_DEVICE in
       sata)
-        file=`ls /dev/disk/by-id/*-part1|grep -i s*ata | head -1`
+        file=`ls /dev/disk/by-id/* |grep -i ata | head -1`
         if [[ ! -z "$file" ]]; then
-        DEV_NODE="/dev/""$(basename $(readlink $file))"
-         echo $DEV_NODE
-         exit 0
+          basenode="/dev/""$(basename $(readlink $file))"
+          echo $basenode
+          exit 0
         fi
       ;;
       usb|usbxhci)
         usb_cnt_interface=`get_usb_controller_name.sh "$SCSI_DEVICE"`
-	usb_speed_found=1
-	# in USB case, extra param is used to indicate usb speed
-	DEVICE_SPEED=$EXTRA_PARAM
-	for file in `ls /dev/disk/by-path/*-part1|grep -i "$usb_cnt_interface"`
-	do
+        usb_speed_found=1
+        # in USB case, extra param is used to indicate usb speed
+        DEVICE_SPEED=$EXTRA_PARAM
+        for file in `ls /dev/disk/by-path/* |grep -i "$usb_cnt_interface" |head -1`
+        do
         	if [[ ! -z "$file" ]]; then
-        		DEV_NODE="/dev/""$(basename $(readlink $file))"
-			if [[ ! -z "$DEVICE_SPEED" ]]; then
-				usb_speed=`find_usbhost_speed.sh "$DEVICE_SPEED"`
-                                speed=`udevadm info -a -n $DEV_NODE|grep speed`
-                                for speed in `udevadm info -a -n $DEV_NODE|grep speed`
-                                do
-                                        if [[ "${speed}" == *$usb_speed* ]]; then
-                                                echo $DEV_NODE
-                                                exit 0
-					else
-						usb_speed_found=0
-                                        fi
-                                done
-			fi
+        		basenode="/dev/""$(basename $(readlink $file))"
+            if [[ ! -z "$DEVICE_SPEED" ]]; then
+              usb_speed=`find_usbhost_speed.sh "$DEVICE_SPEED"`
+              speed=`udevadm info -a -n $DEV_NODE|grep speed`
+              for speed in `udevadm info -a -n $DEV_NODE|grep speed`
+              do
+                if [[ "${speed}" == *$usb_speed* ]]; then
+                  echo $basenode
+                  exit 0
+                else
+                  usb_speed_found=0
+                fi
+              done
+            fi
         	fi
-	done
-	if [[ ! -z "$usb_speed_found" ]]; then
-		echo $DEV_NODE
-       		exit 0
-	else
-		echo "Could not find USB device or USB device with specified speed"
-		exit 1
-	fi
+        done
+        if [[ ! -z "$usb_speed_found" ]]; then
+          echo $basenode
+          exit 0
+        else
+          echo "Could not find USB device or USB device with specified speed"
+          exit 1
+        fi
       ;;
 
       pci)
-        file=`ls /dev/disk/by-path/*-part1|grep -i 'pci'|head -1`
+        file=`ls /dev/disk/by-path/* |grep -i 'pci'|head -1`
         if [[ ! -z "$file" ]]; then
-          DEV_NODE="/dev/""$(basename $(readlink $file))"
-          echo $DEV_NODE
+          basenode="/dev/""$(basename $(readlink $file))"
+          echo $basenode
           exit 0
         fi
       ;;
@@ -106,32 +106,6 @@ find_mmc_basenode() {
     echo $mmc_node
 }
 
-# create one test partition if mmc or emmc doesn't have any partition on it
-# and create initial file system on it. Choose mkfs.vfat since this operation is fast
-#   $1: basenode like /dev/mmcblk0, /dev/mmcblk1
-create_one_partition() {
-    basenode=$1
-    ls ${basenode}p*
-    if [ $? -ne 0 ]; then
-      echo -e "p\np\nn\np\n1\n\n\np\nw\n" | fdisk $basenode
-      mkfs.vfat -F32 ${basenode}p1
-    fi
-}
-
-# create two partitions on emmc if they are not mounted 
-# and mark the first partition as boot partition so the mmc test won't touch it
-# and also make initial filesystem
-#   $1: basenode like /dev/mmcblk0, /dev/mmcblk1
-create_two_partitions() {
-    basenode=$1
-    mount | grep ${basenode}p
-    #ls ${basenode}p*
-    if [ $? -ne 0 ]; then
-      echo -e "p\nn\np\n1\n\n146570\nn\np\n\n\n\na\n1\np\nw\n" | fdisk $basenode
-      mkfs.vfat -F32 ${basenode}p1
-      mkfs.vfat -F32 ${basenode}p2
-    fi
-}
 
 ############################ Default Params ##############################
 DEV_TYPE=`get_device_type_map.sh "$DEVICE_TYPE"` || die "error getting device type: $DEV_TYPE"
@@ -153,23 +127,33 @@ case $DEV_TYPE in
             die "Could not fine emmc basenode"
           fi
           # create two partition if emmc doesn't have any partition on it
-          create_two_partitions $emmc_basenode > /dev/null
+          create_three_partitions $emmc_basenode 80 1024 > /dev/null
           DEV_NODE=`find_part_with_biggest_size "$emmc_basenode" "emmc"` || die "error getting partition with biggest size: $DEV_NODE"
         ;;
         usb)
-          DEV_NODE=`find_scsi_node "usb"` || die "error getting usb node: $DEV_NODE" 
+          basenode=`find_scsi_basenode "usb"` || die "error getting usb base node: $basenode"
+          # create 3 partitions with the size 80M, 2048M, and remaining if there is no partition
+          create_three_partitions $basenode 80 2048 > /dev/null
+          DEV_NODE=`find_part_with_biggest_size "$basenode" "usb"` || die "error getting partition with biggest size: $DEV_NODE"
         ;;
         usbxhci)
-          DEV_NODE=`find_scsi_node "usbxhci"` || die "error getting usbxhci node: $DEV_NODE" 
+          basenode=`find_scsi_basenode "usbxhci"` || die "error getting usbxhci base node: $basenode" 
+          create_three_partitions $basenode 80 2048 > /dev/null
+          DEV_NODE=`find_part_with_biggest_size "$basenode" "usbxhci"` || die "error getting partition with biggest size: $DEV_NODE"
         ;;
         pci)
-          DEV_NODE=`find_scsi_node "pci"` || die "error getting pciusb node: $DEV_NODE" 
+          basenode=`find_scsi_basenode "pci"` || die "error getting pci basenode: $basenode" 
+          create_three_partitions $basenode 80 2048 > /dev/null
+          DEV_NODE=`find_part_with_biggest_size "$basenode" "pci"` || die "error getting partition with biggest size: $DEV_NODE"
         ;;
         ata)
           DEV_NODE="/dev/hda1"
         ;;
         sata)
-          DEV_NODE=`find_scsi_node "sata"` || die "error getting sata node: $DEV_NODE"
+          basenode=`find_scsi_basenode "sata"` || die "error getting sata basenode: $basenode" 
+          # Typically, sata harddisk is big, so create 16G (16384) to be able to run 10G filesize test 
+          create_three_partitions $basenode 80 16384 > /dev/null
+          DEV_NODE=`find_part_with_biggest_size "$basenode" "sata"` || die "error getting partition with biggest size: $DEV_NODE"
         ;;
         *)
           die "Invalid device type in $0 script"
