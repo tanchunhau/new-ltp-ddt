@@ -17,6 +17,65 @@
 source "common.sh"
 
 ############################ Functions ################################
+
+# Create three partitions on blk device like emmc, usbhost, msata/sata etc if there
+#   is no partition in it. 
+# And mark the first partition as boot partition so the test won't touch it in case 
+#   user use it as boot partition later on;
+# And also make initial filesystem on these three partitions
+# 3rd partition size is whatever left on the card
+# Input:
+#       basenode like /dev/mmcblk0, /dev/sda etc
+#       1st partition size in MB
+#       2nd partition size in MB
+create_three_partitions() {
+    if [ $# -ne 3 ]; then
+      die "Usage: $0 <dev_base_node ex. /dev/mmcblk0, /dev/sda> <1st partition size> <2nd partition size>"
+    fi
+
+    basenode=$1
+    partsize_1st=$2
+    partsize_2nd=$3
+
+    # check if the device size is big enough
+    input_size=`echo ${partsize_1st}*1024*1024+${partsize_2nd}*1024*1024 |bc`
+    bnode=`echo $basenode |sed s'/\/dev\///'`
+    actual_size=`cat /sys/block/${bnode}/size`
+    actual_size=`echo ${actual_size}*1024 |bc`
+    if [[ $input_size -ge $actual_size ]]; then
+      die "Device size is too small or Input size (1st+2nd) is too big!"
+    fi
+
+    have_partition=`have_partition $basenode`
+    if [ "$have_partition" = 'no' ]; then
+      sector_size=`get_sector_size $basenode`
+      end_of_1st_partition=`echo ${partsize_1st}*1024*1024/${sector_size} |bc`
+      end_of_2nd_partition=`echo ${partsize_2nd}*1024*1024/${sector_size}+${end_of_1st_partition} |bc`
+      echo "Making three partitions..."
+      echo -e "p\nn\np\n1\n\n${end_of_1st_partition}\nn\np\n2\n\n${end_of_2nd_partition}\nn\np\n\n\n\na\n1\nt\n1\nc\np\nw\n" | fdisk $basenode
+      # making initial fs
+      ls ${basenode}* | grep ${basenode}p1 && (mkfs.vfat -F32 ${basenode}p1; mkfs.vfat -F32 ${basenode}p2; mkfs.vfat -F32 ${basenode}p3)
+      ls ${basenode}* | grep ${basenode}1 && (mkfs.vfat -F32 ${basenode}1; mkfs.vfat -F32 ${basenode}2; mkfs.vfat -F32 ${basenode}3)
+    else
+      echo "Skipping creating partition in $basenode since there is at least one partition in it"
+    fi
+}
+
+# This function is to check if blk device has at least on partition in it
+have_partition() {
+    basenode=$1
+    ls ${basenode}* |grep -E "${basenode}1|${basenode}p1" > /dev/null && have_partition='yes' || have_partition='no'
+    echo "$have_partition"
+}
+
+# This function is to get the sector size of blk device
+get_sector_size() {
+    basenode=$1
+    bnode=`echo $basenode |sed s'/\/dev\///'`
+    sector_size=`cat /sys/block/${bnode}/queue/hw_sector_size`
+    echo $sector_size
+}
+
 # This function return DEVNODE with the biggest size.
 #   If the partition is boot or rootfs partition, it will be skipped.
 # Input: DEV_BASE_NODE: like /dev/mmcblk0 etc
@@ -54,18 +113,20 @@ find_part_with_biggest_size() {
   case "$UTIL_TO_USE" in
 
   fdisk)
-    MATCH=`fdisk -l $DEV_BASE_NODE |grep "$DEV_BASE_NODE"p`
+    MATCH=`fdisk -l $DEV_BASE_NODE |grep -E "${DEV_BASE_NODE}p|${DEV_BASE_NODE}[1-9]+"`
     for i in $MATCH
     do
       LINE=$i
       FIELD_2ND=`echo "$LINE" | awk -F " " '{print $2}'`
       DEVNODE=`echo "$LINE" | awk -F " " '{print $1}'`
+      SIZE=`echo "$LINE" | awk -F " " '{print $4}' | sed s/+$//`
 
       # skip bootable partition and rootfs partition with rootfs in it
-      if [ "$FIELD_2ND" != '*' ]; then
+      # limit the test size upto 32G
+      max_test_size=`echo "32*1024*1024*1024/512" |bc`
+      if [[ "$FIELD_2ND" != '*' ]] && [[ $SIZE -lt $max_test_size ]]; then
         IS_ROOTFS=`is_part_rootfs "$DEVICE_TYPE" "$DEVNODE"` || die "error when calling is_part_rootfs: "$IS_ROOTFS" "
         if [ "$IS_ROOTFS" == "no" ]; then
-          SIZE=`echo "$LINE" | awk -F " " '{print $4}' | sed s/+$//`
           if [ $SIZE -gt $SIZE_BIGGEST ]; then
             SIZE_BIGGEST=$SIZE
             PART_DEVNODE="$DEVNODE"
