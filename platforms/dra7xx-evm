@@ -52,9 +52,15 @@ usb/host/msc/xhci-hcd
 usb/host/hid/xhci-hcd
 usb/host/iso/xhci-hcd
 usb/host/superspeed
-usb/slave/msc
-usb/slave/cdc
+usb/slave/usbslave_ether
+usb/slave/usbslave_zero 
+usb/slave/usbslave_ncm  
+usb/slave/usbslave_mass_storage
+usb/slave/usbslave_multi       
+usb/slave/usbslave_cdc  
 watchdog/omap_wdt
+wlan/wl18xx
+wlan/wlcore_sdio
 pwm/ehrpwm
 pwm/ecap
 pwm/backlight

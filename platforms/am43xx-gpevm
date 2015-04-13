@@ -47,8 +47,14 @@ spi_master/mtd/spi-omap2-mcspi
 usb/host/msc/xhci-hcd         
 usb/host/hid/xhci-hcd         
 usb/host/iso/xhci-hcd 
-usb/slave/msc
-usb/slave/cdc
+usb/slave/usbslave_ether
+usb/slave/usbslave_zero 
+usb/slave/usbslave_ncm  
+usb/slave/usbslave_mass_storage
+usb/slave/usbslave_multi       
+usb/slave/usbslave_cdc  
 watchdog/omap_wdt
+wlan/wl18xx
+wlan/wlcore_sdio
 hdmi/audio/playback
 ipc
