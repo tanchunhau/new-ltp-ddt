@@ -27,17 +27,21 @@ cat <<-EOF >&2
         -d DEVICE_TYPE  device type like 'nand', 'mmc', 'usb' etc
 	-l TEST_LOOP	test loop for insmod/rmmod. default is 1.
 	-a ACTION	optional; the test to be run after module is inserted.
+	-m MODULE_NAME  optional; to provide module name for out-of-tree modules
+	-p PARAMETER	optional; parameters to provide for module
         -h Help         print this usage
 EOF
 exit 0
 }
 
 ############################### CLI Params ###################################
-while getopts  :d:l:a:h arg
+while getopts  :d:l:a:m:p:h arg
 do case $arg in
         d)      DEVICE_TYPE="$OPTARG";;
 	l) 	TEST_LOOP="$OPTARG";;
 	a)	ACTION="$OPTARG";;
+	m)	MOD_NAME="$OPTARG";;
+        p)      PARAMETER="$OPTARG";;   
         h)      usage;;
         :)      test_print_trc "$0: Must supply an argument to -$OPTARG." >&2
                 exit 1
@@ -56,31 +60,32 @@ test_print_trc "ACTION: $ACTION"
 
 ############# Do the work ###########################################
 test_print_trc "Doing insmod;rmmod test for $TEST_LOOP times"
-MOD_NAME=`get_modular_name.sh "$DEVICE_TYPE"` || die "error getting modular name" 
+if [ ! -z "$DEVICE_TYPE" ]; then
+	MOD_NAME=`get_modular_name.sh "$DEVICE_TYPE"` || die "error getting modular name" 
+fi
 x=0
 while [ $x -lt $TEST_LOOP ]
 do
   echo "============Modular Test LOOP: $x============"
-	do_cmd insmod.sh "$MOD_NAME"
+	do_cmd insmod.sh "$MOD_NAME" "$PARAMETER"
 
 	if [ -n "$ACTION" ]; then
 		do_cmd "$ACTION" 
 	fi
 
   # before doing modprobe remove, need make sure device is not mounted
-  DEV_NODE=`get_blk_device_node.sh "$DEVICE_TYPE"` || die "error getting device node for $DEVICE_TYPE: $DEV_NODE"
-  echo "dev_node: $DEV_NODE"
-  dev_node_base=`echo $DEV_NODE |sed 's/[0-9]\+$//' `
-  nodes=`ls ${dev_node_base}*`
-  for node in $nodes; do
-      do_cmd "mount" | grep "${node} " && do_cmd "umount $node"
-  done
-
+if [ ! -z "$DEVICE_TYPE" ]; then
+  	DEV_NODE=`get_blk_device_node.sh "$DEVICE_TYPE"` || die "error getting device node for $DEVICE_TYPE: $DEV_NODE"
+  	echo "dev_node: $DEV_NODE"
+  	dev_node_base=`echo $DEV_NODE |sed 's/[0-9]\+$//' `
+  	nodes=`ls ${dev_node_base}*`
+  	for node in $nodes; do
+      		do_cmd "mount" | grep "${node} " && do_cmd "umount $node"
+  	done
+fi
 	do_cmd rmmod.sh "$MOD_NAME"
 
   x=$((x+1))
 
 done
-
-
 
