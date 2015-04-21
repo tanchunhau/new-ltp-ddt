@@ -58,3 +58,4 @@ wlan/wl18xx
 wlan/wlcore_sdio
 hdmi/audio/playback
 ipc
+video/capture/*/v4l2
