@@ -55,19 +55,19 @@ done
 case $CODEC in
    264)
       FILE="/usr/share/ti/video/HistoryOfTI-$RESOLUTION.264"
-      GSTCMD='gst-launch-0.10 filesrc location="$FILE" ! h264parse ! ffdec_h264 !\
+      GSTCMD='gst-launch-1.0 filesrc location="$FILE" ! h264parse ! ffdec_h264 !\
 		 ffmpegcolorspace ! fbdevsink device=/dev/fb';;
    mpeg2)
       FILE="/usr/share/ti/video/HistoryOfTI-$RESOLUTION.m2v"
-      GSTCMD='gst-launch-0.10 filesrc location="$FILE" ! mpegvideoparse ! \
+      GSTCMD='gst-launch-1.0 filesrc location="$FILE" ! mpegvideoparse ! \
 		ffdec_mpeg2video ! ffmpegcolorspace ! fbdevsink device=/dev/fb';;
    mpeg4)
       FILE="/usr/share/ti/video/HistoryOfTI-$RESOLUTION.m4v"
-      GSTCMD='gst-launch-0.10 filesrc location="$FILE" ! mpeg4videoparse ! \
+      GSTCMD='gst-launch-1.0 filesrc location="$FILE" ! mpeg4videoparse ! \
 		ffdec_mpeg4 ! ffmpegcolorspace ! fbdevsink device=/dev/fb';;
    mpeg4aac)
       FILE="/usr/share/ti/video/HistoryOfTIAV-$RESOLUTION.mp4"
-      GSTCMD='gst-launch-0.10 filesrc location="$FILE" ! qtdemux name=demux demux.audio_00 \
+      GSTCMD='gst-launch-1.0 filesrc location="$FILE" ! qtdemux name=demux demux.audio_00 \
 		! faad ! alsasink sync=false demux.video_00 ! queue ! ffdec_mpeg4 ! \
 		ffmpegcolorspace ! fbdevsink device=/dev/fb';;
 esac
