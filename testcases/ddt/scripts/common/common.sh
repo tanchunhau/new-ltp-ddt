@@ -31,6 +31,7 @@ START_TIME=`date "+%s"`
 
 resolve_platform_name() {
   case $1 in
+    am437x-evm) PLATFORM="am43xx-gpevm" ;;
     *) PLATFORM="$1" ;; 
   esac
   echo $PLATFORM
