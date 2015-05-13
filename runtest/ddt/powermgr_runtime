@@ -3,7 +3,7 @@
 # @requires i2c && mmc_host && gpio && /net/eth/* && usb
 # @setup_requires 
 
-POWERMGR_S_FUNC_RUNTIME_TIMERS source 'pm_runtime.sh'; is_pm_runtime_enabled timer || die "pm_runtime is not enabled for TIMERS"; is_pm_runtime_suspending_device timer || die "pm_runtime is not suspending TIMERS"
+POWERMGR_S_FUNC_RUNTIME_TIMERS source 'pm_runtime.sh'; is_pm_runtime_enabled wdt || die "pm_runtime is not enabled for WDT"; is_pm_runtime_suspending_device wdt || die "pm_runtime is not suspending WDT"
 
 POWERMGR_S_FUNC_RUNTIME_I2C source 'pm_runtime.sh'; is_pm_runtime_enabled i2c || die "pm_runtime is not enabled for I2C"; is_pm_runtime_suspending_device i2c || die "pm_runtime is not suspending I2C"
                                                               
