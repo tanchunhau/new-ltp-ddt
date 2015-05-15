@@ -15,6 +15,8 @@ INSTALL_MODE            := 00755
 
 #INSTALL_TARGETS         := $(filter-out $(UNWANTED_FILES),$(notdir $(patsubst $(abs_srcdir)/%,%,$(wildcard $(abs_srcdir)/*))))
 
-MAKE_TARGETS	:= dmtimer-test.ko
+ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwDMTIMER)))
+	MAKE_TARGETS	:= dmtimer-test.ko
+endif
 
 include $(top_srcdir)/include/mk/generic_leaf_target.mk
