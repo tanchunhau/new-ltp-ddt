@@ -22,7 +22,7 @@ source "common.sh"
 ############################### CLI Params ###################################
 
 ############################ DYNAMIC-DEFINED Params ##############################
-HWRNG_NODE=`find / -name hwrng` || die "No HWRNG node available"
+HWRNG_NODE=`find /dev -name hwrng` || die "No HWRNG node available"
 
 ############################ USER-DEFINED Params ##############################
 # Try to avoid defining values here, instead see if possible
