@@ -133,12 +133,12 @@ case $DEV_TYPE in
         usb)
           basenode=`find_scsi_basenode "usb"` || die "error getting usb base node: $basenode"
           # create 3 partitions with the size 80M, 2048M, and remaining if there is no partition
-          create_three_partitions $basenode 80 2048 > /dev/null
+          create_three_partitions $basenode 80 1024 > /dev/null
           DEV_NODE=`find_part_with_biggest_size "$basenode" "usb"` || die "error getting partition with biggest size: $DEV_NODE"
         ;;
         usbxhci)
           basenode=`find_scsi_basenode "usbxhci"` || die "error getting usbxhci base node: $basenode" 
-          create_three_partitions $basenode 80 2048 > /dev/null
+          create_three_partitions $basenode 80 1024 > /dev/null
           DEV_NODE=`find_part_with_biggest_size "$basenode" "usbxhci"` || die "error getting partition with biggest size: $DEV_NODE"
         ;;
         pci)
