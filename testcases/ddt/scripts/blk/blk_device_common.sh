@@ -64,7 +64,13 @@ create_three_partitions() {
 # This function is to check if blk device has at least on partition in it
 have_partition() {
     basenode=$1
-    ls ${basenode}* |grep -E "${basenode}1|${basenode}p1" > /dev/null && have_partition='yes' || have_partition='no'
+    match=`fdisk -l $basenode |grep -E "${basenode}p|${basenode}[1-9]+"`
+    if [ "$match" = "" ]; then
+      have_partition="no"
+    else
+      have_partition="yes"
+    fi
+    #ls ${basenode}* |grep -E "${basenode}1|${basenode}p1" > /dev/null && have_partition='yes' || have_partition='no'
     echo "$have_partition"
 }
 
@@ -114,6 +120,9 @@ find_part_with_biggest_size() {
 
   fdisk)
     MATCH=`fdisk -l $DEV_BASE_NODE |grep -E "${DEV_BASE_NODE}p|${DEV_BASE_NODE}[1-9]+"`
+    if [ "$MATCH" = "" ]; then
+      die "fdisk does not show any partitions! Please check if the partitions really exist!"
+    fi
     for i in $MATCH
     do
       LINE=$i
@@ -187,7 +196,8 @@ find_part_with_biggest_size() {
 
   if [ -z "$PART_DEVNODE" ]
   then
-    die "Could not find the partition to test! Maybe all the existing partitions are either boot or rootfs partitions. Or may be there is no any partition on the card. Please create at least one test partition on $DEVICE_TYPE and make initial filesystem on it."
+    
+    die "Could not find the partition to test! Maybe all the existing partitions are either boot or rootfs partitions or the size is bigger than 32G. Please use fdisk to check the partitions!"
   fi  
   echo $PART_DEVNODE
 }
@@ -230,6 +240,7 @@ is_part_rootfs(){
   else
     MNT_POINT="/mnt/partition_${DEVICE_TYPE}_$$"
     do_cmd blk_device_do_mount.sh -n "$DEV_NODE" -d "$DEVICE_TYPE" -m "$MNT_POINT" > /dev/null 2>$1 
+    mount |grep "$DEV_NODE" > /dev/null && IS_MOUNTED="yes" || die "Failed to mount $DEV_NODE when checking if it is rootfs partition"
     NEED_UMOUNT="yes"
   fi
   if [ -e "$MNT_POINT/etc" -a -e "$MNT_POINT/dev" ]; then
