@@ -40,7 +40,7 @@ do_cleanup()
   for device in `find /sys/class/net/*eth*`
   do 
     interface=`echo $device | cut -c16-`
-    ifup $interface
+    do_eth_up_down.sh -d "up" -i "$interface"
   done
 }
 p_iterations=10
@@ -91,16 +91,16 @@ for (( j=0; j < ${#int_name[@]}; j++ ))
 do
  for interface in ${int_name[@]}
  do
-   ifdown $interface
+ 	do_eth_up_down.sh -d "down" -i "$interface"
  done
 
- ifup ${int_name[j]}
+ do_eth_up_down.sh -d "up" -i "${int_name[j]}"
  eth_gateway[j]=`get_eth_gateway.sh -i ${int_name[j]}` || die "Error getting eth gateway for ${int_name[j]}"
- ifdown ${int_name[j]}
+ do_eth_up_down.sh -d "down" -i "${int_name[j]}"
  
  for interface in ${int_name[@]}
  do
-   ifup $interface
+ 	do_eth_up_down.sh -d "up" -i "$interface"
  done
 done
 
@@ -113,8 +113,8 @@ then
 # do ifdown (and ifup, if applicable) on all other interfaces
   for (( i=0; i < ${#int_name[@]}; i++ ))
   do
-    ifdown ${int_name[i]}
-    do_cmd "ifup ${int_name[i]}"
+    do_eth_up_down.sh -d "down" -i "${int_name[i]}"
+    do_eth_up_down.sh -d "up" -i "${int_name[i]}"
     rm nohup.out
     nohup ping ${eth_gateway[i]} -s $p_pktsize -w $p_duration & 
     pid=$!
@@ -126,8 +126,8 @@ then
          do
            if [[ $j != $i ]]
            then
-             ifdown ${int_name[j]}
-             do_cmd "ifup ${int_name[j]}"
+    		do_eth_up_down.sh -d "down" -i "${int_name[j]}"
+    		do_eth_up_down.sh -d "up" -i "${int_name[j]}"
            fi  
          done
        elif [ "$p_type" = 'ping_down' ]
@@ -136,7 +136,7 @@ then
          do
              if [[ $j != $i ]]
              then
-               ifdown ${int_name[j]}
+    		do_eth_up_down.sh -d "down" -i "${int_name[j]}"
              fi  
            done
            k=$p_iterations
@@ -176,8 +176,8 @@ then
        do 
          case $p_type in
          'ifupdown')
-           do_cmd "ifdown ${int_name[k]}"
-           do_cmd "ifup ${int_name[k]}"
+    		do_eth_up_down.sh -d "down" -i "${int_name[k]}"
+    		do_eth_up_down.sh -d "up" -i "${int_name[k]}"
           ;;
          'ping')
            do_cmd "ping ${eth_gateway[k]} -s $p_pktsize -w $p_duration"
@@ -195,17 +195,17 @@ then
       do
         if [ "$p_type" = 'ifupdown' ] 
         then
-          do_cmd "ifdown $interface"
+    		do_eth_up_down.sh -d "down" -i "$interface"
         fi
       done
       for (( j=${#int_name[@]}; j>0; j-- ))
       do
         if [ "$p_type" = 'ifupdown' ] 
         then
-          do_cmd "ifup ${int_name[j-1]}"
+    		do_eth_up_down.sh -d "up" -i "${int_name[j-1]}"
         elif [ "$p_type" = 'ping' ] 
         then
-          do_cmd "ping ${eth_gateway[j-1]} -s $p_pktsize -w $p_duration"
+          	do_cmd "ping ${eth_gateway[j-1]} -s $p_pktsize -w $p_duration"
         fi
       done
    done
@@ -217,8 +217,8 @@ then
        do 
          case $p_type in
          'ifupdown')
-             do_cmd "ifdown ${int_name[k]}"
-             do_cmd "ifup ${int_name[k]}"
+    		do_eth_up_down.sh -d "down" -i "${int_name[k]}"
+    		do_eth_up_down.sh -d "up" -i "${int_name[k]}"
           ;;
     
           'ping')
