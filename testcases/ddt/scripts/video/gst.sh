@@ -54,23 +54,23 @@ done
 ############################ USER-DEFINED Params ###############################
 case $CODEC in
    264)
-      FILE="/usr/share/ti/video/HistoryOfTI-$RESOLUTION.264"
-      GSTCMD='gst-launch-1.0 filesrc location="$FILE" ! h264parse ! ffdec_h264 !\
-		 ffmpegcolorspace ! fbdevsink device=/dev/fb';;
+      FILE="/usr/share/ti/video/HistoryOfTI-$RESOLUTION.264";;
    mpeg2)
-      FILE="/usr/share/ti/video/HistoryOfTI-$RESOLUTION.m2v"
-      GSTCMD='gst-launch-1.0 filesrc location="$FILE" ! mpegvideoparse ! \
-		ffdec_mpeg2video ! ffmpegcolorspace ! fbdevsink device=/dev/fb';;
+      FILE="/usr/share/ti/video/HistoryOfTI-$RESOLUTION.m2v";;
    mpeg4)
-      FILE="/usr/share/ti/video/HistoryOfTI-$RESOLUTION.m4v"
-      GSTCMD='gst-launch-1.0 filesrc location="$FILE" ! mpeg4videoparse ! \
-		ffdec_mpeg4 ! ffmpegcolorspace ! fbdevsink device=/dev/fb';;
+      FILE="/usr/share/ti/video/HistoryOfTI-$RESOLUTION.m4v";;
    mpeg4aac)
-      FILE="/usr/share/ti/video/HistoryOfTIAV-$RESOLUTION.mp4"
-      GSTCMD='gst-launch-1.0 filesrc location="$FILE" ! qtdemux name=demux demux.audio_00 \
-		! faad ! alsasink sync=false demux.video_00 ! queue ! ffdec_mpeg4 ! \
-		ffmpegcolorspace ! fbdevsink device=/dev/fb';;
+      FILE="/usr/share/ti/video/HistoryOfTIAV-$RESOLUTION.mp4";;
 esac
+
+case $MACHINE in
+   dra7xx*|am57xx*)
+       VSINK="kmssink";;
+   *)
+       VSINK="fbdevsink /dev/fb0";;
+esac
+
+GSTCMD="gst-launch-1.0 playbin uri=file://${FILE} video-sink=\"${VSINK}\" audio-sink=alsasink"
 
 ########################### DYNAMICALLY-DEFINED Params #########################
 # Try to use /sys and /proc information to determine values dynamically.
