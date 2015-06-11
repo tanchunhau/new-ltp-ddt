@@ -40,13 +40,13 @@ create_three_partitions() {
     have_partition=`have_partition $basenode`
     if [ "$have_partition" = 'no' ]; then
       # check if the device size is big enough
-      input_size=`echo ${partsize_1st}*1024*1024+${partsize_2nd}*1024*1024 |bc`
+      #input_size=`echo ${partsize_1st}*1024*1024+${partsize_2nd}*1024*1024 |bc`
       bnode=`echo $basenode |sed s'/\/dev\///'`
       actual_size=`cat /sys/block/${bnode}/size`
       actual_size=`echo ${actual_size}*1024 |bc`
-      if [[ $input_size -ge $actual_size ]]; then
-        die "Device size is too small or Input size (1st+2nd) is too big!"
-      fi
+      #if [[ $input_size -ge $actual_size ]]; then
+      #  die "Device size is too small or Input size (1st+2nd) is too big!"
+      #fi
 
       sector_size=`get_sector_size $basenode`
       end_of_1st_partition=`echo ${partsize_1st}*1024*1024/${sector_size} |bc`
