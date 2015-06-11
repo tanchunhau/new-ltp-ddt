@@ -24,7 +24,6 @@ ETH_S_PERF_IPERF_UDP_600M_1500B source 'common.sh'; run_iperf.sh -w 128k -l 1500
 ETH_S_PERF_IPERF_UDP_650M_1500B source 'common.sh'; run_iperf.sh -w 128k -l 1500 -f M -u -t 60 -b 650M
 ETH_S_PERF_IPERF_UDP_700M_1500B source 'common.sh'; run_iperf.sh -w 128k -l 1500 -f M -u -t 60 -b 700M
 ETH_S_PERF_IPERF_UDP_750M_1500B source 'common.sh'; run_iperf.sh -w 128k -l 1500 -f M -u -t 60 -b 750M
-ETH_S_PERF_IPERF_UDP_1G_1500B source 'common.sh'; run_iperf.sh -w 128k -l 1500 -f M -u -t 60 -b 1000M
 ETH_M_PERF_IPERF_UDP_1G_1500B source 'common.sh'; run_iperf.sh -w 128k -l 1500 -f M -u -t 3600 -b 1000M
 ETH_L_PERF_IPERF_UDP_1G_1500B source 'common.sh'; run_iperf.sh -w 128k -l 1500 -f M -u -t 14400 -b 1000M
 
