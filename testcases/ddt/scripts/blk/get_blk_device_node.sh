@@ -36,7 +36,8 @@ find_scsi_basenode() {
   SCSI_DEVICE=$1
     case $SCSI_DEVICE in
       sata)
-        file=`ls /dev/disk/by-id/* |grep -i ata | head -1`
+        # remove DVD
+        file=`ls /dev/disk/by-id/* |grep -v "DRW" |grep -i ata | head -1`
         if [[ ! -z "$file" ]]; then
           basenode="/dev/""$(basename $(readlink $file))"
           echo $basenode
