@@ -131,9 +131,7 @@ find_part_with_biggest_size() {
       SIZE=`echo "$LINE" | awk -F " " '{print $4}' | sed s/+$//`
 
       # skip bootable partition and rootfs partition with rootfs in it
-      # limit the test size upto 32G
-      max_test_size=`echo "32*1024*1024*1024/512" |bc`
-      if [[ "$FIELD_2ND" != '*' ]] && [[ $SIZE -lt $max_test_size ]]; then
+      if [[ "$FIELD_2ND" != '*' ]]; then
         IS_ROOTFS=`is_part_rootfs "$DEVICE_TYPE" "$DEVNODE"` || die "error when calling is_part_rootfs: "$IS_ROOTFS" "
         if [ "$IS_ROOTFS" == "no" ]; then
           if [ $SIZE -gt $SIZE_BIGGEST ]; then
