@@ -10,6 +10,8 @@ POWERMGR_L_STRESS_SIMPLE_SUSPEND source 'functions.sh'; suspend -i 100 -p "mem"
 
 POWERMGR_XL_STRESS_SIMPLE_SUSPEND source 'functions.sh'; suspend -i 1000 -p "mem"
 
+POWERMGR_XXL_STRESS_SIMPLE_SUSPEND source 'functions.sh'; suspend -i 4000 -p "mem"
+
 POWERMGR_XS_FUNC_SIMPLE_STANDBY source 'functions.sh'; suspend -i 2 -p "standby"
 
 POWERMGR_S_FUNC_SIMPLE_STANDBY source 'functions.sh'; suspend -i 10 -p "standby"
