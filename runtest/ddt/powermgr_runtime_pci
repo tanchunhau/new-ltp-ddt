@@ -1,0 +1,7 @@
+# @name Power Manager Runtime Tests for PCI
+# @desc Tests to validate that PCI driver use runtime_pm
+# @requires pcie
+# @setup_requires 
+
+POWERMGR_S_FUNC_RUNTIME_PCI source 'pm_runtime.sh'; is_pm_runtime_enabled 'pci' || die "pm_runtime is not enabled for PCI"; is_pm_runtime_suspending_device 'pci' || die "pm_runtime is not suspending PCI"
+
