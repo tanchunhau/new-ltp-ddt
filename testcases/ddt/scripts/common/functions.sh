@@ -712,6 +712,38 @@ report_stats()
     report "============================================="
 }
 
+# Get the power domain name for peripheral
+# Input
+#   $1: platform name
+#   $2: peripheral
+# Output
+#   pwrdm_name
+#
+get_pwrdm_name()
+{
+  platform=$1
+  per=$2
+
+  case $platform in
+    dra7xx*|dra72x*|am57xx*)
+      case $per in
+        i2c) rtn="l4per_pwrdm" ;;
+      esac
+    ;;
+    am335x*)
+      case $per in
+        i2c) rtn="per_pwrdm" ;;
+      esac
+    ;;
+  esac
+ 
+  if [ -z "$rtn" ]; then
+    die "Could not get pwrdm name for $platform $per"
+  fi
+
+  echo "$rtn"
+}
+
 # write pm counters into log file. The log will have something like "RET:0 \n RET-LOGIC-OFF:6"
 # $1: power domain
 # $2: power states seperated by delimiter Ex, "OFF:RET:INA","RET:RET-LOGIC-OFF" etc showing in pm count stat
