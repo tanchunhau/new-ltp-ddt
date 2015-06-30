@@ -16,9 +16,14 @@
 
 source "common.sh"
 
+net_type=$1     #type of ethernet, eth or wlan
 ethdev=''
 
-devices=`ls /sys/class/net|grep eth`
+if [ -z "$net_type" ]; then
+  net_type='eth'
+fi
+
+devices=`ls /sys/class/net|grep -i $net_type`
 for device in $devices
   do
     pci_interface=`udevadm info --attribute-walk --path=/sys/class/net/$device|grep -m 1 -i "pci"`

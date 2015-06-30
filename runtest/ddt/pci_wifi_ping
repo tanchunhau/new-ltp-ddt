@@ -1,0 +1,15 @@
+# @name PCIe Wifi ping tests 
+# @desc Brings wifi iface up and pings gw
+#       To run these tests, you may 
+#       export AP_SSID=<ap_ssid>, then run these tests;
+#       or 
+#       AP_SSID=<ap_ssid> ./runltp -f ddt/pci_wifi_tests -P <platform>
+# @requires pcie || pci
+# @setup_requires mpciiwlwificard
+
+PCI_XS_FUNC_IWLWIFI_PING source 'common.sh'; check_config_options "ym" CONFIG_IWLWIFI; run_pci_wifi_test.sh 
+
+PCI_L_STRESS_IWLWIFI_PING_5HRS source 'common.sh'; check_config_options "ym" CONFIG_IWLWIFI; run_pci_wifi_test.sh -d 18000
+
+PCI_XL_STRESS_IWLWIFI_PING_12HRS source 'common.sh'; check_config_options "ym" CONFIG_IWLWIFI; run_pci_wifi_test.sh -d 43200
+
