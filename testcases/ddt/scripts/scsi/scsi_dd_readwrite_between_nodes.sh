@@ -75,8 +75,8 @@ fi
 for i in $DRIVES; do
   do_cmd "cat /sys/block/sd$i/device/model"
   MNT_POINT="/mnt/sd${i}_$$"
-  NODE="/dev/sd${i}1"
-
+  create_three_partitions "/dev/sd${i}" 80 16384 
+  NODE=`find_part_with_biggest_size "/dev/sd${i}" ${DEVICE_TYPE}` || die "error getting partition with biggest size: $NODE"
   if [ -n "$FS_TYPE" ]; then
     do_cmd blk_device_prepare_format.sh -d "$DEVICE_TYPE" -n "$NODE" -f "$FS_TYPE" -m "$MNT_POINT"
   else

@@ -70,7 +70,8 @@ fi
 for drive in $DRIVES; do
   do_cmd "cat /sys/block/sd${drive}/device/model"
   MNT_POINT="/mnt/sd${drive}_$$"
-  node="/dev/sd${drive}1"
+  create_three_partitions "/dev/sd${drive}" 80 16384
+  node=`find_part_with_biggest_size "/dev/sd${drive}" ${DEVICE_TYPE}` || die "error getting partition with biggest size: $node"
   if [ -n "$FS_TYPE" ]; then
     do_cmd blk_device_dd_readwrite_test.sh -n "$node" -f "$FS_TYPE" -m "$MNT_POINT" -b "$DD_BUFSIZE" -c "$DD_CNT" -i "$IO_OPERATION" -l "$TEST_LOOP" -d "$DEVICE_TYPE" 
   else
