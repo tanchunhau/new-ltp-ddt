@@ -1,0 +1,8 @@
+# @name Openssl DES-CBC Tests
+# @desc Run openssl tests to exercise DES HW crypto operations in multithreaded mode. 
+# @requires crypto/crypto-omap && crypto/crypto-omap/des
+# @setup_requires 
+
+OPENSSL_M_STRESS_DES-CBC-100-threads source 'common.sh'; config_options=`get_modular_config_names.sh crypto`; check_config_options "y" CONFIG_CRYPTO_HW $config_options; echo /dev/null>/var/log/messages; crypto_ip=`get_crypto_ip.sh`; IRQ_NUM=`get_irq_for_iface.sh -i $crypto_ip` || die "error getting irq for crypto"; PRE=`get_num_interrupts_for_irq.sh -i $IRQ_NUM -c 0`; openssl speed -evp des-cbc -multi 100 -engine cryptodev; POST=`get_num_interrupts_for_irq.sh -i $IRQ_NUM -c 0`; [[ $POST -gt  $(( $PRE+17000 )) ]]|| die "IRQ count did not increase, no hardware crypto, looking for irq number $IRQ_NUM, initial count $PRE, final count $POST";echo "PRE is $PRE and POST is $POST"; crypto_test.sh
+OPENSSL_L_STRESS_DES-CBC-1000-threads source 'common.sh'; config_options=`get_modular_config_names.sh crypto`; check_config_options "y" CONFIG_CRYPTO_HW $config_options; echo /dev/null>/var/log/messages; crypto_ip=`get_crypto_ip.sh`; IRQ_NUM=`get_irq_for_iface.sh -i $crypto_ip` || die "error getting irq for crypto"; PRE=`get_num_interrupts_for_irq.sh -i $IRQ_NUM -c 0`; openssl speed -evp des-cbc -multi 1000 -engine cryptodev; POST=`get_num_interrupts_for_irq.sh -i $IRQ_NUM -c 0`; [[ $POST -gt  $(( $PRE+17000 )) ]]|| die "IRQ count did not increase, no hardware crypto, looking for irq number $IRQ_NUM, initial count $PRE, final count $POST";echo "PRE is $PRE and POST is $POST"; crypto_test.sh
+
