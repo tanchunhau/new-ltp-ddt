@@ -57,7 +57,7 @@ static irqreturn_t dmtimer_test_isr(int irq, void *dev) {
 
 static struct irqaction dmtimer_test_irq = {
 	.name = "dm timer",
-	.flags = IRQF_DISABLED | IRQF_TIMER | IRQF_IRQPOLL,
+	.flags = IRQF_TIMER | IRQF_IRQPOLL,
 	.handler = dmtimer_test_isr,
 };
 
