@@ -164,7 +164,7 @@ do
       echo "*****************From run_processes.sh***********************"
       echo "Process $p exit with non-zero value at time " `date`                    
       echo ""
-      if [ _run_processes_kill ]; then
+      if [ ${_run_processes_kill} -eq 1 ]; then
         echo "Going to kill ${pids[@]//:/ }"
         kill -9 ${pids[@]:1}
         break
