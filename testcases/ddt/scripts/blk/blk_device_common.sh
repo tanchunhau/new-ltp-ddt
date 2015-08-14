@@ -244,8 +244,7 @@ is_part_boot_or_rootfs(){
     do_cmd blk_device_do_mount.sh -n "$DEV_NODE" -d "$DEVICE_TYPE" -m "$MNT_POINT" > /dev/null 2>$1
     mount |grep "$DEV_NODE" > /dev/null
     if [ $? -ne 0 ]; then
-      echo "Formatting ${DEV_NODE} since it failed to mount"
-      do_cmd mkfs.vfat -F32 ${DEV_NODE}
+      do_cmd mkfs.vfat -F32 ${DEV_NODE} > /dev/null 2>$1
       do_cmd blk_device_do_mount.sh -n "$DEV_NODE" -d "$DEVICE_TYPE" -m "$MNT_POINT" > /dev/null 2>$1
       mount |grep "$DEV_NODE" > /dev/null || die "Failed to mount $DEV_NODE when checking if it is rootfs/boot partition"
     fi
