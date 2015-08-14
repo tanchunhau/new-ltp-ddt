@@ -222,6 +222,26 @@ get_frequency() {
     cat $dirpath
 }
 
+# Save cpufreq transition stats into an array
+# $1: Array to save values into
+get_cpufreq_transition_values() {
+    local __arrayvar=$1
+    eval $__arrayvar="($(cat /sys/devices/system/cpu/cpu0/cpufreq/stats/time_in_state | cut -d' ' -f 2))"
+}
+
+# Function to check that corresponding elements in 2 arrays increased
+# $1: First array
+# $2: Second array
+check_array_values_increased() {
+    local old=("${!1}")
+    local new=("${!2}")
+    for i in "${!old[@]}"; do
+        echo "Checking assertion for index $i"
+        assert [ ${old[$i]} -lt ${new[$i]} ]
+    done
+}
+
+
 get_max_frequency() {
     local cpu=$1
     local dirpath=$CPU_PATH/$cpu/cpufreq/scaling_max_freq
