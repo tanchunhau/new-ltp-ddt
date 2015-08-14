@@ -20,7 +20,7 @@
 # @returns Zero for success, non-zero for failure
 # @history 2012-01-31: First version
 
-source "common.sh"  # Import do_cmd(), die() and other functions
+source "functions.sh"  # Import do_cmd(), die() and other functions
 
 ############################# Functions #######################################
 usage()
@@ -67,6 +67,9 @@ case $MACHINE in
   omap5-evm)  REGULATOR="smps123";;
   am43xx-epos) REGULATOR="vdd_mpu";;
   am43xx-gpevm) REGULATOR="vdd_mpu";;
+  dra7xx-evm) REGULATOR="abb_mpu";;
+  am57xx-evm) REGULATOR="abb_mpu";;
+  dra72x-evm) REGULATOR="abb_mpu";;
 esac
 
 
@@ -89,6 +92,8 @@ test_print_trc "cpufreq trace log"
 
 cnt=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies | awk ' {print NF} '`
 k=0;
+
+get_cpufreq_transition_values old_cpufreq_values
 
 test_print_trc "OPP to be switched for $LOOP loops with $DELAY seconds delay between each OPP transition"
 
@@ -142,3 +147,8 @@ do
   sleep $DELAY
  fi
 done
+
+get_cpufreq_transition_values new_cpufreq_values
+if [ "$extreme" == "false" ]; then
+  check_array_values_increased old_cpufreq_values[@] new_cpufreq_values[@]
+fi
