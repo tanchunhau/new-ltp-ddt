@@ -784,37 +784,15 @@ get_pwrdm_name()
 # $4: log name to save the counter
 log_pm_count()
 {
-  pwrdm=$1
-  pwr_states=$2
-  states_delimiter=$3
-  log_name=$4
-  pwr_state_place=0
-
-  tmp_ifs="$IFS"
+  local pwrdm=$1
+  local pwr_states=$2
+  local states_delimiter=$3
+  local log_name=$4
+  local tmp_ifs="$IFS"
   IFS=$states_delimiter
   for pwr_state in $pwr_states; do
-    if [ "$pwr_state" = "DEVICE-OFF" ]; then
-      pwr_state_place=1
-    elif [ "$pwr_state" = "OFF" ]; then
-      pwr_state_place=2
-    elif [ "$pwr_state" = "RET" ]; then
-      pwr_state_place=3
-    elif [ "$pwr_state" = "INA" ]; then
-      pwr_state_place=4
-    elif [ "$pwr_state" = "ON" ]; then
-      pwr_state_place=5
-    elif [ "$pwr_state" = "RET-LOGIC-OFF" ]; then
-      pwr_state_place=6
-    elif [ "$pwr_state" = "RET-MEMBANK1-OFF" ]; then
-      pwr_state_place=7
-    elif [ "$pwr_state" = "RET-MEMBANK2-OFF" ]; then
-      pwr_state_place=8
-    else
-      die "Unknown power status name: $pwr_state"
-    fi
-
-    pwrdm_stat=`cat $DEBUGFS_LOCATION/pm_debug/count | grep ^$pwrdm | \
-                cut -d "," -f $pwr_state_place`
+    pwrdm_stat=`cat ${DEBUGFS_LOCATION}pm_debug/count | grep ^$pwrdm`
+    pwrdm_stat=`expr match "$pwrdm_stat" ".*,\($pwr_state:[0-9]*\)"`
     report "Power domain stats requested: ${pwrdm}: $pwrdm_stat==========="
     echo "$pwrdm_stat" >> ${TMPDIR}/"$log_name"
   done
@@ -830,22 +808,22 @@ log_pm_count()
 #  $5: log name after  
 compare_pm_count()
 {
-  pwrdm=$1
-  pwr_state=$2
-  state_delimiter=$3
-  log_name_before=$4
-  log_name_after=$5
+  local pwrdm=$1
+  local pwr_states=$2
+  local state_delimiter=$3
+  local log_name_before=$4
+  local log_name_after=$5
 
-  log_before=${TMPDIR}/"$log_name_before"
-  log_after=${TMPDIR}/"$log_name_after"
+  local log_before=${TMPDIR}/"$log_name_before"
+  local log_after=${TMPDIR}/"$log_name_after"
 
-  num_lines_1=`cat "$log_before" | wc -l`
-  num_lines_2=`cat "$log_after" | wc -l`
+  local num_lines_1=`cat "$log_before" | wc -l`
+  local num_lines_2=`cat "$log_after" | wc -l`
   if [ $num_lines_1 -ne $num_lines_2 ]; then
     die "There is differnt number of pairs between log file $log_name_before and log file $log_name_after; can not compare these two logs" 
   fi
 
-  tmp_ifs="$IFS"
+  local tmp_ifs="$IFS"
   IFS=$state_delimiter
   for pwr_state in $pwr_states; do
     val_before=`get_value_for_key_from_file "$log_before" "$pwr_state" ":"` || die "Error getting value from $log_before for ${pwr_state}: $val_before"
