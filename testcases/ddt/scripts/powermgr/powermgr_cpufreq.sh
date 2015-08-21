@@ -150,5 +150,5 @@ done
 
 get_cpufreq_transition_values new_cpufreq_values
 if [ "$extreme" == "false" ]; then
-  check_array_values_increased old_cpufreq_values[@] new_cpufreq_values[@]
+  check_array_values old_cpufreq_values[@] new_cpufreq_values[@] "-lt"
 fi

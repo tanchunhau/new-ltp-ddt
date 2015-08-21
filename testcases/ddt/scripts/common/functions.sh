@@ -229,15 +229,28 @@ get_cpufreq_transition_values() {
     eval $__arrayvar="($(cat /sys/devices/system/cpu/cpu0/cpufreq/stats/time_in_state | cut -d' ' -f 2))"
 }
 
-# Function to check that corresponding elements in 2 arrays increased
+# Get array of clock rates
+# $1: Array to save values into
+get_clk_summary() {
+  local __arrayvalues=$1
+  data=`mktemp`
+  cat /sys/kernel/debug/clk/clk_summary  > $data
+  sed -i -e 's/\-*//' -e 's/.*clock.*enable.*rate.*//' $data
+  eval $__arrayvalues="($(awk -- '{print $4};' $data))"
+  rm $data
+}
+
+
+# Function to check operator ($3) in  corresponding elements in 2 arrays
 # $1: First array
 # $2: Second array
-check_array_values_increased() {
+# $3: comparison operation e.g. "-lt"
+check_array_values() {
     local old=("${!1}")
     local new=("${!2}")
     for i in "${!old[@]}"; do
         echo "Checking assertion for index $i"
-        assert [ ${old[$i]} -lt ${new[$i]} ]
+        assert [ ${old[$i]} $3 ${new[$i]} ]
     done
 }
 
