@@ -141,7 +141,11 @@ case $DEV_TYPE in
       #do_cmd "ubimkvol /dev/ubi0 -N test -s 200MiB"
       do_cmd "ubimkvol /dev/ubi$UBI_DEVICE_NUM -N "$VOL_NAME" -S $LEB_CNT"
     else
-      do_cmd "$FLASH_ERASEALL $CHAR_DEV_NODE"
+      if [ "$FS_TYPE" = "jffs2" ]; then
+        do_cmd "$FLASH_ERASEALL -j $CHAR_DEV_NODE"
+      else
+        do_cmd "$FLASH_ERASEALL $CHAR_DEV_NODE"
+      fi
     fi
     sleep 1
     ;;
