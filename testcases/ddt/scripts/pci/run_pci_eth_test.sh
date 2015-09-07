@@ -51,7 +51,7 @@ test_print_trc "ETH_IFACE: $ETH_IFACE"
 iface_list=`get_active_eth_interfaces.sh`; 
 echo "${iface_list[@]}"; 
 if [ -z "${ETH_IFACE}" ];then
-  ETH_IFACE=`pci_eth_search_device.sh 'pci'` || die "error getting pcie eth interface name";  
+  ETH_IFACE=`pci_eth_search_device.sh 'eth'` || die "error getting pcie eth interface name";  
   echo "PCI eth iface: $ETH_IFACE"; 
 fi
 iface_config="iface ${ETH_IFACE} inet dhcp"; 
