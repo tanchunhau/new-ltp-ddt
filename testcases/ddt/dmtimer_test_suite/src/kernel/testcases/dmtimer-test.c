@@ -123,13 +123,13 @@ static int __init dmtimer_init(void)
 		dmtimer_test_irq.dev_id = (void *)timer_test;
 		request_irq(timer_irq, dmtimer_test_isr, IRQF_SHARED,
 				  "dmtimer-test", timer_test);
-		omap_dm_timer_set_int_enable(timer_test, OMAP_TIMER_INT_OVERFLOW);
 		omap_dm_timer_set_load_start(timer_test, 1, 0xffffffff - period);
 
 		switch(test_type){
 		// request/start/stop/free timers
 		case 1:
 			omap_dm_timer_start(timer_test);
+			omap_dm_timer_set_int_enable(timer_test, OMAP_TIMER_INT_OVERFLOW);
 			omap_dm_timer_stop(timer_test);
 			free_irq(timer_irq, timer_test);
 			omap_dm_timer_free(timer_test);
@@ -142,6 +142,7 @@ static int __init dmtimer_init(void)
 			t0_total = t0.tv_sec*1000000+t0.tv_usec;
 			printk(KERN_ERR "Time0 inside debug 1 %u\n", t0_total);
 			omap_dm_timer_start(timer_test);
+			omap_dm_timer_set_int_enable(timer_test, OMAP_TIMER_INT_OVERFLOW);
 			status = omap_dm_timer_read_status(timer_test);
 
 			if(status<0) {
