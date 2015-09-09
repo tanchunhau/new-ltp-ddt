@@ -12,7 +12,7 @@ get_power_domain_states_on_suspend()
 
   case $platform in
     dra7xx*|dra72x*|am57xx*)
-      rtn="cam_pwrdm:OFF,mpu_pwrdm:RET,vpe_pwrdm:RET,cpu0_pwrdm:RET,gpu_pwrdm:OFF,l4per_pwrdm:RET,dss_pwrdm:RET,rtc_pwrdm:OFF,iva_pwrdm:RET" ;;
+      rtn="cam_pwrdm:OFF,mpu_pwrdm:RET,vpe_pwrdm:RET,cpu0_pwrdm:RET,gpu_pwrdm:OFF,l4per_pwrdm:RET,dss_pwrdm:RET,iva_pwrdm:RET" ;;
     am335x*|beagle*|am43*)
       rtn="mpu_pwrdm:OFF,per_pwrdm:RET,gfx_pwrdm:OFF" ;;
   esac
