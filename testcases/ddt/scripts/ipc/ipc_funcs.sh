@@ -556,7 +556,7 @@ rpmsg_client_sample_test()
   
   for idx in `seq 1 $__loops`
   do
-    __test_log=$(dmesg -c > /dev/null && insmod ddt/rpmsg_client_sample.ko && sleep 3 && dmesg)
+    __test_log=$(dmesg -c > /dev/null && modprobe -f rpmsg_client_sample && sleep 3 && dmesg)
     __num_match=$(echo -e "$__test_log" | grep -c -i 'rpmsg[0-9]\+: incoming msg 100')
     __num_goodbye=$(echo -e "$__test_log" | grep -c -i 'rpmsg[0-9]\+: goodbye!')
     if [ $__num_match -ne 1 -o  $__num_goodbye -ne $(($__num_procs * 2)) ]
