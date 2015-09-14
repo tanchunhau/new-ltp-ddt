@@ -2,6 +2,7 @@ armv7l
 keystone
 keystone-evm
 net/eth1G
+net/dual_mac
 spi_master/mtd/spi_davinci
 jffs2
 watchdog
