@@ -1,0 +1,6 @@
+# @name Test system use cases
+# @desc Test system use cases
+# @requires net && usb/host
+# @setup_requires usbhostmsc
+
+SYSTEM_L_FUNC_ETH-USB-0001 source 'common.sh'; run_processes.sh -c "/opt/ltp/runltp -f ddt/eth_iperf_tcp -P $PLATFORM -s ETH_S_PERF_IPERF_TCP_128K_1448B # /opt/ltp/runltp -f ddt/usbhost_perf_vfat -P $PLATFORM -s USBHOST_M_PERF_VFAT_0001"
