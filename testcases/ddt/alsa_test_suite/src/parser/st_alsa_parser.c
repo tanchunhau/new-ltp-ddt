@@ -80,7 +80,7 @@ static void st_alsa_test_suite_help(void)
 {
 	printf
 	    ("alsa_tests -playback -record -[file] -[access] [-channel] [-device] [-totalsize] [-format] [-performance] "
-	     "-[nonblock] [-periodsize] [-rate] [-id] [-h/elp] [-v/ersion] \n\n"
+	     "-[nonblock] [-periodsize] [-buffersize] [-rate] [-id] [-h/elp] [-v/ersion] \n\n"
 	     "-access=# 	ACCESS TYPE TO PCM, [3]\n"
 	     "\t  	0= mmap interleaved\n"
 	     "\t  	1= mmap non interleaved\n"
@@ -110,6 +110,7 @@ static void st_alsa_test_suite_help(void)
 	     "\t  	13= unsigned 32 bit BE\n"
 	     "-nonblock	Non Blocking Mode \n"
 	     "-periodsize=#Distance between interrupts is # frames [64]\n"
+	     "-buffersize=#Size of the hw buffer in # frames [1024]\n"
 	     "-rate=# 		Sampling Rate [44100] \n"
 	     "-playback=#	Playback\n"
 	     "\t		0= Playback from buffer (sine wave)\n"
@@ -230,6 +231,8 @@ static void st_process_alsa_test_options(int argc, char **argv)
 			{"nonblock", no_argument, NULL, OPTION_NONBLOCK},
 			{"performance", optional_argument, NULL,
 			 OPTION_PERFORMANCE},
+			{"buffersize", required_argument, NULL,
+			 OPTION_BUFFERSIZE},
 			{"id", required_argument, NULL, OPTION_TESTCASE_ID},
 			{"version", no_argument, NULL, OPTION_VERSION},
 			{"help", no_argument, NULL, OPTION_HELP},
@@ -412,6 +415,17 @@ static void st_process_alsa_test_options(int argc, char **argv)
 				}
 			}
 			break;
+		case OPTION_BUFFERSIZE:
+			if (optarg != NULL) {
+				testoptions_capture.hw_buffer_size = atoi(optarg);
+				testoptions_playback.hw_buffer_size = atoi(optarg);
+			} else if (optind < argc && ('-' != argv[optind][0])) {
+				testoptions_capture.hw_buffer_size =
+				    atoi(argv[optind]);
+				testoptions_playback.hw_buffer_size =
+				    atoi(argv[optind]);
+			}
+			break;
 		case OPTION_TESTCASE_ID:
 			if (optarg != NULL) {
 				testcaseid = optarg;
@@ -508,6 +522,7 @@ void st_alsa_print_test_params(tc_dev_params * test_opt)
 	TEST_PRINT_TRC("Device Number	|%d", test_opt->device);
 	TEST_PRINT_TRC("Access Type		|%s", access);
 	TEST_PRINT_TRC("Period Size		|%d", test_opt->period_size);
+	TEST_PRINT_TRC("Buffer Size		|%d", test_opt->hw_buffer_size);
 	TEST_PRINT_TRC("Sampling Rate	|%d", test_opt->sampling_rate);
 	TEST_PRINT_TRC("Channels		|%d", test_opt->channel);
 	TEST_PRINT_TRC("format		|%s", format);

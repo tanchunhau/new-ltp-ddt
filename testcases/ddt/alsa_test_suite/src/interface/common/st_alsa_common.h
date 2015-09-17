@@ -60,6 +60,7 @@
 #define DEFAULT_SND_DEVICE 0
 #define DEFAULT_CAPTURE_PLAYBACK_TIME 10
 #define DEFAULT_BUFFER_SIZE 2048
+#define DEFAULT_HW_BUFFER_SIZE 1024
 #define DEFAULT_PERIOD_SIZE 64
 #define DEFAULT_TOTAL_SIZE 1024*1024*10
 
@@ -102,6 +103,7 @@ typedef struct _tc_dev_params {
 	unsigned int period_time;
 	unsigned int buffer_time;
 	unsigned int buffer_size;
+	unsigned int hw_buffer_size;
 	unsigned int total_size;
 	unsigned int sample_size;
 	unsigned int play_from_file;

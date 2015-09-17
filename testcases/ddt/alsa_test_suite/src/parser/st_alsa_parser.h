@@ -114,6 +114,11 @@
  * Enables performance calculation
  */ 
 #define OPTION_PERFORMANCE 14
+
+/* 
+ * Buffer size
+ */ 
+#define OPTION_BUFFERSIZE 15
     
 /*
  *Displays the version of LFTB package 

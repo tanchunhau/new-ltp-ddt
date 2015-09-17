@@ -293,7 +293,7 @@ int st_audio_open_config_hw_interface(tc_dev_params * pcm_param)
 
 		/* Set period size and buffer size */
 		frames_capture = pcm_param->period_size;
-		size = frames_capture * 2;
+		size = pcm_param->hw_buffer_size;
 		if ((err =
 		     snd_pcm_hw_params_set_period_size_near(handle_capture,
 							    params_capture,
@@ -407,7 +407,7 @@ int st_audio_open_config_hw_interface(tc_dev_params * pcm_param)
 
 		/* Set period size and buffer size */
 		frames_playback = pcm_param->period_size;
-		size = frames_playback * 2;
+		size = pcm_param->hw_buffer_size;
 		if ((err =
 		     snd_pcm_hw_params_set_period_size_near(handle_playback,
 							    params_playback,
@@ -467,6 +467,7 @@ void st_alsa_init_capture_test_params(void)
 	testoptions_capture.file_name = "/mnt/default_capture.raw";
 	testoptions_capture.io_opmode = BLOCKING;
 	testoptions_capture.period_size = DEFAULT_PERIOD_SIZE;
+	testoptions_capture.hw_buffer_size = DEFAULT_HW_BUFFER_SIZE;
 	testoptions_capture.total_size = DEFAULT_TOTAL_SIZE;
 	testoptions_capture.sampling_rate = DEFAULT_SAMPING_RATE;
 	testoptions_capture.stream = CAPTURE;
@@ -493,6 +494,7 @@ void st_alsa_init_playback_test_params(void)
 	testoptions_playback.file_name = "/mnt/default_capture.raw";
 	testoptions_playback.io_opmode = BLOCKING;
 	testoptions_playback.period_size = DEFAULT_PERIOD_SIZE;
+	testoptions_playback.hw_buffer_size = DEFAULT_HW_BUFFER_SIZE;
 	testoptions_playback.total_size = DEFAULT_TOTAL_SIZE;
 	testoptions_playback.sampling_rate = DEFAULT_SAMPING_RATE;
 	testoptions_playback.stream = PLAYBACK;
