@@ -1,0 +1,5 @@
+# @name linaro pm-qa tests
+# @desc power managament functional tests from git://git.linaro.org/tools/pm-qa.git
+# @requires power_mgr/cpufreq
+
+POWERMGR_M_FUNC_LINARO_PM-QA run_linaro_pm-qa.sh
