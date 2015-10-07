@@ -1,6 +1,7 @@
 # @name HDMI with Audio . 
 # @desc Test cases corresponding to HDMI with Audio playback cases. 
 # @requires hdmi
+# @setup_requires hdmi
 
 HDMI_S_FUNC_PLAYBACK_1920x1080  source 'audio_display_functions.sh' ; modes=( $(get_video_connector_info hdmi 1920x1080-) ); do_cmd 'disp_audio_test hdmi modes 10'
 HDMI_S_FUNC_PLAYBACK_1920x1080i  source 'audio_display_functions.sh' ; modes=( $(get_video_connector_info hdmi 1920x1080i) ); do_cmd 'disp_audio_test hdmi modes 10'

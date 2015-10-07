@@ -2,6 +2,7 @@
 # @desc Test cases corresponding to simultaneous display on all available
 #       outputs (hdmi, lcd, etc) and audio playback on HDMI 
 # @requires hdmi/audio/playback
+# @setup_requires hdmi
 
 MULTIDISP_S_FUNC_PLAYBACK_1920x1080_32KHz_HDMI  source 'audio_display_functions.sh' ; devnode=`get_hdmi_audio_devnode`; get_multidisplay_modes modes "1920x1080-"; do_cmd 'disp_audio_test all modes 10 32000 $devnode'
 MULTIDISP_S_FUNC_PLAYBACK_1920x1080_44KHz_HDMI  source 'audio_display_functions.sh' ; devnode=`get_hdmi_audio_devnode`; get_multidisplay_modes modes "1920x1080-"; do_cmd 'disp_audio_test all modes 10 44100 $devnode'
