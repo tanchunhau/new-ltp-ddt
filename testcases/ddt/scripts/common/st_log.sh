@@ -18,7 +18,7 @@
 #
 test_print_trc()
 {
-	log_info=$1			# trace information
+	log_info=$*			# trace information
 
 
 	echo "|TRACE LOG|$log_info|"
