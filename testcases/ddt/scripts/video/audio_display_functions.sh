@@ -217,3 +217,19 @@ get_multidisplay_modes()
     fi
   done
 }
+
+#Function to obtain the connector ids of connectors with connected
+#status.
+#Inputs:
+#  $1: (Optional) the connector type hdmi, unknown
+#Output:
+#a list containing the connector ids, one per line if $1 is not defined
+get_video_connectors_id()
+{
+	local __filter="."
+	if [ ${#} -gt 0 ]; then
+	  __filter=$*
+  fi
+  
+  modetest -c | grep -i -v disconnected | grep -i $__filter | grep -o ^[0-9]* 
+}
