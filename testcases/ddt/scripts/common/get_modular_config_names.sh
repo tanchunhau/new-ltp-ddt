@@ -150,7 +150,7 @@ case $MACHINE in
 		sound='CONFIG_SND_DM6467_SOC_EVM:snd-soc-evm';;
 	keystone-evm)
 		usb='CONFIG_USB_XHCI_HCD:xhci-hcd';;
-    dragonboard410c)
+    dragonboard410c|hikey)
         usb='CONFIG_USB_STORAGE:usb-storage';;
 
 esac
