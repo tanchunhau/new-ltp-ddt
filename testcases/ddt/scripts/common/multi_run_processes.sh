@@ -20,7 +20,6 @@ COMMANDS_SET=0
 PARAMS_SET=0
 
 while getopts ":s:l:" opt; do                                            
-  echo "OPT is $opt"
   case $opt in                                                                 
    s)                                                                          
       echo "-s was triggered, Parameter: $OPTARG" >&2                  
