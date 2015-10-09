@@ -9,7 +9,7 @@
 #                  [-p <priority> ]
 #                  [-w] On first failure, wait for all processes
 # if cpu affinity is set, then taskset is used to spawn the processes
-source "common.sh"  # Import do_cmd(), die() and other functions
+source "functions.sh"  # Import do_cmd(), die() and other functions
 pids=''
 RET=0
 OFS=$IFS
