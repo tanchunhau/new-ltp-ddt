@@ -23,3 +23,19 @@ get_power_domain_states_on_suspend()
 
   echo "$rtn"
 }
+
+# Return max latency accepted for given use case and SoC
+# $1: use case
+get_acceptable_latency()
+{
+  local usecase=$1
+  local max_latency
+  case $usecase in
+  *)
+      case $SOC in
+      *)
+          max_latency=50 ;;
+      esac
+  esac
+  echo "$max_latency"
+}
