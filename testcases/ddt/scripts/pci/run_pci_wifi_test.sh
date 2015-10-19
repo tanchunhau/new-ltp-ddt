@@ -75,12 +75,14 @@ do_cmd sleep 1
 do_cmd ifconfig $ETH_IFACE up
 do_cmd ip addr show $ETH_IFACE |grep ",UP>" ||die "$ETH_IFACE could not be brought up"
 
+echo "iw dev $ETH_IFACE scan"
 iw dev $ETH_IFACE scan |grep $AP_SSID ||iw dev $ETH_IFACE scan |grep $AP_SSID ||die "Could not see testing AP: $AP_SSID"
   
 cnt=0
 while [ $cnt -lt 5 ]
 do
   #do_cmd iw dev $ETH_IFACE connect $AP_SSID |grep "${ETH_IFACE}: associated" && break
+  echo "cnt=$cnt; iw dev $ETH_IFACE connect $AP_SSID"
   iw dev $ETH_IFACE connect $AP_SSID 2>&1 |grep "${ETH_IFACE}: associated"
   if [ $? -eq 0 ]; then
     echo "Connected"
