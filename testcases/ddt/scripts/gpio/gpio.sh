@@ -115,7 +115,7 @@ case $MACHINE in
   keystone-evm)
     GPIO_NUM_IN_BANKS="6,8"
   ;;
-  dra7xx-evm)
+  dra7xx-evm|am572x-idk|am571x-idk) 
     # bank number starts from 1 and total 8 banks
     GPIO_NUM_IN_BANKS="22,29,0,0,0,14,0,0"
   ;;

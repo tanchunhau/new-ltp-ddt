@@ -242,7 +242,7 @@ case $MACHINE in
           esac
       ;;
 
-      dra7xx-evm)
+      dra7xx-evm|am572x-idk|am571x-idk)
 
           case $SLAVE_DEVICE in
               temp_sensor)

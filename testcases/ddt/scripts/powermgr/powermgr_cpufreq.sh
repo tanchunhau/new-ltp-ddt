@@ -67,9 +67,9 @@ case $MACHINE in
   omap5-evm)  REGULATOR="smps123";;
   am43xx-epos) REGULATOR="vdd_mpu";;
   am43xx-gpevm) REGULATOR="vdd_mpu";;
-  dra7xx-evm) REGULATOR="abb_mpu";;
+  dra7xx-evm | am572x-idk) REGULATOR="abb_mpu";;
   am57xx-evm) REGULATOR="abb_mpu";;
-  dra72x-evm) REGULATOR="abb_mpu";;
+  dra72x-evm | am571x-idk) REGULATOR="abb_mpu";;
 esac
 
 
