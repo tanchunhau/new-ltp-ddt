@@ -1,0 +1,12 @@
+# @name Worstcase Latency with IPC by using cyclictest
+# @desc Measure latency using cyclictest while using IPC to communicate with Remote Procs.
+# @requires ipc
+# @setup_requires
+
+REALTIME_S_PERF_1C_IPC_RPMSG_RPC source 'functions.sh'; source 'board_requirements.sh'; latency=`get_acceptable_latency ipc`; multi_run_processes.sh -s "timeout -t 115 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/ipc_performance -s IPC_S_FUNC_RPMSG_RPC; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p99 -m -n -q -D 2m" -l "-n 1"
+
+REALTIME_L_PERF_1C_IPC_RPMSG_RPC source 'functions.sh'; source 'board_requirements.sh'; latency=`get_acceptable_latency ipc`; multi_run_processes.sh -s "timeout -t 14380 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/ipc_performance -s IPC_S_FUNC_RPMSG_RPC; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p99 -m -n -q -D 4h" -l "-n 1"
+
+REALTIME_S_PERF_1C_IPC_RPMSG_PROTO source 'functions.sh'; source 'board_requirements.sh'; latency=`get_acceptable_latency ipc`; multi_run_processes.sh -s "timeout -t 115 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/ipc_performance -s IPC_S_FUNC_RPMSG_PROTO; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p99 -m -n -q -D 2m" -l "-n 1"
+
+REALTIME_L_PERF_1C_IPC_RPMSG_PROTO source 'functions.sh'; source 'board_requirements.sh'; latency=`get_acceptable_latency ipc`; multi_run_processes.sh -s "timeout -t 14380 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/ipc_performance -s IPC_S_FUNC_RPMSG_PROTO; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p99 -m -n -q -D 4h" -l "-n 1"
