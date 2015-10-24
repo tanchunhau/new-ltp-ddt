@@ -7,9 +7,9 @@
 # @requires pcie || pci
 # @setup_requires mpciiwlwificard
 
-PCI_XS_FUNC_IWLWIFI_PING source 'common.sh'; check_config_options "ym" CONFIG_IWLWIFI; run_pci_wifi_test.sh 
+PCI_XS_FUNC_IWLWIFI_PING source 'common.sh'; check_config_options "ym" CONFIG_IWLWIFI; get_iwlwifi_firmware.sh; run_pci_wifi_test.sh 
 
-PCI_L_STRESS_IWLWIFI_PING_5HRS source 'common.sh'; check_config_options "ym" CONFIG_IWLWIFI; run_pci_wifi_test.sh -d 18000
+PCI_L_STRESS_IWLWIFI_PING_5HRS source 'common.sh'; check_config_options "ym" CONFIG_IWLWIFI; get_iwlwifi_firmware.sh; run_pci_wifi_test.sh -d 18000
 
-PCI_XL_STRESS_IWLWIFI_PING_12HRS source 'common.sh'; check_config_options "ym" CONFIG_IWLWIFI; run_pci_wifi_test.sh -d 43200
+PCI_XL_STRESS_IWLWIFI_PING_12HRS source 'common.sh'; check_config_options "ym" CONFIG_IWLWIFI; get_iwlwifi_firmware.sh; run_pci_wifi_test.sh -d 43200
 
