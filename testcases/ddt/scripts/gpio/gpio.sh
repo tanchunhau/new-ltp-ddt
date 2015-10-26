@@ -112,7 +112,7 @@ case $MACHINE in
   beagleboard)
     GPIO_NUM_IN_BANKS="26,6,6,19,0,1"
   ;;
-  keystone-evm)
+  k2*-evm)
     GPIO_NUM_IN_BANKS="6,8"
   ;;
   dra7xx-evm|am572x-idk|am571x-idk) 
@@ -146,7 +146,7 @@ for GPIO_NUM_IN_BANK in $GPIO_NUM_IN_BANKS; do
         GPIO_PIN_STRING="DA850_GPIO${BANK_NUM}_${GPIO_NUM_IN_BANK}"
         EXTRA_PARAMS="gpio_pin_string=${GPIO_PIN_STRING}"
       ;;
-      keystone-evm)
+      k2*-evm)
         GPIO_NUM=$((${BANK_NUM}*16+${GPIO_NUM_IN_BANK})) 
       ;;
     esac

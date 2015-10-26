@@ -65,7 +65,7 @@ eth*)
 	case $MACHINE in
 	omap5-evm)
 		NAME='109';;
-	keystone-evm)
+	k2*-evm)
     NAME='80';;
 	esac
 	;;

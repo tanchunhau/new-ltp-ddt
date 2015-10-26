@@ -148,7 +148,7 @@ case $MACHINE in
 		sound='CONFIG_SND_DA830_SOC_EVM:snd-soc-evm CONFIG_SND_DAVINCI_SOC:snd-soc-davinci CONFIG_SND_DAVINCI_SOC_MCASP:snd-soc-davinci-mcasp CONFIG_SND_SOC_TLV320AIC3X:snd-soc-tlv320aic3x';;
 	dm6467-evm)
 		sound='CONFIG_SND_DM6467_SOC_EVM:snd-soc-evm';;
-	keystone-evm)
+	k2*-evm)
 		usb='CONFIG_USB_XHCI_HCD:xhci-hcd';;
     dragonboard410c|hikey)
         usb='CONFIG_USB_STORAGE:usb-storage';;

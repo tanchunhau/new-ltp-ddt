@@ -1,6 +1,6 @@
 armv7l
 keystone
-keystone-evm
+k2l-evm
 net/eth1G
 net/dual_mac
 spi_master/mtd/spi_davinci
