@@ -1,9 +1,9 @@
 # @name 
 #	WL18XX ping test in station mode 
 # @desc 
-#       A router with SSID as mentioned in environment variable $WILINK_WLAN_OPEN_SSID needs to be available
+#       A router with SSID as mentioned in environment variable $AP_SSID needs to be available
 #	or if running from vatf, such an SSID needs to be defined in bench file as dut parameter 
-#	"wilink_wlan_open_ssid". For example, dut.wilink_wlan_open_ssid = "gtaccess-open"
+#	"AP_SSID". For example, dut.params['AP_SSID'] = "gtaccess-open"
 #	wl18xx demos are invoked to start/connect/stop station interface 
 # @setup_requires wlan
 
