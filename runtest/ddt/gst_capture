@@ -1,0 +1,18 @@
+# @name Test capture and encoding using Gstreamer
+# @desc Display Modular tests for display in a loop of 100 and checking for proc entries
+# @requires video/capture/*/v4l2
+# @setup_requires videosensor
+
+GST_S_CAP_H264 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c h264; done
+GST_S_CAP_H264_1920x1080 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c h264 -r 1920x1080 ; done
+GST_S_CAP_H264_1280x800 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c h264 -r 1280x800 ; done
+GST_S_CAP_H264_1280x720 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c h264 -r 1280x720 ; done
+GST_S_CAP_H264_720x480 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c h264 -r 720x480 ; done
+GST_S_CAP_H264_640x480 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c h264 -r 640x480 ; done
+
+GST_S_CAP_MPEG4 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c mpeg4 ; done
+GST_S_CAP_MPEG4_1920x1080 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c mpeg4 -r 1920x1080 ; done
+GST_S_CAP_MPEG4_1280x800 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c mpeg4 -r 1280x800 ; done
+GST_S_CAP_MPEG4_1280x720 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c mpeg4 -r 1280x720 ; done
+GST_S_CAP_MPEG4_720x480 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c mpeg4 -r 720x480 ; done
+GST_S_CAP_MPEG4_640x480 source video_capture_functions.sh; video_devs=$(get_video_capture_nodes); for v_node in $video_devs; do gst_enc.sh -n ${v_node} -c mpeg4 -r 640x480 ; done
