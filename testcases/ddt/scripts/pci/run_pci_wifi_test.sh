@@ -93,13 +93,9 @@ done
 do_cmd iw dev $ETH_IFACE link |grep -i "not connected" && die "Could not connect to $AP_SSID"
 
 timeout -t 120 -s2 udhcpc -x hostname:${PLATFORM} -i $ETH_IFACE || die "Failed to get ipaddr from dhcp server"
-#timeout -t 120 -s2 udhcpc -x hostname:${PLATFORM} -i $ETH_IFACE
-#if [ $? -ne 0 ];then
-#  die "Failed to get ipaddr from dhcp server"
-#fi 
+AP_IP=`udhcpc -x hostname:${PLATFORM} -i $ETH_IFACE |awk '/DNS/ {print $4}' `
 do_cmd ifconfig $ETH_IFACE
 ipaddr=`get_eth_ipaddr.sh $ETH_IFACE` ||die "error getting ipaddr of $ETH_IFACE :: $ipaddr "
-AP_IP=`get_eth_gateway.sh -i $ETH_IFACE` ||die "error getting ipaddr of AP :: $AP_IP "
 sleep 1
 do_cmd ping $AP_IP -w $DURATION
 
