@@ -1,8 +1,8 @@
 # @name Worstcase Latency with Multimedia load on isolated core by using cyclictest
 # @desc Measure latency under Multimedia load on isolated core using cyclictest
-# @requires
+# @requires smp
 # @setup_requires
 
-REALTIME_S_PERF_SHIELD_SMP_MULTIMEDIA source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency multimedia`; multi_run_processes.sh -s "timeout -t 240 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/gst_video -s VIDEO_S_FUNC_GST_MP4_480P; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p98 -m -n -q -D 3m" -l "-n 1"
+REALTIME_S_PERF_SHIELD_SMP_MULTIMEDIA source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency multimedia`; multi_run_processes.sh -s "timeout -t 240 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/gst_video -s VIDEO_S_FUNC_GST_MP4_480P; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -p98 -m -n -q -D 3m" -l "-n 1"
 
-REALTIME_L_PERF_SHIELD_SMP_MULTIMEDIA source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency multimedia`; multi_run_processes.sh -s "timeout -t 14440 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/gst_video -s VIDEO_S_FUNC_GST_MP4_480P; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p98 -m -n -q -D 4h" -l "-n 1"
+REALTIME_L_PERF_SHIELD_SMP_MULTIMEDIA source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency multimedia`; multi_run_processes.sh -s "timeout -t 14440 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/gst_video -s VIDEO_S_FUNC_GST_MP4_480P; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -p98 -m -n -q -D 4h" -l "-n 1"
