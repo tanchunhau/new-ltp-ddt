@@ -1,0 +1,8 @@
+# @name Worstcase Latency with UART IO load on isolated core by using cyclictest
+# @desc Measure latency under UART IO load on isolated core using cyclictest
+# @requires smp
+# @setup_requires
+
+REALTIME_S_PERF_SHIELD_SMP_UART source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency uart`; multi_run_processes.sh -s "timeout -t 115 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/uart -s 'UART_S_FUNC_1152000'; done'  || true" -l "-n 1" -s "run_cyclictest $latency -p98 -m -n -q -D 2m" -l "-n 1"
+
+REALTIME_L_PERF_SHIELD_SMP_UART source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency uart`; multi_run_processes.sh -s "timeout -t 14380 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/uart -s 'UART_L_STRESS_3500000'; done'  || true" -l "-n 1" -s "run_cyclictest $latency -p98 -m -n -q -D 4h" -l "-n 1"
