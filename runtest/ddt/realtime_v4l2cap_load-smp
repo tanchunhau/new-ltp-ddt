@@ -1,0 +1,8 @@
+# @name Worstcase Latency with Video Capture on isolated core by using cyclictest
+# @desc Measure latency using cyclictest while capturing video on isolated core
+# @requires video/capture/*/v4l2 && smp
+# @setup_requires
+
+REALTIME_S_PERF_SHIELD_SMP_V4L2CAP source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency v4l2cap`; multi_run_processes.sh -s "timeout -t 115 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/v4l2_cap_func -s V4L2CAP_S_FUNC_CAP; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p98 -m -n -q -D 2m" -l "-n 1"
+
+REALTIME_L_PERF_SHIELD_SMP_V4L2CAP source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency v4l2cap`; multi_run_processes.sh -s "timeout -t 14380 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/v4l2_cap_func -s V4L2CAP_S_FUNC_CAP; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p98 -m -n -q -D 4h" -l "-n 1"

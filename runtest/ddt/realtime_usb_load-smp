@@ -1,0 +1,8 @@
+# @name Worstcase Latency with USB IO load on isolated core by using cyclictest
+# @desc Measure latency under USB IO load on isolated core using cyclictest
+# @requires (usb/host || usbxhci/host) && smp
+# @setup_requires usbhostmsc
+
+REALTIME_S_PERF_SHIELD_SMP_USB source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency usb`; multi_run_processes.sh -s "timeout -t 120 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/usbhost_perf_vfat -s USBHOST_L_PERF_VFAT_0001; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p98 -m -n -q -D 2m" -l "-n 1"
+
+REALTIME_L_PERF_SHIELD_SMP_USB source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency usb`; multi_run_processes.sh -s "timeout -t 14440 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/usbhost_perf_vfat -s USBHOST_L_PERF_VFAT_0001; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p98 -m -n -q -D 4h" -l "-n 1"

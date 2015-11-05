@@ -1,0 +1,8 @@
+# @name Worstcase Latency with Graphics load on isolated core by using cyclictest
+# @desc Measure latency under Graphics load on isolated core using cyclictest
+# @requires graphics && smp
+# @setup_requires
+
+REALTIME_S_PERF_SHIELD_SMP_GRAPHICS source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency graphics`; multi_run_processes.sh -s "timeout -t 240 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/sgx -s SGX_S_FUNC_OGLES2CHAMELEONMAN; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p98 -m -n -q -D 3m" -l "-n 1"
+
+REALTIME_L_PERF_SHIELD_SMP_GRAPHICS source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency graphics`; multi_run_processes.sh -s "timeout -t 14440 -s 9 sh -c 'while true; do ${LTPROOT}/runltp -P $PLATFORM -f ddt/sgx -s SGX_L_FUNC_OGLES2CHAMELEONMAN; sleep 5; done'  || true" -l "-n 1" -s "run_cyclictest $latency -S -p98 -m -n -q -D 4h" -l "-n 1"
