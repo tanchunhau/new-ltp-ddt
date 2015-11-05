@@ -1066,3 +1066,37 @@ run_cyclictest()
       END {print "max_latency=" max};
       END {if (max > passcriteria) {print "TEST:FAILED"; exit 1;} else {print "TEST:PASSED"; exit 0}}'
 }
+
+# $1: name
+# $2: cpuset
+# $3: memset (default 0)
+create_cgroup()
+{
+    local memset=0
+    if [ -z $1 -o -z $2 ]; then
+        die "create_cgroup requires name and cpuset"
+    fi
+    if [ $3"x" != "x" ]; then
+        memset=$3
+    fi
+    ls /sys/fs/cgroup/tasks || mount -t cgroup -ocpuset cpuset /sys/fs/cgroup/
+    ls /sys/fs/cgroup/$1 || mkdir /sys/fs/cgroup/$1
+    echo $2 > /sys/fs/cgroup/$1/cpuset.cpus
+    echo $memset > /sys/fs/cgroup/$1/cpuset.mems
+    echo 1 > /sys/fs/cgroup/$1/cpuset.cpu_exclusive
+}
+
+# Run shell and subsequent Processes started from it on shielded (i.e. separate) CPU
+shield_shell()
+{
+    create_cgroup nonrt 0
+    create_cgroup rt 1
+    for pid in $(cat /sys/fs/cgroup/tasks); do /bin/echo $pid > /sys/fs/cgroup/nonrt/tasks; done
+    /bin/echo $$ > /sys/fs/cgroup/rt/tasks
+}
+
+unshield_shell()
+{
+    for pid in $(cat /sys/fs/cgroup/nonrt/tasks); do /bin/echo $pid > /sys/fs/cgroup/tasks; done
+    for pid in $(cat /sys/fs/cgroup/rt/tasks); do /bin/echo $pid > /sys/fs/cgroup/tasks; done
+}
