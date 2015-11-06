@@ -163,7 +163,7 @@ do
     then
       chrt -p -r $r_priority $process_id
     fi
-    pids="$pids:$!"
+    pids="$pids:$process_id"
     pid_table+=( "$process_id" )
   done
   i=`expr $i + 1`
