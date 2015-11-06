@@ -10,7 +10,7 @@
 #
 #                 process_list= -s "#-separated commands" -l "-n <num_instances> 
 #                        -a <cpu affinity mask> -d <inter-process start delay>
-#                        -p <priority>" 
+#                        -p <priority> -r <realtime priority>"
 
 OFS=$IFS
 RET=0

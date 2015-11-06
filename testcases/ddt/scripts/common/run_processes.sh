@@ -7,6 +7,7 @@
 #                  [-a <cpu_affinity_mask>]
 #                  [-d <delay_in_sec> ]
 #                  [-p <priority> ]
+#                  [-r <realtime priority> ]
 #                  [-w] On first failure, wait for all processes
 # if cpu affinity is set, then taskset is used to spawn the processes
 source "functions.sh"  # Import do_cmd(), die() and other functions
@@ -23,14 +24,16 @@ INSTANCE_SET=0
 AFFINITY_SET=0
 DELAY_SET=0
 PRIORITY_SET=0
+local RTPRIORITY_SET=0
 
 
 p_instances=1
 p_mask='0xFFFFFFFF'
 p_delay=1
 p_priority=0
+local r_priority=0
 OPTIND=1
-while getopts ":c:n:a:d:p:w" opt; do
+while getopts ":c:n:a:d:p:r:w" opt; do
   #echo "Opt is "$opt
   case $opt in
    c)
@@ -88,6 +91,20 @@ while getopts ":c:n:a:d:p:w" opt; do
       exit 1
     fi
     ;;
+   r)
+    if [[ $RTPRIORITY_SET = 0 ]]; then
+      RTPRIORITY_SET=1
+      if [[ $OPTARG -lt 100 ]] && [[ $OPTARG -ge 1 ]]
+       then
+         r_priority=$OPTARG
+      else
+         die "Valid realtime priority values are between 1 and 99, $OPTARG is not in valid range"
+      fi
+    else
+      echo "Option -r (realtime priority) was already used."
+      exit 1
+    fi
+    ;;
    w) 
     _run_processes_kill=0
     ;;
@@ -141,6 +158,10 @@ do
     if [[ $PRIORITY_SET = 1 ]]
     then
       renice $p_priority -p $process_id
+    fi
+    if [[ $RTPRIORITY_SET = 1 ]]
+    then
+      chrt -p -r $r_priority $process_id
     fi
     pids="$pids:$!"
     pid_table+=( "$process_id" )
