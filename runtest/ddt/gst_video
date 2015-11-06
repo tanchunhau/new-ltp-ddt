@@ -14,3 +14,4 @@ VIDEO_M_FUNC_GST_H264_WVGA source 'common.sh'; do_cmd 'gst.sh -d "264/HistoryOfT
 VIDEO_S_FUNC_GST_MP4_480P source 'common.sh'; do_cmd 'gst.sh -d "MP4/HistoryOfTIAV-480p.mp4" -c "mpeg4aac" -r "480p"'
 VIDEO_M_FUNC_GST_MP4_WQVGA source 'common.sh'; do_cmd 'gst.sh -d "MP4/HistoryOfTIAV-WQVGA.mp4" -c "mpeg4aac" -r "WQVGA"'
 VIDEO_M_FUNC_GST_MP4_WVGA source 'common.sh'; do_cmd 'gst.sh -d "MP4/HistoryOfTIAV-WVGA.mp4" -c "mpeg4aac" -r "WVGA"'
+VIDEO_M_FUNC_GST_H264_1080_ENCDEC source 'common.sh'; do_cmd "gst-launch-1.0 -e videotestsrc num-buffers=500 ! queue ! 'video/x-raw, format=(string)NV12, width=(int)1920, height=(int)1080, framerate=(fraction)30/1' ! queue ! ducatih264enc ! queue ! h264parse ! queue ! ducatih264dec ! queue ! kmssink"
