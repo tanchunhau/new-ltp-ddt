@@ -16,6 +16,8 @@
 
 source "common.sh"
 
+lanes_supported=$1    # number of lanes should be supported by host 
+
 get_rc_id()
 {
   rc_id=`lspci -n |grep -E "^00:" |cut -d" " -f3`
@@ -109,6 +111,13 @@ rc_id=`get_rc_id` || die "error getting rc_id: $rc_id"
 ep_id=`get_ep_id` || die "error getting ep_id: $ep_id"
 rc_speed_cap=`get_pcie_speed "$rc_id" "lnkcap:" ` || die "error when getting speed cap for RC:${rc_speed_cap}"
 rc_width_cap=`get_pcie_width "$rc_id" "lnkcap:" ` || die "error when getting width cap for RC:${rc_width_cap}"
+# if test case pass lanes_supported, check if its cap showed in lspci matches this to check if the support is in
+if [ -n $lanes_supported ]; then 
+  # check if rc width cap matches the supported_lane
+  if [ $rc_width_cap -lt $lanes_supported ]; then
+    die "Host as RC should support $lanes_supported lanes; but lspci shows it only support $rc_width_cap "
+  fi
+fi
 ep_speed_cap=`get_pcie_speed "$ep_id" "lnkcap:" ` || die "error when getting speed cap for EP:${rc_speed_cap}"
 ep_width_cap=`get_pcie_width "$ep_id" "lnkcap:" ` || die "error when getting width cap for EP:${rc_width_cap}"
 

@@ -12,3 +12,9 @@ PCI_XS_FUNC_PCIE_CHECK_SPEED_SATACARD source 'common.sh'; do_cmd pcie_check_spee
 
 PCI_XS_FUNC_PCIE_CHECK_SPEED_USBCARD source 'common.sh'; do_cmd pcie_check_speed.sh
 
+PCI_XS_FUNC_PCIE_2LANES_CHECK_SPEED_USBCARD source 'common.sh'; do_cmd pcie_check_speed.sh 2
+
+PCI_XS_FUNC_PCIE_2LANES_CHECK_SPEED_SATACARD source 'common.sh'; do_cmd pcie_check_speed.sh 2
+
+PCI_XS_FUNC_PCIE_2LANES_CHECK_SPEED_ETHCARD source 'common.sh'; do_cmd pcie_check_speed.sh 2
+
