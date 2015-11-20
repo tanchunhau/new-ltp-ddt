@@ -28,9 +28,9 @@ get_sources() {
   do_cmd "cd ${TMPDIR}"
   if [ -d ${TMPDIR}/pm-qa ]; then
     do_cmd "cd ${TMPDIR}/pm-qa"
-    do_cmd "git pull"
+    do_cmd "git pull || http_proxy=$SITE_HTTP_PROXY git pull"
   else
-    do_cmd "git clone ${TOOL_REPO}"
+    do_cmd "git clone ${TOOL_REPO} || http_proxy=$SITE_HTTP_PROXY git clone ${TOOL_REPO}"
     do_cmd "cd pm-qa"
   fi
 }
