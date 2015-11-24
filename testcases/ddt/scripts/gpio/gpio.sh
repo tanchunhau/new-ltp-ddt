@@ -123,7 +123,7 @@ case $MACHINE in
     # bank number starts from 1 and total 8 banks
     GPIO_NUM_IN_BANKS="22,29,0,0,0,14,0,0"
   ;;
-  am43xx-epos|am43xx-gpevm)
+  am43xx-epos|am43xx-gpevm|am437x-idk)
     GPIO_NUM_IN_BANKS="0,0,31"
   ;;
   *)
