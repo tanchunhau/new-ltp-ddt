@@ -12,3 +12,4 @@ nand/davinci_nand
 smp
 usb/host/msc/xhci-hcd
 gpio
+ipc
