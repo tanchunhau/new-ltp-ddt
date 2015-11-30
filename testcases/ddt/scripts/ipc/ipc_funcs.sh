@@ -38,11 +38,11 @@ setup_firmware()
   local __fw_pattern=$1
   local __fw_dir='/lib/firmware'
   pushd ${__fw_dir}
-  local __fw_files=$(find $__fw_dir -type f -name "${__fw_pattern}" -exec basename {} \;)
+  local __fw_files=$(find $__fw_dir -type f -name "${__fw_pattern}")
   echo "Found $__fw_files fw files..."
   case $MACHINE in
     dra7xx-evm|am57xx*)
-      save_firmware dra7-dsp1-fw.xe66 dra7-dsp2-fw.xe66 dra7-ipu2-fw.xem4 dra7-ipu1-fw.xem4
+      save_firmware dra7-dsp1-fw.xe66 dra7-dsp2-fw.xe66 dra7-ipu2-fw.xem4 dra7-ipu1-fw.xem4 am57xx-pru1_0-fw am57xx-pru1_1-fw am57xx-pru2_0-fw am57xx-pru2_1-fw
       for __fw in $__fw_files
       do
         echo "Setting up $__fw ..."
@@ -58,6 +58,14 @@ setup_firmware()
             ;;
           *ipu2*)
             ln -sf $__fw dra7-ipu2-fw.xem4
+            ;;
+          *pru0*)
+            ln -sf $__fw am57xx-pru1_0-fw
+            ln -sf $__fw am57xx-pru2_0-fw
+            ;;
+          *pru1*)
+            ln -sf $__fw am57xx-pru1_1-fw
+            ln -sf $__fw am57xx-pru2_1-fw
             ;;
           *)
             echo "File $__fw did not contain processor tag"
@@ -83,24 +91,15 @@ setup_firmware()
         esac
       done
     ;;
-    am57xx*)
-      save_firmware am57xx-pru1_0-fw am57xx-pru1_1-fw am57xx-pru2_0-fw am57xx-pru2_1-fw
-      for __fw in $__fw_files
+    k2*)
+      for i in `seq 0 7`;
       do
-        echo "Setting up $__fw ..."
-        case $__fw in
-          *pru0*)
-            ln -sf $__fw am57xx-pru1_0-fw
-            ln -sf $__fw am57xx-pru2_0-fw
-            ;;
-          *pru1*)
-            ln -sf $__fw am57xx-pru1_1-fw
-            ln -sf $__fw am57xx-pru2_1-fw
-            ;;
-          *)
-            echo "File $__fw did not contain processor tag"
-            ;;
-        esac
+        save_firmware keystone-dsp${i}-fw
+      done
+      echo "Setting up $__fw_files ..."
+      for i in `seq 0 7`
+      do
+        ln -sf ${__fw_files} keystone-dsp${i}-fw
       done
     ;;
     *)
@@ -117,10 +116,11 @@ setup_firmware()
 # be loaded in the remote processors
 rm_ipc_mods()
 {
-  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample virtio_rpmsg_bus omap_remoteproc remoteproc)
+  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample virtio_rpmsg_bus omap_remoteproc remoteproc keystone_remoteproc)
   
   kill_lad
-  
+  kill_mpm_daemon
+
   for __mod in ${__modules[@]}
   do
     modprobe -r ${__mod}
@@ -132,18 +132,95 @@ rm_ipc_mods()
 #   $*: (Optional) Additional modules to load, i.e 'rpmsg_rpc', 'rpmsg_proto', etc
 ins_ipc_mods()
 {
+  local __modules
+  case $MACHINE in
+    k2*)
+      modprobe keystone_remoteproc use_rproc_core_loader=1
+      for __mod in $*
+      do
+        modprobe ${__mod}
+      done
+    ;;
+    *)
+      __modules=(remoteproc omap_remoteproc keystone_remoteproc virtio_rpmsg_bus)
   
-  local __modules=(remoteproc omap_remoteproc virtio_rpmsg_bus)
+      if [ $# -gt 0 ];
+      then
+        __modules+=($*)
+      fi
   
-  if [ $# -gt 0 ];
-  then
-    __modules+=($*)
-  fi
-  
-  for __mod in ${__modules[@]}
-  do
-    insmod.sh ${__mod}
-  done
+      for __mod in ${__modules[@]}
+      do
+        insmod.sh ${__mod}
+      done
+    ;;
+  esac
+  sleep 3
+}
+
+# Function to insmod the modules require to run RPMSG test with mpm
+ins_ipc_mods_mpm()
+{
+  case $MACHINE in
+    k2*)
+      modprobe keystone_remoteproc
+      for __mod in $*
+      do
+        modprobe ${__mod}
+      done
+    ;;
+    *)
+      "MPM remoteproc not supported for $MACHINE"
+    ;;
+  esac
+  sleep 3
+}
+
+#Function to load remote procs via mpm for IPC related test
+# Inputs:
+#    $1: name pattern of the firmware files that should be loaded. These files
+#        should be located in /lib/firmware folder of the file system
+load_rproc_mpm()
+{
+  local __fw_pattern=$1
+  local __fw_dir='/lib/firmware'
+  local __fw_files=$(find $__fw_dir -type f -name "${__fw_pattern}")
+  echo "Found $__fw_files fw files..."
+  start_mpm_daemon
+  case $MACHINE in
+    k2*)
+      local __procs=$(get_num_remote_procs)
+      for i in `seq 0 $((__procs - 1))`
+      do
+        echo "Loading ${__fw_files} on dsp${i} ..."
+#        mpmcl reset dsp${i}
+        mpmcl load dsp${i} ${__fw_files}
+        mpmcl run dsp${i}
+      done
+    ;;
+    *)
+      "MPM remoteproc not supported for $MACHINE"
+    ;;
+  esac
+  sleep 3
+}
+
+kill_mpm_daemon()
+{
+  case $MACHINE in
+    k2*)
+      /etc/init.d/mpmsrv-daemon.sh stop
+    ;;
+  esac
+}
+
+start_mpm_daemon()
+{
+  case $MACHINE in
+    k2*)
+      /etc/init.d/mpmsrv-daemon.sh start; sleep 2
+    ;;
+  esac
 }
 
 # Function to obtain the number of remote processors in the SOC.
@@ -157,6 +234,20 @@ get_num_remote_procs()
       ;;
     *j6eco)
       echo 3
+      ;;
+    *keystone)
+      local __model=$(cat /proc/device-tree/model)
+      case $__model in
+        *Hawking*)
+          echo 8
+        ;;
+        *Lamarr*)
+          echo 4
+        ;;
+        *Edison*)
+          echo 1
+        ;;
+      esac
       ;;
     *)
       echo "SOC ${SOC} not supported"
@@ -178,6 +269,20 @@ get_rpmsg_proto_rproc_ids()
       ;;
     *j6eco)
       rids=( 1 2 4 )
+      ;;
+    *keystone)
+      local __model=$(cat /proc/device-tree/model)
+      case $__model in
+        *Hawking*)
+          rids=( `seq 1 8` )
+        ;;
+        *Lamarr*)
+          rids=( `seq 1 4` )
+        ;;
+        *Edison*)
+          rids=( 1 )
+        ;;
+      esac
       ;;
     *)
       echo "SOC ${SOC} not supported"
@@ -302,6 +407,20 @@ kill_lad()
     *dra7xx-evm|*am57xx-evm)
       killall lad_dra7xx
       ;;
+    k2*)
+      local __model=$(cat /proc/device-tree/model)
+      case $__model in
+        *Hawking*)
+          killall lad_tci6638
+        ;;
+        *Lamarr*)
+          killall lad_tci6630
+        ;;
+        *Edison*)
+          killall lad_66AK2E
+        ;;
+      esac
+      ;;
     *)
       echo "Machine ${MACHINE} not supported"
       return 1
@@ -317,6 +436,20 @@ start_lad()
   case $MACHINE in
     *dra7xx-evm|*am57xx-evm)
       lad_dra7xx
+      ;;
+    k2*)
+      local __model=$(cat /proc/device-tree/model)
+      case $__model in
+        *Hawking*)
+          lad_tci6638
+        ;;
+        *Lamarr*)
+          lad_tci6630
+        ;;
+        *Edison*)
+          lad_66AK2E
+        ;;
+      esac
       ;;
     *)
       echo "Machine ${MACHINE} not supported"
