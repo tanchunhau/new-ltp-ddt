@@ -26,7 +26,6 @@ cat <<-EOF >&2
         usage: ./${0##*/} [-f FILE] [-s] [-p] [-x] [-c v_id] [-a a_id]  
         -f absolute path of the stream to be played
         -s Enable video and audio sync property
-        -p Enable video performance (Not available on all platforms)
         -x Enable video scaling (Not available on all platforms or with -p)
         -c Video connector id
         -a audio device, i.e hw:0,0 
@@ -57,9 +56,6 @@ do case $arg in
                 FILE=$OPTARG ;;
         s)
                 SYNC="sync=true" ;;
-        p)
-                VSINK="fpsdisplaysink"
-                GST_V="-v" ;;
         x)
                 SCALING="scale=true" ;;
         c)

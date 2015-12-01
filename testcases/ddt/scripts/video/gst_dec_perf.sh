@@ -22,39 +22,32 @@ get_data()
 {
 	echo -e "$2" | grep -i -o $1':[^,]*' | grep -o '[0-9\.]*'
 }
+
+get_secs()
+{
+  local __time
+  
+  __time=( $(echo -e "$1" | grep -i -e 'Duration: ' -e 'Execution ended after' | grep -o '[0-9]*' ) )
+  echo $((10#${__time[0]}*3600 + 10#${__time[1]}*60 + 10#${__time[2]}))
+}
+
 test_print_trc " CMD | gst_dec.sh $* "
 perf_string=$(gst_dec.sh $*)
 FILE=$(echo "$*" | grep -o '\-f\s*[^( -)]*')
-
-expected_perf=$(($(gst-discoverer-1.0 -v ${FILE:2} | grep -i 'Frame rate' | grep -o '[0-9\/]*')))
-
-raw_data=$(echo -e "$perf_string" | grep -i rendered)
-fps=( $(get_data current "$raw_data") )
-dropped=( $(get_data dropped "$raw_data") )
-test_print_trc " CAPT_FREQS | ${fps[@]:1} "
-test_print_trc " MINREQ_FREQ | ${expected_perf[0]} "
-fps_test=0
-exp_fr=$(((expected_perf[0]-1)*100))
-if [ ${#fps[@]} -lt 2 ]
+stream_info=$(gst-discoverer-1.0 -v ${FILE:2})
+expected_perf=$(($(echo "$stream_info" | grep -i 'Frame rate' | grep -o '[0-9\/]*')))
+expected_duration=$(get_secs "$stream_info")
+measured_duration=$(get_secs "$perf_string")
+if [ $expected_perf -lt 1 ]
 then
-  fps_test=1
+  test_print_trc " MEASURED_DURATION | $measured_duration secs"
+  test_print_trc " MAXREQ_DURATION | $expected_duration secs"
+else
+  num_frames=$((expected_perf*expected_duration))
+  measured_fps=$((num_frames*100/measured_duration))
+  test_print_trc " CAPT_FREQS | ${measured_fps:0:2}.${measured_fps:2:2} "
+  test_print_trc " MINREQ_FREQ | ${expected_perf} "
+  fps_test=0
 fi
-for fr in ${fps[@]:1}
-do
-  freq=${fr/./}
-  if [ $freq -lt $exp_fr ]
-	then
-	  test_print_trc "Fps test failed expected ${expected_perf[0]}/${expected_perf}, got $fr"
-	  fps_test=1
-	fi
-done
-drop_test=0
-for drop_fr in ${droppped[@]:1}
-do
-  drop_test=$((drop_test+drop_fr-dropped[0]))
-done
-if [ $drop_test -gt 0 ]
-then
-  test_print_trc "Frame drops detected during decode"
-fi
-exit $((fps_test+drop_test))
+
+[[ $measured_duration -le $((expected_duration + 1)) ]] || die "measured fps lower than expected $measured_duration > $expected_duration"
