@@ -24,14 +24,14 @@ INSTANCE_SET=0
 AFFINITY_SET=0
 DELAY_SET=0
 PRIORITY_SET=0
-local RTPRIORITY_SET=0
+RTPRIORITY_SET=0
 
 
 p_instances=1
 p_mask='0xFFFFFFFF'
 p_delay=1
 p_priority=0
-local r_priority=0
+r_priority=0
 OPTIND=1
 while getopts ":c:n:a:d:p:r:w" opt; do
   #echo "Opt is "$opt
