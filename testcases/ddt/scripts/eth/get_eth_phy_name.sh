@@ -33,7 +33,7 @@ esac
 case $SOC in
 esac
 case $MACHINE in
-        am57xx-evm|am43xx-gpevm)
+        am57xx-evm|am571x-idk|am572x-idk|am43xx-gpevm)
                 phy="micrel";;
 esac
 echo "$phy"
