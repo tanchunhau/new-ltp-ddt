@@ -175,7 +175,7 @@ find_part_with_biggest_size() {
 
       IS_ROOTFS_OR_BOOT=`is_part_boot_or_rootfs "$DEVICE_TYPE" "$DEVNODE"` || die "error when calling is_part_boot_or_rootfs: "$IS_ROOTFS_OR_BOOT" "
       if [ "$IS_ROOTFS_OR_BOOT" == "no" ]; then
-        if [ $SIZE -gt $SIZE_BIGGEST ]; then
+        if [ $(echo "$SIZE > $SIZE_BIGGEST" |bc -l) -ne 0 ];then
           SIZE_BIGGEST=$SIZE
           PART_DEVNODE="${DEVNODE}"
         fi
