@@ -35,7 +35,12 @@ test_print_trc " CMD | gst_dec.sh $* "
 perf_string=$(gst_dec.sh $*)
 FILE=$(echo "$*" | grep -o '\-f\s*[^( -)]*')
 stream_info=$(gst-discoverer-1.0 -v ${FILE:2})
-expected_perf=$(($(echo "$stream_info" | grep -i 'Frame rate' | grep -o '[0-9\/]*')))
+parsed_perfs=( $(echo "$stream_info" | grep -i 'Frame rate' | grep -o '[0-9\/]*') )
+expected_perf=$((${parsed_perfs[0]}))                                           
+for f in ${a[@]:1};                                                             
+do                                                                              
+  [[ $((f)) -lt $expected_perf ]] && expected_perf=$((f))                       
+done
 expected_duration=$(get_secs "$stream_info")
 measured_duration=$(get_secs "$perf_string")
 if [ $expected_perf -lt 1 ]
