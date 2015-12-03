@@ -37,11 +37,14 @@ find_scsi_basenode() {
     case $SCSI_DEVICE in
       sata)
         # remove DVD
-        file=`ls /dev/disk/by-id/* |grep -v "DRW" |grep -i ata | head -1`
-        if [[ ! -z "$file" ]]; then
-          basenode="/dev/""$(basename $(readlink $file))"
-          echo $basenode
-          exit 0
+        files=`ls /dev/disk/by-id/* |grep -v "DRW" |grep -i ata `
+        if [[ ! -z "$files" ]]; then
+          for file in $files; do
+              basenode="/dev/""$(basename $(readlink $file))"
+              udevadm info -a -n $basenode |grep -i 'pci' > /dev/null && continue 
+              echo $basenode
+              exit 0
+          done
         fi
       ;;
       usb|usbxhci)
