@@ -31,6 +31,52 @@ get_secs()
   echo $((10#${__time[0]}*3600 + 10#${__time[1]}*60 + 10#${__time[2]}))
 }
 
+print_opp()
+{
+  local __old_ifs=$IFS
+  IFS=$'\n'
+  local __opp_info=( `omapconf show opp | grep '^|'` )
+  local __opp_cols
+  local __line_ifs
+  local __line_idx=0
+  local __col_names
+  local __m_name
+  local __c_name
+  local __c_val
+
+  if [ ${#__opp_info[@]} -gt 3 ]
+  then
+    for opp_line in ${__opp_info[@]}
+    do
+      __line_ifs=$IFS
+      IFS='|'
+      __opp_cols=( $opp_line )
+      __line_idx=$((__line_idx + 1 ))
+      if [ $__line_idx -lt 3 -o ${#__opp_cols[@]} -lt 5 ]
+      then
+        [[ $__line_idx -eq 2 ]] && __col_names=( $opp_line )
+        continue
+      fi
+      for i in `seq -s '|' 0 $((${#__col_names[@]} - 1))`
+      do
+        __c_name=${__col_names[$i]// /}
+        __c_val=${__opp_cols[$i]// /}
+        if [ "$__c_val" != "" -a "$__c_name" == "" ]
+        then 
+          __m_name=$__c_val
+        elif [ "$__c_val" != "" ]
+        then
+          test_print_trc "$__m_name $__c_name | $__c_val "
+        fi
+      done
+      IFS=$__line_ifs
+    done
+  fi
+  
+  IFS=$__old_ifs
+}
+
+print_opp
 test_print_trc " CMD | gst_dec.sh $* "
 perf_string=$(gst_dec.sh $*)
 FILE=$(echo "$*" | grep -o '\-f\s*[^( -)]*')
