@@ -1,16 +1,16 @@
 #!/bin/sh
-# 
+#
 # Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
-#  
+#
 # This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as 
+# modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation version 2.
-# 
+#
 # This program is distributed "as is" WITHOUT ANY WARRANTY of any
 # kind, whether express or implied; without even the implied warranty
 # of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 
 # Test video functionality using gstreamer
 # Input: File to be downloaded and test file name
@@ -26,7 +26,7 @@ get_data()
 get_secs()
 {
   local __time
-  
+
   __time=( $(echo -e "$1" | grep -i -e 'Duration: ' -e 'Execution ended after' | grep -o '[0-9]*' ) )
   echo $((10#${__time[0]}*3600 + 10#${__time[1]}*60 + 10#${__time[2]}))
 }
@@ -62,7 +62,7 @@ print_opp()
         __c_name=${__col_names[$i]// /}
         __c_val=${__opp_cols[$i]// /}
         if [ "$__c_val" != "" -a "$__c_name" == "" ]
-        then 
+        then
           __m_name=$__c_val
         elif [ "$__c_val" != "" ]
         then
@@ -72,7 +72,7 @@ print_opp()
       IFS=$__line_ifs
     done
   fi
-  
+
   IFS=$__old_ifs
 }
 
@@ -82,10 +82,10 @@ perf_string=$(gst_dec.sh $*)
 FILE=$(echo "$*" | grep -o '\-f\s*[^( -)]*')
 stream_info=$(gst-discoverer-1.0 -v ${FILE:2})
 parsed_perfs=( $(echo "$stream_info" | grep -i 'Frame rate' | grep -o '[0-9\/]*') )
-expected_perf=$((${parsed_perfs[0]}))                                           
-for f in ${a[@]:1};                                                             
-do                                                                              
-  [[ $((f)) -lt $expected_perf ]] && expected_perf=$((f))                       
+expected_perf=$((100*${parsed_perfs[0]}))
+for f in ${a[@]:1};
+do
+  [[ $((f)) -lt $expected_perf ]] && expected_perf=$((f))
 done
 expected_duration=$(get_secs "$stream_info")
 measured_duration=$(get_secs "$perf_string")
@@ -95,9 +95,9 @@ then
   test_print_trc " MAXREQ_DURATION | $expected_duration secs"
 else
   num_frames=$((expected_perf*expected_duration))
-  measured_fps=$((num_frames*100/measured_duration))
+  measured_fps=$((num_frames/measured_duration))
   test_print_trc " CAPT_FREQS | ${measured_fps:0:2}.${measured_fps:2:2} "
-  test_print_trc " MINREQ_FREQ | ${expected_perf} "
+  test_print_trc " MINREQ_FREQ | ${expected_perf:0:2}.${expected_perf:2:2} "
   fps_test=0
 fi
 
