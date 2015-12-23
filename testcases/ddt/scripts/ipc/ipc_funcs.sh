@@ -92,6 +92,7 @@ setup_firmware()
       done
     ;;
     k2*)
+      __fw_files=$(find /usr/lib/firmware -type f -name "${__fw_pattern}")
       for i in `seq 0 7`;
       do
         save_firmware keystone-dsp${i}-fw
@@ -116,14 +117,14 @@ setup_firmware()
 # be loaded in the remote processors
 rm_ipc_mods()
 {
-  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample virtio_rpmsg_bus omap_remoteproc remoteproc keystone_remoteproc)
+  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus )
   
   kill_lad
   kill_mpm_daemon
 
   for __mod in ${__modules[@]}
   do
-    modprobe -r ${__mod}
+    rmmod --force ${__mod}
   done
 }
 
