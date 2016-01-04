@@ -124,7 +124,7 @@ rm_ipc_mods()
 
   for __mod in ${__modules[@]}
   do
-    rmmod --force ${__mod}
+    modprobe -r ${__mod}
   done
 }
 
@@ -190,6 +190,7 @@ load_rproc_mpm()
   start_mpm_daemon
   case $MACHINE in
     k2*)
+      __fw_files=$(find /usr/lib/firmware -type f -name "${__fw_pattern}")
       local __procs=$(get_num_remote_procs)
       for i in `seq 0 $((__procs - 1))`
       do
@@ -210,7 +211,7 @@ kill_mpm_daemon()
 {
   case $MACHINE in
     k2*)
-      /etc/init.d/mpmsrv-daemon.sh stop
+      /etc/init.d/mpmsrv-daemon.sh stop && killall -9 mpmsrv
     ;;
   esac
 }
