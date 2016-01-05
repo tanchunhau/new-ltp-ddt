@@ -9,6 +9,7 @@ watchdog
 ubifs
 i2c/eeprom
 nand/davinci_nand
+pcie
 smp
 usb/host/msc/xhci-hcd
 gpio
