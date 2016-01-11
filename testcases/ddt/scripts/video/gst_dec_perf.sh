@@ -96,8 +96,10 @@ then
 else
   num_frames=$((expected_perf*expected_duration))
   measured_fps=$((num_frames/measured_duration))
-  test_print_trc " CAPT_FREQS | ${measured_fps:0:2}.${measured_fps:2:2} "
-  test_print_trc " MINREQ_FREQ | ${expected_perf:0:2}.${expected_perf:2:2} "
+  eperf_l=$((${#expected_perf}-2))
+  mperf_l=$((${#measured_fps}-2))
+  test_print_trc " CAPT_FREQS | ${measured_fps:0:${mperf_l}}.${measured_fps:${mperf_l}:2} "
+  test_print_trc " MINREQ_FREQ | ${expected_perf:0:${eperf_l}}.${expected_perf:${eperf_l}:2} "
   fps_test=0
 fi
 
