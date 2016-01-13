@@ -59,12 +59,13 @@ if [ -z $DEV_NODE ]; then
 	DEV_NODE=`get_blk_device_node.sh "$DEVICE_TYPE"` || die "error getting device node for $DEVICE_TYPE: $DEV_NODE"
 fi
 ############# Do the work ###########################################
-# TODO: don't hardcode ubi node and volume name
 do_cmd blk_device_umount.sh -m "$MNT_POINT"
 
 if [ "$FS_TYPE" = "ubifs" ]; then
-  do_cmd ubirmvol /dev/ubi0 -N test
-  do_cmd ubidetach -d 0
+  ubi_dev=`find_ubi_device`
+  do_cmd ubirmvol /dev/$ubi_dev -N test
+  ubi_dev_num=`echo ${ubi_dev#"ubi"} `
+  do_cmd ubidetach -d $ubi_dev_num
 fi
 
 

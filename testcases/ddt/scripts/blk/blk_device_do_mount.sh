@@ -63,10 +63,9 @@ done
 
 ############# Do the work ###########################################
 if [ "$FS_TYPE" = "ubifs" ]; then
-  # TODO: pass in ubi0 instead of hardcode
-  # TODO: need check what dev_node is attached to. It may not be ubi0_0.
-  VOLUME_NAME=`cat /sys/class/ubi/ubi0_0/name` || die "error getting volume name for ubi0_0"
-  MNT_DEV_NODE="ubi0:$VOLUME_NAME"
+  ubi_dev=`find_ubi_device`
+  VOLUME_NAME=`cat /sys/class/ubi/${ubi_dev}_0/name` || die "error getting volume name for ${ubi_dev}_0"
+  MNT_DEV_NODE="${ubi_dev}:$VOLUME_NAME"
 else
   MNT_DEV_NODE="$DEV_NODE"
 fi

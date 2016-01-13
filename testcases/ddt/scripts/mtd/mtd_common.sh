@@ -168,3 +168,10 @@ get_partnum_from_name() {
   done
   echo "$test_part"
 }
+
+# Find last ubi device attached
+find_ubi_device() {
+  ubi_dev=`ubinfo | grep -i 'present ubi devices:' |cut -d ":" -f2 |xargs |awk -F, '{print $NF}' |xargs `
+  echo $ubi_dev
+}
+

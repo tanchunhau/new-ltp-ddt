@@ -99,10 +99,6 @@ case $DEV_TYPE in
  #exit 0
     PART=`get_mtd_partnum_from_devnode.sh "$DEV_NODE"` || die "error getting partition number: $PART"
     if [ "$FS_TYPE" = "ubifs" ]; then
-      # TODO: volume name is set to 'test'. Later on, get the name from proc mtd or sys entry.
-      # TODO: assume we only test one partition attched to ubi0, so hardcode to ubi0. 
-      #       need to add ubi device number as input option
-      UBI_DEVICE_NUM=0
       UBI_VOLUME_NUM=0
       VOL_NAME="test"
 
@@ -114,32 +110,29 @@ case $DEV_TYPE in
       test_print_trc "mtd subpage size: $SUBPAGE_SIZE"
       test_print_trc "mtd pagesize: $PAGE_SIZE"
       # before format, make sure it is not attached.
-      test_print_trc "Detach $CHAR_DEV_NODE and ubi$UBI_DEVICE_NUM"
-      #umount "ubi$UBI_DEVICE_NUM:$VOL_NAME"
+      test_print_trc "Detach $CHAR_DEV_NODE"
       test_print_trc "umount "$MNT_POINT""
       umount "$MNT_POINT"
       test_print_trc "ubidetach -p "$CHAR_DEV_NODE""
       ubidetach -p "$CHAR_DEV_NODE"
-      test_print_trc "ubidetach -d $UBI_DEVICE_NUM"
-      ubidetach -d $UBI_DEVICE_NUM
       ls /dev/ub*
 
       #do_cmd "$FLASH_ERASEALL $CHAR_DEV_NODE"
       #do_cmd "ubiformat "$CHAR_DEV_NODE" -s "$SUBPAGE_SIZE" -O "$PAGE_SIZE" -e $MTD_ERASEBLOCKS -y -q"
       do_cmd "ubiformat "$CHAR_DEV_NODE" -y -q"
-      #do_cmd "ubiattach /dev/ubi_ctrl -m "$PART" -O "$PAGE_SIZE" "
-      do_cmd "ubiattach -p "$CHAR_DEV_NODE" -d $UBI_DEVICE_NUM "
+      do_cmd "ubiattach -p "$CHAR_DEV_NODE" "
+      new_ubi=`find_ubi_device`
+      test_print_trc "ubi device: $new_ubi "
       do_cmd "ls /dev/ub*"
 
       # before mk vol, need remove the existing one
       # First find out the name of existing volume name if it exists
-      if [ -e /sys/class/ubi/ubi"$UBI_DEVICE_NUM"_"$UBI_VOLUME_NUM" ]; then
-        $VOLUME_NAME=`cat /sys/class/ubi/ubi"$UBI_DEVICE_NUM"_"$UBI_VOLUME_NUM"/name`  
-        do_cmd "ubirmvol /dev/ubi$UBI_DEVICE_NUM -N "$VOLUME_NAME" "
+      if [ -e /sys/class/ubi/"$new_ubi"_"$UBI_VOLUME_NUM" ]; then
+        $VOLUME_NAME=`cat /sys/class/ubi/"$new_ubi"_"$UBI_VOLUME_NUM"/name`  
+        do_cmd "ubirmvol /dev/$new_ubi -N "$VOLUME_NAME" "
       fi
-      LEB_CNT=`cat /sys/class/ubi/ubi0/avail_eraseblocks`
-      #do_cmd "ubimkvol /dev/ubi0 -N test -s 200MiB"
-      do_cmd "ubimkvol /dev/ubi$UBI_DEVICE_NUM -N "$VOL_NAME" -S $LEB_CNT"
+      LEB_CNT=`cat /sys/class/ubi/$new_ubi/avail_eraseblocks`
+      do_cmd "ubimkvol /dev/$new_ubi -N "$VOL_NAME" -S $LEB_CNT"
     else
       if [ "$FS_TYPE" = "jffs2" ]; then
         do_cmd "$FLASH_ERASEALL -j $CHAR_DEV_NODE"
