@@ -275,6 +275,15 @@ printout_model(){
   esac
 }
 
+printout_mmc_ios() {
+  test_print_trc "===== printout of mmc ios ====="
+  mmcd=`for d in ${DEBUGFS_LOCATION}/mmc*/; do echo "$d"; done`
+  for i in $mmcd; do
+    do_cmd cat ${i}ios
+  done
+  test_print_trc "===== end of mmc ios ====="
+}
+
 # find all available scsi drives
 # Input: "usb" or "sata"
 # Output: drives_found

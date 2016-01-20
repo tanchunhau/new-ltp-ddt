@@ -96,6 +96,11 @@ test_print_trc "FS_TYPE: $FS_TYPE"
 # print out the model number if possible
 do_cmd printout_model "$DEV_NODE" "$DEVICE_TYPE"
 
+# printout mmc ios for mmc test
+if [[ "$DEV_NODE" =~ "mmc" ]]; then
+  do_cmd printout_mmc_ios
+fi
+ 
 if [ $SKIP_FORMAT -ne 1 ]; then 
   if [ -n "$FS_TYPE" ]; then
     do_cmd blk_device_prepare_format.sh -d "$DEVICE_TYPE" -n "$DEV_NODE" -f "$FS_TYPE" -m "$MNT_POINT"

@@ -110,6 +110,11 @@ test_print_trc "DEVICE_TYPE:${DEVICE_TYPE}"
 # print out the model number if possible
 do_cmd printout_model "$DEV_NODE" "$DEVICE_TYPE"
 
+# printout mmc ios for mmc test
+if [[ "$DEV_NODE" =~ "mmc" ]]; then
+  do_cmd printout_mmc_ios
+fi
+
 # check if input are valid for this machine
 DEVICE_PART_SIZE=`get_blk_device_part_size.sh -d $DEVICE_TYPE -n $DEV_NODE` || die "error while getting device partition size: $DEVICE_PART_SIZE"
 test_print_trc "Device Partition Size is $DEVICE_PART_SIZE MB"
