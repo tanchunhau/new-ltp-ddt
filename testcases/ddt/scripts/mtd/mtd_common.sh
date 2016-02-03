@@ -25,15 +25,21 @@ MTD_CHAR_DEV="/dev/$MTD_CHAR"
 find_part_type() {
   PART=$1
   MTD_DEV="mtdblock$PART"
-  if [ -e /sys/block/$MTD_DEV/device/type ]; then
+  if [[ -e /sys/block/$MTD_DEV/device/type ]]; then
     TYPE=`cat /sys/block/$MTD_DEV/device/type`
-    if [ $TYPE == 'nand' ]; then
+    if [[ $TYPE == 'nand' ]]; then
       PART_TYPE='nand'
     else
-      if [ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'flash'` ]; then
+      if [[ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'flash'` ]]; then
         PART_TYPE="nor"
-      elif [ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'spi'` ];then
-        PART_TYPE="spi"
+      elif [[ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'qspi'` ]];then
+        PART_TYPE="qspi"
+      elif [[ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'spi'` ]];then
+        if [[ `cat /proc/mtd |grep mtd$PART |grep -i qspi ` ]];then
+          PART_TYPE="qspi"
+        else
+          PART_TYPE="spi"
+        fi
       else
         die "/sys/class/mtd/mtd$PART/device/driver doesn't exist"
       fi
