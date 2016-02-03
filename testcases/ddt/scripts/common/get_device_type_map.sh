@@ -29,7 +29,7 @@ DEVICE_TYPE=$1
 ############################ Default Params ##############################
 DEV_TYPE=$DEVICE_TYPE
 
-if [ $DEVICE_TYPE = "nand" ] || [ $DEVICE_TYPE = "nor" ] || [ $DEVICE_TYPE = "spi" ]; then
+if [ $DEVICE_TYPE = "nand" ] || [ $DEVICE_TYPE = "nor" ] || [ $DEVICE_TYPE = "spi" ] || [ $DEVICE_TYPE = "qspi" ] ; then
 	DEV_TYPE="mtd"
 fi
 

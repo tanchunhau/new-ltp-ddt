@@ -37,13 +37,13 @@ power_mgr/smartreflex
 pwm/ehrpwm
 pwm/ecap
 pwm/backlight
+qspi_master/mtd/spi-ti-qspi
 rtc/omap_rtc
 sound/capture/alsa
 sound/playback/alsa
 sound/capture/alsa/hisamplingrate
 sound/playback/alsa/hisamplingrate
 spi_master/mtd/spi-omap2-mcspi
-spi_master/mtd/spi-ti-qspi
 usb/host/msc/xhci-hcd         
 usb/host/hid/xhci-hcd         
 usb/host/iso/xhci-hcd 

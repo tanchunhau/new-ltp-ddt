@@ -14,5 +14,5 @@ usb/host/msc/xhci-hcd
 gpio
 mmc_host
 pcie
-qspi
+qspi_master/mtd/cadence-quadspi
 ipc

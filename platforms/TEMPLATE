@@ -31,7 +31,7 @@ power_mgr/cpuidle/<drivername>
 power_mgr/dynamic_ticks/<drivername>
 power_mgr/smartreflex
 pru/<drivername>
-qspi
+qspi_master/mtd/<drivername>
 rtc/<drivername>
 sata/<drivername>
 sdma/<drivername>

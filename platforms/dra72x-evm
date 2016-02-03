@@ -36,7 +36,7 @@ power_mgr/cpufreq/ondemand
 power_mgr/cpuidle
 power_mgr/dynamic_ticks
 power_mgr/smartreflex
-qspi
+qspi_master/mtd/spi-ti-qspi
 rtc/omap_rtc
 sata/ahci
 rtc/rtc-palmas
@@ -46,7 +46,6 @@ sound/playback/alsa
 sound/capture/alsa/hisamplingrate
 sound/playback/alsa/hisamplingrate
 spi_master/mtd/spi-omap2-mcspi
-spi_master/mtd/spi-ti-qspi
 usb/host/msc/xhci-hcd
 usb/host/hid/xhci-hcd
 usb/host/iso/xhci-hcd
