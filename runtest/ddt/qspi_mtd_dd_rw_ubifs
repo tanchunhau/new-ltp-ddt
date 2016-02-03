@@ -1,0 +1,14 @@
+# @name QSPI read write test using dd with ubifs
+# @desc Perform qspi eraseall first, then do read write and then compare
+#	The partition number is specified in get_mtd_partition_number.sh
+# @requires qspi_master/mtd
+
+QSPI_S_FUNC_DD_RW_ERASESIZE_UBIFS source "common.sh"; install_modules.sh "qspi"; part=`get_mtd_partition_number.sh "qspi"` || die "error getting mtd part number: $part"; size=`get_mtd_erase_size.sh "$part"` || die "error getting mtd erase size: $size"; blk_device_dd_readwrite_test.sh -f "ubifs" -b "$size" -c 10 -d "qspi"
+
+QSPI_M_FUNC_DD_RW_BIGSIZE_UBIFS source "common.sh"; install_modules.sh "qspi"; part=`get_mtd_partition_number.sh "qspi"` || die "error getting mtd part number: $part"; size=`get_mtd_size.sh "$part"` || die "error getting mtd size: $size"; size=$(( $size/MB )) && size=`get_ceiling_divide.sh "$size" 2` || die "error getting divide ceiling: $size"; do_cmd blk_device_dd_readwrite_test.sh -f "ubifs" -b "1M" -c "$size" -d "qspi"
+
+
+
+
+
+
