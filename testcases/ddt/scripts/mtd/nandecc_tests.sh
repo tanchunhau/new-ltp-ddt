@@ -35,6 +35,7 @@ cat <<-EOF >&2
     -n dev_node: optional; if not provided, choose one with the biggest size
     -r rules: the rules used to inject error bits
     -t test_type: optional; by default is positive test. you could pass 'negative'
+    -e test empty sectors
     -h Help         print this usage
 EOF
 exit 0
@@ -91,11 +92,12 @@ modify_nanddump_file()
 }
 
 ################################ CLI Params ####################################
-while getopts  :n:r:t:h arg
+while getopts  :n:r:t:eh arg
 do case $arg in
     n)      dev_node="$OPTARG";;
     r)      rules="$OPTARG";;
     t)      type="$OPTARG";;
+    e)      test_empty_sector=1;
     h)      usage;;
     :)      die "$0: Must supply an argument to -$OPTARG.";;
     \?)     die "Invalid Option -$OPTARG ";;
@@ -140,9 +142,13 @@ testfile="testfile.bin"
 do_cmd dd if=/dev/urandom of="$testfile" bs=1 count=$pagesize
 
 # write to nand
-test_print_trc "Write testfile to nand..."
 do_cmd flash_erase -q "$dev_node" 0 0
-do_cmd nandwrite -p "$dev_node" "$testfile"
+if [ "$test_empty_sector" -eq 1 ]; then
+  test_print_trc "Leave the nand to empty"
+else
+  test_print_trc "Write testfile to nand..."
+  do_cmd nandwrite -p "$dev_node" "$testfile"
+fi
 do_cmd nanddump -p -l "$pagesize" "$dev_node"
 orig_nanddump="$TMPDIR/testfile_nanddump.original"
 orig_nanddump_w_oob="$TMPDIR/testfile_nanddump_w_oob.original"
