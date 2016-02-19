@@ -55,4 +55,5 @@ usb/slave/usbslave_mass_storage
 usb/slave/usbslave_multi       
 usb/slave/usbslave_cdc  
 watchdog/omap_wdt
-
+wlan/wl18xx
+wlan/wlcore_sdio
