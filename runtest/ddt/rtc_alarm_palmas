@@ -1,0 +1,10 @@
+# @name Check for RTC Node and Alarm for Palmas RTC 
+# @desc Check for RTC Node and Alarm for Palmas RTC
+# @requires rtc/rtc-palmas 
+
+RTC_XS_FUNC_RTC_PALMAS source 'common.sh'; do_cmd install_modules.sh 'rtc'; do_cmd "get_rtc_type_device_node.sh palmas"
+RTC_XS_FUNC_RTC_PALMAS_ALARM_0001 source 'common.sh'; do_cmd install_modules.sh 'rtc' ; DEV_NODE=`get_rtc_type_device_node.sh palmas` || die "error getting devnode for palmas rtc"; do_cmd timeout -t 40 rtc_tests -device $DEV_NODE  -ioctltest alarm -ioctltestarg 30 
+
+
+
+

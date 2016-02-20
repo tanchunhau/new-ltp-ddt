@@ -1,0 +1,10 @@
+# @name Check for RTC Node and Alarm for MCP RTC 
+# @desc Check for RTC Node and Alarm for MCP RTC
+# @requires rtc/mcp 
+
+RTC_XS_FUNC_RTC_MCP source 'common.sh'; do_cmd install_modules.sh 'rtc'; do_cmd "get_rtc_type_device_node.sh mcp"
+RTC_XS_FUNC_RTC_MCP_ALARM_0001 source 'common.sh'; do_cmd install_modules.sh 'rtc' ; DEV_NODE=`get_rtc_type_device_node.sh mcp` || die "error getting devnode for mcp rtc"; do_cmd timeout -t 40 rtc_tests -device $DEV_NODE  -ioctltest alarm -ioctltestarg 30 
+
+
+
+

@@ -1,0 +1,10 @@
+# @name Check for RTC Node and Alarm for Omap RTC 
+# @desc Check for RTC Node and Alarm for Omap RTC
+# @requires rtc/omap_rtc 
+
+RTC_XS_FUNC_RTC_OMAP source 'common.sh'; do_cmd install_modules.sh 'rtc'; do_cmd "get_rtc_type_device_node.sh omap_rtc"
+RTC_XS_FUNC_RTC_OMAP_ALARM_0001 source 'common.sh'; do_cmd install_modules.sh 'rtc' ; DEV_NODE=`get_rtc_type_device_node.sh omap_rtc` || die "error getting devnode for omap rtc"; do_cmd timeout -t 40 rtc_tests -device $DEV_NODE  -ioctltest alarm -ioctltestarg 30 
+
+
+
+
