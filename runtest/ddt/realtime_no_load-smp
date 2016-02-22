@@ -1,0 +1,10 @@
+# @name Worstcase Latency with no load on isolated core by using cyclictest
+# @desc Measure latency without extra load on isolated core using cyclictest
+# @requires armv*
+# @setup_requires
+
+REALTIME_S_PERF_SHIELD_SMP_NO_LOAD source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency noload`; multi_run_processes.sh -s "run_cyclictest $latency -S -p98 -m -n -q -D 2m" -l "-n 1"
+
+REALTIME_L_PERF_SHIELD_SMP_NO_LOAD source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency noload`; multi_run_processes.sh -s "run_cyclictest $latency -S -p98 -m -n -q -D 4h" -l "-n 1"
+
+REALTIME_XL_PERF_SHIELD_SMP_OSADL source 'functions.sh'; shield_shell; cyclictest -l100000000 -m -n -a0 -t1 -p99 -i200 -h400 -q
