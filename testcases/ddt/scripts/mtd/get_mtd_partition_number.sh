@@ -85,21 +85,5 @@ case $MACHINE in
 
 esac
 
-# If no ARCH/DRIVER/SOC/MACHINE specific value, take the value below
-case $DEVICE_TYPE in
-        nand)
-                : ${PARTITION:='4'}
-                ;;
-        spi)
-                : ${PARTITION:='4'}
-                ;;
-        nor)
-                : ${PARTITION:='3'}
-                ;;
-        *)
-                die "Wrong device_type input in $0 script"
-                ;;
-esac
-
 ################
 echo "$PARTITION"
