@@ -39,8 +39,9 @@ power_mgr/dynamic_ticks
 power_mgr/smartreflex
 qspi_master/mtd/spi-ti-qspi
 rtc/omap_rtc
-sata/ahci
 rtc/rtc-palmas
+rtc/mcp
+sata/ahci
 smp
 sound/capture/alsa
 sound/playback/alsa

@@ -38,6 +38,7 @@ power_mgr/dynamic_ticks
 power_mgr/smartreflex
 rtc/omap_rtc
 rtc/rtc-palmas
+rtc/mcp
 sata/ahci
 smp
 sound/capture/alsa

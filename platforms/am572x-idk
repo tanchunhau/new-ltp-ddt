@@ -41,6 +41,7 @@ power_mgr/smartreflex
 qspi_master/mtd/spi-ti-qspi
 rtc/omap_rtc
 rtc/rtc-palmas
+rtc/mcp
 sata/ahci
 smp
 sound/capture/alsa
