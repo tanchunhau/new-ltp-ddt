@@ -38,6 +38,10 @@ ifeq ($(PLATFORM),dra72x-evm)
 FILTER_OUT_DIRS                 += mc_test_suite
 endif
 
+ifeq ($(PLATFORM),dra7xx-hs-evm)
+FILTER_OUT_DIRS                 += mc_test_suite
+endif
+
 ifeq ($(PLATFORM),am57xx-evm)
 FILTER_OUT_DIRS                 += mc_test_suite
 endif
@@ -132,6 +136,15 @@ FILTER_OUT_DIRS                 += ipc_test_suite
 endif
 
 ifeq ($(PLATFORM),am437x-evm)
+FILTER_OUT_DIRS                 += v4l2_capture_test_suite
+FILTER_OUT_DIRS                 += v4l2_display_test_suite
+FILTER_OUT_DIRS                 += mc_test_suite
+FILTER_OUT_DIRS                 += v4l2_display_davinci_test_suite
+FILTER_OUT_DIRS                 += edma_test_suite
+FILTER_OUT_DIRS                 += ipc_test_suite
+endif
+
+ifeq ($(PLATFORM),am437x-hs-evm)
 FILTER_OUT_DIRS                 += v4l2_capture_test_suite
 FILTER_OUT_DIRS                 += v4l2_display_test_suite
 FILTER_OUT_DIRS                 += mc_test_suite
