@@ -97,7 +97,7 @@ do case $arg in
     n)      dev_node="$OPTARG";;
     r)      rules="$OPTARG";;
     t)      type="$OPTARG";;
-    e)      test_empty_sector=1;
+    e)      test_empty_sector=1;;
     h)      usage;;
     :)      die "$0: Must supply an argument to -$OPTARG.";;
     \?)     die "Invalid Option -$OPTARG ";;
