@@ -1,6 +1,7 @@
 armv7l
 keystone
 k2g-evm
+emmc
 gpio
 i2c/eeprom
 ipc
