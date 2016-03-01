@@ -92,7 +92,6 @@ setup_firmware()
       done
     ;;
     k2*)
-      __fw_files=$(find /usr/lib/firmware -type f -name "${__fw_pattern}")
       for i in `seq 0 7`;
       do
         save_firmware keystone-dsp${i}-fw
@@ -190,7 +189,6 @@ load_rproc_mpm()
   start_mpm_daemon
   case $MACHINE in
     k2*)
-      __fw_files=$(find /usr/lib/firmware -type f -name "${__fw_pattern}")
       local __procs=$(get_num_remote_procs)
       for i in `seq 0 $((__procs - 1))`
       do
@@ -246,7 +244,7 @@ get_num_remote_procs()
         *Lamarr*)
           echo 4
         ;;
-        *Edison*)
+        *Edison*|*K2G*)
           echo 1
         ;;
       esac
