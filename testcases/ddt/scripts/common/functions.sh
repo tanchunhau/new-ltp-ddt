@@ -1079,8 +1079,8 @@ create_cgroup()
     if [ $3"x" != "x" ]; then
         memset=$3
     fi
-    ls /sys/fs/cgroup/tasks || mount -t cgroup -ocpuset cpuset /sys/fs/cgroup/
-    ls /sys/fs/cgroup/$1 || mkdir /sys/fs/cgroup/$1
+    ls /sys/fs/cgroup/tasks &> /dev/null || mount -t cgroup -ocpuset cpuset /sys/fs/cgroup/
+    ls /sys/fs/cgroup/$1 &> /dev/null || mkdir /sys/fs/cgroup/$1
     echo $2 > /sys/fs/cgroup/$1/cpuset.cpus
     echo $memset > /sys/fs/cgroup/$1/cpuset.mems
     echo 1 > /sys/fs/cgroup/$1/cpuset.cpu_exclusive
@@ -1089,8 +1089,14 @@ create_cgroup()
 # Run shell and subsequent Processes started from it on shielded (i.e. separate) CPU
 shield_shell()
 {
-    create_cgroup nonrt 0
-    create_cgroup rt 1
+    local max_id=`cat /sys/devices/system/cpu/online | cut -d '-' -f 2`
+    if [ $max_id == "1" ]; then
+        create_cgroup nonrt 0
+        create_cgroup rt 1
+    else
+        create_cgroup nonrt "0-$((max_id-1))"
+        create_cgroup rt $max_id
+    fi
     for pid in $(cat /sys/fs/cgroup/tasks); do /bin/echo $pid > /sys/fs/cgroup/nonrt/tasks; done
     /bin/echo $$ > /sys/fs/cgroup/rt/tasks
 }
