@@ -39,6 +39,7 @@ power_mgr/smartreflex
 pwm/ehrpwm
 pwm/ecap
 pwm/backlight
+qspi_master/mtd/spi-ti-qspi
 rtc/omap_rtc
 sound/capture/alsa
 sound/playback/alsa
