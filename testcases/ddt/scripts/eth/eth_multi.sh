@@ -30,6 +30,8 @@ source "common.sh"  # Import do_cmd(), die() and other functions
 #                                                      on another interface 
 #                                 -d <duration of ping in seconds>
 #                                 -p <packetsize for ping in bytes>   
+#                                 -i <interfaces - example all>
+#                                 -m <module_type - example pru>
 #################################################################################
 
 ################################################################################
@@ -49,8 +51,9 @@ p_sequence='one'
 p_duration=10
 p_pktsize=64
 p_interfaces='all'
+p_module=''
 OFS=$IFS
-while getopts ":l:t:s:d:p:i" opt; do
+while getopts ":l:t:s:d:p:i:m:" opt; do
   case $opt in 
   l)
     p_iterations=$OPTARG
@@ -69,6 +72,9 @@ while getopts ":l:t:s:d:p:i" opt; do
     ;;
   i)
    p_interfaces="$OPTARG"
+   ;;
+  m)
+   p_module="$OPTARG"
   esac
 done
 
@@ -78,14 +84,27 @@ for device in `find /sys/class/net/*eth*`
 do 
   operstate='down'
   interface=`echo $device | cut -c16-`
-  operstate=`cat /sys/class/net/$interface/operstate`
-  if [ "$p_interfaces" == 'all' ] || [ "$operstate" == 'up' ]
+  `ifdown $interface`
+  if [ ! -z "$p_module" ]
   then
-    int_name[j]=$interface
-  fi
+    driver=`ethtool -i $interface|grep driver|grep -i $p_module`
+    if [ ! -z "$driver" ]
+    then
+      if [ "$p_interfaces" == 'all' ] || [ "$operstate" == 'up' ]
+      then
+        int_name[j]=$interface
   j+=1
+      fi
+    fi
+  else
+    operstate=`cat /sys/class/net/$interface/operstate`
+    if [ "$p_interfaces" == 'all' ] || [ "$operstate" == 'up' ]
+    then
+      int_name[j]=$interface
+  j+=1
+    fi
+  fi
 done
-
 # for each eth interface, find the corresponding gateway
 for (( j=0; j < ${#int_name[@]}; j++ ))
 do
