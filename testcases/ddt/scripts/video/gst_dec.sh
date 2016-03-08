@@ -80,6 +80,6 @@ done
 
 ########################### REUSABLE TEST LOGIC ###############################
 
-/etc/init.d/weston stop && sleep 3
+ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3
 echo "gst-launch-1.0 playbin uri=file://${TESTFILE} video-sink=\"${VSINK} ${SCALING} ${SYNC} ${V_CONN}\" audio-sink=\"${A_SINK} ${SYNC} ${A_DEV}\""
 gst-launch-1.0 playbin uri=file://${FILE} video-sink=\"${VSINK} ${SCALING} ${SYNC} ${V_CONN}\" audio-sink=\"${A_SINK} ${SYNC} ${A_DEV}\" || die "Problem occurred while trying to play stream"
