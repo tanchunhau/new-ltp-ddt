@@ -43,6 +43,9 @@ A_SINK="alsasink"
 case $MACHINE in
 	 dra7xx*|am57xx*)
 			 VSINK="kmssink";;
+     am572x-idk*)
+			 VSINK="kmssink"
+             A_SINK="fakesink";;
 	 *)
 			 VSINK="fbdevsink";;
 esac

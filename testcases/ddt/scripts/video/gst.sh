@@ -63,14 +63,18 @@ case $CODEC in
       FILE="/usr/share/ti/video/HistoryOfTIAV-$RESOLUTION.mp4";;
 esac
 
+ASINK="alsasink"
 case $MACHINE in
    dra7xx*|am57xx*)
        VSINK="kmssink";;
+   am572x-idk*)
+       VSINK="kmssink"
+       ASINK="fakesink";;
    *)
        VSINK="fbdevsink /dev/fb0";;
 esac
 
-GSTCMD="gst-launch-1.0 playbin uri=file://${FILE} video-sink=\"${VSINK}\" audio-sink=alsasink"
+GSTCMD="gst-launch-1.0 playbin uri=file://${FILE} video-sink=\"${VSINK}\" audio-sink=\"${ASINK}\""
 
 ########################### DYNAMICALLY-DEFINED Params #########################
 # Try to use /sys and /proc information to determine values dynamically.
