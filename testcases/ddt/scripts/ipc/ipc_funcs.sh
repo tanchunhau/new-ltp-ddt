@@ -419,6 +419,9 @@ kill_lad()
         *Edison*)
           killall lad_66AK2E
         ;;
+        *K2G*)
+          killall lad_66ak2g
+        ;;
       esac
       ;;
     *)
@@ -448,6 +451,9 @@ start_lad()
         ;;
         *Edison*)
           lad_66AK2E
+        ;;
+        *K2G*)
+          lad_66ak2g
         ;;
       esac
       ;;
