@@ -116,6 +116,10 @@ setup_firmware()
 # be loaded in the remote processors
 rm_ipc_mods()
 {
+  rm_pru_mods
+  local __rprocs=( $(list_rprocs) )                                           
+  toggle_rprocs unbind ${__rprocs[@]}
+  
   local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus )
   
   kill_lad
@@ -156,6 +160,12 @@ ins_ipc_mods()
     ;;
   esac
   sleep 3
+  local __rprocs=( $(list_rprocs) )   
+  toggle_rprocs unbind ${__rprocs[@]}
+  sleep 3                                        
+  toggle_rprocs bind ${__rprocs[@]}
+  sleep 3
+  ins_pru_mods
 }
 
 # Function to insmod the modules require to run RPMSG test with mpm
@@ -203,6 +213,38 @@ load_rproc_mpm()
     ;;
   esac
   sleep 3
+}
+
+
+ins_pru_mods()
+{
+  local __modules=(pruss pru_rproc)
+
+  case $MACHINE in
+    am57xx*|am43xx*|am335x*)
+      for __mod in ${__modules[@]}
+      do
+        modprobe ${__mod}
+      done
+      sleep 3
+    ;;
+  esac
+}
+
+rm_pru_mods()
+{
+  local __modules=(pru_rproc pruss)
+
+  case $MACHINE in
+    am57xx*|am43xx*|am335x*)
+      __prus=( $(list_prus) )                                           
+      toggle_prus unbind ${__prus[@]}
+      for __mod in ${__modules[@]}
+      do
+        modprobe -r ${__mod}
+      done
+  ;;
+  esac
 }
 
 kill_mpm_daemon()
@@ -292,7 +334,7 @@ get_rpmsg_proto_rproc_ids()
   echo ${rids[@]::$1}
 }
 
-# Funtion to run the RPMSG-RPC test
+# Funtion to creat the RPMSG-RPC test cmds
 # Inputs:
 #   -p: The number of remote processor to use in the test
 #   -f: (Optional) The function or part of the function name to execute
@@ -303,13 +345,16 @@ get_rpmsg_proto_rproc_ids()
 #   -s: (Optional) the time in sec after which the test should be killed,
 #       or if -a is specified after -c command will be sent.
 #       This option is useful to test stability, 
+#   -t: variable to store the single proc test commands array
+#   -u: variable to store the multi-proc test commands array
+#   -n: variable to store the number of processors to test
 #   -c: (Optional) command to send after time -s seconds
 # Returns, 0 if the test passed, 1 if the single processor test failed,
 #          2 if the multiprocessors test failed, or 3 if both single and
 #          multiprocessor test fails
-rpmsg_rpc_test()
+rpmsg_rpc_test_cmds()
 {
-  local __num_procs=$1
+  local __num_procs
   local __kill_time=0
   local __result=0
   local __instances=10
@@ -321,22 +366,33 @@ rpmsg_rpc_test()
   local __num_match
   local __command
   local __add_cmd=''
+  local __n_procs
+  local __s_cmds
+  local __m_cmds
+
   OPTIND=1 
   local _iterations
-  while getopts :p:c:f:s:m: arg
-  do case $arg in
-    p)  __num_procs="$OPTARG";;
-    s)  __kill_time="$OPTARG";;
-    f)  __f_name="$OPTARG";;
-    m)  __msg_num="-m $OPTARG";;
-    c)  __add_cmd="$OPTARG";;
+  while getopts :p:c:f:s:m:t:u:n: arg
+  do 
+    case $arg in
+      p)  __num_procs="$OPTARG";;
+      s)  __kill_time="$OPTARG";;
+      f)  __f_name="$OPTARG";;
+      m)  __msg_num="-m $OPTARG";;
+      c)  __add_cmd="$OPTARG";;
+      t)  __s_cmds="$OPTARG";;
+      u)  __m_cmds="$OPTARG";;
+      n)  __n_procs="$OPTARG";;
 
-    \?)  test_print_trc "Invalid Option -$OPTARG ignored." >&2
-    return 1
-    ;;
-  esac
+      \?)  test_print_trc "Invalid Option -$OPTARG ignored." >&2
+      ;;
+    esac
   done
-  
+
+  eval "${__s_cmds}=()"
+  eval "${__m_cmds}=()"
+  eval "${__n_procs}=${__num_procs}"
+
   for __rproc in `seq 0 $((__num_procs - 1))`
   do
     __multiproc_cmds[0]="${__multiproc_cmds[0]} & $__rpc_cmd -t $((__rproc % 3 + 1)) -c $__rproc -x $__instances -l $__instances -f $__f_name $__msg_num"
@@ -356,21 +412,13 @@ rpmsg_rpc_test()
           __command="${__command} killall $__rpc_cmd"
         fi 
       fi
-      echo $__command
-      __test_log=$(eval $__command)
-      __num_match=$(echo -e "$__test_log" | grep -c -i "TEST STATUS: PASSED")
-      if [ $__num_match -ne 1 ]
-      then
-        __result=1
-        echo -e "${__test_log}\nTest $__t_type failed for proc ${__rproc}"
-      else
-        echo "Test $__t_type passed for proc $__rproc"
-      fi
+      eval "${__s_cmds}+=(\"$__command\")"
     done
   done
 
   if [ $__num_procs -gt 1 ]
   then
+    i=0
     for __cmd in "${__multiproc_cmds[@]}"
     do
       if [ $__kill_time -gt 0 ]
@@ -383,20 +431,137 @@ rpmsg_rpc_test()
           __cmd="${__cmd} killall $__rpc_cmd" 
         fi
       fi
-      echo ${__cmd:3}
-      __test_log=$(eval ${__cmd:3})
-      __num_match=$(echo -e "$__test_log" | grep -i -c "TEST STATUS: PASSED")
-      echo -e "$__num_match processors passed..."
-      if [ $__num_match -ne $__num_procs ]
-      then
-        let "__result|=2"
-        echo -e "$__test_log\nTest failed for ${__cmd:3}"
-      else
-        echo -e "Test passed for ${__cmd:3}"
-      fi
+      eval "${__m_cmds}[$i]=\"${__cmd:3}\""
+      i=$((i+1))
     done
+  else
+    eval "${__m_cmds}=()"
   fi
+
+}
+
+# Funtion to run the RPMSG-RPC test
+# Inputs:
+#   -p: The number of remote processor to use in the test
+#   -f: (Optional) The function or part of the function name to execute
+#       in the remote processor. Defaults to _triple
+#   -m: (Optional) int used to trigger an MMU fault while running the test.
+#       0:Fault on first message, 1: Fault on middle messsage 
+#       2: Fault on last message 
+#   -s: (Optional) the time in sec after which the test should be killed,
+#       or if -a is specified after -c command will be sent.
+#       This option is useful to test stability, 
+#   -c: (Optional) command to send after time -s seconds
+# Returns, 0 if the test passed, 1 if the single processor test failed,
+#          2 if the multiprocessors test failed, or 3 if both single and
+#          multiprocessor test fails
+rpmsg_rpc_test()
+{
+  local __result=0
+  local __f_name='_triple'
+  local __test_log
+  local __num_match
+  local __command
+
+  rpmsg_rpc_test_cmds -t s_cmds -u m_cmds -n num_procs $*
+
+  for __command in "${s_cmds[@]}"
+  do
+    echo $__command
+    __test_log=$(eval $__command)
+    __num_match=$(echo -e "$__test_log" | grep -c -i "TEST STATUS: PASSED")
+    if [ $__num_match -ne 1 ]
+    then
+      __result=1
+      echo -e "${__test_log}\n$__command failed"
+    else
+      echo "$__command passed"
+    fi
+  done
+
+  for __cmd in "${m_cmds[@]}"
+  do
+    __test_log=$(eval ${__cmd})
+    __num_match=$(echo -e "$__test_log" | grep -i -c "TEST STATUS: PASSED")
+    echo -e "$__num_match processors passed..."
+    if [ $__num_match -ne $num_procs ]
+    then
+      let "__result|=2"
+      echo -e "$__test_log\nTest failed for ${__cmd}"
+    else
+      echo -e "Test passed for ${__cmd}"
+    fi
+  done
+
+  return $__result
+}
+
+# Funtion to test recovery in rpmsg_rpc
+# Inputs:
+#   -p: The number of remote processor to use in the test
+#   -f: (Optional) The function or part of the function name to execute
+#       in the remote processor. Defaults to _triple
+#   -m: (Optional) int used to trigger an MMU fault while running the test.
+#       0:Fault on first message, 1: Fault on middle messsage 
+#       2: Fault on last message 
+#       This option is useful to test stability,
+# Returns, 0 if the test passed, 1 if the single processor test failed,
+#          2 if the multiprocessors test failed, or 3 if both single and
+#          multiprocessor test fails
+rpmsg_rpc_recovery_test()
+{
+  local __result=0
+  local __f_name='_triple'
+  local __test_log
+  local __num_match
+  local __command
+  local __mr_events=''
+
+  rpmsg_rpc_test_cmds -t s_cmds -u m_cmds -n num_procs $*
+
+  rpmsg_recovery_event __rec_events
+
+  i=0
+  #single rproc recovery
+  for __cmd in "${m_cmds[@]}"
+  do
+    __command="${__cmd}; sleep 5; ${__rec_events[$((i % num_procs))]}"
+    __test_log=$(eval ${__command})
+    __num_match=$(echo -e "$__test_log" | grep -i -c "TEST STATUS: PASSED")
+    echo -e "$__num_match processors passed..."
+    if [ $__num_match -ne $num_procs ]
+    then
+      let "__result|=2"
+      echo -e "$__test_log\nTest failed for ${__command}"
+    else
+      echo -e "Test passed for ${__command}"
+    fi
+    i=$((i+1))
+  done
   
+  
+  __mr_events="${__rec_events[0]}"
+  for i in `seq 1 $((${#__rec_events[@]} - 1))`
+  do
+    __mr_events="${__mr_events} && ${__rec_events[$i]}"
+  done
+  
+  #Multiple rproc recovery
+  for __cmd in "${m_cmds[@]}"
+  do
+    __command="${__cmd}; sleep 5; ${__mr_events[@]}"
+    __test_log=$(eval ${__command})
+    __num_match=$(echo -e "$__test_log" | grep -i -c "TEST STATUS: PASSED")
+    echo -e "$__num_match processors passed..."
+    if [ $__num_match -ne $num_procs ]
+    then
+      let "__result|=2"
+      echo -e "$__test_log\nTest failed for ${__command}"
+    else
+      echo -e "Test passed for ${__command}"
+    fi
+  done
+
   return $__result
 }
 
@@ -713,14 +878,17 @@ rpmsg_client_sample_test()
 
 # Funtion obtain the command that may be used to trigger a recovery
 # event
+# Inputs:
+#   $1: Variable to store the array of recovery events commands
 # Returns:
-#   A string containing the command to trigger the driver's crash
-#   recovery mechanism 
+#   An array of string containing the commands to trigger the driver's crash
+#   recovery mechanism is stored in $1
 rpmsg_recovery_event()
 {
   local __mbox_q_addr
   local __command=""
   
+  eval "$1=()"
   case $MACHINE in
     *dra7xx-evm|*am57xx-evm)
       __mbox_q_addr=('0x48840044' '0x48840050' '0x48842044' '0x48842050')
@@ -733,10 +901,9 @@ rpmsg_recovery_event()
   
   for __mb_addr in ${__mbox_q_addr[@]}
   do
-    __command="$__command && devmem2 $__mb_addr w 0xffffff02"
+    eval "$1+=(\"devmem2 $__mb_addr w 0xffffff02\")"
   done
-  
-  echo ${__command:3}
+
 }
 
 # Function to bind/unbind the prus
@@ -772,4 +939,58 @@ list_prus()
       echo "Machine ${MACHINE} not supported"
     ;;
   esac
+}
+
+# Funtion to obtain the list of pru devices
+# Returns the list of PRU devices based on the MACHINE var value
+list_rprocs()
+{
+  case $SOC in
+    dra7xx)
+      echo "40800000.dsp 41000000.dsp 58820000.ipu 55020000.ipu"
+    ;;
+    j6eco)
+      echo "40800000.dsp 58820000.ipu 55020000.ipu"
+    ;;
+    keystone)
+      case $MACHINE in
+        k2g-evm|k2e-evm)
+          echo "10800000.dsp0"
+        ;;
+        k2l-evm)
+          echo "10800000.dsp0 11800000.dsp1 12800000.dsp2 13800000.dsp3"
+        ;;
+        k2hk-evm)
+          echo "10800000.dsp0 11800000.dsp1 12800000.dsp2 13800000.dsp3 14800000.dsp4 15800000.dsp5 16800000.dsp6 17800000.dsp7"
+        ;;  
+      esac
+    ;;
+    *)
+      echo "Machine ${MACHINE} not supported"
+    ;;
+  esac
+}
+
+# Function to bind/unbind the prus
+# Inputs:
+#   $1: action to perform, either "bind" or "unbind"
+#   $2:* devices to bind/unbind
+toggle_rprocs()
+{
+  local __driver_sysfs
+  
+  case $SOC in
+    keystone)
+      __driver_sysfs='/sys/bus/platform/drivers/keystone-rproc'
+    ;;
+    *)
+      __driver_sysfs='/sys/bus/platform/drivers/omap-rproc'
+    ;;
+  esac
+
+  for __pru in ${@:2}
+  do
+    echo "${1}ing $__pru ..."
+    echo "$__pru" > ${__driver_sysfs}/$1
+  done
 }
