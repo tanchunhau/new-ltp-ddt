@@ -41,7 +41,7 @@ setup_firmware()
   local __fw_files=$(find $__fw_dir -type f -name "${__fw_pattern}")
   echo "Found $__fw_files fw files..."
   case $MACHINE in
-    dra7xx-evm|am57xx*)
+    dra7xx-evm|am57*)
       save_firmware dra7-dsp1-fw.xe66 dra7-dsp2-fw.xe66 dra7-ipu2-fw.xem4 dra7-ipu1-fw.xem4 am57xx-pru1_0-fw am57xx-pru1_1-fw am57xx-pru2_0-fw am57xx-pru2_1-fw
       for __fw in $__fw_files
       do
@@ -116,14 +116,15 @@ setup_firmware()
 # be loaded in the remote processors
 rm_ipc_mods()
 {
+
+  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus )
+
+  kill_lad
+  kill_mpm_daemon
+
   rm_pru_mods
   local __rprocs=( $(list_rprocs) )                                           
   toggle_rprocs unbind ${__rprocs[@]}
-  
-  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus )
-  
-  kill_lad
-  kill_mpm_daemon
 
   for __mod in ${__modules[@]}
   do
@@ -321,7 +322,7 @@ get_rpmsg_proto_rproc_ids()
         *Lamarr*)
           rids=( `seq 1 4` )
         ;;
-        *Edison*)
+        *Edison*|*K2G*)
           rids=( 1 )
         ;;
       esac
