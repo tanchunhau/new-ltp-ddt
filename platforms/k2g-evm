@@ -21,3 +21,5 @@ ubifs
 usb/host/msc/xhci-hcd
 watchdog
 hdmi/audio/playback
+audio
+sound
