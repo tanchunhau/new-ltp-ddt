@@ -222,7 +222,7 @@ ins_pru_mods()
   local __modules=(pruss pru_rproc)
 
   case $MACHINE in
-    am57xx*|am43xx*|am335x*)
+    am57*|am43xx*|am335x*)
       for __mod in ${__modules[@]}
       do
         modprobe ${__mod}
@@ -237,7 +237,7 @@ rm_pru_mods()
   local __modules=(pru_rproc pruss)
 
   case $MACHINE in
-    am57xx*|am43xx*|am335x*)
+    am57*|am43xx*|am335x*)
       __prus=( $(list_prus) )                                           
       toggle_prus unbind ${__prus[@]}
       for __mod in ${__modules[@]}
@@ -570,7 +570,7 @@ rpmsg_rpc_recovery_test()
 kill_lad()
 {
   case $MACHINE in
-    *dra7xx-evm|*am57xx-evm)
+    *dra7xx-evm|*am57*)
       killall lad_dra7xx
       ;;
     k2*)
@@ -603,7 +603,7 @@ kill_lad()
 start_lad()
 {
   case $MACHINE in
-    *dra7xx-evm|*am57xx-evm)
+    *dra7xx-evm|*am57*)
       lad_dra7xx
       ;;
     k2*)
@@ -891,7 +891,7 @@ rpmsg_recovery_event()
   
   eval "$1=()"
   case $MACHINE in
-    *dra7xx-evm|*am57xx-evm)
+    *dra7xx-evm|*am57*)
       __mbox_q_addr=('0x48840044' '0x48840050' '0x48842044' '0x48842050')
       ;;
     *)
@@ -933,7 +933,7 @@ list_prus()
     am335x*)
       echo "4a334000.pru0 4a338000.pru1"
     ;;
-    am57xx*)
+    am57*)
       echo "4b234000.pru0 4b238000.pru1 4b2b4000.pru0 4b2b8000.pru1"
     ;;
     *)
