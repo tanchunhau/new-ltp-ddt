@@ -62,7 +62,7 @@ test_print_trc "FS TYPE: $FS_TYPE"
 if [ "$FS_TYPE" = "vfat" ]; then
   MKFS="mkfs.${FS_TYPE} -F 32"
 else
-  MKFS="mkfs.${FS_TYPE}"
+  MKFS="mkfs.${FS_TYPE} -F "
 fi
 FLASH_ERASEALL="flash_eraseall -q"
 
