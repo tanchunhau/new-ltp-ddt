@@ -3,6 +3,7 @@
 # @desc 
 #       modprobe spi module with params first and then do RW and then rmmod it
 # @requires  spi_master/*/spi_davinci 
+# @setup_requires spi
 
 # Notes: this test is not working yet since spi_davinci_busfreq is not recognized.
 

@@ -2,6 +2,7 @@
 #	QSPI modular test with optional params 
 # @desc 
 #       modprobe qspi module with params first and then do RW and then rmmod it
+# @setup_requires qspi
 # @requires  qspi_master/*/qspi_davinci 
 
 # Notes: this test is not working yet since qspi_davinci_busfreq is not recognized.

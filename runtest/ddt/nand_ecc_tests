@@ -1,7 +1,7 @@
 # @name NAND ECC tests
 # @desc Introduce error bits to Nand page to see if those errors can be corrected
 # @requires nand
-
+# @setup_requires nand
 # Examples
 #NAND_S_FUNC_ECC_BCH8_8ERRS source "common.sh"; nandecc_tests.sh -n "/dev/mtd6" -r "0:0:0x01"~"1:0:0xFE"~"OOB:4:0x01"
 #NAND_S_FUNC_ECC_BCH8_8ERRS source "common.sh"; nandecc_tests.sh -n "/dev/mtd6" -r "0:0:0x01"~"0:16:0x01"~"0:32:0xCC"~"1:0:0xFF"~"OOB:4:0xCC"

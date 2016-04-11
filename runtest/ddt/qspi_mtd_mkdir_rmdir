@@ -2,6 +2,7 @@
 # @desc Perform mkdir and rmdir in qspi 
 #	The partition number is specified in get_mtd_partition_number.sh
 # @requires qspi_master/mtd
+# @setup_requires qspi
 
 QSPI_S_FUNC_MKDIR_RMDIR source "common.sh"; install_modules.sh "qspi"; source "mtd_common.sh"; part=`get_mtd_partition_number.sh "qspi"`; dev_node="$MTD_BLK_DEV$part"; do_cmd flash_eraseall -q /dev/mtd$part; blk_device_do_mount.sh -n "$dev_node" -f "jffs2" -d "qspi" -m "/mnt/qspi"; do_cmd mkdir "/mnt/qspi/test";  do_cmd chmod 777 "/mnt/qspi/test";    do_cmd rmdir "/mnt/qspi/test";   do_cmd umount "$dev_node" 
 

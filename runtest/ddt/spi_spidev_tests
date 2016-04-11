@@ -4,6 +4,7 @@
 #       Before run those tests, spidev needs to be enabled in kernel including
 #       settting up pinctrl. Also, loopback SOMI and SIMO pin on EVM.
 # @requires spi_master
+# @setup_requires spi
 
 SPI_S_FUNC_SPIDEV_500K_4_10 source "common.sh"; install_modules.sh "spi"; spidev_node=`get_spidev_node.sh` || die "fail to get spidev node: $spidev_node"; spidev_test -D "$spidev_node" -s 500000 -b 4 -W 10
 SPI_S_FUNC_SPIDEV_500K_8_10 source "common.sh"; install_modules.sh "spi"; spidev_node=`get_spidev_node.sh` || die "fail to get spidev node: $spidev_node"; spidev_test -D "$spidev_node" -s 500000 -b 8 -W 10

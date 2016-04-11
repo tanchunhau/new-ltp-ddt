@@ -2,6 +2,7 @@
 # @desc Erase Nand MTD partition
 #	The partition number is specified in get_mtd_partition_number.sh
 # @requires nand
+# @setup_requires nand
 
 #NAND_M_FUNC_ERASE_0001 mtd_debug_erase.sh -n 4 -o 0 -d "nand"
 #NAND_M_FUNC_ERASE_0001 mtd_debug_erase.sh -d "nand"
