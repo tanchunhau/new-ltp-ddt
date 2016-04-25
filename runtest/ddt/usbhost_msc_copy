@@ -1,7 +1,7 @@
 # @name USB Host Write/Read between all/seleted drives test
 # @desc find the drives if it is hdd/usb or if the drive is mentioned explisitly, then copy a file with all possible combinations to the drives with mentioned file size
 # @requires usb/host
-# @setup_requires usbhostmsc
+# @setup_requires usbhostmultimsc
 
 USBHOST_L_FUNC_COPY_bw_ALL_DRIVES_500M source 'common.sh' ; do_cmd install_modules.sh 'usb'; scsi_dd_readwrite_between_nodes.sh -d all -b 512K -c 1000 -l 10
 USBHOST_M_FUNC_COPY_bw_ALL_DRIVES_100M source 'common.sh' ; do_cmd install_modules.sh 'usb'; scsi_dd_readwrite_between_nodes.sh -d all -b 1M -c 100
