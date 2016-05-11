@@ -13,37 +13,39 @@
 #                                                                             #
 ###############################################################################
 
-LOOP=300
-
-if [ ! -e "$TRACING_PATH"/set_ftrace_pid ]; then
-	should_skip=1
-else
-	should_skip=0
-fi
-
-for ((; ; ))
+ftrace_sleep()
 {
-	if [ $should_skip -eq 1 ]; then
-		sleep 2
-		continue
+	# usleep is not a standard command?
+	usleep 200000 2> /dev/null
+	if [ $? -ne 0 ]; then
+		sleep 1
 	fi
-
-	for ((j = 0; j < $LOOP; j++))
-	{
-		for ((k = 1; k <= NR_PIDS; k++))
-		{
-			str="\$pid$k"
-			eval echo $str >> "$TRACING_PATH"/set_ftrace_pid
-		}
-
-		if ! echo > "$TRACING_PATH"/set_ftrace_pid >/dev/null 2>&1; then
-			if ! echo -1 > "$TRACING_PATH"/set_ftrace_pid >/dev/null 2>&1; then
-				tst_resm TBROK "Cannot disable set_ftrace_pid!"
-				exit 1
-			fi
-		fi
-	}
-
-	sleep 1
 }
 
+kill_this_pid()
+{
+	/bin/kill -SIGKILL $this_pid
+	wait $this_pid
+	exit 0
+}
+
+trap kill_this_pid SIGUSR1
+
+LOOP=20
+
+for ((; ;))
+{
+	for ((i = 0; i < $LOOP; i++))
+	{
+		cat "$TRACING_PATH"/trace_pipe > /dev/null &
+
+		this_pid=$!
+		ftrace_sleep
+		/bin/kill -SIGINT $this_pid
+		wait $this_pid
+		this_pid=0
+		ftrace_sleep
+	}
+
+	sleep 2
+}

@@ -13,27 +13,33 @@
 #                                                                             #
 ###############################################################################
 
-MAX_LOOP=1500
-count=0
+LOOP=400
+
+if [ ! -e /proc/sys/kernel/stack_tracer_enabled ]; then
+	should_skip=1
+else
+	should_skip=0
+fi
 
 for ((; ;))
 {
-	count=$(( $count + 1 ))
+	if [ $should_skip -eq 1 ]; then
+		sleep 2
+		continue
+	fi
 
-	for ((i = 0; i < $MAX_LOOP; i++))
+	for ((i = 0; i < $LOOP; i++))
 	{
-		echo 0 > "$TRACING_PATH"/tracing_on
-		echo 1 > "$TRACING_PATH"/tracing_on
+		cat "$TRACING_PATH"/stack_trace > /dev/null
 	}
 
-	enable=$(( $count % 3 ))
+	sleep 1
 
-	if [ $enable -eq 0 ]; then
-		echo 0 > "$TRACING_PATH"/tracing_on
-	else
-		echo 1 > "$TRACING_PATH"/tracing_on
-	fi
+	for ((i = 0; i < $LOOP; i++))
+	{
+		echo 0 > /proc/sys/kernel/stack_tracer_enabled
+		echo 1 > /proc/sys/kernel/stack_tracer_enabled
+	}
 
 	sleep 1
 }
-

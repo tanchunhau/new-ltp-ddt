@@ -13,27 +13,26 @@
 #                                                                             #
 ###############################################################################
 
-MAX_STACK_SIZE=8192
-
-if [ ! -e /proc/sys/kernel/stack_tracer_enabled ]; then
-	should_skip=1
-else
-	should_skip=0
-fi
+MAX_LOOP=1500
+count=0
 
 for ((; ;))
 {
-	if [ $should_skip -eq 1 ]; then
-		sleep 2
-		continue
-	fi
+	count=$(( $count + 1 ))
 
-	for ((i = 0; i < $MAX_STACK_SIZE; i += 70))
+	for ((i = 0; i < $MAX_LOOP; i++))
 	{
-		echo $i > "$TRACING_PATH"/stack_max_size
-		cat "$TRACING_PATH"/stack_max_size > /dev/null
+		echo 0 > "$TRACING_PATH"/tracing_enabled
+		echo 1 > "$TRACING_PATH"/tracing_enabled
 	}
+
+	enable=$(( $count % 3 ))
+
+	if [ $enable -eq 0 ]; then
+		echo 0 > "$TRACING_PATH"/tracing_enabled
+	else
+		echo 1 > "$TRACING_PATH"/tracing_enabled
+	fi
 
 	sleep 1
 }
-

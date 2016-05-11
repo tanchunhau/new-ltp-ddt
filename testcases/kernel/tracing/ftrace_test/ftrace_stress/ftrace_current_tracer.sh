@@ -15,31 +15,19 @@
 
 LOOP=200
 
-should_skip=0
-
-if [ ! -e "$TRACING_PATH"/function_profile_enabled ]; then
-        should_skip=1
-fi
-
-# For kernels older than 2.6.36, this testcase can result in
-# divide-by-zero kernel bug
-tst_kvercmp 2 6 36
-if [ $? -eq 0 ]; then
-	should_skip=1
-fi
-
 for ((; ;))
 {
-	if [ $should_skip -eq 1 ]; then
-		sleep 2
-		continue
-	fi
-
 	for ((i = 0; i < $LOOP; i++))
 	{
-		cat "$TRACING_PATH"/trace_stat/function0 > /dev/null 2>&1
+		for tracer in `cat "$TRACING_PATH"/available_tracers`
+		do
+			if [ "$tracer" = mmiotrace ]; then
+				continue
+			fi
+
+			echo $tracer > "$TRACING_PATH"/current_tracer 2> /dev/null
+		done
 	}
 
 	sleep 1
 }
-

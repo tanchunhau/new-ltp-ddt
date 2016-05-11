@@ -13,32 +13,14 @@
 #                                                                             #
 ###############################################################################
 
+LOOP=200
+
 for ((; ;))
 {
-	for ((i = 0; i < 100; i++))
+	for ((i = 0; i < $LOOP; i++))
 	{
-		echo 1 > "$TRACING_PATH"/events/enable
-		echo 0 > "$TRACING_PATH"/events/enable
+		cat "$TRACING_PATH"/trace > /dev/null
 	}
-
-	for dir in `ls $TRACING_PATH/events/`
-	do
-		if [ ! -d $dir -o "$dir" = ftrace ]; then
-			continue;
-		fi
-
-		for ((i = 0; i < 20; i++))
-		{
-			echo 1 > "$TRACING_PATH"/events/$dir/enable
-			echo 0 > "$TRACING_PATH"/events/$dir/enable
-		}
-	done
-
-	for event in `cat $TRACING_PATH/available_events`;
-	do
-		echo $event >> "$TRACING_PATH"/set_event
-	done
 
 	sleep 1
 }
-

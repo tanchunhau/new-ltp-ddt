@@ -13,13 +13,19 @@
 #                                                                             #
 ###############################################################################
 
-MAX_LOOP=1500
-count=0
+LOOP=200
+
+should_skip=0
 
 if [ ! -e "$TRACING_PATH"/function_profile_enabled ]; then
+        should_skip=1
+fi
+
+# For kernels older than 2.6.36, this testcase can result in
+# divide-by-zero kernel bug
+tst_kvercmp 2 6 36
+if [ $? -eq 0 ]; then
 	should_skip=1
-else
-	should_skip=0
 fi
 
 for ((; ;))
@@ -29,22 +35,10 @@ for ((; ;))
 		continue
 	fi
 
-	count=$(( $count + 1 ))
-
-	for ((i = 0; i < $MAX_LOOP; i++))
+	for ((i = 0; i < $LOOP; i++))
 	{
-		echo 0 > "$TRACING_PATH"/function_profile_enabled 2> /dev/null
-		echo 1 > "$TRACING_PATH"/function_profile_enabled 2> /dev/null
+		cat "$TRACING_PATH"/trace_stat/function0 > /dev/null 2>&1
 	}
-
-	enable=$(( $count % 3 ))
-
-	if [ $enable -eq 0 ]; then
-		echo 1 > "$TRACING_PATH"/function_profile_enabled 2> /dev/null
-	else
-		echo 0 > "$TRACING_PATH"/function_profile_enabled 2> /dev/null
-	fi
 
 	sleep 1
 }
-

@@ -13,30 +13,26 @@
 #                                                                             #
 ###############################################################################
 
-LOOP=200
+MAX_LOOP=1500
+count=0
 
-trace_options=(print-parent sym-offset sym-addr verbose raw hex bin block trace_printk ftrace_preempt branch annotate userstacktrace sym-userobj printk-msg-only context-info latency-format sleep-time graph-time)
-
-NR_TRACE_OPTIONS=19
-
-for ((; ; ))
+for ((; ;))
 {
-	for ((j = 0; j < $LOOP; j++))
-	{
-		num=`date +%N`
-		num=`printf 1%s $num`
+	count=$(( $count + 1 ))
 
-		for ((i = 0; i < $NR_TRACE_OPTIONS; i++))
-		{
-			n=$(( ( $num >> $i ) % 2 ))
-			if [ $n -eq 0 ]; then
-				echo 0 > "$TRACING_PATH"/options/${trace_options[$i]}
-			else
-				echo 1 > "$TRACING_PATH"/options/${trace_options[$i]}
-			fi
-		}
+	for ((i = 0; i < $MAX_LOOP; i++))
+	{
+		echo 0 > /proc/sys/kernel/ftrace_enabled
+		echo 1 > /proc/sys/kernel/ftrace_enabled
 	}
+
+	enable=$(( $count % 3 ))
+
+	if [ $enable -eq 0 ]; then
+		echo 1 > /proc/sys/kernel/ftrace_enabled
+	else
+		echo 0 > /proc/sys/kernel/ftrace_enabled
+	fi
 
 	sleep 1
 }
-

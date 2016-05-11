@@ -13,26 +13,31 @@
 #                                                                             #
 ###############################################################################
 
-MAX_LATENCY=100000
-
-if [ ! -e "$TRACING_PATH"/tracing_max_latency ]; then
-        should_skip=1
-else
-        should_skip=0
-fi
-
 for ((; ;))
 {
-        if [ $should_skip -eq 1 ]; then
-                sleep 2
-                continue
-        fi
-
-	for ((i = 0; i < $MAX_LATENCY; i += 400))
+	for ((i = 0; i < 100; i++))
 	{
-		echo $i > "$TRACING_PATH"/tracing_max_latency
+		echo 1 > "$TRACING_PATH"/events/enable
+		echo 0 > "$TRACING_PATH"/events/enable
 	}
+
+	for dir in `ls $TRACING_PATH/events/`
+	do
+		if [ ! -d $dir -o "$dir" = ftrace ]; then
+			continue;
+		fi
+
+		for ((i = 0; i < 20; i++))
+		{
+			echo 1 > "$TRACING_PATH"/events/$dir/enable
+			echo 0 > "$TRACING_PATH"/events/$dir/enable
+		}
+	done
+
+	for event in `cat $TRACING_PATH/available_events`;
+	do
+		echo $event >> "$TRACING_PATH"/set_event
+	done
 
 	sleep 1
 }
-

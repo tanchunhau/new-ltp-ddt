@@ -13,27 +13,25 @@
 #                                                                             #
 ###############################################################################
 
-MAX_LOOP=1500
-count=0
+MAX_LATENCY=100000
+
+if [ ! -e "$TRACING_PATH"/tracing_max_latency ]; then
+        should_skip=1
+else
+        should_skip=0
+fi
 
 for ((; ;))
 {
-	count=$(( $count + 1 ))
+        if [ $should_skip -eq 1 ]; then
+                sleep 2
+                continue
+        fi
 
-	for ((i = 0; i < $MAX_LOOP; i++))
+	for ((i = 0; i < $MAX_LATENCY; i += 400))
 	{
-		echo 0 > "$TRACING_PATH"/tracing_enabled
-		echo 1 > "$TRACING_PATH"/tracing_enabled
+		echo $i > "$TRACING_PATH"/tracing_max_latency
 	}
-
-	enable=$(( $count % 3 ))
-
-	if [ $enable -eq 0 ]; then
-		echo 0 > "$TRACING_PATH"/tracing_enabled
-	else
-		echo 1 > "$TRACING_PATH"/tracing_enabled
-	fi
 
 	sleep 1
 }
-

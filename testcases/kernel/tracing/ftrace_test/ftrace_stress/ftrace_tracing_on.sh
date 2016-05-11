@@ -13,40 +13,26 @@
 #                                                                             #
 ###############################################################################
 
-ftrace_sleep()
-{
-	# usleep is not a standard command?
-	usleep 200000 2> /dev/null
-	if [ $? -ne 0 ]; then
-		sleep 1
-	fi
-}
-
-kill_this_pid()
-{
-	/bin/kill -SIGKILL $this_pid
-	wait $this_pid
-	exit 0
-}
-
-trap kill_this_pid SIGUSR1
-
-LOOP=20
+MAX_LOOP=1500
+count=0
 
 for ((; ;))
 {
-	for ((i = 0; i < $LOOP; i++))
-	{
-		cat "$TRACING_PATH"/trace_pipe > /dev/null &
+	count=$(( $count + 1 ))
 
-		this_pid=$!
-		ftrace_sleep
-		/bin/kill -SIGINT $this_pid
-		wait $this_pid
-		this_pid=0
-		ftrace_sleep
+	for ((i = 0; i < $MAX_LOOP; i++))
+	{
+		echo 0 > "$TRACING_PATH"/tracing_on
+		echo 1 > "$TRACING_PATH"/tracing_on
 	}
 
-	sleep 2
-}
+	enable=$(( $count % 3 ))
 
+	if [ $enable -eq 0 ]; then
+		echo 0 > "$TRACING_PATH"/tracing_on
+	else
+		echo 1 > "$TRACING_PATH"/tracing_on
+	fi
+
+	sleep 1
+}

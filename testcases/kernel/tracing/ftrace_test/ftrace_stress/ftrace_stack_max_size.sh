@@ -13,22 +13,26 @@
 #                                                                             #
 ###############################################################################
 
-LOOP=200
+MAX_STACK_SIZE=8192
+
+if [ ! -e /proc/sys/kernel/stack_tracer_enabled ]; then
+	should_skip=1
+else
+	should_skip=0
+fi
 
 for ((; ;))
 {
-	for ((i = 0; i < $LOOP; i++))
-	{
-		for tracer in `cat "$TRACING_PATH"/available_tracers`
-		do
-			if [ "$tracer" = mmiotrace ]; then
-				continue
-			fi
+	if [ $should_skip -eq 1 ]; then
+		sleep 2
+		continue
+	fi
 
-			echo $tracer > "$TRACING_PATH"/current_tracer 2> /dev/null
-		done
+	for ((i = 0; i < $MAX_STACK_SIZE; i += 70))
+	{
+		echo $i > "$TRACING_PATH"/stack_max_size
+		cat "$TRACING_PATH"/stack_max_size > /dev/null
 	}
 
 	sleep 1
 }
-

@@ -13,34 +13,36 @@
 #                                                                             #
 ###############################################################################
 
-LOOP=400
+LOOP=300
 
-if [ ! -e /proc/sys/kernel/stack_tracer_enabled ]; then
+if [ ! -e "$TRACING_PATH"/set_ftrace_pid ]; then
 	should_skip=1
 else
 	should_skip=0
 fi
 
-for ((; ;))
+for ((; ; ))
 {
 	if [ $should_skip -eq 1 ]; then
 		sleep 2
 		continue
 	fi
 
-	for ((i = 0; i < $LOOP; i++))
+	for ((j = 0; j < $LOOP; j++))
 	{
-		cat "$TRACING_PATH"/stack_trace > /dev/null
-	}
+		for ((k = 1; k <= NR_PIDS; k++))
+		{
+			str="\$pid$k"
+			eval echo $str >> "$TRACING_PATH"/set_ftrace_pid
+		}
 
-	sleep 1
-
-	for ((i = 0; i < $LOOP; i++))
-	{
-		echo 0 > /proc/sys/kernel/stack_tracer_enabled
-		echo 1 > /proc/sys/kernel/stack_tracer_enabled
+		if ! echo > "$TRACING_PATH"/set_ftrace_pid >/dev/null 2>&1; then
+			if ! echo -1 > "$TRACING_PATH"/set_ftrace_pid >/dev/null 2>&1; then
+				tst_resm TBROK "Cannot disable set_ftrace_pid!"
+				exit 1
+			fi
+		fi
 	}
 
 	sleep 1
 }
-

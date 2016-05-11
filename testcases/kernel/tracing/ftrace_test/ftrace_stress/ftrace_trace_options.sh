@@ -13,34 +13,29 @@
 #                                                                             #
 ###############################################################################
 
-LOOP=400
+LOOP=200
 
-# In kernel which is older than 2.6.32, we set global clock
-# via trace_options.
-tst_kvercmp 2 6 32
-if [ $? -eq 0 ]; then
-        old_kernel=1
-else
-        old_kernel=0
-fi
+trace_options=(print-parent sym-offset sym-addr verbose raw hex bin block trace_printk ftrace_preempt branch annotate userstacktrace sym-userobj printk-msg-only context-info latency-format sleep-time graph-time)
 
-for ((; ;))
+NR_TRACE_OPTIONS=19
+
+for ((; ; ))
 {
-	if [ $old_kernel -eq 1 ];
-	then
-		for ((i = 0; i < $LOOP; i++))
+	for ((j = 0; j < $LOOP; j++))
+	{
+		num=`date +%N`
+		num=`printf 1%s $num`
+
+		for ((i = 0; i < $NR_TRACE_OPTIONS; i++))
 		{
-			echo 1 > "$TRACING_PATH"/options/global-clock
-			echo 0 > "$TRACING_PATH"/options/global-clock
+			n=$(( ( $num >> $i ) % 2 ))
+			if [ $n -eq 0 ]; then
+				echo 0 > "$TRACING_PATH"/options/${trace_options[$i]}
+			else
+				echo 1 > "$TRACING_PATH"/options/${trace_options[$i]}
+			fi
 		}
-	else
-		for ((i = 0; i < $LOOP; i++))
-		{
-			echo local > "$TRACING_PATH"/trace_clock
-			echo global > "$TRACING_PATH"/trace_clock
-		}
-	fi
+	}
 
 	sleep 1
 }
-
