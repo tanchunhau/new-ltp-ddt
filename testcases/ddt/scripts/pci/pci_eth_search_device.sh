@@ -23,7 +23,7 @@ if [ -z "$net_type" ]; then
   net_type='eth'
 fi
 
-devices=`ls /sys/class/net|grep -i $net_type`
+devices=`ls /sys/class/net|grep -iE "${net_type}|enp"`
 for device in $devices
   do
     pci_interface=`udevadm info --attribute-walk --path=/sys/class/net/$device|grep -m 1 -i "pci"`
