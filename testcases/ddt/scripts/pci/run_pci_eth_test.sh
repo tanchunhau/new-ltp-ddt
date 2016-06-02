@@ -60,6 +60,7 @@ for interface in ${iface_list[@]}; do
   do_cmd "ifdown $interface"; 
 done; 
 do_cmd "ifup ${ETH_IFACE}"; 
+do_cmd "udhcpc";
 host=`get_eth_gateway.sh "-i ${ETH_IFACE}"` || die "error getting eth gateway address";
 echo "host:${host}"
 
