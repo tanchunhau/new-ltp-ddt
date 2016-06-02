@@ -52,7 +52,7 @@ esac
 case $SOC in
 esac
 case $MACHINE in
-*dra7xx-evm|am57xx-evm)
+*dra7xx-evm|am57xx-evm|k2g-evm)
 		CAPTURE_NAME="PGA Capture Volume";
 		PLAYBACK_NAME="PCM Playback Volume"
 		MINVAL=0
