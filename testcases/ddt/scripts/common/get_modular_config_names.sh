@@ -49,7 +49,7 @@ do
       net="CONFIG_TI_CPSW:ti_cpsw";;
 
     *omap2-nand)
-      nand="CONFIG_MTD_NAND_OMAP2:omap2";; 
+      nand="CONFIG_MTD_NAND_OMAP2:omap2_nand";; 
     *davinci_nand)
       nand="CONFIG_MTD_NAND_DAVINCI:davinci_nand";;
 
