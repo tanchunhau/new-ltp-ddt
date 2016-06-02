@@ -60,8 +60,7 @@ for interface in ${iface_list[@]}; do
   do_cmd "ifdown $interface"; 
 done; 
 do_cmd "ifup ${ETH_IFACE}"; 
-do_cmd "udhcpc";
-host=`get_eth_gateway.sh "-i ${ETH_IFACE}"` || die "error getting eth gateway address";
+host=`get_eth_gateway.sh "-i ${ETH_IFACE}"` || host=`get_eth_gateway.sh "-i eth0"` || die "error getting eth gateway address";
 echo "host:${host}"
 
 #run eth tests
@@ -72,7 +71,10 @@ fi
 # clean up after pci eth test
 do_cmd "ifdown $ETH_IFACE"; 
 for interface in ${iface_list[@]}; do 
-  do_cmd "ifup $interface"; 
+  status=`cat /sys/class/net/"${interface}"/operstate`
+  if [ $status == 'down' ]; then
+    ifup $interface; 
+  fi
 done
 
 # end of script
