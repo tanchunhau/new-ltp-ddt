@@ -8,4 +8,4 @@ REALTIME_S_PERF_SHIELD_SMP_PING source 'functions.sh'; shield_shell; NFS_HOST=`g
 
 REALTIME_S_PERF_SHIELD_SMP_NET source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency net`; multi_run_processes.sh -s "timeout -t 115 -s 9 sh -c 'while true; do run_iperf.sh -m -M 1500 -f M -d -t 110 -w 8K; done'  || true" -l "-n 1" -s "run_cyclictest $latency -p98 -m -n -q -D 2m" -l "-n 1"
 
-REALTIME_L_PERF_SHIELD_SMP_NET source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency net`; multi_run_processes.sh -s "timeout -t 14400 -s 9 sh -c 'while true; do do run_iperf.sh -m -M 1500 -f M -d -t 14380 -w 8K; done'  || true" -l "-n 1" -s "run_cyclictest $latency -p98 -m -n -q -D 4h" -l "-n 1"
+REALTIME_L_PERF_SHIELD_SMP_NET source 'functions.sh'; shield_shell; source 'board_requirements.sh'; latency=`get_acceptable_latency net`; multi_run_processes.sh -s "timeout -t 14400 -s 9 sh -c 'while true; do run_iperf.sh -m -M 1500 -f M -d -t 14380 -w 128K; done'  || true" -l "-n 1" -s "run_cyclictest $latency -p98 -m -n -q -D 4h" -l "-n 1"
