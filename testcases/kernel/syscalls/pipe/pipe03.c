@@ -45,17 +45,14 @@
 #include <unistd.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "pipe03";
 int TST_TOTAL = 1;
 
-int exp_enos[] = { EBADF, 0 };
-
 void setup(void);
 void cleanup(void);
 
-ssize_t safe_read(int fd, void *buf, size_t count)
+ssize_t do_read(int fd, void *buf, size_t count)
 {
 	ssize_t n;
 
@@ -69,13 +66,11 @@ ssize_t safe_read(int fd, void *buf, size_t count)
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 
 	int fildes[2];		/* fds for pipe read and write */
 	char rbuf[BUFSIZ];
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -99,7 +94,7 @@ int main(int ac, char **av)
 				 "success when writing to read "
 				 "end of pipe ret=%ld", TEST_RETURN);
 
-		TEST(safe_read(fildes[1], rbuf, 1));
+		TEST(do_read(fildes[1], rbuf, 1));
 		if (TEST_RETURN == -1 && TEST_ERRNO == EBADF)
 			tst_resm(TPASS, "expected failure reading from "
 				 "write end of pipe");
@@ -129,9 +124,4 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }

@@ -60,7 +60,6 @@
 #include <unistd.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 #include "include_j_h.h"
 #include "numa_helper.h"
@@ -181,12 +180,9 @@ static void cleanup(void);
 
 int main(int argc, char **argv)
 {
-	const char *msg;
 	int lc, i, ret;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, tst_exit, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 	testno = (int)(sizeof(tcase) / sizeof(tcase[0]));
@@ -302,13 +298,15 @@ static void setup(void)
 	/* check syscall availability */
 	ltp_syscall(__NR_mbind, NULL, 0, 0, NULL, 0, 0);
 
+	if (!is_numa(NULL, NH_MEMS, 1))
+		tst_brkm(TCONF, NULL, "requires NUMA with at least 1 node");
+
 	TEST_PAUSE;
 	tst_tmpdir();
 }
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 #else /* no NUMA */

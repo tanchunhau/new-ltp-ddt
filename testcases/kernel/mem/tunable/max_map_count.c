@@ -59,8 +59,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/utsname.h>
 #include "test.h"
-#include "usctest.h"
 #include "mem.h"
 
 #define MAP_COUNT_DEFAULT	64
@@ -71,18 +71,16 @@ int TST_TOTAL = 1;
 
 static long old_max_map_count;
 static long old_overcommit;
+static struct utsname un;
 
 static long count_maps(pid_t pid);
 static void max_map_count_test(void);
 
 int main(int argc, char *argv[])
 {
-	const char *msg;
 	int lc;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR -%s ", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
@@ -96,7 +94,7 @@ int main(int argc, char *argv[])
 
 void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	TEST_PAUSE;
@@ -108,14 +106,15 @@ void setup(void)
 	old_max_map_count = get_sys_tune("max_map_count");
 	old_overcommit = get_sys_tune("overcommit_memory");
 	set_sys_tune("overcommit_memory", 2, 1);
+
+	if (uname(&un) != 0)
+		tst_brkm(TBROK | TERRNO, NULL, "uname error");
 }
 
 void cleanup(void)
 {
 	set_sys_tune("overcommit_memory", old_overcommit, 0);
 	set_sys_tune("max_map_count", old_max_map_count, 0);
-
-	TEST_CLEANUP;
 }
 
 /* This is a filter to exclude map entries which aren't accounted
@@ -139,6 +138,10 @@ static bool filter_map(const char *line)
 	if (!strcmp(buf, "[vdso]"))
 		return true;
 #elif defined(__arm__)
+	/* Skip it when run it in aarch64 */
+	if (strcmp(un.machine, "aarch64"))
+		return false;
+
 	/* Older arm kernels didn't label their vdso maps */
 	if (!strncmp(line, "ffff0000-ffff1000", 17))
 		return true;
@@ -206,7 +209,7 @@ static void max_map_count_test(void)
 	while (max_maps <= max_iters) {
 		set_sys_tune("max_map_count", max_maps, 1);
 
-		switch (pid = fork()) {
+		switch (pid = tst_fork()) {
 		case -1:
 			tst_brkm(TBROK | TERRNO, cleanup, "fork");
 		case 0:

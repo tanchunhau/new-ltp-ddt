@@ -53,7 +53,6 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "pipe02";
 int TST_TOTAL = 1;
@@ -65,7 +64,7 @@ void setup(void);
 void cleanup(void);
 void catch_usr2(int);
 
-ssize_t safe_read(int fd, void *buf, size_t count)
+ssize_t do_read(int fd, void *buf, size_t count)
 {
 	ssize_t n;
 
@@ -81,16 +80,13 @@ int pp[2];			/* pipe descriptor */
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 	char rbuf[BUFSIZ], wbuf[BUFSIZ];
 	int pid, ret, len, rlen, status;
 	int sig = 0;
 
 	usrsig = 0;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&do_child, "dd", &pp[0], &pp[1]);
 #endif
@@ -127,7 +123,7 @@ int main(int ac, char **av)
 			/* PARENT */
 			close(pp[1]);	/* close write end of pipe */
 			memset(rbuf, 0, sizeof(rbuf));
-			rlen = safe_read(pp[0], rbuf, len);
+			rlen = do_read(pp[0], rbuf, len);
 			if (memcmp(wbuf, rbuf, len) != 0)
 				tst_resm(TFAIL, "pipe read data and pipe "
 					 "write data didn't match");
@@ -196,10 +192,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

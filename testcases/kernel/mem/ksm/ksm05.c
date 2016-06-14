@@ -65,7 +65,6 @@
 #include <string.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 #include "mem.h"
 
 char *TCID = "ksm05";
@@ -76,19 +75,15 @@ int TST_TOTAL = 1;
 static int ksm_run_orig;
 
 static void sighandler(int sig);
-static void write_ksm_run(int val);
 
 int main(int argc, char *argv[])
 {
-	int lc, status;
+	int lc, status, ret;
 	long ps;
-	const char *msg;
 	pid_t pid;
 	void *ptr;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, tst_exit, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	ps = sysconf(_SC_PAGESIZE);
 	setup();
@@ -100,9 +95,11 @@ int main(int argc, char *argv[])
 		case -1:
 			tst_brkm(TBROK | TERRNO, cleanup, "fork");
 		case 0:
-			if (posix_memalign(&ptr, ps, ps) < 0)
-				tst_brkm(TBROK | TERRNO, cleanup,
-					 "posix_memalign");
+			ret = posix_memalign(&ptr, ps, ps);
+			if (ret) {
+				tst_brkm(TBROK, cleanup, "posix_memalign(): %s",
+				         tst_strerrno(ret));
+			}
 			if (madvise(ptr, ps, MADV_MERGEABLE) < 0)
 				tst_brkm(TBROK | TERRNO, cleanup, "madvise");
 			*(char *)NULL = 0;	/* SIGSEGV occurs as expected. */
@@ -127,26 +124,9 @@ static void sighandler(int sig)
 	_exit((sig == SIGSEGV) ? 0 : sig);
 }
 
-static void write_ksm_run(int val)
-{
-	int fd;
-	char buf[BUFSIZ];
-
-	sprintf(buf, "%d", val);
-	fd = open(PATH_KSM "run", O_WRONLY);
-	if (fd == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "open");
-	if (write(fd, buf, 1) != 1)
-		tst_brkm(TBROK | TERRNO, cleanup, "write");
-	close(fd);
-}
-
 void setup(void)
 {
-	int fd;
-	char buf[BUFSIZ];
-
-	tst_require_root(NULL);
+	tst_require_root();
 
 	if (tst_kvercmp(2, 6, 32) < 0)
 		tst_brkm(TCONF, NULL, "2.6.32 or greater kernel required.");
@@ -159,26 +139,16 @@ void setup(void)
 	TEST_PAUSE;
 
 	/* save original /sys/kernel/mm/ksm/run value */
-	fd = open(PATH_KSM "run", O_RDONLY);
-	if (fd == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "open");
-	if (read(fd, buf, 1) != 1)
-		tst_brkm(TBROK | TERRNO, cleanup, "read");
-	close(fd);
-	ksm_run_orig = atoi(buf);
+	SAFE_FILE_SCANF(NULL, PATH_KSM "run", "%d", &ksm_run_orig);
 
 	/* echo 1 > /sys/kernel/mm/ksm/run */
-	if (ksm_run_orig != 1)
-		write_ksm_run(1);
+	SAFE_FILE_PRINTF(NULL, PATH_KSM "run", "1");
 }
 
 void cleanup(void)
 {
 	/* restore /sys/kernel/mm/ksm/run value */
-	if (ksm_run_orig != 1)
-		write_ksm_run(ksm_run_orig);
-
-	TEST_CLEANUP;
+	FILE_PRINTF(PATH_KSM "run", "%d", ksm_run_orig);
 }
 #else
 int main(void)

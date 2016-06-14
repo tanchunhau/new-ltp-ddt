@@ -38,7 +38,6 @@
 #include "ptrace.h"
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "ptrace05";
 int TST_TOTAL = 0;
@@ -99,8 +98,7 @@ int main(int argc, char **argv)
 
 		switch (child = fork()) {
 		case -1:
-			tst_resm(TBROK | TERRNO, "Failed to fork properly.");
-			break;
+			tst_brkm(TBROK | TERRNO, NULL, "fork() failed");
 		case 0:
 
 			if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) != -1) {

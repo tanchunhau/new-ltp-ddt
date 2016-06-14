@@ -28,14 +28,12 @@
 #include <sched.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 #include "clone_platform.h"
 
 #define TRUE 1
 #define FALSE 0
 
 static void setup();
-static void cleanup();
 static int do_child();
 
 char *TCID = "clone07";
@@ -50,12 +48,9 @@ int main(int ac, char **av)
 {
 
 	int lc, status;
-	const char *msg;
 	void *child_stack;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -63,13 +58,17 @@ int main(int ac, char **av)
 		tst_count = 0;
 		child_stack = malloc(CHILD_STACK_SIZE);
 		if (child_stack == NULL)
-			tst_brkm(TBROK, cleanup,
+			tst_brkm(TBROK, NULL,
 				 "Cannot allocate stack for child");
 
 		child_pid = ltp_clone(SIGCHLD, do_child, NULL,
 				      CHILD_STACK_SIZE, child_stack);
+
+		if (child_pid < 0)
+			tst_brkm(TBROK | TERRNO, NULL, "clone failed");
+
 		if ((wait(&status)) == -1)
-			tst_brkm(TBROK | TERRNO, cleanup,
+			tst_brkm(TBROK | TERRNO, NULL,
 				 "wait failed, status: %d", status);
 
 		free(child_stack);
@@ -81,7 +80,6 @@ int main(int ac, char **av)
 	else
 		tst_resm(TFAIL, "Use of return() in child caused SIGSEGV");
 
-	cleanup();
 	tst_exit();
 }
 
@@ -107,12 +105,6 @@ static void setup(void)
 	if ((sigaction(SIGUSR2, &def_act, NULL)) == -1)
 		tst_resm(TWARN | TERRNO,
 			 "sigaction() for SIGUSR2 failed in test_setup()");
-}
-
-static void cleanup(void)
-{
-	TEST_CLEANUP;
-	kill(child_pid, SIGKILL);
 }
 
 static int do_child(void)

@@ -67,7 +67,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 #include "mem.h"
 
 char *TCID = "ksm02";
@@ -87,14 +86,11 @@ option_t ksm_options[] = {
 int main(int argc, char *argv[])
 {
 	int lc;
-	const char *msg;
 	int size = 128, num = 3, unit = 1;
 	unsigned long nmask[MAXNODES / BITS_PER_LONG] = { 0 };
 	unsigned int node;
 
-	msg = parse_opts(argc, argv, ksm_options, ksm_usage);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, ksm_options, ksm_usage);
 
 	node = get_a_numa_node(tst_exit);
 	set_node(nmask, node);
@@ -129,18 +125,20 @@ void cleanup(void)
 		FILE_PRINTF(PATH_KSM "merge_across_nodes",
 				 "%d", merge_across_nodes);
 
+	restore_max_page_sharing();
+
 	umount_mem(CPATH, CPATH_NEW);
-	TEST_CLEANUP;
 }
 
 void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 
 	if (tst_kvercmp(2, 6, 32) < 0)
 		tst_brkm(TCONF, NULL, "2.6.32 or greater kernel required");
 	if (access(PATH_KSM, F_OK) == -1)
 		tst_brkm(TCONF, NULL, "KSM configuration is not enabled");
+	save_max_page_sharing();
 
 	if (access(PATH_KSM "merge_across_nodes", F_OK) == 0) {
 		SAFE_FILE_SCANF(NULL, PATH_KSM "merge_across_nodes",

@@ -24,21 +24,19 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "ipcmsg.h"
 
 char *TCID = "msgctl13";
 int TST_TOTAL = 1;
+static struct msqid_ds buf;
+
 static void msgctl_verify(void);
 
 int main(int argc, char *argv[])
 {
 	int lc;
-	const char *msg;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -76,8 +74,8 @@ static void msgctl_verify(void)
 		return;
 	}
 
-	TEST(msgget(msg_q, MSG_RW));
-	if (TEST_ERRNO == ENOENT)
+	TEST(msgctl(msg_q, IPC_STAT, &buf));
+	if (TEST_ERRNO == EINVAL)
 		tst_resm(TPASS, "msgctl() test IPC_RMID succeeded");
 	else
 		tst_resm(TFAIL, "msgctl() test IPC_RMID failed unexpectedly");
@@ -85,5 +83,4 @@ static void msgctl_verify(void)
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
 }

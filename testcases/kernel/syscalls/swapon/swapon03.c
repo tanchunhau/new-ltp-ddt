@@ -37,9 +37,7 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
-#include "tst_fs_type.h"
 #include "swaponoff.h"
 #include "libswapon.h"
 
@@ -51,8 +49,6 @@ static int check_and_swapoff(const char *filename);
 
 char *TCID = "swapon03";
 int TST_TOTAL = 1;
-
-static int exp_enos[] = { EPERM, 0 };
 
 static int swapfiles;
 
@@ -72,10 +68,8 @@ int expected_errno = EPERM;
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -142,8 +136,6 @@ int main(int ac, char **av)
 		if (clean_swap() < 0)
 			tst_brkm(TBROK, cleanup,
 				 "Cleanup failed, quitting the test");
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 	}
 
@@ -334,9 +326,7 @@ static void setup(void)
 {
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	TEST_EXP_ENOS(exp_enos);
-
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_tmpdir();
 
@@ -354,8 +344,6 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	clean_swap();
 
 	tst_rmdir();

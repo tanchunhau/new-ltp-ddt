@@ -37,7 +37,6 @@
 #include <stdio.h>
 #include "numa_helper.h"
 #include "test.h"
-#include "usctest.h"
 #include "mem.h"
 
 char *TCID = "oom04";
@@ -48,12 +47,9 @@ int TST_TOTAL = 1;
 
 int main(int argc, char *argv[])
 {
-	const char *msg;
 	int lc;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 #if __WORDSIZE == 32
 	tst_brkm(TCONF, NULL, "test is not designed for 32-bit system.");
@@ -67,7 +63,7 @@ int main(int argc, char *argv[])
 		tst_resm(TINFO, "OOM on CPUSET...");
 		testoom(0, 0, ENOMEM, 1);
 
-		if (is_numa(cleanup)) {
+		if (is_numa(cleanup, NH_MEMS, 2)) {
 			/*
 			 * Under NUMA system, the migration of cpuset's memory
 			 * is in charge of cpuset.memory_migrate, we can write
@@ -87,9 +83,12 @@ void setup(void)
 {
 	int memnode, ret;
 
-	tst_require_root(NULL);
+	tst_require_root();
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	TEST_PAUSE;
+
+	if (!is_numa(NULL, NH_MEMS, 1))
+		tst_brkm(TCONF, NULL, "requires NUMA with at least 1 node");
 
 	overcommit = get_sys_tune("overcommit_memory");
 	set_sys_tune("overcommit_memory", 1, 1);
@@ -104,7 +103,7 @@ void setup(void)
 	 */
 	ret = get_allowed_nodes(NH_MEMS, 1, &memnode);
 	if (ret < 0)
-		tst_brkm(TBROK, NULL, "Failed to get a memory node "
+		tst_brkm(TBROK, cleanup, "Failed to get a memory node "
 				      "using get_allowed_nodes()");
 	write_cpusets(memnode);
 }
@@ -113,8 +112,6 @@ void cleanup(void)
 {
 	set_sys_tune("overcommit_memory", overcommit, 0);
 	umount_mem(CPATH, CPATH_NEW);
-
-	TEST_CLEANUP;
 }
 
 #else /* no NUMA */

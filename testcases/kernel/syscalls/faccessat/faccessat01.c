@@ -43,7 +43,7 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
+#include "safe_macros.h"
 #include "linux_syscall_numbers.h"
 
 #define TEST_CASES 6
@@ -52,18 +52,16 @@
 #endif
 void setup();
 void cleanup();
-void setup_every_copy();
 
 char *TCID = "faccessat01";
 int TST_TOTAL = TEST_CASES;
-char pathname[256] = "";
-char testfile[256] = "";
-char testfile2[256] = "";
-char testfile3[256] = "";
-int dirfd, fd, ret;
-int fds[TEST_CASES];
-char *filenames[TEST_CASES];
-int expected_errno[TEST_CASES] = { 0, 0, ENOTDIR, EBADF, 0, 0 };
+static char pathname[256];
+static char testfile[256];
+static char testfile2[256];
+static char testfile3[256];
+static int fds[TEST_CASES];
+static char *filenames[TEST_CASES];
+static int expected_errno[TEST_CASES] = { 0, 0, ENOTDIR, EBADF, 0, 0 };
 
 int myfaccessat(int dirfd, const char *filename, int mode)
 {
@@ -73,24 +71,17 @@ int myfaccessat(int dirfd, const char *filename, int mode)
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 	int i;
 
 	/* Disable test if the version of the kernel is less than 2.6.16 */
-	if (((tst_kvercmp(2, 6, 16)) < 0)) {
-		tst_resm(TWARN, "This test can only run on kernels that are ");
-		tst_resm(TWARN, "2.6.16 and higher");
-		exit(0);
-	}
+	if ((tst_kvercmp(2, 6, 16)) < 0)
+		tst_brkm(TCONF, NULL, "Test must be run with kernel 2.6.16+");
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		setup_every_copy();
-
 		tst_count = 0;
 
 		/*
@@ -106,83 +97,60 @@ int main(int ac, char **av)
 					 TEST_ERRNO,
 					 strerror(TEST_ERRNO));
 			} else {
-				TEST_ERROR_LOG(TEST_ERRNO);
 				tst_resm(TFAIL,
 					 "faccessdat() Failed, errno=%d : %s",
 					 TEST_ERRNO, strerror(TEST_ERRNO));
 			}
 		}
-
 	}
 
 	cleanup();
 	tst_exit();
 }
 
-void setup_every_copy(void)
+void setup(void)
 {
+	tst_sig(NOFORK, DEF_HANDLER, cleanup);
+
+	tst_tmpdir();
+
+	char *abs_path = tst_get_tmpdir();
+	int p = getpid();
+
 	/* Initialize test dir and file names */
-	sprintf(pathname, "faccessattestdir%d", getpid());
-	sprintf(testfile, "faccessattestfile%d.txt", getpid());
-	sprintf(testfile2, "/tmp/faccessattestfile%d.txt", getpid());
-	sprintf(testfile3, "faccessattestdir%d/faccessattestfile%d.txt",
-		getpid(), getpid());
+	sprintf(pathname, "faccessattestdir%d", p);
+	sprintf(testfile, "faccessattestfile%d.txt", p);
+	sprintf(testfile2, "%s/faccessattestfile%d.txt", abs_path, p);
+	sprintf(testfile3, "faccessattestdir%d/faccessattestfile%d.txt", p, p);
 
-	ret = mkdir(pathname, 0700);
-	if (ret < 0) {
-		perror("mkdir: ");
-		exit(-1);
-	}
+	free(abs_path);
 
-	dirfd = open(pathname, O_DIRECTORY);
-	if (dirfd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	SAFE_MKDIR(cleanup, pathname, 0700);
 
-	fd = open(testfile, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	fds[0] = SAFE_OPEN(cleanup, pathname, O_DIRECTORY);
+	fds[1] = fds[4] = fds[0];
 
-	fd = open(testfile2, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	SAFE_FILE_PRINTF(cleanup, testfile, testfile);
+	SAFE_FILE_PRINTF(cleanup, testfile2, testfile2);
 
-	fd = open(testfile3, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	fds[2] = SAFE_OPEN(cleanup, testfile3, O_CREAT | O_RDWR, 0600);
 
-	fds[0] = fds[1] = fds[4] = dirfd;
-	fds[2] = fd;
 	fds[3] = 100;
 	fds[5] = AT_FDCWD;
 
 	filenames[0] = filenames[2] = filenames[3] = filenames[4] = testfile;
 	filenames[1] = testfile2;
 	filenames[5] = testfile3;
-}
-
-void setup(void)
-{
-
-	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 }
 
 void cleanup(void)
 {
-	close(fd);
-	unlink(testfile);
-	unlink(testfile2);
-	unlink(testfile3);
-	rmdir(pathname);
+	if (fds[0] > 0)
+		close(fds[0]);
+	if (fds[2] > 0)
+		close(fds[2]);
 
-	TEST_CLEANUP;
+	tst_rmdir();
 }

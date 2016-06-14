@@ -1,6 +1,6 @@
 /*
  * Copyright (c) International Business Machines  Corp., 2001
- * Copyright (c) 2012 Cyril Hrubis <chrubis@suse.cz>
+ * Copyright (c) 2012-2016 Cyril Hrubis <chrubis@suse.cz>
  *
  * This program is free software;  you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,101 +21,56 @@
  * Testcase to check creat(2) sets ETXTBSY correctly.
  */
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <libgen.h>
-#include <stdio.h>
-#include "test.h"
-#include "usctest.h"
+#include "tst_test.h"
 
 #define TEST_APP "creat07_child"
 
-char *TCID = "creat07";
-int TST_TOTAL = 1;
-
-static void setup(char *);
-static void cleanup(void);
-
-static int exp_enos[] = {ETXTBSY, 0};
-
-static struct tst_checkpoint checkpoint;
-
-int main(int ac, char **av)
+static void verify_creat(void)
 {
-	int lc;
-	const char *msg;
 	pid_t pid;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	setup(av[0]);
-
-	TEST_EXP_ENOS(exp_enos);
-
-	for (lc = 0; TEST_LOOPING(lc); lc++) {
-
-		tst_count = 0;
-
-		if ((pid = FORK_OR_VFORK()) == -1)
-			tst_brkm(TBROK|TERRNO, cleanup, "fork #1 failed");
-
-		if (pid == 0) {
-			char *av[2];
-			av[0] = TEST_APP;
-			av[1] = NULL;
-			(void)execve(TEST_APP, av, NULL);
-			perror("execve failed");
-			exit(1);
-		}
-
-		TST_CHECKPOINT_PARENT_WAIT(NULL, &checkpoint);
-
-		TEST(creat(TEST_APP, O_WRONLY));
-
-		if (TEST_RETURN != -1) {
-			tst_resm(TFAIL, "creat succeeded");
-		} else {
-			if (TEST_ERRNO == ETXTBSY)
-				tst_resm(TPASS, "creat received EXTBSY");
-			else
-				tst_resm(TFAIL | TTERRNO, "creat failed with "
-				                         "unexpected error");
-		}
-
-		if (kill(pid, SIGKILL) == -1)
-			tst_resm(TINFO | TERRNO, "kill failed");
-		
-		if (wait(NULL) == -1)
-			tst_brkm(TBROK|TERRNO, cleanup, "wait failed");
+	pid = SAFE_FORK();
+	if (pid == 0) {
+		char *av[] = {TEST_APP, NULL};
+		(void)execve(TEST_APP, av, tst_ipc_envp);
+		perror("execve failed");
+		exit(1);
 	}
-	
-	cleanup();
-	tst_exit();
+
+	TST_CHECKPOINT_WAIT(0);
+
+	TEST(creat(TEST_APP, O_WRONLY));
+
+	if (TEST_RETURN != -1) {
+		tst_res(TFAIL, "creat() succeeded unexpectedly");
+		return;
+	}
+
+	if (TEST_ERRNO == ETXTBSY)
+		tst_res(TPASS, "creat() received EXTBSY");
+	else
+		tst_res(TFAIL | TTERRNO, "creat() failed unexpectedly");
+
+	SAFE_KILL(pid, SIGKILL);
+	SAFE_WAITPID(pid, NULL, 0);
 }
 
-static void setup(char *app)
-{
-	tst_sig(FORK, DEF_HANDLER, cleanup);
+static const char *const resource_files[] = {
+	TEST_APP,
+	NULL,
+};
 
-	tst_tmpdir();
-
-	TST_RESOURCE_COPY(cleanup, TEST_APP, NULL);
-	
-	TST_CHECKPOINT_CREATE(&checkpoint);
-
-	TEST_PAUSE;
-}
-
-static void cleanup(void)
-{
-	TEST_CLEANUP;
-
-	tst_rmdir();
-}
+static struct tst_test test = {
+	.tid = "creat07",
+	.test_all = verify_creat,
+	.needs_checkpoints = 1,
+	.forks_child = 1,
+	.resource_files = resource_files,
+};

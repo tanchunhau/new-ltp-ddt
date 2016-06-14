@@ -25,6 +25,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "test.h"
 #include "tst_process_state.h"
 
 void tst_process_state_wait(const char *file, const int lineno,
@@ -60,7 +61,12 @@ int tst_process_state_wait2(pid_t pid, const char state)
 			return 1;
 		}
 
-		fscanf(f, "%*i %*s %c", &cur_state);
+		if (fscanf(f, "%*i %*s %c", &cur_state) != 1) {
+			fclose(f);
+			fprintf(stderr, "Failed to read '%s': %s\n",
+			        proc_path, strerror(errno));
+			return 1;
+		}
 		fclose(f);
 
 		if (state == cur_state)

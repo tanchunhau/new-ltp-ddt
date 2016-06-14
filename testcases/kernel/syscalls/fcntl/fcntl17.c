@@ -54,7 +54,6 @@
 #include <inttypes.h>
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "fcntl17";
 int TST_TOTAL = 1;
@@ -161,6 +160,15 @@ int setup(void)
 
 void cleanup(void)
 {
+	if (child_pid1 > 0)
+		kill(child_pid1, 9);
+
+	if (child_pid2 > 0)
+		kill(child_pid2, 9);
+
+	if (child_pid3 > 0)
+		kill(child_pid3, 9);
+
 	close(file_fd);
 	tst_rmdir();
 
@@ -387,7 +395,12 @@ void stop_children(void)
 	child_free(child_pipe1[1], arg);
 	child_free(child_pipe2[1], arg);
 	child_free(child_pipe3[1], arg);
-	wait(0);
+	waitpid(child_pid1, &child_stat, 0);
+	child_pid1 = 0;
+	waitpid(child_pid2, &child_stat, 0);
+	child_pid2 = 0;
+	waitpid(child_pid3, &child_stat, 0);
+	child_pid3 = 0;
 }
 
 void catch_child(void)
@@ -422,12 +435,9 @@ int main(int ac, char **av)
 {
 	int ans;
 	int lc;
-	const char *msg;
 	int fail = 0;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&do_child1, "nddddddddd", 1, &file_fd,
 			&parent_pipe[0], &parent_pipe[1],
@@ -470,10 +480,8 @@ int main(int ac, char **av)
 #else
 			do_child1();
 #endif
-		} else if (child_pid1 < 0) {
-			perror("Fork failed: child 1");
-			cleanup();
-		}
+		} else if (child_pid1 < 0)
+			tst_brkm(TBROK|TERRNO, cleanup, "Fork failed: child 1");
 
 		/* parent */
 
@@ -491,12 +499,7 @@ int main(int ac, char **av)
 			do_child2();
 #endif
 		} else if (child_pid2 < 0) {
-			perror("Fork failed: child 2");
-			if ((kill(child_pid1, SIGKILL)) < 0) {
-				tst_resm(TFAIL, "Attempt to signal child "
-					 "1 failed");
-			}
-			cleanup();
+			tst_brkm(TBROK|TERRNO, cleanup, "Fork failed: child 2");
 		}
 
 		/* parent */
@@ -516,16 +519,7 @@ int main(int ac, char **av)
 #endif
 			do_child3();
 		} else if (child_pid3 < 0) {
-			perror("Fork failed: child 3");
-			if ((kill(child_pid1, SIGKILL)) < 0) {
-				tst_resm(TFAIL, "Attempt to signal child "
-					 "1 failed");
-			}
-			if ((kill(child_pid2, SIGKILL)) < 0) {
-				tst_resm(TFAIL, "Attempt to signal child 2 "
-					 "failed");
-			}
-			cleanup();
+			tst_brkm(TBROK|TERRNO, cleanup, "Fork failed: child 3");
 		}
 		/* parent */
 
@@ -620,16 +614,14 @@ int main(int ac, char **av)
 		do_test(&lock3, child_pid3);
 
 		stop_children();
+
 		if (fail) {
-			tst_resm(TINFO, "Block 1 FAILED");
+			tst_resm(TFAIL, "Block 1 FAILED");
 		} else {
-			tst_resm(TINFO, "Block 1 PASSED");
+			tst_resm(TPASS, "Block 1 PASSED");
 		}
 		tst_resm(TINFO, "Exit block 1");
 	}
-	waitpid(child_pid1, &child_stat, 0);
-	waitpid(child_pid2, &child_stat, 0);
-	waitpid(child_pid3, &child_stat, 0);
 	cleanup();
 	tst_exit();
 }

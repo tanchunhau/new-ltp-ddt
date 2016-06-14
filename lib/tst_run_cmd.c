@@ -31,11 +31,14 @@
 #define OPEN_MODE	(S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 #define OPEN_FLAGS	(O_WRONLY | O_APPEND | O_CREAT)
 
-void tst_run_cmd_fds(void (cleanup_fn)(void),
+int tst_run_cmd_fds_(void (cleanup_fn)(void),
 		const char *const argv[],
 		int stdout_fd,
-		int stderr_fd)
+		int stderr_fd,
+		int pass_exit_val)
 {
+	int rc;
+
 	if (argv == NULL || argv[0] == NULL) {
 		tst_brkm(TBROK, cleanup_fn,
 			"argument list is empty at %s:%d", __FILE__, __LINE__);
@@ -68,7 +71,11 @@ void tst_run_cmd_fds(void (cleanup_fn)(void),
 			dup2(stderr_fd, STDERR_FILENO);
 		}
 
-		_exit(execvp(argv[0], (char *const *)argv));
+		if (execvp(argv[0], (char *const *)argv)) {
+			if (errno == ENOENT)
+				_exit(255);
+		}
+		_exit(254);
 	}
 
 	int ret = -1;
@@ -79,19 +86,30 @@ void tst_run_cmd_fds(void (cleanup_fn)(void),
 
 	signal(SIGCHLD, old_handler);
 
-	if (!WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {
+	if (!WIFEXITED(ret)) {
 		tst_brkm(TBROK, cleanup_fn, "failed to exec cmd '%s' at %s:%d",
 			argv[0], __FILE__, __LINE__);
 	}
+
+	rc = WEXITSTATUS(ret);
+
+	if ((!pass_exit_val) && rc)
+		tst_brkm(TBROK, cleanup_fn,
+			 "'%s' exited with a non-zero code %d at %s:%d",
+			 argv[0], rc, __FILE__, __LINE__);
+
+	return rc;
 }
 
-void tst_run_cmd(void (cleanup_fn)(void),
+int tst_run_cmd_(void (cleanup_fn)(void),
 		const char *const argv[],
 		const char *stdout_path,
-		const char *stderr_path)
+		const char *stderr_path,
+		int pass_exit_val)
 {
 	int stdout_fd = -1;
 	int stderr_fd = -1;
+	int rc;
 
 	if (stdout_path != NULL) {
 		stdout_fd = open(stdout_path,
@@ -113,7 +131,8 @@ void tst_run_cmd(void (cleanup_fn)(void),
 				stderr_path, __FILE__, __LINE__);
 	}
 
-	tst_run_cmd_fds(cleanup_fn, argv, stdout_fd, stderr_fd);
+	rc = tst_run_cmd_fds(cleanup_fn, argv, stdout_fd, stderr_fd,
+			     pass_exit_val);
 
 	if ((stdout_fd != -1) && (close(stdout_fd) == -1))
 		tst_resm(TWARN | TERRNO,
@@ -124,6 +143,8 @@ void tst_run_cmd(void (cleanup_fn)(void),
 		tst_resm(TWARN | TERRNO,
 			"close() on %s failed at %s:%d",
 			stderr_path, __FILE__, __LINE__);
+
+	return rc;
 }
 
 int tst_system(const char *command)

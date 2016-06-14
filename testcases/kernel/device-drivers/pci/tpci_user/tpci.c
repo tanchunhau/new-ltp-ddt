@@ -27,9 +27,8 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
-#include "tst_module.h"
+#include "old_module.h"
 
 #include "../tpci_kernel/tpci.h"
 
@@ -46,13 +45,11 @@ static void cleanup(void)
 {
 	if (module_loaded)
 		tst_module_unload(NULL, module_name);
-
-	TEST_CLEANUP;
 }
 
 void setup(int argc, char *argv[])
 {
-	tst_require_root(NULL);
+	tst_require_root();
 
 	if (tst_kvercmp(2, 6, 0) < 0) {
 		tst_brkm(TCONF, NULL,

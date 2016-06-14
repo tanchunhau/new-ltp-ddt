@@ -50,14 +50,12 @@
 #include <sys/mount.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 
 #define TEMP_FILE	"tmp_file"
 #define MNT_POINT	"mntpoint"
 
 char *TCID = "utime06";
-static int exp_enos[] = { EACCES, ENOENT, EPERM, EROFS, 0 };
 static struct passwd *ltpuser;
 static const struct utimbuf times;
 static const char *dev;
@@ -86,12 +84,9 @@ static void cleanup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 	int i;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -111,7 +106,7 @@ static void setup(void)
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	TEST_PAUSE;
 
@@ -119,14 +114,12 @@ static void setup(void)
 
 	SAFE_TOUCH(cleanup, TEMP_FILE, 0644, NULL);
 
-	TEST_EXP_ENOS(exp_enos);
-
 	fs_type = tst_dev_fs_type();
 	dev = tst_acquire_device(cleanup);
 	if (!dev)
 		tst_brkm(TCONF, cleanup, "Failed to acquire test device");
 
-	tst_mkfs(cleanup, dev, fs_type, NULL);
+	tst_mkfs(cleanup, dev, fs_type, NULL, NULL);
 
 	SAFE_MKDIR(cleanup, MNT_POINT, 0644);
 	if (mount(dev, MNT_POINT, fs_type, MS_RDONLY, NULL) < 0) {
@@ -174,13 +167,11 @@ static void cleanup_nobody(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
-	if (mount_flag && umount(MNT_POINT) < 0)
+	if (mount_flag && tst_umount(MNT_POINT) < 0)
 		tst_resm(TWARN | TERRNO, "umount device:%s failed", dev);
 
 	if (dev)
-		tst_release_device(NULL, dev);
+		tst_release_device(dev);
 
 	tst_rmdir();
 }

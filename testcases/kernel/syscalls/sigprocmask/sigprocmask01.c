@@ -80,7 +80,6 @@
 #include <ucontext.h>
 
 #include "test.h"
-#include "usctest.h"
 
 void setup();			/* Main setup function of test */
 void cleanup();			/* cleanup function for the test */
@@ -88,30 +87,21 @@ void sig_handler(int sig);	/* signal catching function */
 
 char *TCID = "sigprocmask01";
 int TST_TOTAL = 1;
-int exp_enos[] = { 0 };
 
 int sig_catch = 0;		/* variable to blocked/unblocked signals */
 
 struct sigaction sa_new;	/* struct to hold signal info */
-sigset_t sigset;		/* signal set to hold signal lists */
+sigset_t set;		/* signal set to hold signal lists */
 sigset_t sigset2;
 
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 	pid_t my_pid;		/* test process id */
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	 /*NOTREACED*/}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
@@ -122,7 +112,7 @@ int main(int ac, char **av)
 		 * so that, signal will not be delivered to
 		 * the test process.
 		 */
-		TEST(sigprocmask(SIG_BLOCK, &sigset, 0));
+		TEST(sigprocmask(SIG_BLOCK, &set, 0));
 
 		/* Get the process id of test process */
 		my_pid = getpid();
@@ -131,7 +121,6 @@ int main(int ac, char **av)
 		kill(my_pid, SIGINT);
 
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL,
 				 "sigprocmask() Failed, errno=%d : %s",
 				 TEST_ERRNO, strerror(TEST_ERRNO));
@@ -176,7 +165,7 @@ int main(int ac, char **av)
 				 */
 				errno = 0;
 				if (sigprocmask(SIG_UNBLOCK,
-						&sigset, 0) == -1) {
+						&set, 0) == -1) {
 					tst_brkm(TFAIL, cleanup,
 						 "sigprocmask() failed "
 						 "to unblock signal, "
@@ -223,7 +212,7 @@ void setup(void)
 	 * Initialise the signal sets with the list that
 	 * excludes/includes  all system-defined signals.
 	 */
-	if (sigemptyset(&sigset) == -1) {
+	if (sigemptyset(&set) == -1) {
 		tst_brkm(TFAIL, cleanup,
 			 "sigemptyset() failed, errno=%d : %s",
 			 errno, strerror(errno));
@@ -246,7 +235,7 @@ void setup(void)
 	 * Add specified signal (SIGINT) to the signal set
 	 * which excludes system-defined signals.
 	 */
-	if (sigaddset(&sigset, SIGINT) == -1) {
+	if (sigaddset(&set, SIGINT) == -1) {
 		tst_brkm(TFAIL, cleanup,
 			 "sigaddset() failed, errno=%d : %s",
 			 errno, strerror(errno));
@@ -275,10 +264,5 @@ void sig_handler(int sig)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

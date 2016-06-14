@@ -44,7 +44,6 @@
 #include <fcntl.h>
 #include "config.h"
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 #include "linux_syscall_numbers.h"
 
@@ -185,6 +184,21 @@ static void create_testfile(void)
 	free(tmp);
 }
 
+static long get_device_readahead(const char *fname)
+{
+	struct stat st;
+	unsigned long ra_kb = 0;
+	char buf[256];
+
+	if (stat(fname, &st) == -1)
+		tst_brkm(TBROK | TERRNO, cleanup, "stat");
+	snprintf(buf, sizeof(buf), "/sys/dev/block/%d:%d/queue/read_ahead_kb",
+		 major(st.st_dev), minor(st.st_dev));
+	SAFE_FILE_SCANF(cleanup, buf, "%ld", &ra_kb);
+
+	return ra_kb * 1024;
+}
+
 /* read_testfile - mmap testfile and read every page.
  * This functions measures how many I/O and time it takes to fully
  * read contents of test file.
@@ -207,16 +221,22 @@ static void read_testfile(int do_readahead, const char *fname, size_t fsize,
 	unsigned long time_start_usec, time_end_usec;
 	off_t offset;
 	struct timeval now;
+	long readahead_size;
+
+	/* use bdi limit for 4.4 and older, otherwise default to 2M */
+	if ((tst_kvercmp(4, 4, 0)) >= 0)
+		readahead_size = get_device_readahead(fname);
+	else
+		readahead_size = 2 * 1024 * 1024;
+	tst_resm(TINFO, "max readahead size is: %ld", readahead_size);
 
 	fd = open(fname, O_RDONLY);
 	if (fd < 0)
 		tst_brkm(TBROK | TERRNO, cleanup, "Failed to open %s", fname);
 
 	if (do_readahead) {
-		/* read ahead in chunks, 2MB is maximum since 3.15-rc1 */
-		for (i = 0; i < fsize; i += 2*1024*1024) {
-			TEST(ltp_syscall(__NR_readahead, fd,
-				(off64_t) i, 2*1024*1024));
+		for (i = 0; i < fsize; i += readahead_size) {
+			TEST(readahead(fd, (off64_t) i, readahead_size));
 			if (TEST_RETURN != 0)
 				break;
 		}
@@ -284,7 +304,10 @@ static void test_readahead(void)
 
 	tst_resm(TINFO, "read_testfile(0)");
 	read_testfile(0, testfile, testfile_size, &read_bytes, &usec, &cached);
-	cached = cached - cached_low;
+	if (cached > cached_low)
+		cached = cached - cached_low;
+	else
+		cached = 0;
 
 	sync();
 	drop_caches();
@@ -292,7 +315,10 @@ static void test_readahead(void)
 	tst_resm(TINFO, "read_testfile(1)");
 	read_testfile(1, testfile, testfile_size, &read_bytes_ra,
 		      &usec_ra, &cached_ra);
-	cached_ra = cached_ra - cached_low;
+	if (cached_ra > cached_low)
+		cached_ra = cached_ra - cached_low;
+	else
+		cached_ra = 0;
 
 	tst_resm(TINFO, "read_testfile(0) took: %ld usec", usec);
 	tst_resm(TINFO, "read_testfile(1) took: %ld usec", usec_ra);
@@ -331,12 +357,9 @@ static void test_readahead(void)
 
 int main(int argc, char *argv[])
 {
-	const char *msg;
 	int lc;
 
-	msg = parse_opts(argc, argv, options, help);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, options, help);
 
 	if (opt_fsize)
 		testfile_size = atoi(opt_fsizestr);
@@ -352,7 +375,7 @@ int main(int argc, char *argv[])
 
 static void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 	tst_tmpdir();
 	TEST_PAUSE;
 
@@ -368,7 +391,6 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	unlink(testfile);
 	tst_rmdir();
 }

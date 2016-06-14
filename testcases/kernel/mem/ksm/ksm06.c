@@ -46,7 +46,6 @@
 #include "numa_helper.h"
 #include "test.h"
 #include "safe_macros.h"
-#include "usctest.h"
 #include "mem.h"
 
 char *TCID = "ksm06";
@@ -71,11 +70,9 @@ static void usage(void);
 int main(int argc, char *argv[])
 {
 	int lc;
-	const char *msg;
 
-	msg = parse_opts(argc, argv, options, &usage);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PASING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, options, &usage);
+
 	if (n_flag)
 		nr_pages = SAFE_STRTOUL(NULL, n_opt, 0, ULONG_MAX);
 	else
@@ -98,8 +95,8 @@ void setup(void)
 	if (access(PATH_KSM "merge_across_nodes", F_OK) == -1)
 		tst_brkm(TCONF, NULL, "no merge_across_nodes sysfs knob");
 
-	if (!is_numa(NULL))
-		tst_brkm(TCONF, NULL, "The case need a NUMA system.");
+	if (!is_numa(NULL, NH_MEMS, 2))
+		tst_brkm(TCONF, NULL, "The case needs a NUMA system.");
 
 	/* save the current value */
 	SAFE_FILE_SCANF(NULL, PATH_KSM "run", "%d", &run);
@@ -107,6 +104,8 @@ void setup(void)
 			"%d", &merge_across_nodes);
 	SAFE_FILE_SCANF(NULL, PATH_KSM "sleep_millisecs",
 			"%d", &sleep_millisecs);
+
+	save_max_page_sharing();
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	TEST_PAUSE;
@@ -120,7 +119,7 @@ void cleanup(void)
 			 "%d", sleep_millisecs);
 	FILE_PRINTF(PATH_KSM "run", "%d", run);
 
-	TEST_CLEANUP;
+	restore_max_page_sharing();
 }
 
 static void usage(void)
