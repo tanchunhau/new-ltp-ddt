@@ -34,7 +34,6 @@
 #include <limits.h>
 /*****  LTP Port        *****/
 #include "test.h"
-#include "usctest.h"
 #define FAILED 0
 #define PASSED 1
 
@@ -164,8 +163,7 @@ int main(int argc, char *argv[])
 	progname = *argv;
 	tst_tmpdir();
 	if (argc < 2) {
-		tst_resm(TBROK, "usage: %s %s\n", progname, usage);
-		tst_exit();
+		tst_brkm(TBROK, NULL, "usage: %s %s\n", progname, usage);
 	}
 
 	while ((c = getopt(argc, argv, "S:omdlrf:p:t:")) != -1) {
@@ -291,8 +289,8 @@ int main(int argc, char *argv[])
 		anyfail();
 	}
 
-	if ((buf = (uchar_t *) malloc(pagesize)) == NULL
-	    || (pidarray = (pid_t *) malloc(nprocs * sizeof(pid_t))) == NULL) {
+	if ((buf = malloc(pagesize)) == NULL
+	    || (pidarray = malloc(nprocs * sizeof(pid_t))) == NULL) {
 		perror("malloc error");
 		anyfail();
 	}
@@ -604,9 +602,9 @@ int fileokay(char *file, uchar_t * expbuf)
 	struct stat statbuf;
 #endif /* LARGE_FILE */
 	size_t mapsize;
-	uchar_t *readbuf;
 	unsigned mappages;
 	unsigned pagesize = sysconf(_SC_PAGE_SIZE);
+	uchar_t readbuf[pagesize];
 	int fd;
 	int cnt;
 	unsigned i, j;
@@ -643,7 +641,6 @@ int fileokay(char *file, uchar_t * expbuf)
 		perror("lseek");
 		anyfail();
 	}
-	readbuf = (uchar_t *) malloc(pagesize);
 
 	if (statbuf.st_size - sparseoffset > SIZE_MAX) {
 		fprintf(stderr, "size_t overflow when setting up map\n");
@@ -670,6 +667,7 @@ int fileokay(char *file, uchar_t * expbuf)
 				(void)fprintf(stderr, "read %d of %ld bytes\n",
 					      (i * pagesize) + cnt,
 					      (long)mapsize);
+				close(fd);
 				return 0;
 			}
 		}
@@ -690,6 +688,7 @@ int fileokay(char *file, uchar_t * expbuf)
 					      "(fsize %ld)\n", i, j,
 					      statbuf.st_size);
 #endif /* LARGE_FILE */
+				close(fd);
 				return 0;
 			}
 		}
@@ -719,26 +718,23 @@ unsigned int initrand(void)
 	 */
 	srand((unsigned int)getpid());
 	seed = rand();
-	srand((unsigned int)time((time_t *) 0));
+	srand((unsigned int)time(NULL));
 	seed = (seed ^ rand()) % 100000;
 	srand48((long int)seed);
 	return (seed);
 }
 
 /*****  LTP Port        *****/
-void ok_exit()
+void ok_exit(void)
 {
 	tst_resm(TPASS, "Test passed");
 	tst_rmdir();
 	tst_exit();
 }
 
-int anyfail()
+int anyfail(void)
 {
-	tst_resm(TFAIL, "Test failed");
-	tst_rmdir();
-	tst_exit();
-	return 0;
+	tst_brkm(TFAIL, tst_rmdir, "Test failed");
 }
 
 /*****  **      **      *****/

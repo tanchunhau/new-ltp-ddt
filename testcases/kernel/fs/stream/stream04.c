@@ -36,7 +36,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "stream04";
 int TST_TOTAL = 1;
@@ -60,13 +59,11 @@ int main(int ac, char *av[])
 	int ret;
 
 	int lc;
-	char *msg;
 
 	/*
 	 * parse standard options
 	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 	tst_tmpdir();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
@@ -76,17 +73,14 @@ int main(int ac, char *av[])
 	/*--------------------------------------------------------------------*/
 		//block0:
 		if ((stream = fopen(tempfile1, "a+")) == NULL) {
-			tst_resm(TFAIL | TERRNO, "fopen(%s) a+ failed",
+			tst_brkm(TFAIL | TERRNO, tst_rmdir, "fopen(%s) a+ failed",
 				 tempfile1);
-			tst_rmdir();
-			tst_exit();
 		}
 		/* write something and check */
 		if ((ret =
 		     fwrite(junk, sizeof(*junk), strlen(junk), stream)) == 0) {
-			tst_resm(TFAIL, "fwrite failed: %s", strerror(errno));
-			tst_rmdir();
-			tst_exit();
+			tst_brkm(TFAIL, tst_rmdir, "fwrite failed: %s",
+				 strerror(errno));
 		}
 
 		if ((size_t) ret != strlen(junk)) {
@@ -98,22 +92,17 @@ int main(int ac, char *av[])
 
 		fclose(stream);
 		if ((stream = fopen(tempfile1, "r+")) == NULL) {
-			tst_resm(TFAIL, "fopen(%s) r+ failed: %s", tempfile1,
+			tst_brkm(TFAIL, tst_rmdir, "fopen(%s) r+ failed: %s", tempfile1,
 				 strerror(errno));
-			tst_rmdir();
-			tst_exit();
 		}
-		if ((inbuf = (char *)malloc(strlen(junk))) == 0) {
-			tst_resm(TBROK, "test failed because of malloc: %s",
+		if ((inbuf = malloc(strlen(junk))) == 0) {
+			tst_brkm(TBROK, tst_rmdir, "test failed because of malloc: %s",
 				 strerror(errno));
-			tst_rmdir();
-			tst_exit();
 		}
 		if ((ret =
 		     fread(inbuf, sizeof(*junk), strlen(junk), stream)) == 0) {
-			tst_resm(TFAIL, "fread failed: %s", strerror(errno));
-			tst_rmdir();
-			tst_exit();
+			tst_brkm(TFAIL, tst_rmdir, "fread failed: %s",
+				 strerror(errno));
 		}
 		if ((size_t) ret != strlen(junk)) {
 			tst_resm(TFAIL,

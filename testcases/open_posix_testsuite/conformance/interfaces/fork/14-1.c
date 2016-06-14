@@ -31,9 +31,6 @@
 /* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
 #define _POSIX_C_SOURCE 200112L
 
-/********************************************************************************************/
-/****************************** standard includes *****************************************/
-/********************************************************************************************/
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -47,48 +44,20 @@
 #include <semaphore.h>
 #include <fcntl.h>
 
-/********************************************************************************************/
-/******************************   Test framework   *****************************************/
-/********************************************************************************************/
 #include "../testfrmw/testfrmw.h"
 #include "../testfrmw/testfrmw.c"
-/* This header is responsible for defining the following macros:
- * UNRESOLVED(ret, descr);
- *    where descr is a description of the error and ret is an int (error code for example)
- * FAILED(descr);
- *    where descr is a short text saying why the test has failed.
- * PASSED();
- *    No parameter.
- *
- * Both three macros shall terminate the calling process.
- * The testcase shall not terminate in any other maneer.
- *
- * The other file defines the functions
- * void output_init()
- * void output(char * string, ...)
- *
- * Those may be used to output information.
- */
 
-/********************************************************************************************/
-/********************************** Configuration ******************************************/
-/********************************************************************************************/
 #ifndef VERBOSE
 #define VERBOSE 1
 #endif
 
-/********************************************************************************************/
-/***********************************    Test case   *****************************************/
-/********************************************************************************************/
-/* The main test function. */
-int main(int argc, char *argv[])
+int main(void)
 {
 	int ret, status;
 	pid_t child, ctl;
 
 	sem_t *sem_linked, *sem_unlinked;
 
-	/* Initialize output */
 	output_init();
 
 	sem_linked = sem_open("/fork_14_1a", O_CREAT, O_RDWR, 0);
@@ -196,11 +165,8 @@ int main(int argc, char *argv[])
 		UNRESOLVED(errno, "Failed to close semaphore B");
 	}
 
-	/* Test passed */
 #if VERBOSE > 0
-
 	output("Test passed\n");
-
 #endif
 
 	PASSED;

@@ -38,51 +38,33 @@
  *        to conflict with other instances of the same test.
  */
 
-#include <sys/types.h>		/* needed for test              */
-#include <sys/ipc.h>		/* needed for test              */
-#include <sys/sem.h>		/* needed for test              */
-#include <signal.h>		/* needed for test              */
-#include <errno.h>		/* needed for test              */
-#include <stdio.h>		/* needed by testhead.h         */
-#include <wait.h>		/* needed by testhead.h         */
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#include <signal.h>
+#include <errno.h>
+#include <stdio.h>
+#include <wait.h>
 #include "ipcsem.h"
 #include "test.h"
-#include "usctest.h"
 
-void setup();
-void cleanup();
+void setup(void);
+void cleanup(void);
 
-/*
- *These globals must be defined in the test.
- */
-
-char *TCID = "semctl07";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0 };		/* List must end with 0 */
+char *TCID = "semctl07";
+int TST_TOTAL = 1;
 
 key_t key;
 int semid = -1, nsems;
 
-/*--------------------------------------------------------------*/
-
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 	int status;
 	struct semid_ds buf_ds;
 
-	union semun {
-		int val;
-		struct semid_ds *buf;
-		short *array;
-	};
-
 	union semun arg;
 
-	setup();		/* temp file is now open        */
-/*--------------------------------------------------------------*/
+	setup();
 
 	arg.buf = &buf_ds;
 	if ((status = semctl(semid, 0, IPC_STAT, arg)) == -1) {
@@ -164,37 +146,17 @@ char *argv[];
 	}
 
 	tst_resm(TPASS, "semctl07 ran successfully!");
-/*--------------------------------------------------------------*/
-/* Clean up any files created by test before exit.		*/
-/*--------------------------------------------------------------*/
 
 	cleanup();
-	return (0);
+	tst_exit();
 }
 
-/*--------------------------------------------------------------*/
-
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- *****************************************************************/
-void setup()
+void setup(void)
 {
-	/* You will want to enable some signal handling so you can capture
-	 * unexpected signals like SIGSEGV.
-	 *                   */
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	/* One cavet that hasn't been fixed yet.  TEST_PAUSE contains the code to
-	 * fork the test with the -c option.  You want to make sure you do this
-	 * before you create your temporary directory.
-	 */
 	TEST_PAUSE;
 
-	/*
-	 * Create a temporary directory and cd into it.
-	 * This helps to ensure that a unique msgkey is created.
-	 * See ../lib/libipc.c for more information.
-	 */
 	tst_tmpdir();
 
 	/* get an IPC resource key */
@@ -202,26 +164,12 @@ void setup()
 	nsems = 1;
 
 	if ((semid = semget(key, nsems, SEM_RA | IPC_CREAT)) == -1) {
-		tst_resm(TFAIL, "semget() failed errno = %d", errno);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "semget() failed errno = %d", errno);
 	}
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- * completion or premature exit.
- ****************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/* if it exists, remove the semaphore resouce */
 	rm_sema(semid);
-
 	tst_rmdir();
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
-
 }

@@ -53,17 +53,14 @@
 #include <sys/socket.h>
 #include <sys/syscall.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
 
 #ifndef SOCK_NONBLOCK
 #define SOCK_NONBLOCK O_NONBLOCK
 #endif
 
 int TST_TOTAL = 2;
-/* Global Variables */
-char *TCID = "socketpair02";	/* test program identifier.              */
+char *TCID = "socketpair02";
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -83,10 +80,9 @@ char *TCID = "socketpair02";	/* test program identifier.              */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-void cleanup()
+void cleanup(void)
 {
 
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 
@@ -108,7 +104,7 @@ void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -129,7 +125,7 @@ int main(int argc, char *argv[])
 	if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) == -1) {
 		tst_brkm(TFAIL, cleanup, "socketpair(0) failed");
 	}
-	for (i = 0; i < (sizeof(fds) / sizeof(fds[0])); i++) {
+	for (i = 0; i < ARRAY_SIZE(fds); i++) {
 		fl = fcntl(fds[i], F_GETFL);
 		if (fl == -1) {
 			tst_brkm(TBROK, cleanup, "fcntl failed");
@@ -145,7 +141,7 @@ int main(int argc, char *argv[])
 	if (socketpair(PF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, fds) == -1) {
 		tst_brkm(TFAIL, cleanup, "socketpair(SOCK_NONBLOCK) failed");
 	}
-	for (i = 0; i < (sizeof(fds) / sizeof(fds[0])); i++) {
+	for (i = 0; i < ARRAY_SIZE(fds); i++) {
 		fl = fcntl(fds[i], F_GETFL);
 		if (fl == -1) {
 			tst_brkm(TBROK, cleanup, "fcntl failed");

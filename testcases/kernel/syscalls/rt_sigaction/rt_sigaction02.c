@@ -12,32 +12,18 @@
 /* the GNU General Public License for more details.                           */
 /*                                                                            */
 /* You should have received a copy of the GNU General Public License          */
-/* along with this program;  if not, write to the Free Software               */
-/* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA    */
+/* along with this program;  if not, write to the Free Software Foundation,   */
+/* Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA           */
 /*                                                                            */
-/******************************************************************************/
-/******************************************************************************/
-/*                                                                            */
-/* File:        rt_sigaction02.c                                              */
-/*                                                                            */
-/* Description: This tests the rt_sigaction() syscall                         */
-/*		rt_sigaction Expected EFAULT error check                      */
-/*                                                                            */
-/* Usage:  <for command-line>                                                 */
-/* rt_sigaction02 [-c n] [-e][-i n] [-I x] [-p x] [-t]                        */
-/*      where,  -c n : Run n copies concurrently.                             */
-/*              -e   : Turn on errno logging.                                 */
-/*              -i n : Execute test n times.                                  */
-/*              -I x : Execute test for x seconds.                            */
-/*              -P x : Pause for x seconds between iterations.                */
-/*              -t   : Turn on syscall timing.                                */
-/*                                                                            */
-/* Total Tests: 1                                                             */
-/*                                                                            */
-/* Test Name:   rt_sigaction02                                             */
 /* History:     Porting from Crackerjack to LTP is done by                    */
 /*              Manas Kumar Nayak maknayak@in.ibm.com>                        */
 /******************************************************************************/
+
+/******************************************************************************/
+/* Description: This tests the rt_sigaction() syscall                         */
+/*		rt_sigaction Expected EFAULT error check                      */
+/******************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -46,100 +32,35 @@
 #include <sys/syscall.h>
 #include <string.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
+#include "lapi/rt_sigaction.h"
 
-/*
- * For all but __mips__:
- *
- * _COMPAT_NSIG / _COMPAT_NSIG_BPW == 2.
- *
- * For __mips__:
- *
- * _COMPAT_NSIG / _COMPAT_NSIG_BPW == 4.
- *
- * See asm/compat.h under the kernel source for more details.
- *
- * Multiply that by a fudge factor of 4 and you have your SIGSETSIZE.
- */
-#if defined (__mips__)
-#define SIGSETSIZE 16
-#else
-#define SIGSETSIZE 8
-#endif
+char *TCID = "rt_sigaction02";
+static int testno;
+int TST_TOTAL = 1;
 
-#define INVAL_STRUCT -1
-
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "rt_sigaction02";	/* Test program identifier. */
-int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
-
-/* Extern Global Functions */
-/******************************************************************************/
-/*                                                                            */
-/* Function:    cleanup                                                       */
-/*                                                                            */
-/* Description: Performs all one time clean up for this test on successful    */
-/*              completion,  premature exit or  failure. Closes all temporary */
-/*              files, removes all temporary directories exits the test with  */
-/*              appropriate return code by calling tst_exit() function.       */
-/*                                                                            */
-/* Input:       None.                                                         */
-/*                                                                            */
-/* Output:      None.                                                         */
-/*                                                                            */
-/* Return:      On failure - Exits calling tst_exit(). Non '0' return code.   */
-/*              On success - Exits calling tst_exit(). With '0' return code.  */
-/*                                                                            */
-/******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
-
-	TEST_CLEANUP;
 	tst_rmdir();
 
 	tst_exit();
 }
 
-/* Local  Functions */
-/******************************************************************************/
-/*                                                                            */
-/* Function:    setup                                                         */
-/*                                                                            */
-/* Description: Performs all one time setup for this test. This function is   */
-/*              typically used to capture signals, create temporary dirs      */
-/*              and temporary files that may be used in the course of this    */
-/*              test.                                                         */
-/*                                                                            */
-/* Input:       None.                                                         */
-/*                                                                            */
-/* Output:      None.                                                         */
-/*                                                                            */
-/* Return:      On failure - Exits by calling cleanup().                      */
-/*              On success - returns 0.                                       */
-/*                                                                            */
-/******************************************************************************/
-void setup()
+void setup(void)
 {
-	/* Capture signals if any */
-	/* Create temporary directories */
 	TEST_PAUSE;
 	tst_tmpdir();
 }
 
-int test_flags[] =
+static int test_flags[] =
     { SA_RESETHAND | SA_SIGINFO, SA_RESETHAND, SA_RESETHAND | SA_SIGINFO,
 SA_RESETHAND | SA_SIGINFO, SA_NOMASK };
 char *test_flags_list[] =
     { "SA_RESETHAND|SA_SIGINFO", "SA_RESETHAND", "SA_RESETHAND|SA_SIGINFO",
 "SA_RESETHAND|SA_SIGINFO", "SA_NOMASK" };
 
-struct test_case_t {
+static struct test_case_t {
 	int exp_errno;
 	char *errdesc;
 } test_cases[] = {
@@ -149,23 +70,21 @@ struct test_case_t {
 
 int main(int ac, char **av)
 {
-	int signal, flag;
+	unsigned int flag;
+	int signal;
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
+			for (signal = SIGRTMIN; signal <= SIGRTMAX; signal++) {
+				tst_resm(TINFO, "Signal %d", signal);
 
-			for (signal = SIGRTMIN; signal <= (SIGRTMAX); signal++) {	//signal for 34 to 65
-				for (flag = 0; flag < 5; flag++) {
+				for (flag = 0; flag < ARRAY_SIZE(test_flags); flag++) {
 
 					/*                                                              *
 					 * long sys_rt_sigaction (int sig, const struct sigaction *act, *
@@ -174,9 +93,8 @@ int main(int ac, char **av)
 					 * An invalid act or oact value was specified                   *
 					 */
 
-					TEST(syscall
-					     (__NR_rt_sigaction, signal,
-					      INVAL_STRUCT, NULL, SIGSETSIZE));
+					TEST(ltp_rt_sigaction(signal,
+						INVAL_SA_PTR, NULL, SIGSETSIZE));
 					if ((TEST_RETURN == -1)
 					    && (TEST_ERRNO ==
 						test_cases[0].exp_errno)) {
@@ -200,7 +118,6 @@ int main(int ac, char **av)
 							 test_flags_list[flag]);
 					}
 				}
-				printf("\n");
 			}
 
 		}

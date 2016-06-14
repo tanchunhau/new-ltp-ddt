@@ -30,16 +30,16 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include "noatime.h"
 #include "posixtest.h"
 
 int main(void)
 {
 	char tmpfname[256];
-	char *data;
-
+	ssize_t size = 1024;
+	char data[size];
 	void *pa;
-	size_t size = 1024;
 	int fd;
 
 	struct stat stat_buff, stat_buff2;
@@ -60,7 +60,6 @@ int main(void)
 		return PTS_UNRESOLVED;
 	}
 
-	data = malloc(size);
 	memset(data, 'a', size);
 	printf("Time before write(): %ld\n", time(NULL));
 	if (write(fd, data, size) != size) {
@@ -68,7 +67,6 @@ int main(void)
 		unlink(tmpfname);
 		return PTS_UNRESOLVED;
 	}
-	free(data);
 
 	if (stat(tmpfname, &stat_buff) == -1) {
 		printf("Error at 1st stat(): %s\n", strerror(errno));

@@ -45,7 +45,6 @@
 #include <time.h>
 #include <sys/time.h>
 #include "test.h"
-#include "usctest.h"
 
 #define MAXTIME 72000		/* Maximum # of secs to wait before failing */
 #define NUMLOOPS 100000		/* # of loops */
@@ -287,8 +286,8 @@ int main(int argc, char **argv)
 	cleanup();
 
 #else
-	tst_resm(TCONF, "Skipping Execution - This system is not using NPTL");
-	tst_exit();
+	tst_brkm(TCONF, NULL,
+		 "Skipping Execution - This system is not using NPTL");
 #endif
 
 	return 1;

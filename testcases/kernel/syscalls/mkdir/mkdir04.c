@@ -75,81 +75,68 @@
 #include <pwd.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
 #include "test.h"
-#include "usctest.h"
+#include "safe_macros.h"
 
 void setup();
 void cleanup();
-extern struct passwd *my_getpwnam(char *);
 int fail;
 
 #define PERMS		0700
 
-char user1name[] = "nobody";
-char user2name[] = "bin";
+static uid_t nobody_uid, bin_uid;
 
-char *TCID = "mkdir04";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "mkdir04";
+int TST_TOTAL = 1;
 int fail;
 
 char tstdir1[100];
 char tstdir2[100];
 
-int exp_enos[] = { EACCES, 0 };	/* List must end with 0 */
-
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int rval;
 	pid_t pid, pid1;
 	int status;
-	struct passwd *ltpuser1, *ltpuser2;
 
 	/*
 	 * parse standard options
 	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/*
 	 * perform global setup for test
 	 */
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	/*
 	 * check looping state if -i option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* Initialize the test directories name */
 		sprintf(tstdir1, "tstdir1.%d", getpid());
-		ltpuser1 = my_getpwnam(user1name);
-
 		if ((pid = FORK_OR_VFORK()) < 0) {
 			tst_brkm(TBROK, cleanup, "fork #1 failed");
 		}
 
 		if (pid == 0) {	/* first child */
-			/* set to ltpuser1 */
-			rval = setreuid(ltpuser1->pw_uid, ltpuser1->pw_uid);
+			rval = setreuid(nobody_uid, nobody_uid);
 			if (rval < 0) {
-				tst_resm(TFAIL, "setreuid failed to "
+				tst_resm(TFAIL | TERRNO, "setreuid failed to "
 					 "to set the real uid to %d and "
 					 "effective uid to %d",
-					 ltpuser1->pw_uid, ltpuser1->pw_uid);
-				perror("setreuid");
+					 nobody_uid, nobody_uid);
 				exit(1);
 			}
 			/* create the parent directory with 0700 permits */
 			if (mkdir(tstdir1, PERMS) == -1) {
-				tst_resm(TFAIL, "mkdir(%s, %#o) Failed",
+				tst_resm(TFAIL | TERRNO,
+					 "mkdir(%s, %#o) Failed",
 					 tstdir1, PERMS);
 				exit(1);
 			}
@@ -164,21 +151,18 @@ int main(int ac, char **av)
 		}
 
 		sprintf(tstdir2, "%s/tst", tstdir1);
-		ltpuser2 = my_getpwnam(user2name);
 
 		if ((pid1 = FORK_OR_VFORK()) < 0) {
 			tst_brkm(TBROK, cleanup, "fork #2 failed");
 		}
 
 		if (pid1 == 0) {	/* second child */
-			/* set to ltpuser2 */
-			rval = setreuid(ltpuser2->pw_uid, ltpuser2->pw_uid);
+			rval = setreuid(bin_uid, bin_uid);
 			if (rval < 0) {
-				tst_resm(TFAIL, "setreuid failed to "
+				tst_resm(TFAIL | TERRNO, "setreuid failed to "
 					 "to set the real uid to %d and "
 					 "effective uid to %d",
-					 ltpuser2->pw_uid, ltpuser2->pw_uid);
-				perror("setreuid");
+					 bin_uid, bin_uid);
 				exit(1);
 			}
 			if (mkdir(tstdir2, PERMS) != -1) {
@@ -217,12 +201,16 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
-	/* must run as root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must run this as root");
-	}
+	struct passwd *pw;
+
+	tst_require_root();
+
+	pw = SAFE_GETPWNAM(NULL, "nobody");
+	nobody_uid = pw->pw_uid;
+	pw = SAFE_GETPWNAM(NULL, "bin");
+	bin_uid = pw->pw_uid;
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
@@ -238,13 +226,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/*
 	 * Remove the temporary directory.

@@ -41,7 +41,6 @@
 #include <sched.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 
 #include "clone_platform.h"
 
@@ -58,14 +57,11 @@ int main(int ac, char **av)
 {
 
 	int lc;
-	char *msg;
 	void *child_stack;
 	char buff[10];
 	int child_pid, status;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -75,7 +71,7 @@ int main(int ac, char **av)
 		tst_brkm(TBROK, cleanup, "Cannot allocate stack for child");
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		if ((pipe(pfd)) == -1)
 			tst_brkm(TBROK | TERRNO, cleanup, "pipe failed");
@@ -127,10 +123,9 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 }
 
-static int child_fn()
+static int child_fn(void)
 {
 	char pid[10];
 

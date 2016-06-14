@@ -1,5 +1,5 @@
 /*
- * Out Of Memory (OOM) for Memory Resource Controller and NUMA
+ * Out Of Memory (OOM) for CPUSET
  *
  * The program is designed to cope with unpredictable like amount and
  * system physical memory, swap size and other VMM technology like KSM,
@@ -35,8 +35,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include "numa_helper.h"
 #include "test.h"
-#include "usctest.h"
 #include "mem.h"
 
 char *TCID = "oom04";
@@ -44,16 +44,12 @@ int TST_TOTAL = 1;
 
 #if HAVE_NUMA_H && HAVE_LINUX_MEMPOLICY_H && HAVE_NUMAIF_H \
 	&& HAVE_MPOL_CONSTANTS
+
 int main(int argc, char *argv[])
 {
-	char *msg;
 	int lc;
-	int swap_acc_on = 1;
-	char buf[BUFSIZ], mem[BUFSIZ];
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 #if __WORDSIZE == 32
 	tst_brkm(TCONF, NULL, "test is not designed for 32-bit system.");
@@ -62,40 +58,21 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
-		snprintf(buf, BUFSIZ, "%d", getpid());
-		write_file(MEMCG_PATH_NEW "/tasks", buf);
+		tst_resm(TINFO, "OOM on CPUSET...");
+		testoom(0, 0, ENOMEM, 1);
 
-		snprintf(mem, BUFSIZ, "%ld", TESTMEM);
-		write_file(MEMCG_PATH_NEW "/memory.limit_in_bytes", mem);
-
-		if (access(MEMCG_SW_LIMIT, F_OK) == -1) {
-			if (errno == ENOENT) {
-				tst_resm(TCONF,
-					 "memcg swap accounting is disabled");
-				swap_acc_on = 0;
-			} else
-				tst_brkm(TBROK | TERRNO, cleanup, "access");
-		}
-
-		tst_resm(TINFO, "process mempolicy.");
-		testoom(1, 0, 1);
-
-		if (swap_acc_on) {
-			write_file(MEMCG_SW_LIMIT, mem);
-			testoom(1, 1, 1);
-		}
-
-		tst_resm(TINFO, "process cpuset.");
-
-		if (swap_acc_on)
-			write_file(MEMCG_SW_LIMIT, "-1");
-		testoom(0, 0, 1);
-
-		if (swap_acc_on) {
-			write_file(MEMCG_SW_LIMIT, mem);
-			testoom(0, 1, 1);
+		if (is_numa(cleanup, NH_MEMS, 2)) {
+			/*
+			 * Under NUMA system, the migration of cpuset's memory
+			 * is in charge of cpuset.memory_migrate, we can write
+			 * 1 to cpuset.memory_migrate to enable the migration.
+			 */
+			write_cpuset_files(CPATH_NEW,
+					   "memory_migrate", "1");
+			tst_resm(TINFO, "OOM on CPUSET with mem migrate:");
+			testoom(0, 0, ENOMEM, 1);
 		}
 	}
 	cleanup();
@@ -104,23 +81,37 @@ int main(int argc, char *argv[])
 
 void setup(void)
 {
-	tst_require_root(NULL);
+	int memnode, ret;
+
+	tst_require_root();
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	TEST_PAUSE;
 
+	if (!is_numa(NULL, NH_MEMS, 1))
+		tst_brkm(TCONF, NULL, "requires NUMA with at least 1 node");
+
 	overcommit = get_sys_tune("overcommit_memory");
 	set_sys_tune("overcommit_memory", 1, 1);
+
 	mount_mem("cpuset", "cpuset", NULL, CPATH, CPATH_NEW);
-	mount_mem("memcg", "cgroup", "memory", MEMCG_PATH, MEMCG_PATH_NEW);
+
+	/*
+	 * Some nodes do not contain memory, so use
+	 * get_allowed_nodes(NH_MEMS) to get a memory
+	 * node. This operation also applies to Non-NUMA
+	 * systems.
+	 */
+	ret = get_allowed_nodes(NH_MEMS, 1, &memnode);
+	if (ret < 0)
+		tst_brkm(TBROK, cleanup, "Failed to get a memory node "
+				      "using get_allowed_nodes()");
+	write_cpusets(memnode);
 }
 
 void cleanup(void)
 {
 	set_sys_tune("overcommit_memory", overcommit, 0);
 	umount_mem(CPATH, CPATH_NEW);
-	umount_mem(MEMCG_PATH, MEMCG_PATH_NEW);
-
-	TEST_CLEANUP;
 }
 
 #else /* no NUMA */

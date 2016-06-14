@@ -69,14 +69,12 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include "test.h"
-#include "usctest.h"
 
 #define MODE_RWX	S_IFMT	/* mode different from those expected */
 #define TNODE		"tnode"	/*pathname */
 
-char *TCID = "mknod09";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-int exp_enos[] = { EINVAL, 0 };
+char *TCID = "mknod09";
+int TST_TOTAL = 1;
 
 void setup();			/* setup function for the test */
 void cleanup();			/* cleanup function for the test */
@@ -84,25 +82,16 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	char *test_desc;	/* test specific error message */
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		test_desc = "EINVAL";
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call mknod(2) to test condition.
@@ -115,17 +104,15 @@ int main(int ac, char **av)
 		if (TEST_RETURN != -1) {
 			tst_resm(TFAIL, "mknod() returned %ld,"
 				 "expected -1, errno=%d", TEST_RETURN,
-				 exp_enos[0]);
+				 EINVAL);
 		} else {
-			TEST_ERROR_LOG(TEST_ERRNO);
-
-			if (TEST_ERRNO == exp_enos[0]) {
+			if (TEST_ERRNO == EINVAL) {
 				tst_resm(TPASS, "mknod() fails with expected "
 					 "error EINVAL errno:%d", TEST_ERRNO);
 			} else {
 				tst_resm(TFAIL, "mknod() fails, %s, "
 					 "errno=%d, expected errno=%d",
-					 test_desc, TEST_ERRNO, exp_enos[0]);
+					 test_desc, TEST_ERRNO, EINVAL);
 			}
 		}
 	}
@@ -138,16 +125,12 @@ int main(int ac, char **av)
 /*
  * setup(void)
  */
-void setup()
+void setup(void)
 {
+	tst_require_root();
+
 	/* Capture unexpected signals */
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Check that the test process id is super/root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be super/root for this test!");
-		tst_exit();
-	}
 
 	TEST_PAUSE;
 
@@ -158,13 +141,8 @@ void setup()
 /*
  * cleanup()
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

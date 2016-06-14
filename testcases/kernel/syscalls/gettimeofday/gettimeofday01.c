@@ -28,15 +28,6 @@
  *	Call gettimeofday() with an invalid buffer, and expect EFAULT to be
  *	set in errno.
  *
- * USAGE:  <for command-line>
- *  gettimeofday01 [-c n] [-e] [-i n] [-I x] [-P x] [-t]
- *     where,  -c n : Run n copies concurrently.
- *             -e   : Turn on errno logging.
- *             -i n : Execute test n times.
- *             -I x : Execute test for x seconds.
- *             -P x : Pause for x seconds between iterations.
- *             -t   : Turn on syscall timing.
- *
  * HISTORY
  *	07/2001 Ported by Wayne Boyer
  *
@@ -47,18 +38,15 @@
 #include <sys/time.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include <sys/syscall.h>
 #include <unistd.h>
 
 #define gettimeofday(a,b)  syscall(__NR_gettimeofday,a,b)
 
 char *TCID = "gettimeofday01";
-#if !defined UCLINUX
-
 int TST_TOTAL = 1;
 
-int exp_enos[] = { EFAULT, 0 };
+#if !defined UCLINUX
 
 void cleanup(void);
 void setup(void);
@@ -66,20 +54,14 @@ void setup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int ret;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(gettimeofday((void *)-1, (void *)-1));
 
@@ -93,7 +75,6 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		TEST_ERROR_LOG(TEST_ERRNO);
 		if (TEST_ERRNO == EFAULT)
 			tst_resm(TPASS,
 				 "gettimeofday(2) set the errno EFAULT correctly");
@@ -102,14 +83,11 @@ int main(int ac, char **av)
 				 "gettimeofday(2) didn't set errno to EFAULT, errno=%i (%s)",
 				 errno, strerror(errno));
 	}
-	cleanup();
 
-	return (0);
+	cleanup();
+	tst_exit();
 }
 
-/*
- * setup() - performs all ONE TIME setup for this test.
- */
 void setup(void)
 {
 
@@ -118,28 +96,14 @@ void setup(void)
 	TEST_PAUSE;
 }
 
-/*
- * cleanup() - performs all ONE TIME cleanup for this test at
- *	       completion or premature exit.
- */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
-
 }
 #else
 
-int TST_TOTAL = 0;		/* Total number of test cases. */
-
 int main(void)
 {
-	tst_resm(TPASS, "gettimeofday EFAULT check disabled on uClinux");
-	tst_exit();
-	tst_exit();
+	tst_brkm(TCONF, "gettimeofday EFAULT check disabled on uClinux");
 }
 
 #endif

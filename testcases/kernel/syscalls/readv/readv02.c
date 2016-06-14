@@ -47,7 +47,6 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define	K_1	1024
 #define	M_1	K_1 * K_1
@@ -102,19 +101,16 @@ void cleanup();
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 //test1:
 		if (readv(fd[0], rd_iovec, 1) < 0) {
@@ -186,7 +182,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	int nbytes;
 
@@ -239,7 +235,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	if (unlink(f_name) < 0) {
 		tst_brkm(TBROK, NULL, "unlink FAILED: file %s, errno %d",

@@ -54,7 +54,6 @@
  */
 #include <pwd.h>
 #include "test.h"
-#include "usctest.h"
 
 #include "ipcmsg.h"
 
@@ -64,8 +63,6 @@ int TST_TOTAL = 3;
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
 
-int exp_enos[] = { EACCES, 0 };	/* 0 terminated list of expected errnos */
-
 int msg_q_1 = -1;		/* to hold the message queue id */
 
 int test_flags[] = { MSG_RD, MSG_WR, MSG_RD | MSG_WR };
@@ -73,20 +70,17 @@ int test_flags[] = { MSG_RD, MSG_WR, MSG_RD | MSG_WR };
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* loop through the test cases */
 
@@ -103,8 +97,6 @@ int main(int ac, char **av)
 					 "when EACCES error expected");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			switch (TEST_ERRNO) {
 			case EACCES:
@@ -131,18 +123,13 @@ int main(int ac, char **av)
  */
 void setup(void)
 {
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	ltpuser = getpwnam(nobody_uid);
 	if (setuid(ltpuser->pw_uid) == -1) {
 		tst_resm(TINFO, "setuid failed to "
@@ -178,11 +165,5 @@ void cleanup(void)
 	rm_queue(msg_q_1);
 
 	tst_rmdir();
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

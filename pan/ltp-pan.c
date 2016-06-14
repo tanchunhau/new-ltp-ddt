@@ -67,6 +67,7 @@
 
 #include "splitstr.h"
 #include "zoolib.h"
+#include "tst_res_flags.h"
 
 /* One entry in the command line collection.  */
 struct coll_entry {
@@ -103,8 +104,9 @@ static struct collection *get_collection(char *file, int optind, int argc,
 static void pids_running(struct tag_pgrp *running, int keep_active);
 static int check_pids(struct tag_pgrp *running, int *num_active,
 		      int keep_active, FILE * logfile, FILE * failcmdfile,
-		      struct orphan_pgrp *orphans, int fmt_print,
-		      int *failcnt, int quiet_mode);
+		      FILE *tconfcmdfile, struct orphan_pgrp *orphans,
+		      int fmt_print, int *failcnt, int *tconfcnt,
+		      int quiet_mode);
 static void propagate_signal(struct tag_pgrp *running, int keep_active,
 			     struct orphan_pgrp *orphans);
 static void dump_coll(struct collection *coll);
@@ -150,6 +152,7 @@ int main(int argc, char **argv)
 	char *filename = "/dev/null";	/* filename to read test tags from */
 	char *logfilename = NULL;
 	char *failcmdfilename = NULL;
+	char *tconfcmdfilename = NULL;
 	char *outputfilename = NULL;
 	struct collection *coll = NULL;
 	struct tag_pgrp *running;
@@ -157,9 +160,11 @@ int main(int argc, char **argv)
 	struct utsname unamebuf;
 	FILE *logfile = NULL;
 	FILE *failcmdfile = NULL;
+	FILE *tconfcmdfile = NULL;
 	int keep_active = 1;
 	int num_active = 0;
-	int failcnt = 0;	/* count of total testcases that failed. */
+	int failcnt = 0;  /* count of total testcases that failed. */
+	int tconfcnt = 0; /* count of total testcases that return TCONF */
 	int err, i;
 	int starts = -1;
 	int timed = 0;
@@ -180,7 +185,8 @@ int main(int argc, char **argv)
 	struct sigaction sa;
 
 	while ((c =
-		getopt(argc, argv, "AO:Sa:C:d:ef:hl:n:o:pqr:s:t:x:y")) != -1) {
+		getopt(argc, argv, "AO:Sa:C:T:d:ef:hl:n:o:pqr:s:t:x:y"))
+		       != -1) {
 		switch (c) {
 		case 'A':	/* all-stop flag */
 			has_brakes = 1;
@@ -197,6 +203,13 @@ int main(int argc, char **argv)
 			break;
 		case 'C':	/* name of the file where all failed commands will be */
 			failcmdfilename = strdup(optarg);
+			break;
+		case 'T':
+			/*
+			 * test cases that are not fully tested will be recorded
+			 * in this file
+			 */
+			tconfcmdfilename = strdup(optarg);
 			break;
 		case 'd':	/* debug options */
 			sscanf(optarg, "%i", &Debug);
@@ -355,8 +368,8 @@ int main(int argc, char **argv)
 
 	/* a place to store the pgrps we're watching */
 	running =
-	    (struct tag_pgrp *)malloc((keep_active + 1) *
-				      sizeof(struct tag_pgrp));
+		malloc((keep_active + 1) *
+			sizeof(struct tag_pgrp));
 	if (running == NULL) {
 		fprintf(stderr, "pan(%s): Failed to allocate memory: %s\n",
 			panname, strerror(errno));
@@ -366,7 +379,7 @@ int main(int argc, char **argv)
 	running[keep_active].pgrp = -1;	/* end sentinel */
 
 	/* a head to the orphaned pgrp list */
-	orphans = (struct orphan_pgrp *)malloc(sizeof(struct orphan_pgrp));
+	orphans = malloc(sizeof(struct orphan_pgrp));
 	memset(orphans, 0, sizeof(struct orphan_pgrp));
 
 	srand48(time(NULL) ^ (getpid() + (getpid() << 15)));
@@ -440,6 +453,16 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (tconfcmdfilename) {
+		tconfcmdfile = fopen(tconfcmdfilename, "a+");
+		if (!tconfcmdfile) {
+			fprintf(stderr, "pan(%s): Error %s (%d) opening "
+				"tconf cmd file '%s'\n", panname,
+				strerror(errno), errno, tconfcmdfilename);
+			exit(1);
+		}
+	}
+
 	if ((zoofile = zoo_open(zooname)) == NULL) {
 		fprintf(stderr, "pan(%s): %s\n", panname, zoo_error);
 		exit(1);
@@ -453,13 +476,6 @@ int main(int argc, char **argv)
 	 * this is an "active file cleanliness" thing
 	 */
 	{
-		char *av[2], bigarg[82];
-
-		memset(bigarg, '.', 81);
-		bigarg[81] = '\0';
-		av[0] = bigarg;
-		av[1] = NULL;
-
 		for (c = 0; c < keep_active; c++) {
 			if (zoo_mark_cmdline(zoofile, c, panname, "")) {
 				fprintf(stderr, "pan(%s): %s\n", panname,
@@ -569,8 +585,8 @@ int main(int argc, char **argv)
 		}
 
 		err = check_pids(running, &num_active, keep_active, logfile,
-				 failcmdfile, orphans, fmt_print, &failcnt,
-				 quiet_mode);
+				 failcmdfile, tconfcmdfile, orphans, fmt_print,
+				 &failcnt, &tconfcnt, quiet_mode);
 		if (Debug & Drunning) {
 			pids_running(running, keep_active);
 			orphans_running(orphans);
@@ -630,6 +646,7 @@ int main(int argc, char **argv)
 		fprintf(logfile,
 			"\n-----------------------------------------------\n");
 		fprintf(logfile, "Total Tests: %d\n", coll->cnt);
+		fprintf(logfile, "Total Skipped Tests: %d\n", tconfcnt);
 		fprintf(logfile, "Total Failures: %d\n", failcnt);
 		fprintf(logfile, "Kernel Version: %s\n", unamebuf.release);
 		fprintf(logfile, "Machine Architecture: %s\n",
@@ -639,6 +656,11 @@ int main(int argc, char **argv)
 	if (logfile && (logfile != stdout))
 		fclose(logfile);
 
+	if (failcmdfile)
+		fclose(failcmdfile);
+
+	if (tconfcmdfile)
+		fclose(tconfcmdfile);
 	exit(exit_stat);
 }
 
@@ -680,8 +702,9 @@ propagate_signal(struct tag_pgrp *running, int keep_active,
 
 static int
 check_pids(struct tag_pgrp *running, int *num_active, int keep_active,
-	   FILE * logfile, FILE * failcmdfile, struct orphan_pgrp *orphans,
-	   int fmt_print, int *failcnt, int quiet_mode)
+	   FILE *logfile, FILE *failcmdfile, FILE *tconfcmdfile,
+	   struct orphan_pgrp *orphans, int fmt_print, int *failcnt,
+	   int *tconfcnt, int quiet_mode)
 {
 	int w;
 	pid_t cpid;
@@ -690,6 +713,7 @@ check_pids(struct tag_pgrp *running, int *num_active, int keep_active,
 	int i;
 	time_t t;
 	char *status;
+	char *result_str;
 	int signaled = 0;
 	struct tms tms1, tms2;
 	clock_t tck;
@@ -737,7 +761,7 @@ check_pids(struct tag_pgrp *running, int *num_active, int keep_active,
 					"child %d exited with status %d\n",
 					cpid, w);
 			--*num_active;
-			if (w != 0)
+			if (w != 0 && w != TCONF)
 				ret++;
 		} else if (WIFSTOPPED(stat_loc)) {	/* should never happen */
 			w = WSTOPSIG(stat_loc);
@@ -784,23 +808,38 @@ check_pids(struct tag_pgrp *running, int *num_active, int keep_active,
 							(int)(tms2.tms_cstime -
 							      tms1.tms_cstime));
 					else {
-						if (w != 0)
-							++ * failcnt;
+						if (strcmp(status, "exited") ==
+						    0 && w == TCONF) {
+							++*tconfcnt;
+							result_str = "CONF";
+						} else if (w != 0) {
+							++*failcnt;
+							result_str = "FAIL";
+						} else {
+							result_str = "PASS";
+						}
+
 						fprintf(logfile,
 							"%-30.30s %-10.10s %-5d\n",
 							running[i].cmd->name,
-							((w !=
-							  0) ? "FAIL" : "PASS"),
+							result_str,
 							w);
 					}
 
 					fflush(logfile);
 				}
 
-				if ((failcmdfile != NULL) && (w != 0)) {
-					fprintf(failcmdfile, "%s %s\n",
+				if (w != 0) {
+					if (tconfcmdfile != NULL &&
+					    w == TCONF) {
+						fprintf(tconfcmdfile, "%s %s\n",
 						running[i].cmd->name,
 						running[i].cmd->cmdline);
+					} else if (failcmdfile != NULL) {
+						fprintf(failcmdfile, "%s %s\n",
+						running[i].cmd->name,
+						running[i].cmd->cmdline);
+					}
 				}
 
 				if (running[i].stopping)
@@ -910,6 +949,8 @@ run_child(struct coll_entry *colle, struct tag_pgrp *active, int quiet_mode,
 		if (!quiet_mode)
 			write_test_start(active);
 
+	fflush(NULL);
+
 	if ((cpid = fork()) == -1) {
 		fprintf(stderr,
 			"pan(%s): fork failed (tag %s).  errno:%d  %s\n",
@@ -985,7 +1026,7 @@ run_child(struct coll_entry *colle, struct tag_pgrp *active, int quiet_mode,
 		 * cmd directly.
 		 */
 		if (strpbrk(c_cmdline, "\"';|<>$\\")) {
-			execlp("sh", "sh", "-c", c_cmdline, (char *)0);
+			execlp("sh", "sh", "-c", c_cmdline, NULL);
 			errlen = sprintf(errbuf,
 					 "pan(%s): execlp of '%s' (tag %s) failed.  errno:%d %s",
 					 panname, c_cmdline, colle->name, errno,
@@ -1026,7 +1067,8 @@ run_child(struct coll_entry *colle, struct tag_pgrp *active, int quiet_mode,
 		char *termtype;
 		struct tms notime = { 0, 0, 0, 0 };
 
-		read(errpipe[0], errbuf, errlen);
+		if (read(errpipe[0], errbuf, errlen) < 0)
+			fprintf(stderr, "Failed to read from errpipe[0]\n");
 		close(errpipe[0]);
 		errbuf[errlen] = '\0';
 		/* fprintf(stderr, "%s", errbuf); */
@@ -1134,7 +1176,7 @@ static struct collection *get_collection(char *file, int optind, int argc,
 	if (!buf)
 		return NULL;
 
-	coll = (struct collection *)malloc(sizeof(struct collection));
+	coll = malloc(sizeof(struct collection));
 	coll->cnt = 0;
 
 	head = p = n = NULL;
@@ -1147,8 +1189,7 @@ static struct collection *get_collection(char *file, int optind, int argc,
 
 		/* If this is line isn't a comment */
 		if ((*a != '#') && (*a != '\0') && (*a != ' ')) {
-			n = (struct coll_entry *)
-			    malloc(sizeof(struct coll_entry));
+			n = malloc(sizeof(struct coll_entry));
 			if ((n->pcnt_f = strstr(a, "%f"))) {
 				n->pcnt_f[1] = 's';
 			}
@@ -1182,7 +1223,7 @@ static struct collection *get_collection(char *file, int optind, int argc,
 			workstr_left--;
 		}
 
-		n = (struct coll_entry *)malloc(sizeof(struct coll_entry));
+		n = malloc(sizeof(struct coll_entry));
 		if ((n->pcnt_f = strstr(workstr, "%f"))) {
 			n->pcnt_f[1] = 's';
 		}
@@ -1199,8 +1240,7 @@ static struct collection *get_collection(char *file, int optind, int argc,
 	}
 
 	/* get an array */
-	coll->ary = (struct coll_entry **)malloc(coll->cnt *
-						 sizeof(struct coll_entry *));
+	coll->ary = malloc(coll->cnt * sizeof(struct coll_entry *));
 
 	/* fill the array */
 	i = 0;
@@ -1235,10 +1275,11 @@ static char *slurp(char *file)
 		return NULL;
 	}
 
-	buf = (char *)malloc(sbuf.st_size + 1);
+	buf = malloc(sbuf.st_size + 1);
 	if (read(fd, buf, sbuf.st_size) != sbuf.st_size) {
 		fprintf(stderr, "pan(%s): slurp failed.  errno:%d  %s\n",
 			panname, errno, strerror(errno));
+		free(buf);
 		return NULL;
 	}
 	buf[sbuf.st_size] = '\0';
@@ -1287,7 +1328,7 @@ static void mark_orphan(struct orphan_pgrp *orphans, pid_t cpid)
 	}
 	if (orph == NULL) {
 		/* make a new struct */
-		orph = (struct orphan_pgrp *)malloc(sizeof(struct orphan_pgrp));
+		orph = malloc(sizeof(struct orphan_pgrp));
 
 		/* plug in the new struct just after the head */
 		orph->next = orphans->next;

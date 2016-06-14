@@ -46,10 +46,10 @@
 #include <signal.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+
 
 #define SKIPVAL 0x0f00
 //#define       SKIP    SKIPVAL, 0, 0L, 0L, IGNORED
@@ -62,22 +62,15 @@
 #define	NOBLOCK		2	/* immediate success */
 #define	WILLBLOCK	3	/* blocks, succeeds, parent unlocks records */
 #define	TIME_OUT	10
+int NO_NFS = 1;			/* Test on NFS or not */
 
 typedef struct {
-	short type;
-	short whence;
-	long start;
-	long len;
-	short flag;
-} lock;
-
-typedef struct {
-	lock parent_a;
-	lock parent_b;
-	lock child_a;
-	lock child_b;
-	lock parent_c;
-	lock parent_d;
+	struct flock parent_a;
+	struct flock parent_b;
+	struct flock child_a;
+	struct flock child_b;
+	struct flock parent_c;
+	struct flock parent_d;
 } testcase;
 
 static testcase testcases[] = {
@@ -267,7 +260,7 @@ static testcase testcases[] = {
 };
 
 static testcase *thiscase;
-static lock *thislock;
+static struct flock *thislock;
 static int parent;
 static int child_flag1 = 0;
 static int child_flag2 = 0;
@@ -280,10 +273,7 @@ static char tmpname[40];
 
 #define	FILEDATA	"tenbytes!"
 
-extern void catch_usr1();	/* signal catching subroutine */
-extern void catch_usr2();	/* signal catching subroutine */
-extern void catch_int();	/* signal catching subroutine */
-extern void catch_alarm();	/* signal catching subroutine */
+extern void catch_int(int sig);	/* signal catching subroutine */
 
 char *TCID = "fcntl16";
 int TST_TOTAL = 1;
@@ -298,8 +288,6 @@ static char *argv0;
  */
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 
 }
@@ -310,6 +298,7 @@ void dochild(int kid)
 	struct sigaction sact;
 	sact.sa_flags = 0;
 	sact.sa_handler = catch_int;
+	sigemptyset(&sact.sa_mask);
 	(void)sigaction(SIGUSR1, &sact, NULL);
 
 	/* Lock should succeed after blocking and parent releases lock */
@@ -352,18 +341,18 @@ void dochild(int kid)
 #ifdef UCLINUX
 static int kid_uc;
 
-void dochild_uc()
+void dochild_uc(void)
 {
 	dochild(kid_uc);
 }
 #endif
 
-void catch_alarm()
+void catch_alarm(int sig)
 {
 	alarm_flag = 1;
 }
 
-void catch_usr1()
+void catch_usr1(int sig)
 {				/* invoked on catching SIGUSR1 */
 	/*
 	 * Set flag to let parent know that child #1 is ready to have the
@@ -372,7 +361,7 @@ void catch_usr1()
 	child_flag1 = 1;
 }
 
-void catch_usr2()
+void catch_usr2(int sig)
 {				/* invoked on catching SIGUSR2 */
 	/*
 	 * Set flag to let parent know that child #2 is ready to have the
@@ -381,7 +370,7 @@ void catch_usr2()
 	child_flag2 = 1;
 }
 
-void catch_int()
+void catch_int(int sig)
 {				/* invoked on child catching SIGUSR1 */
 	/*
 	 * Set flag to interrupt fcntl call in child and force a controlled
@@ -421,6 +410,10 @@ void setup(void)
 	parent = getpid();
 
 	tst_tmpdir();
+
+	/* On NFS or not */
+	if (tst_fs_type(cleanup, ".") == TST_NFS_MAGIC)
+		NO_NFS = 0;
 
 	/* set up temp filename */
 	sprintf(tmpname, "fcntl4.%d", parent);
@@ -475,6 +468,7 @@ int run_test(int file_flag, int file_mode, int start, int end)
 			tst_resm(TFAIL, "First parent lock failed");
 			tst_resm(TFAIL, "Test case %d, errno = %d", test + 1,
 				 errno);
+			close(fd);
 			unlink(tmpname);
 			return 1;
 		}
@@ -482,12 +476,13 @@ int run_test(int file_flag, int file_mode, int start, int end)
 		/* Initialize second parent lock structure */
 		thislock = &thiscase->parent_b;
 
-		if ((thislock->type) != IGNORED) {	/*SKIPVAL */
+		if ((thislock->l_type) != IGNORED) {	/*SKIPVAL */
 			/* set the second parent lock */
 			if ((fcntl(fd, F_SETLK, thislock)) < 0) {
 				tst_resm(TFAIL, "Second parent lock failed");
 				tst_resm(TFAIL, "Test case %d, errno = %d",
 					 test + 1, errno);
+				close(fd);
 				unlink(tmpname);
 				return 1;
 			}
@@ -503,7 +498,7 @@ int run_test(int file_flag, int file_mode, int start, int end)
 
 		/* spawn child processes */
 		for (i = 0; i < 2; i++) {
-			if (thislock->type != IGNORED) {
+			if (thislock->l_type != IGNORED) {
 				if ((child = FORK_OR_VFORK()) == 0) {
 #ifdef UCLINUX
 					if (self_exec(argv0, "ddddd", i, parent,
@@ -521,7 +516,7 @@ int run_test(int file_flag, int file_mode, int start, int end)
 				}
 				child_count++;
 				child_pid[i] = child;
-				flag[i] = thislock->flag;
+				flag[i] = thislock->l_pid;
 			}
 			/* Initialize second child lock structure */
 			thislock = &thiscase->child_b;
@@ -558,6 +553,7 @@ int run_test(int file_flag, int file_mode, int start, int end)
 			tst_resm(TFAIL, "Third parent lock failed");
 			tst_resm(TFAIL, "Test case %d, errno = %d",
 				 test + 1, errno);
+			close(fd);
 			unlink(tmpname);
 			return 1;
 		}
@@ -565,12 +561,13 @@ int run_test(int file_flag, int file_mode, int start, int end)
 		/* Initialize fourth parent lock structure */
 		thislock = &thiscase->parent_d;
 
-		if ((thislock->type) != IGNORED) {	/*SKIPVAL */
+		if ((thislock->l_type) != IGNORED) {	/*SKIPVAL */
 			/* set the fourth parent lock */
 			if ((fcntl(fd, F_SETLK, thislock)) < 0) {
 				tst_resm(TINFO, "Fourth parent lock failed");
 				tst_resm(TINFO, "Test case %d, errno = %d",
 					 test + 1, errno);
+				close(fd);
 				unlink(tmpname);
 				return 1;
 			}
@@ -657,11 +654,8 @@ int main(int ac, char **av)
 {
 
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(dochild_uc, "ddddd", &kid_uc, &parent, &test,
 			&thislock, &fd);
@@ -671,8 +665,8 @@ int main(int ac, char **av)
 	setup();		/* global setup */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 /* //block1: */
 		/*
@@ -695,13 +689,17 @@ int main(int ac, char **av)
 		 * locking
 		 */
 		tst_resm(TINFO, "Entering block 2");
-		if (run_test(O_CREAT | O_RDWR | O_TRUNC, S_ISGID |
+		if (NO_NFS && run_test(O_CREAT | O_RDWR | O_TRUNC, S_ISGID |
 			     S_IRUSR | S_IWUSR, 0, 11)) {
 			tst_resm(TINFO, "Test case 2: with mandatory record "
 				 "locking FAILED");
 		} else {
-			tst_resm(TINFO, "Test case 2: with mandatory record "
-				 "locking PASSED");
+			if (NO_NFS)
+				tst_resm(TINFO, "Test case 2: with mandatory"
+					 " record locking PASSED");
+			else
+				tst_resm(TCONF, "Test case 2: NFS does not"
+					 " support mandatory locking");
 		}
 		tst_resm(TINFO, "Exiting block 2");
 
@@ -711,13 +709,17 @@ int main(int ac, char **av)
 		 * and no delay
 		 */
 		tst_resm(TINFO, "Entering block 3");
-		if (run_test(O_CREAT | O_RDWR | O_TRUNC | O_NDELAY,
+		if (NO_NFS && run_test(O_CREAT | O_RDWR | O_TRUNC | O_NDELAY,
 			     S_ISGID | S_IRUSR | S_IWUSR, 0, 11)) {
 			tst_resm(TINFO, "Test case 3: mandatory locking with "
 				 "NODELAY FAILED");
 		} else {
-			tst_resm(TINFO, "Test case 3: mandatory locking with "
-				 "NODELAY PASSED");
+			if (NO_NFS)
+				tst_resm(TINFO, "Test case 3: mandatory"
+					 " locking with NODELAY PASSED");
+			else
+				tst_resm(TCONF, "Test case 3: NFS does not"
+					 " support mandatory locking");
 		}
 		tst_resm(TINFO, "Exiting block 3");
 	}

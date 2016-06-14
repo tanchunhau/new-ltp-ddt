@@ -36,7 +36,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 #include "mem.h"
 
 char *TCID = "oom01";
@@ -44,12 +43,9 @@ int TST_TOTAL = 1;
 
 int main(int argc, char *argv[])
 {
-	char *msg;
 	int lc;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 #if __WORDSIZE == 32
 	tst_brkm(TCONF, NULL, "test is not designed for 32-bit system.");
@@ -58,16 +54,19 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
+		/* we expect mmap to fail before OOM is hit */
 		set_sys_tune("overcommit_memory", 2, 1);
-		oom(OVERCOMMIT, 0, 0);
+		oom(NORMAL, 0, ENOMEM, 0);
 
+		/* with overcommit_memory set to 0 or 1 there's no
+		 * guarantee that mmap fails before OOM */
 		set_sys_tune("overcommit_memory", 0, 1);
-		oom(OVERCOMMIT, 0, 0);
+		oom(NORMAL, 0, ENOMEM, 1);
 
 		set_sys_tune("overcommit_memory", 1, 1);
-		testoom(0, 0, 0);
+		testoom(0, 0, ENOMEM, 1);
 	}
 	cleanup();
 	tst_exit();
@@ -75,7 +74,7 @@ int main(int argc, char *argv[])
 
 void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	TEST_PAUSE;
 
@@ -85,6 +84,4 @@ void setup(void)
 void cleanup(void)
 {
 	set_sys_tune("overcommit_memory", overcommit, 0);
-
-	TEST_CLEANUP;
 }

@@ -67,16 +67,13 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void setup1(int);
 void cleanup();
 
-char *TCID = "munlock01";	/* Test program identifier.    */
-int TST_TOTAL = 4;		/* Total number of test cases. */
-
-int exp_enos[] = { 0 };
+char *TCID = "munlock01";
+int TST_TOTAL = 4;
 
 void *addr1;
 
@@ -95,19 +92,15 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	/* check looping state */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -118,7 +111,6 @@ int main(int ac, char **av)
 
 			/* check return code */
 			if (TEST_RETURN == -1) {
-				TEST_ERROR_LOG(TEST_ERRNO);
 				tst_resm(TFAIL | TTERRNO,
 					 "mlock(%p, %d) Failed with "
 					 "return=%ld", TC[i].addr, TC[i].len,
@@ -138,14 +130,13 @@ int main(int ac, char **av)
 
 void setup1(int i)
 {
-	addr1 = (char *)malloc(TC[i].len);
+	addr1 = malloc(TC[i].len);
 	if (addr1 == NULL)
 		tst_brkm(TFAIL, cleanup, "malloc failed");
 	TEST(mlock(*(TC[i].addr), TC[i].len));
 
 	/* check return code */
 	if (TEST_RETURN == -1) {
-		TEST_ERROR_LOG(TEST_ERRNO);
 		tst_brkm(TFAIL | TTERRNO, cleanup,
 			 "mlock(%p, %d) Failed with return=%ld", TC[i].addr,
 			 TC[i].len, TEST_RETURN);
@@ -153,18 +144,11 @@ void setup1(int i)
 }
 
 /* setup() - performs all ONE TIME setup for this test. */
-void setup()
+void setup(void)
 {
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Check whether we are root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 }
@@ -173,8 +157,6 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 }

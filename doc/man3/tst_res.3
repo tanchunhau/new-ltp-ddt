@@ -33,11 +33,9 @@
 .\"
 .TH TST_RES 3 01/21/2011 "Linux Test Project"
 .SH NAME
-tst_res \- Print result message, including file contents
-.sp
 tst_resm \- Print result message
 .sp
-tst_brk \- Print result message, including file contents, and break remaining test cases
+tst_resm_hexd \- Print result message, including specified buffer in hexadecimal format
 .sp
 tst_brkm \- Print result message and break remaining test cases
 .sp
@@ -49,12 +47,10 @@ tst_environ \- Keep results coming to original stdout
 .SH SYNOPSIS
 \fB#include "test.h"\fR
 .P
-\fBvoid tst_res(int \fIttype\fB, char *\fIfname\fB, char *\fItmesg,
-[arg ...]\fR)
 .P
 \fBvoid tst_resm(int \fIttype\fB, char *\fItmesg, [arg ...]\fR)
 .P
-\fBvoid tst_brk(int \fIttype\fB, char *\fIfname\fB, void (*\fIfunc\fB)(),
+\fBvoid tst_resm_hexd(int \fIttype\fB, const void *\fIbuf\fB, size_t \fIsize\fB,
 char *\fItmesg, [arg ...]\fR)
 .P
 \fBvoid tst_brkm(int \fIttype\fB, void (*\fIfunc\fB)(), char *\fItmesg,
@@ -66,9 +62,9 @@ char *\fItmesg, [arg ...]\fR)
 .P
 \fBint  tst_environ()
 .P
-\fBextern int Tst_count;
+\fBextern int tst_count;
 .br
-extern int Tst_range;
+extern int tst_range;
 .br
 \fR
 .SH DESCRIPTION
@@ -79,7 +75,7 @@ library have a distinct number of test cases, and that each test case is
 distinct and uniquely identified by the test case number.  It is also assumed
 that test case results are printed in consecutive order, starting with 1.
 The library maintains a set of global variables (\fBTCID\fR, \fBTST_TOTAL\fR,
-\fBTst_count\fR), which are used by the various functions to format the
+\fBtst_count\fR), which are used by the various functions to format the
 results and to keep track of the current result reporting state (i.e. how many
 total test cases there are, and how many have been reported so far) for the
 calling test.
@@ -91,7 +87,7 @@ library, and MUST be defined/initialized by tests using the library.
 reported.
 .P
 The other global variables are available as externs to tests linked with
-tst_res.o.  \fBTst_count\fR is the running count of the number of test
+tst_res.o.  \fBtst_count\fR is the running count of the number of test
 results that have been reported so far.  The library initializes it to 0, and
 it should not be modified by the test.
 The details are described below under the appropriate functions.
@@ -99,7 +95,7 @@ The details are described below under the appropriate functions.
 .RS 5
 .TP 10
 .I ttype
-test result type; one of \fBTPASS, TFAIL, TBROK, TCONF, TRETR, TWARN\fR, or
+test result type; one of \fBTPASS, TFAIL, TBROK, TCONF, TWARN\fR, or
 \fBTINFO\fR (explained below).
 .TP 10
 .I fname
@@ -121,6 +117,12 @@ expanded message.  The maximum size allowed for an expanded message is
 pointer to a function which performs either the cleanup necessary prior to
 exiting the test or some function executed at the end of each iteration of a
 loop.
+.TP 10
+.I buf
+pointer to a buffer whose contents will be printed in hexadecimal format.
+.TP 10
+.I size
+size of the buffer.
 .RE
 .SS Result Types
 The possible test result types defined in \fBtest.h\fR are as follows:
@@ -140,9 +142,6 @@ temporary file could not be opened).
 The test case was not appropriate for the current hardware or software
 configuration (e.g. MLS was not enabled).
 .TP 10
-.B TRETR
-The test case was no longer valid and has been "retired."
-.TP 10
 .B TWARN
 The testing procedure caused undesirable side effects that did not affect
 test results (e.g. a temporary file could not be removed after all test
@@ -153,30 +152,24 @@ An informative message about the execution of the test that does not
 correspond to a test case result and does not indicate a problem.
 .RE
 .SS Function Descriptions
-\fBtst_res()\fR and \fBtst_resm()\fR are the basic result reporting
-functions.  They report 1 or more test case results of the specified
-\fIttype\fR.  All result types are valid for these functions.  The
-\fBTst_range\fR global variable indicates the number of results that will be
+
+\fBtst_resm()\fR and \fBtst_resm_hexd()\fR are the basic
+result reporting functions. They report 1 or more test case results of the
+specified \fIttype\fR.  All result types are valid for these functions.  The
+\fBtst_range\fR global variable indicates the number of results that will be
 reported for each call to one of these functions.  It is initialized by the
 library to 1, but may be set to a value > 1 by the test.  Each call to one of
-these functions will result in \fBTst_range\fR test case results being
-reported, each with an identical message (\fItmesg\fR).  \fBTst_range\fR is
-always reset to 1 by the library before returning to the caller.  If
-\fBtst_res()\fR is called with a \fIfname\fR argument, the contents of the
-file will only be printed for the first reported result.  \fBtst_res()\fR
-takes the \fIfname\fR argument whereas \fBtst_resm()\fR does not.
-.P
-NOTE: All calls to \fBtst_res()\fR specifying a \fIttype\fR of \fBTWARN\fR or
-\fBTINFO\fR will be printed with a test case number of zero.  Because of
-this, a \fBTst_range\fR value > 1 is not valid for these types.
+these functions will result in \fBtst_range\fR test case results being
+reported, each with an identical message (\fItmesg\fR).  \fBtst_range\fR is
+always reset to 1 by the library before returning to the caller.
 .P
 \fBtst_brk()\fR and \fBtst_brkm()\fR are used to report results for all test
 cases remaining in the test, and then call a cleanup function.  The only
 result types that are valid for these functions are: \fBTFAIL, TBROK,
-TCONF\fR, and \fBTRETR\fR.  When called with a \fIttype\fR of \fBTFAIL\fR or
+and TCONF\fR.  When called with a \fIttype\fR of \fBTFAIL\fR or
 \fBTBROK\fR, one result of the specified \fIttype\fR will be printed,
 followed by results of type \fBTBROK\fR for the remaining test cases.  When
-called with a \fIttype\fR of \fBTCONF\fR or \fBTRETR\fR, the specified
+called with a \fIttype\fR of \fBTCONF\fR, the specified
 \fIttype\fR will be printed for all remaining test cases.  If \fIfunc\fR is
 not NULL, \fBtst_brk()\fR and \fBtst_brkm()\fR will call \fIfunc\fR after all
 results have been printed.  If the call to \fIfunc\fR returns,
@@ -212,9 +205,6 @@ TBROK
 TWARN
 0004	/* .... .1.. */
 .TP 10
-TRETR
-0010	/* .... 1... */
-.TP 10
 TINFO
 0020	/* ...1 .... */
 .TP 10
@@ -222,7 +212,7 @@ TCONF
 0040	/* ..1. .... */
 .RE
 .P
-NOTE: \fBTPASS, TRETR, TINFO\fR, and \fBTCONF\fR do not have an effect
+NOTE: \fBTPASS and TINFO\fR do not have an effect
 on the test program exit status.
 .P
 \fBtst_environ()\fR is used to ensure that results reported by this library
@@ -232,8 +222,8 @@ redirect output that normally goes to stdout (e.g. printf() output) to a
 file.  \fBtst_environ()\fR returns 0 upon successful completion, and -1 if it
 encountered any problems.
 .SS Output Modes
-Four output display modes are supported by the \fBtst_res()\fR family of
-functions to enhance output readability.  The active mode is controlled via
+Four output display modes are supported by the \fBtst_resm()\fR family of
+functions to enhance output readability. The active mode is controlled via
 the environment variable \fBTOUTPUT\fR, which must be set prior to the start
 of the test in order to have any effect (see \fBksh\fR(1) for information on
 environment variables).  The supported modes are as follows:
@@ -270,8 +260,6 @@ main()
 		.
 	/* a successful test result */
 	tst_resm(TPASS, "\fIwhat was tested\fR");
-		/* or */
-	tst_res(TPASS, file, "\fIwhat was tested\fR");
 		.
 		.
 
@@ -295,7 +283,6 @@ tsttcs01    2       FAIL  :  Too many processes (MAXUP+1) created
 tsttcs01    3       BROK  :  tabinfo(PROCTAB, &tbs) failed; errno = 13: Permission denied
 .fi
 .SH "SEE ALSO"
-utst_res(1),
 tst_setup(1),
 printf(3C),
 ksh(1).
@@ -306,10 +293,10 @@ A WARN result message will be printed if any of the following occur:
 .P
 If an invalid test type is specified.
 .P
-If \fBTst_count\fR is negative.
+If \fBtst_count\fR is negative.
 .P
 If one of the \fBtst_brk[m]()\fR routines is called with a test type
-other than \fBTFAIL, TBROK, TCONF\fR, or \fBTRETR\fR.
+other than \fBTFAIL, TBROK, TCONF\fR.
 .P
 If there are any problems opening/reading/writing the contents of \fIfname\fR.
 .RE
@@ -319,5 +306,5 @@ will be empty.  This allows a test to not print a message for a result, but
 it is not advised.
 .SH BUGS
 .P
-The programmer is free to alter the value of \fBTst_count\fR causing possible
+The programmer is free to alter the value of \fBtst_count\fR causing possible
 test result order problems.

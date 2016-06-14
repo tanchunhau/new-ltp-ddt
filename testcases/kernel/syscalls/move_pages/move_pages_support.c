@@ -21,10 +21,9 @@
 #include <unistd.h>
 #include <semaphore.h>
 #include "test.h"
-#include "usctest.h"
 #include "move_pages_support.h"
 
-long get_page_size()
+long get_page_size(void)
 {
 	return sysconf(_SC_PAGESIZE);
 }

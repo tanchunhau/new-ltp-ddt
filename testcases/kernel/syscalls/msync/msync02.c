@@ -70,13 +70,12 @@
 #include <sys/mman.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define TEMPFILE	"msync_file"
 #define BUF_SIZE	256
 
-char *TCID = "msync02";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "msync02";
+int TST_TOTAL = 1;
 
 char *addr;			/* addr of memory mapped region */
 size_t page_sz;			/* system page size */
@@ -91,7 +90,7 @@ int main(int ac, char **av)
 
 	setup();
 
-	Tst_count = 0;
+	tst_count = 0;
 
 	TEST(msync(addr, page_sz, MS_INVALIDATE));
 
@@ -107,7 +106,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	int c_total = 0, nwrite = 0;	/* no. of bytes to be written */
 	char tst_buf[BUF_SIZE];
@@ -147,10 +146,8 @@ void setup()
 		tst_brkm(TBROK | TERRNO, cleanup, "write failed");
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	if (munmap(addr, page_sz) == -1)
 		tst_resm(TBROK | TERRNO, "munmap failed");
 

@@ -115,16 +115,12 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
-extern void do_file_setup(char *);
 
-char *TCID = "rename02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0, 0 };
+char *TCID = "rename02";
+int TST_TOTAL = 1;
 
 int fd;
 char fname[255], mname[255];
@@ -132,19 +128,14 @@ char fname[255], mname[255];
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call rename(2)
@@ -153,22 +144,18 @@ int main(int ac, char **av)
 
 		/* check return code */
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL, "rename(%s, %s) Failed, errno=%d : %s",
 				 fname, mname, TEST_ERRNO,
 				 strerror(TEST_ERRNO));
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS, "rename(%s, %s) returned %ld",
-					 fname, mname, TEST_RETURN);
-			}
+			tst_resm(TPASS, "rename(%s, %s) returned %ld",
+				 fname, mname, TEST_RETURN);
 			if (unlink(mname) == -1) {
 				tst_resm(TWARN,
 					 "unlink(%s) Failed, errno=%d : %s",
 					 mname, errno, strerror(errno));
 			}
-			do_file_setup(fname);
+			SAFE_TOUCH(cleanup, fname, 0700, NULL);
 		}
 	}
 
@@ -180,7 +167,7 @@ int main(int ac, char **av)
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -191,21 +178,15 @@ void setup()
 
 	sprintf(fname, "./tfile_%d", getpid());
 	sprintf(mname, "./rnfile_%d", getpid());
-	do_file_setup(fname);
-
+	SAFE_TOUCH(cleanup, fname, 0700, NULL);
 }
 
 /***************************************************************
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 }

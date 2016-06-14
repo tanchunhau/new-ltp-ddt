@@ -14,20 +14,16 @@
  * The program trys to invoke mmap() endless until triggering MAP_FAILED,
  * then read the process's maps file /proc/[pid]/maps, save the line number
  * to map_count variable, and compare it with /proc/sys/vm/max_map_count,
- * map_count should less than max_map_count.
- * Note: There are two special vmas VDSO and VSYSCALL, which are allocated
- * via install_special_mapping(), install_specail_mapping() allows the VMAs
- * to be allocated and inserted without checking the sysctl_map_map_count,
- * and each /proc/<pid>/maps has both at the end:
- * # cat /proc/self/maps
+ * map_count should be greater than max_map_count by 1;
+ *
+ * Note: On some architectures there is a special vma VSYSCALL, which
+ * is allocated without incrementing mm->map_count variable. On these
+ * architectures each /proc/<pid>/maps has at the end:
  * ...
  * ...
- * 7fff7b9ff000-7fff7ba00000 r-xp 00000000 00:00 0           [vdso]
  * ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0   [vsyscall]
  *
- * so during comparing with map_count and /proc/sys/vm/max_map_count,
- * we should except the two special vmas from map_count:
- * map_count -= 2;
+ * so we ignore this line during /proc/[pid]/maps reading.
  *
  * ********************************************************************
  * Copyright (C) 2012 Red Hat, Inc.
@@ -60,10 +56,11 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/utsname.h>
 #include "test.h"
-#include "usctest.h"
 #include "mem.h"
 
 #define MAP_COUNT_DEFAULT	64
@@ -74,22 +71,20 @@ int TST_TOTAL = 1;
 
 static long old_max_map_count;
 static long old_overcommit;
+static struct utsname un;
 
 static long count_maps(pid_t pid);
 static void max_map_count_test(void);
 
 int main(int argc, char *argv[])
 {
-	char *msg;
 	int lc;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR -%s ", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		max_map_count_test();
 	}
 
@@ -99,7 +94,7 @@ int main(int argc, char *argv[])
 
 void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	TEST_PAUSE;
@@ -111,14 +106,48 @@ void setup(void)
 	old_max_map_count = get_sys_tune("max_map_count");
 	old_overcommit = get_sys_tune("overcommit_memory");
 	set_sys_tune("overcommit_memory", 2, 1);
+
+	if (uname(&un) != 0)
+		tst_brkm(TBROK | TERRNO, NULL, "uname error");
 }
 
 void cleanup(void)
 {
 	set_sys_tune("overcommit_memory", old_overcommit, 0);
 	set_sys_tune("max_map_count", old_max_map_count, 0);
+}
 
-	TEST_CLEANUP;
+/* This is a filter to exclude map entries which aren't accounted
+ * for in the vm_area_struct's map_count.
+ */
+static bool filter_map(const char *line)
+{
+	char buf[BUFSIZ];
+	int ret;
+
+	ret = sscanf(line, "%*p-%*p %*4s %*p %*2d:%*2d %*d %s", buf);
+	if (ret != 1)
+		return false;
+
+#if defined(__x86_64__) || defined(__x86__)
+	/* On x86, there's an old compat vsyscall page */
+	if (!strcmp(buf, "[vsyscall]"))
+		return true;
+#elif defined(__ia64__)
+	/* On ia64, the vdso is not a proper mapping */
+	if (!strcmp(buf, "[vdso]"))
+		return true;
+#elif defined(__arm__)
+	/* Skip it when run it in aarch64 */
+	if (strcmp(un.machine, "aarch64"))
+		return false;
+
+	/* Older arm kernels didn't label their vdso maps */
+	if (!strncmp(line, "ffff0000-ffff1000", 17))
+		return true;
+#endif
+
+	return false;
 }
 
 static long count_maps(pid_t pid)
@@ -135,9 +164,7 @@ static long count_maps(pid_t pid)
 		tst_brkm(TBROK | TERRNO, cleanup, "fopen %s", buf);
 	while (getline(&line, &len, fp) != -1) {
 		/* exclude vdso and vsyscall */
-		if (sscanf(line, "%*p-%*p %*4s %*p %*2d:%*2d %*d %s", buf) ==
-		    1 && ((strcmp(buf, "[vdso]") == 0) ||
-			  (strcmp(buf, "[vsyscall]") == 0)))
+		if (filter_map(line))
 			continue;
 		map_count++;
 	}
@@ -182,7 +209,7 @@ static void max_map_count_test(void)
 	while (max_maps <= max_iters) {
 		set_sys_tune("max_map_count", max_maps, 1);
 
-		switch (pid = fork()) {
+		switch (pid = tst_fork()) {
 		case -1:
 			tst_brkm(TBROK | TERRNO, cleanup, "fork");
 		case 0:
@@ -202,7 +229,12 @@ static void max_map_count_test(void)
 			tst_brkm(TBROK, cleanup, "child did not stopped");
 
 		map_count = count_maps(pid);
-		if (map_count == max_maps)
+		/* Note max_maps will be exceeded by one for
+		 * the sysctl setting of max_map_count. This
+		 * is the mm failure point at the time of
+		 * writing this COMMENT!
+		*/
+		if (map_count == (max_maps + 1))
 			tst_resm(TPASS, "%ld map entries in total "
 				 "as expected.", max_maps);
 		else

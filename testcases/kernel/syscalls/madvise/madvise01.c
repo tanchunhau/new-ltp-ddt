@@ -1,12 +1,7 @@
-/***************************************************************************
- *           madvise01 .c
- *
- *  Fri May 13 15:00:59 2004
- *  Copyright (c) International Business Machines  Corp., 2004
- *  Email : sumit@in.ibm.com
- ****************************************************************************/
-
 /*
+ *  Copyright (c) International Business Machines  Corp., 2004
+ *  Copyright (c) Linux Test Project, 2013
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -22,67 +17,22 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-/**********************************************************
- *    TEST CASES
- *
- *	1.) madvise(2) advices...(See Description)
- *
- *	INPUT SPECIFICATIONS
- *		The standard options for system call tests are accepted.
- *		(See the parse_opts(3) man page).
- *
- *	OUTPUT SPECIFICATIONS
- *		Output describing whether test cases passed or failed.
- *
- *	ENVIRONMENTAL NEEDS
- *		None
- *
- *	SPECIAL PROCEDURAL REQUIREMENTS
- *		None
- *
- *	DETAILED DESCRIPTION
- *		This is a test case for madvise(2) system call.
- *		It tests madvise(2) with combinations of advice values.
- *		No error should be returned.
- *
- *		Total 5 Test Cases :-
- *		(1) Test Case for MADV_NORMAL
- *		(2) Test Case for MADV_RANDOM
- *		(3) Test Case for MADV_SEQUENTIAL
- *		(4) Test Case for MADV_WILLNEED
- *		(5) Test Case for MADV_DONTNEED
- *
- *	Setup:
- *		Setup signal handling.
- *		Pause for SIGUSR1 if option specified.
- *
- *	Test:
- *		Loop if the proper options are given.
- *		Execute system call
- *		Check return code, if system call failed (return=-1)
- *		Log the errno and Issue a FAIL message.
- *		Otherwise, Issue a PASS message.
- *
- *	Cleanup:
- *		Print errno log and/or timing stats if options given
- *
- *
- *#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#**/
+/*
+ * This is a test case for madvise(2) system call.
+ * It tests madvise(2) with combinations of advice values.
+ * No error should be returned.
+ */
 
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
-#include <sys/mman.h>
-#include <fcntl.h>
 
 #include "test.h"
-#include "usctest.h"
-
-/* Uncomment the following line in DEBUG mode */
-//#define MM_DEBUG 1
 
 static void setup(void);
 static void cleanup(void);
@@ -97,15 +47,11 @@ int main(int argc, char *argv[])
 	int i = 0;
 	char *file = NULL;
 	struct stat stat;
-
-	char *msg = NULL;
 	char filename[64];
 	char *progname = NULL;
 	char *str_for_file = "abcdefghijklmnopqrstuvwxyz12345\n";
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -113,12 +59,12 @@ int main(int argc, char *argv[])
 	sprintf(filename, "%s-out.%d", progname, getpid());
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		fd = open(filename, O_RDWR | O_CREAT, 0664);
 		if (fd < 0)
 			tst_brkm(TBROK | TERRNO, cleanup, "open failed");
-#ifdef MM_DEBUG
+#ifdef DEBUG
 		tst_resm(TINFO, "filename = %s opened successfully", filename);
 #endif
 
@@ -179,8 +125,6 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 
 }
@@ -189,6 +133,6 @@ static void check_and_print(char *advice)
 {
 	if (TEST_RETURN == -1)
 		tst_resm(TFAIL | TTERRNO, "madvise test for %s failed", advice);
-	else if (STD_FUNCTIONAL_TEST)
+	else
 		tst_resm(TPASS, "madvise test for %s PASSED", advice);
 }

@@ -114,13 +114,12 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "ulimit01";	/* Test program identifier.    */
-int TST_TOTAL = 6;		/* Total number of test cases. */
+char *TCID = "ulimit01";
+int TST_TOTAL = 6;
 
 int cmd;
 long limit;			/* saved limit */
@@ -155,7 +154,6 @@ int main(int ac, char **av)
 {
 	int lc;
 	int i;
-	char *msg;
 	int tmp;
 
 	TST_TOTAL = sizeof(Scenarios) / sizeof(struct limits_t);
@@ -163,10 +161,7 @@ int main(int ac, char **av)
     /***************************************************************
      * parse standard options
      ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
     /***************************************************************
      * perform global setup for test
@@ -178,7 +173,7 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -193,11 +188,9 @@ int main(int ac, char **av)
 			/* check return code */
 			if (TEST_RETURN == -1) {
 				if (Scenarios[i].exp_fail) {
-					if (STD_FUNCTIONAL_TEST) {
-						tst_resm(TPASS | TTERRNO,
-							 "ulimit(%d, %ld) Failed expectedly",
-							 cmd, limit);
-					}
+					tst_resm(TPASS | TTERRNO,
+						 "ulimit(%d, %ld) Failed expectedly",
+						 cmd, limit);
 				} else {
 					tst_resm(TFAIL | TTERRNO,
 						 "ulimit(%d, %ld) Failed",
@@ -208,7 +201,7 @@ int main(int ac, char **av)
 					tst_resm(TFAIL,
 						 "ulimit(%d, %ld) returned %ld, succeeded unexpectedly",
 						 cmd, limit, TEST_RETURN);
-				} else if (STD_FUNCTIONAL_TEST) {
+				} else {
 					tst_resm(TPASS,
 						 "ulimit(%d, %ld) returned %ld",
 						 cmd, limit, TEST_RETURN);
@@ -248,7 +241,7 @@ int main(int ac, char **av)
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -261,11 +254,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

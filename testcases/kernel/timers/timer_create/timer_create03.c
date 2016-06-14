@@ -70,7 +70,6 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "common_timers.h"
 
 void setup(void);
@@ -86,17 +85,11 @@ static struct sigevent evp, *evp_ptr;
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }
 
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
 	kernel_timer_t created_timer_id;	/* holds the returned timer_id */
 	char *message[] = {
 		"SIGEV_SIGNAL",
@@ -104,20 +97,18 @@ int main(int ac, char **av)
 		"SIGEV_NONE"
 	};
 
-	if ((msg = parse_opts(ac, av, (option_t *) NULL, NULL)) != (char *)NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
 			setup_test(i);
-			TEST(syscall(__NR_timer_create, CLOCK_MONOTONIC,
+			TEST(ltp_syscall(__NR_timer_create, CLOCK_MONOTONIC,
 				     evp_ptr, &created_timer_id));
 
 			tst_resm((TEST_RETURN == 0 ? TPASS : TFAIL | TTERRNO),
@@ -138,7 +129,7 @@ void setup_test(int option)
 {
 	switch (option) {
 	case 0:
-		evp.sigev_value = (sigval_t) 0;
+		evp.sigev_value = (union sigval) 0;
 		evp.sigev_signo = SIGALRM;
 		evp.sigev_notify = SIGEV_SIGNAL;
 		evp_ptr = &evp;
@@ -147,7 +138,7 @@ void setup_test(int option)
 		evp_ptr = NULL;
 		break;
 	case 2:
-		evp.sigev_value = (sigval_t) 0;
+		evp.sigev_value = (union sigval) 0;
 		evp.sigev_signo = SIGALRM;	/* any will do */
 		evp.sigev_notify = SIGEV_NONE;
 		evp_ptr = &evp;

@@ -54,7 +54,6 @@
 
 /** LTP Port **/
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "shmt10";		/* Test program identifier.    */
 int TST_TOTAL = 2;		/* Total number of test cases. */
@@ -63,13 +62,11 @@ int TST_TOTAL = 2;		/* Total number of test cases. */
 int shmid;
 key_t key;
 
-int child(int);
-int rm_shm(int);
-void fini();
+static int child(int);
+static int rm_shm(int);
+static void fini(int);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 	char *c1 = NULL;
 	int pid, st;
@@ -89,9 +86,8 @@ char *argv[];
 			iter = atoi(optarg);
 			break;
 		default:
-			tst_resm(TCONF, "usage: %s [-i <# iterations>]",
+			tst_brkm(TCONF, NULL, "usage: %s [-i <# iterations>]",
 				 argv[0]);
-			tst_exit();
 		}
 	}
 
@@ -99,22 +95,20 @@ char *argv[];
 
 	if ((shmid = shmget(key, SIZE, IPC_CREAT | 0666)) < 0) {
 		tst_resm(TFAIL, "shmget");
-		tst_resm(TFAIL, "Error: shmid = %d\n", shmid);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "Error: shmid = %d\n", shmid);
 	}
 
 	pid = fork();
 	switch (pid) {
 	case -1:
-		tst_resm(TBROK, "fork failed");
-		tst_exit();
+		tst_brkm(TBROK, NULL, "fork failed");
 	case 0:
 		child(iter);
 		tst_exit();
 	}
 
 	for (i = 0; i < iter; i++) {
-		if ((c1 = (char *)shmat(shmid, (void *)0, 0)) == (char *)-1) {
+		if ((c1 = shmat(shmid, NULL, 0)) == (char *)-1) {
 			tst_resm(TFAIL,
 				 "Error shmat: iter %d, shmid = %d\n", i,
 				 shmid);
@@ -131,47 +125,42 @@ char *argv[];
 
 	rm_shm(shmid);
 	tst_exit();
-
-/*------------------------------------------------------------------------*/
-	return (0);
 }
 
-int rm_shm(shmid)
-int shmid;
+static int rm_shm(int shmid)
 {
 	if (shmctl(shmid, IPC_RMID, NULL) == -1) {
 		perror("shmctl");
-		tst_resm(TFAIL,
+		tst_brkm(TFAIL,
+			 NULL,
 			 "shmctl Failed to remove: shmid = %d, errno = %d\n",
 			 shmid, errno);
-		tst_exit();
 	}
 	return (0);
 }
 
-int child(iter)
-int iter;
+static int child(int iter)
 {
 	register int i;
 	char *c1;
 
 	for (i = 0; i < iter; i++) {
-		if ((c1 = (char *)shmat(shmid, (void *)0, 0)) == (char *)-1) {
-			tst_resm(TFAIL,
+		if ((c1 = shmat(shmid, NULL, 0)) == (char *)-1) {
+			tst_brkm(TFAIL,
+				 NULL,
 				 "Error:child proc: shmat: iter %d, shmid = %d\n",
 				 i, shmid);
-			tst_exit();
 		}
 		if (shmdt(c1) < 0) {
-			tst_resm(TFAIL,
-				 "Error: child proc: shmdt: iter %d ", i);
-			tst_exit();
+			tst_brkm(TFAIL,
+				 NULL, "Error: child proc: shmdt: iter %d ",
+				 i);
 		}
 	}
 	return (0);
 }
 
-void fini()
+static void fini(int sig)
 {
 	rm_shm(shmid);
 }

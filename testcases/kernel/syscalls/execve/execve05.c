@@ -44,7 +44,6 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 
 #undef DEBUG			/* change this to #define if needed */
 
@@ -74,10 +73,8 @@ int main(int ac, char **av)
 	pid_t pid;
 
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -86,7 +83,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		prog = av[0];
 		iterations = atoi(av[1]);
@@ -202,6 +199,4 @@ void setup(void)
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 }

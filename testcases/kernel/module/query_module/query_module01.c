@@ -93,7 +93,6 @@
 #include <asm/atomic.h>
 #include <linux/module.h>
 #include "test.h"
-#include "usctest.h"
 
 #ifndef PAGE_SIZE
 #define PAGE_SIZE sysconf(_SC_PAGE_SIZE)
@@ -155,26 +154,16 @@ int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 	size_t buflen = sizeof(out_buf);
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != (char *)NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
-
-	if (STD_COPIES != 1) {
-		tst_resm(TINFO, "-c option has no effect for these testcases - "
-			 "doesn't allow running more than one instance "
-			 "at a time");
-		STD_COPIES = 1;
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	tst_tmpdir();
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 			if ((tdat[testno].setup) && (tdat[testno].setup())) {
@@ -212,14 +201,6 @@ int test_functionality(int which, char *buf, size_t bufsize, size_t ret)
 	int i = 0;
 	char *modname;
 	unsigned long *vals;
-
-	/*
-	 * Don't perform functional verification, if STD_FUNCTIONAL_TEST is
-	 * turned off
-	 */
-	if (STD_FUNCTIONAL_TEST == 0) {
-		return 0;
-	}
 
 	switch (which) {
 	case 0:
@@ -361,7 +342,7 @@ void setup(void)
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	if (tst_kvercmp(2, 5, 48) >= 0)
 		tst_brkm(TCONF, NULL, "This test will not work on "
@@ -388,6 +369,5 @@ void cleanup(void)
 	 * print errno log if that option was specified.
 	 */
 
-	TEST_CLEANUP;
 	tst_rmdir();
 }

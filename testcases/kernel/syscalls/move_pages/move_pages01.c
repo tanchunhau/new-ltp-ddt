@@ -54,7 +54,6 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include "move_pages_support.h"
 
 #define TEST_PAGES 2
@@ -68,13 +67,8 @@ int TST_TOTAL = 1;
 
 int main(int argc, char **argv)
 {
-	char *msg;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -87,18 +81,16 @@ int main(int argc, char **argv)
 		int status[TEST_PAGES];
 		int ret;
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		ret = alloc_pages_linear(pages, TEST_PAGES);
 		if (ret == -1)
 			continue;
 
 		ret = numa_move_pages(0, TEST_PAGES, pages, NULL, status, 0);
-		TEST_ERRNO = errno;
-
 		if (ret != 0) {
-			tst_resm(TFAIL, "retrieving NUMA nodes failed");
+			tst_resm(TFAIL|TERRNO, "move_pages failed");
 			free_pages(pages, TEST_PAGES);
 			continue;
 		}
@@ -137,10 +129,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

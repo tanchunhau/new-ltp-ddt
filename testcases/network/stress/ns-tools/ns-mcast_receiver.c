@@ -282,12 +282,9 @@ parse_options(int argc, char *argv[], struct mcast_rcv_info *info_p, int *bg_p)
 					 saddrs);
 	}
 
-	if (maddr)
-		free(maddr);
-	if (saddrs)
-		free(saddrs);
-	if (portnum)
-		free(portnum);
+	free(maddr);
+	free(saddrs);
+	free(portnum);
 }
 
 /*
@@ -386,7 +383,7 @@ void receive_mcast(struct mcast_rcv_info *info_p)
 		close(sd);
 		exit(EXIT_FAILURE);
 	}
-	msgbuf = (char *)malloc(msgbuf_size + 1);
+	msgbuf = malloc(msgbuf_size + 1);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "malloc() is failed.\n");
 		close(sd);

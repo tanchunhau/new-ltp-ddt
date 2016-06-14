@@ -81,7 +81,6 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define TEMP_FILE1	"tmp_file1"
 #define TEMP_FILE2	"tmp_file2"
@@ -90,9 +89,8 @@
 #define PIPE_MODE	S_IFIFO | S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 #define SEEK_TOP	10
 
-char *TCID = "lseek10";		/* Test program identifier.    */
-int TST_TOTAL = 3;		/* Total number of test cases. */
-int exp_enos[] = { ESPIPE, EINVAL, EBADF, 0 };
+char *TCID = "lseek10";
+int TST_TOTAL = 3;
 
 int no_setup();
 int setup1();			/* setup function to test lseek() for ESPIPE */
@@ -124,24 +122,18 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int fildes;		/* file handle for testfile */
 	int whence;		/* position of file handle in the file */
 	char *test_desc;	/* test specific error message */
 	int ind;		/* counter to test different test conditions */
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; Test_cases[ind].desc != NULL; ind++) {
 			fildes = Test_cases[ind].fd;
@@ -170,7 +162,6 @@ int main(int ac, char **av)
 					 Test_cases[ind].exp_errno);
 				continue;
 			}
-			TEST_ERROR_LOG(TEST_ERRNO);
 			if (TEST_ERRNO == Test_cases[ind].exp_errno) {
 				tst_resm(TPASS, "lseek() fails, %s, errno:%d",
 					 test_desc, TEST_ERRNO);
@@ -193,7 +184,7 @@ int main(int ac, char **av)
  *	     Invoke individual test setup functions according to the order
  *	     set in test struct. definition.
  */
-void setup()
+void setup(void)
 {
 	int ind;
 
@@ -212,7 +203,7 @@ void setup()
 /*
  * no_setup() - This is a dummy function which simply returns 0.
  */
-int no_setup()
+int no_setup(void)
 {
 	return 0;
 }
@@ -224,7 +215,7 @@ int no_setup()
  *	      reading/writing.
  *	      This function returns 0 on success.
  */
-int setup1()
+int setup1(void)
 {
 	/* Creat a named pipe/fifo using mknod() */
 	if (mknod(TEMP_FILE1, PIPE_MODE, 0) < 0) {
@@ -250,7 +241,7 @@ int setup1()
  *	      into it.
  *	      This function returns 0 on success.
  */
-int setup2()
+int setup2(void)
 {
 	char write_buff[BUFSIZ];	/* buffer to hold data */
 
@@ -280,7 +271,7 @@ int setup2()
  *	      Creat a temporary file for reading/writing and close it.
  *	      This function returns 0 on success.
  */
-int setup3()
+int setup3(void)
 {
 	/* Creat/open a temporary file under above directory */
 	if ((fd3 = open(TEMP_FILE3, O_RDWR | O_CREAT, FILE_MODE)) == -1) {
@@ -304,13 +295,8 @@ int setup3()
  *             completion or premature exit.
  *	       Remove the test directory and testfile(s) created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Close the temporary file(s) created in setup1/setup2 */
 	if (close(fd1) < 0) {

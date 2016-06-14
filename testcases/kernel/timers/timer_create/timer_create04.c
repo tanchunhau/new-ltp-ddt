@@ -73,15 +73,9 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "common_timers.h"
 
 void setup(void);
-
-char *TCID = "timer_create04";	/* Test program identifier.    */
-int TST_TOTAL;			/* Total number of test cases. */
-
-static int exp_enos[] = { EINVAL, EFAULT, 0 };
 
 int testcase[6] = {
 	EINVAL,			/* MAX_CLOCKS     */
@@ -90,24 +84,21 @@ int testcase[6] = {
 	EFAULT			/* bad timer_id   */
 };
 
+char *TCID = "timer_create04";	/* Test program identifier.    */
+int TST_TOTAL = ARRAY_SIZE(testcase);
+
 /*
  * cleanup() - Performs one time cleanup for this test at
  * completion or premature exit
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }
 
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
 	kernel_timer_t timer_id, *temp_id;	/* stores the returned timer_id */
 	struct sigevent *temp_ev;	/* used for bad address test case */
 
@@ -120,8 +111,7 @@ int main(int ac, char **av)
 		CLOCK_THREAD_CPUTIME_ID
 	};
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	TST_TOTAL = sizeof(testcase) / sizeof(testcase[0]);
 
@@ -140,11 +130,11 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
-			temp_ev = (struct sigevent *)NULL;
+			temp_ev = NULL;
 			temp_id = &timer_id;
 
 			switch (i) {
@@ -166,7 +156,7 @@ int main(int ac, char **av)
 					temp_ev = (struct sigevent *)-1;
 			}
 
-			TEST(syscall(__NR_timer_create, clocks[i], temp_ev,
+			TEST(ltp_syscall(__NR_timer_create, clocks[i], temp_ev,
 				     temp_id));
 
 			/* check return code */
@@ -192,9 +182,6 @@ void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 }

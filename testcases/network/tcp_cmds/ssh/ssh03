@@ -26,68 +26,27 @@
 #    03/03 Jerone Young (jeroney@us.ibm.com)
 #
 
-#-----------------------------------------------------------------------
-# FUNCTION:  do_setup
-#-----------------------------------------------------------------------
-
-do_setup()
+setup()
 {
-    export RHOST="localhost"
-    export TEST_USER="ssh_usr3"
-    export TEST_USER_PASSWD="eal"
-    export TEST_USER_ENCRYPTED_PASSWD="42VmxaOByKwlA"
-    export TEST_USER_HOMEDIR="/home/$TEST_USER"
-
-    # erase user if he/she already exists, so we can have a clean env
-    TCtmp=/home/$TEST_USER
-
-    rm -Rf $TCtmp
-
-    tst_setup
-
-    exists expect ssh ssh03_s1 useradd userdel
-
-    userdel $TEST_USER
-    sleep 1
-
-    if ! useradd -m -p $TEST_USER_ENCRYPTED_PASSWD $TEST_USER; then
-        end_testcase "Could not add test user $TEST_USER to system $RHOST."
-    fi
-
-    # create users home diretory (SLES 8 does not do this, even when specified
-    # in adduser)
-    USER_UID=$(id -u $TEST_USER)
-    USER_GID=$(id -g $TEST_USER)
-    if ! mkdir -p "$TEST_USER_HOMEDIR"; then
-        end_testcase "Failed to create $TEST_USER_HOMEDIR"
-    fi
-    chown -R $USER_UID.$USER_GID "$TEST_USER_HOMEDIR"
-
-    trap do_cleanup EXIT
-
+	tst_check_cmds ssh03_s1
+	export TEST_USER="ssh_usr3"
 }
 
-#-----------------------------------------------------------------------
-# FUNCTION:  do_cleanup
-#-----------------------------------------------------------------------
+TCID="ssh03"
+TST_TOTAL=1
 
-do_cleanup()
-{
-    userdel $TEST_USER
-    tst_cleanup
-}
+. test.sh
+. ssh_setup
 
-#-----------------------------------------------------------------------
-# FUNCTION:  MAIN
-#
-# DESCRIPTION: Create Test User
-#              Call upon script to make sure an invalid user can not have access
-#              Cleanup Test User from system
-#              Exit with exit code of script called upon
-#-----------------------------------------------------------------------
-. net_cmdlib.sh
-
-read_opts $*
+setup
 do_setup
-ssh03_s1 || end_testcase "Testcase failed"
-do_cleanup
+TST_CLEANUP=do_cleanup
+
+ssh03_s1
+if [ $? -ne 0 ]; then
+	tst_resm TFAIL "Test $TCID FAIL"
+else
+	tst_resm TPASS "Test $TCID PASS"
+fi
+
+tst_exit

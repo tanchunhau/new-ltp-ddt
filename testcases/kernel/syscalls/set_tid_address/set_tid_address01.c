@@ -41,17 +41,12 @@
 #include <stdio.h>
 #include <errno.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "set_tid_address01";	/* Test program identifier. */
+char *TCID = "set_tid_address01";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -71,10 +66,9 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
-	TEST_CLEANUP;
 	tst_rmdir();
 
 	tst_exit();
@@ -98,7 +92,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -110,29 +104,23 @@ int main(int ac, char **av)
 {
 	int newtid = -1;
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
-			TEST(syscall(__NR_set_tid_address, &newtid));	//call set_tid_address()
+			TEST(ltp_syscall(__NR_set_tid_address, &newtid));
 			if (TEST_RETURN == getpid()) {
 				tst_resm(TPASS,
 					 "set_tid_address call succeeded:  as expected %ld",
 					 TEST_RETURN);
 			} else {
-				tst_resm(TFAIL, "%s failed - errno = %d : %s",
+				tst_brkm(TFAIL, cleanup, "%s failed - errno = %d : %s",
 					 TCID, TEST_ERRNO,
 					 strerror(TEST_ERRNO));
-				cleanup();
-				tst_exit();
 			}
 		}
 	}

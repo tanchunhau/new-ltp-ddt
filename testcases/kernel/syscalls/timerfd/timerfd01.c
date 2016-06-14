@@ -43,12 +43,11 @@
 #include <time.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 
 #define cleanup tst_exit
 
-char *TCID = "timerfd01";	/* Test program identifier */
+char *TCID = "timerfd01";
 
 /*
  * This were good at the time of 2.6.23-rc7 ...
@@ -89,20 +88,20 @@ void set_timespec(struct timespec *tmr, unsigned long long ustime)
 int timerfd_create(int clockid, int flags)
 {
 
-	return syscall(__NR_timerfd_create, clockid, flags);
+	return ltp_syscall(__NR_timerfd_create, clockid, flags);
 }
 
 int timerfd_settime(int ufc, int flags, const struct itimerspec *utmr,
 		    struct itimerspec *otmr)
 {
 
-	return syscall(__NR_timerfd_settime, ufc, flags, utmr, otmr);
+	return ltp_syscall(__NR_timerfd_settime, ufc, flags, utmr, otmr);
 }
 
 int timerfd_gettime(int ufc, struct itimerspec *otmr)
 {
 
-	return syscall(__NR_timerfd_gettime, ufc, otmr);
+	return ltp_syscall(__NR_timerfd_gettime, ufc, otmr);
 }
 
 long waittmr(int tfd, int timeo)
@@ -269,12 +268,12 @@ int main(int ac, char **av)
 }
 
 #else
-int TST_TOTAL = 0;		/* Total number of test cases. */
+int TST_TOTAL = 0;
 
-int main()
+int main(void)
 {
 
-	tst_resm(TCONF, "This test needs a kernel that has timerfd syscall.");
-	tst_exit();
+	tst_brkm(TCONF, NULL,
+		 "This test needs a kernel that has timerfd syscall.");
 }
 #endif

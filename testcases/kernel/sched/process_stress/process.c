@@ -45,6 +45,7 @@
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include "lapi/semun.h"
 
 /* indexes into environment variable array */
 #define ADBG 0
@@ -103,12 +104,7 @@ typedef struct messagebuf {
 	char mtext[80];		/* message text */
 } Msgbuf;
 
-union semun {			/* to fix problem with 4th arg of semctl in 64 bits MARIOG */
-	int val;
-	struct semid_ds *buf;
-	unsigned short *array;
-} semarg = {
-0};
+union semun semarg;
 
 /* structure of all environment variable used by program */
 struct envstruct {
@@ -746,7 +742,7 @@ void setup_shm(void)
 
 	/* allocate shared memory */
 
-	if ((shmad = (Pinfo *) shmat(shmid, (char *)shmad, 0)) == MAP_FAILED) {
+	if ((shmad = shmat(shmid, (char *)shmad, 0)) == MAP_FAILED) {
 		printf("SEVERE : shmat failed\n");
 		exit(1);
 	} else {
@@ -1029,7 +1025,7 @@ int getenv_val(void)
 			c++;
 
 		if (*c == '\0') {
-			(envd->eval.vint) = (int *)malloc(sizeof(int));
+			(envd->eval.vint) = malloc(sizeof(int));
 			*(envd->eval.vint) = atoi(val.chptr);
 		} else {
 			envd->eval.chptr = malloc(strlen(val.chptr) + 1);
@@ -1132,6 +1128,7 @@ void messenger(void)
 				prtln();
 				if (discrim) {
 					prtln();
+					printf("Test exiting with SUCCESS\n");
 					exit(0);
 				}
 				exit(1);
@@ -1204,7 +1201,6 @@ void doit(void)
 
 			}
 		}
-		printf("Test exiting with SUCCESS\n");
 		exit(0);
 	}
 #ifdef __64LDT__

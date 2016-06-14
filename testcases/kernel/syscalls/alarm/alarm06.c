@@ -72,7 +72,6 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "alarm06";
 int TST_TOTAL = 1;
@@ -85,21 +84,19 @@ void sigproc(int sig);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int time_sec1 = 10;	/* time for which 1st alarm is set */
 	int time_sec2 = 0;	/* time for which 2nd alarm is set */
 	int ret_val1, ret_val2;	/* return values for alarm() calls */
 	int sleep_time1 = 5;	/* waiting time for the 1st signal */
 	int sleep_time2 = 10;	/* waiting time for the 2nd signal */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call First alarm() with non-zero time parameter
@@ -123,25 +120,21 @@ int main(int ac, char **av)
 		 * sigproc() never executed as SIGALRM was not received by the
 		 * process, the variable alarms_received remains unset.
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			if ((alarms_received == 0) &&
-			    (ret_val2 == (time_sec1 - sleep_time1)))
-				tst_resm(TPASS, "Functionality of alarm(%u) "
-					 "successful", time_sec2);
-			else
-				tst_resm(TFAIL, "alarm(%u) fails, returned %d, "
-					 "alarms_received:%d",
-					 time_sec2, ret_val2, alarms_received);
-		} else
-			tst_resm(TPASS, "last call returned %d", ret_val2);
+		if ((alarms_received == 0) &&
+		    (ret_val2 == (time_sec1 - sleep_time1)))
+			tst_resm(TPASS, "Functionality of alarm(%u) "
+				 "successful", time_sec2);
+		else
+			tst_resm(TFAIL, "alarm(%u) fails, returned %d, "
+				 "alarms_received:%d",
+				 time_sec2, ret_val2, alarms_received);
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -158,7 +151,6 @@ void sigproc(int sig)
 	alarms_received++;
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
 }

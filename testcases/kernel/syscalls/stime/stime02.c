@@ -74,13 +74,11 @@
 #include <pwd.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define INCR_TIME	10	/* increment in the system's current time */
 
-char *TCID = "stime02";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-int exp_enos[] = { EPERM, 0 };
+char *TCID = "stime02";
+int TST_TOTAL = 1;
 
 time_t curr_time;		/* system's current time in seconds */
 time_t new_time;		/* system's new time */
@@ -94,23 +92,14 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Invoke stime(2) to set the system's time
@@ -119,7 +108,6 @@ int main(int ac, char **av)
 		TEST(stime(&new_time));
 
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			if (TEST_ERRNO == EPERM) {
 				tst_resm(TPASS, "stime(2) fails, Caller not "
 					 "root, errno:%d", TEST_ERRNO);
@@ -132,7 +120,7 @@ int main(int ac, char **av)
 			tst_resm(TFAIL, "stime(2) returned %ld, expected -1, "
 				 "errno:%d", TEST_RETURN, EPERM);
 		}
-		Tst_count++;	/* incr TEST_LOOP counter */
+		tst_count++;	/* incr TEST_LOOP counter */
 	}
 
 	cleanup();
@@ -145,15 +133,13 @@ int main(int ac, char **av)
  * setup() - performs all ONE TIME setup for this test.
  *  Get the current time and system's new time.
  */
-void setup()
+void setup(void)
 {
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	ltpuser = getpwnam(nobody_uid);
 	if (setuid(ltpuser->pw_uid) == -1) {
 		tst_resm(TINFO, "setuid failed to "
@@ -178,12 +164,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

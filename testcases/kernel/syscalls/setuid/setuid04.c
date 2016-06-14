@@ -1,90 +1,62 @@
-/******************************************************************************/
-/* Copyright (c) Kerlabs 2008.                                                */
-/* Copyright (c) International Business Machines  Corp., 2008                 */
-/*                                                                            */
-/* This program is free software;  you can redistribute it and/or modify      */
-/* it under the terms of the GNU General Public License as published by       */
-/* the Free Software Foundation; either version 2 of the License, or          */
-/* (at your option) any later version.                                        */
-/*                                                                            */
-/* This program is distributed in the hope that it will be useful,            */
-/* but WITHOUT ANY WARRANTY;  without even the implied warranty of            */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See                  */
-/* the GNU General Public License for more details.                           */
-/*                                                                            */
-/* You should have received a copy of the GNU General Public License          */
-/* along with this program;  if not, write to the Free Software               */
-/* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA    */
-/*                                                                            */
-/******************************************************************************/
+/******************************************************************************
+ * Copyright (c) Kerlabs 2008.                                                *
+ * Copyright (c) International Business Machines  Corp., 2008                 *
+ *  Created by Renaud Lottiaux                                                *
+ *                                                                            *
+ * This program is free software;  you can redistribute it and/or modify      *
+ * it under the terms of the GNU General Public License as published by       *
+ * the Free Software Foundation; either version 2 of the License, or          *
+ * (at your option) any later version.                                        *
+ *                                                                            *
+ * This program is distributed in the hope that it will be useful,            *
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of            *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See                  *
+ * the GNU General Public License for more details.                           *
+ *                                                                            *
+ * You should have received a copy of the GNU General Public License          *
+ * along with this program;  if not, write to the Free Software Foundation,   *
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA           *
+ *****************************************************************************/
+
 /*
+ * Check if setuid behaves correctly with file permissions. The test creates a
+ * file as ROOT with permissions 0644, does a setuid and then tries to open the
+ * file with RDWR permissions. The same test is done in a fork to check if new
+ * UIDs are correctly passed to the son.
  */
-/*
- * NAME
- * 	setuid04.c
- *
- * DESCRIPTION
- * 	Check if setuid behaves correctly with file permissions.
- *      The test creates a file as ROOT with permissions 0644, does a setuid
- *      and then tries to open the file with RDWR permissions.
- *      The same test is done in a fork to check if new UIDs are correctly
- *      passed to the son.
- *
- * USAGE:  <for command-line>
- *  setuid04 [-c n] [-e] [-i n] [-I x] [-P x] [-t]
- *     where,  -c n : Run n copies concurrently.
- *             -e   : Turn on errno logging.
- *             -i n : Execute test n times.
- *             -I x : Execute test for x seconds.
- *             -P x : Pause for x seconds between iterations.
- *             -t   : Turn on syscall timing.
- *
- * HISTORY
- *	07/2001 Created by Renaud Lottiaux
- *
- * RESTRICTIONS
- * 	Must be run as root.
- */
+
 #include <errno.h>
+#include <pwd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
+
 #include "test.h"
-#include "usctest.h"
-#include <pwd.h>
+#include "compat_16.h"
 
 char *TCID = "setuid04";
 int TST_TOTAL = 1;
-char nobody_uid[] = "nobody";
-char testfile[256] = "";
-struct passwd *ltpuser;
 
-int exp_enos[] = { EACCES, 0 };
+static char nobody_uid[] = "nobody";
+static char testfile[] = "setuid04_testfile";
+static struct passwd *ltpuser;
 
-int fd = -1;
+static int fd = -1;
 
-void setup(void);
-void cleanup(void);
-void do_master_child();
+static void setup(void);
+static void cleanup(void);
+static void do_master_child(void);
 
 int main(int ac, char **av)
 {
 	pid_t pid;
-	char *msg;
 	int status;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
-	/*
-	 * perform global setup for the test
-	 */
 	setup();
-
-	TEST_EXP_ENOS(exp_enos);
 
 	pid = FORK_OR_VFORK();
 	if (pid < 0)
@@ -101,20 +73,15 @@ int main(int ac, char **av)
 
 	cleanup();
 	tst_exit();
-	tst_exit();
-
 }
 
-/*
- * do_master_child()
- */
-void do_master_child()
+static void do_master_child(void)
 {
 	int lc;
 	int pid;
 	int status;
 
-	if (setuid(ltpuser->pw_uid) == -1) {
+	if (SETUID(NULL, ltpuser->pw_uid) == -1) {
 		tst_brkm(TBROK, NULL,
 			 "setuid failed to set the effective uid to %d",
 			 ltpuser->pw_uid);
@@ -123,8 +90,7 @@ void do_master_child()
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		int tst_fd;
 
-		/* Reset Tst_count in case we are looping */
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(tst_fd = open(testfile, O_RDWR));
 
@@ -156,8 +122,6 @@ void do_master_child()
 				close(tst_fd2);
 			}
 
-			TEST_ERROR_LOG(TEST_ERRNO);
-
 			if (TEST_ERRNO == EACCES) {
 				tst_resm(TPASS, "open returned errno EACCES");
 			} else {
@@ -176,18 +140,19 @@ void do_master_child()
 	tst_exit();
 }
 
-/*
- * setup() - performs all ONE TIME setup for this test
- */
-void setup(void)
+static void setup(void)
 {
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
+	tst_require_root();
 
 	ltpuser = getpwnam(nobody_uid);
 
-	sprintf(testfile, "setuid04file%d.tst", getpid());
+	if (ltpuser == NULL)
+		tst_brkm(TBROK, cleanup, "getpwnam failed for user id %s",
+			nobody_uid);
+
+	UID16_CHECK(ltpuser->pw_uid, setuid, cleanup);
+
+	tst_tmpdir();
 
 	/* Create test file */
 	fd = open(testfile, O_CREAT | O_RDWR, 0644);
@@ -199,19 +164,8 @@ void setup(void)
 	TEST_PAUSE;
 }
 
-/*
- * cleanup() - performs all the ONE TIME cleanup for this test at completion
- * 	       or premature exit
- */
-void cleanup(void)
+static void cleanup(void)
 {
 	close(fd);
-	unlink(testfile);
-
-	/*
-	 * print timing status if that option was specified
-	 * print errno log if that option was specified
-	 */
-	TEST_CLEANUP;
-
+	tst_rmdir();
 }

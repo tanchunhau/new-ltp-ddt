@@ -59,7 +59,6 @@
 #include <semaphore.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include "move_pages_support.h"
 
 #define TEST_PAGES 2
@@ -107,14 +106,8 @@ void child(void **pages, sem_t * sem)
 
 int main(int argc, char **argv)
 {
-	char *msg;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -137,8 +130,8 @@ int main(int argc, char **argv)
 		pid_t cpid;
 		sem_t *sem;
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		ret = alloc_shared_pages_on_node(pages, TEST_PAGES, from_node);
 		if (ret == -1)
@@ -171,9 +164,8 @@ int main(int argc, char **argv)
 
 		ret = numa_move_pages(0, TEST_PAGES, pages, nodes,
 				      status, MPOL_MF_MOVE_ALL);
-		TEST_ERRNO = errno;
 		if (ret != 0) {
-			tst_resm(TFAIL, "retrieving NUMA nodes failed");
+			tst_resm(TFAIL|TERRNO, "move_pages failed");
 			goto err_kill_child;
 		}
 
@@ -220,10 +212,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

@@ -56,7 +56,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -64,15 +63,6 @@
 void cleanup(void);
 void setup(void);
 void sighandler(int);
-
-char *TCID = "signal03";
-int TST_TOTAL;
-
-typedef void (*sighandler_t) (int);
-
-sighandler_t Tret;
-
-int fail = 0;
 
 int siglist[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGTRAP, SIGABRT, SIGIOT,
 	SIGBUS, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2, SIGPIPE, SIGALRM,
@@ -88,24 +78,30 @@ int siglist[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGTRAP, SIGABRT, SIGIOT,
 #endif
 };
 
+char *TCID = "signal03";
+int TST_TOTAL = ARRAY_SIZE(siglist);
+
+typedef void (*sighandler_t) (int);
+
+sighandler_t Tret;
+
+int fail = 0;
+
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	pid_t pid;
 	int i, rval;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * loop through the list of signals and test each one
@@ -122,37 +118,31 @@ int main(int ac, char **av)
 					 TEST_ERRNO, strerror(TEST_ERRNO));
 			}
 
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Send the signal.  If the signal is truly set
-				 * to be ignored, then the signal handler will
-				 * never be invoked and the test will pass.
-				 */
-				pid = getpid();
+			/*
+			 * Send the signal.  If the signal is truly set
+			 * to be ignored, then the signal handler will
+			 * never be invoked and the test will pass.
+			 */
+			pid = getpid();
 
-				if ((rval = kill(pid, siglist[i])) != 0) {
-					tst_brkm(TBROK, cleanup, "call to "
-						 "kill failed");
-				}
+			if ((rval = kill(pid, siglist[i])) != 0) {
+				tst_brkm(TBROK, cleanup, "call to "
+					 "kill failed");
+			}
 
-				if (fail == 0) {
-					tst_resm(TPASS, "%s call succeeded",
-						 TCID);
-				} else {
-					/* the signal was caught so we fail */
-					tst_resm(TFAIL, "signal caught when "
-						 "suppose to be ignored");
-				}
+			if (fail == 0) {
+				tst_resm(TPASS, "%s call succeeded",
+					 TCID);
 			} else {
-				tst_resm(TPASS, "Call succeeded");
+				/* the signal was caught so we fail */
+				tst_resm(TFAIL, "signal caught when "
+					 "suppose to be ignored");
 			}
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
-
 }
 
 /*
@@ -168,7 +158,6 @@ void sighandler(int sig)
  */
 void setup(void)
 {
-	TST_TOTAL = sizeof(siglist) / sizeof(int);
 	/* capture signals in our own handler */
 	tst_sig(NOFORK, sighandler, cleanup);
 
@@ -181,10 +170,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

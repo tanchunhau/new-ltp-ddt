@@ -71,13 +71,12 @@
 #include <grp.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #include "compat_16.h"
 
 #define TESTUSER	"nobody"
 
-TCID_DEFINE(setgroups02);	/* Test program identifier.    */
+TCID_DEFINE(setgroups02);
 int TST_TOTAL = 1;		/* Total number of test conditions */
 GID_T groups_list[NGROUPS];	/* Array to hold gids for getgroups() */
 
@@ -87,26 +86,23 @@ void cleanup();			/* cleanup function for the test */
 
 int main(int ac, char **av)
 {
-	int lc, i;		/* loop counters */
-	char *msg;
+	int lc, i;
 	int gidsetsize = 1;	/* only one GID, the GID of TESTUSER */
 	int PASS_FLAG = 0;	/* used for checking group array */
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call setgroups() to set supplimentary group IDs of
 		 * the calling super-user process to gid of TESTUSER.
 		 */
-		TEST(SETGROUPS(gidsetsize, groups_list));
+		TEST(SETGROUPS(cleanup, gidsetsize, groups_list));
 
 		if (TEST_RETURN == -1) {
 			tst_resm(TFAIL, "setgroups(%d, groups_list) Failed, "
@@ -116,42 +112,32 @@ int main(int ac, char **av)
 		}
 
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Call getgroups(2) to verify that
+		 * setgroups(2) successfully set the
+		 * supp. gids of TESTUSER.
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Call getgroups(2) to verify that
-			 * setgroups(2) successfully set the
-			 * supp. gids of TESTUSER.
-			 */
-			groups_list[0] = '\0';
-			if (GETGROUPS(gidsetsize, groups_list) < 0) {
-				tst_brkm(TFAIL, cleanup, "getgroups() Fails, "
-					 "error=%d", errno);
+		groups_list[0] = '\0';
+		if (GETGROUPS(cleanup, gidsetsize, groups_list) < 0) {
+			tst_brkm(TFAIL, cleanup, "getgroups() Fails, "
+				 "error=%d", errno);
+		}
+		for (i = 0; i < NGROUPS; i++) {
+			if (groups_list[i] == user_info->pw_gid) {
+				tst_resm(TPASS,
+					 "Functionality of setgroups"
+					 "(%d, groups_list) successful",
+					 gidsetsize);
+				PASS_FLAG = 1;
 			}
-			for (i = 0; i < NGROUPS; i++) {
-				if (groups_list[i] == user_info->pw_gid) {
-					tst_resm(TPASS,
-						 "Functionality of setgroups"
-						 "(%d, groups_list) successful",
-						 gidsetsize);
-					PASS_FLAG = 1;
-				}
-			}
-			if (PASS_FLAG == 0) {
-				tst_resm(TFAIL, "Supplimentary gid %d not set "
-					 "for the process", user_info->pw_gid);
-			}
-		} else {
-			tst_resm(TPASS, "call succeeded");
+		}
+		if (PASS_FLAG == 0) {
+			tst_resm(TFAIL, "Supplimentary gid %d not set "
+				 "for the process", user_info->pw_gid);
 		}
 	}
 
 	cleanup();
 	tst_exit();
-	tst_exit();
-
 }
 
 /*
@@ -160,15 +146,12 @@ int main(int ac, char **av)
  *  Make sure the test process uid is root.
  *  Get the supplimentrary group id of test user from /etc/passwd file.
  */
-void setup()
+void setup(void)
 {
 
-	tst_sig(NOFORK, DEF_HANDLER, cleanup);
+	tst_require_root();
 
-	/* Make sure the calling process is super-user only */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be ROOT to run this test.");
-	}
+	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 
@@ -190,11 +173,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

@@ -22,11 +22,6 @@
  *
  * Started by Andrew Vagin <avagin@gmail.com>
  *
- */
-/*
- * NAME
- *	inotify03
- *
  * DESCRIPTION
  *	Check that inotify get IN_UNMOUNT event and
  *	don't block the umount command.
@@ -47,107 +42,68 @@
 #include <sys/syscall.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 #include "inotify.h"
+
+char *TCID = "inotify03";
+int TST_TOTAL = 3;
 
 #if defined(HAVE_SYS_INOTIFY_H)
 #include <sys/inotify.h>
 
 #define EVENT_MAX 1024
 /* size of the event structure, not counting name */
-#define EVENT_SIZE (sizeof (struct inotify_event))
+#define EVENT_SIZE (sizeof(struct inotify_event))
 /* reasonable guess as to size of 1024 events */
 #define EVENT_BUF_LEN		(EVENT_MAX * (EVENT_SIZE + 16))
 
-void help(void);
-void setup();
-void cleanup();
-
-char *TCID = "inotify03";	/* Test program identifier.     */
-int TST_TOTAL = 3;		/* Total number of test cases. */
+static void setup(void);
+static void cleanup(void);
 
 #define BUF_SIZE 1024
-char fname[BUF_SIZE];
-char buf[BUF_SIZE];
-int fd, fd_notify;
-int wd;
+static char fname[BUF_SIZE];
+static int fd, fd_notify;
+static int wd;
 
-int event_set[EVENT_MAX];
+static int event_set[EVENT_MAX];
 
-char event_buf[EVENT_BUF_LEN];
+static char event_buf[EVENT_BUF_LEN];
 
-#define DEFAULT_FSTYPE	"ext2"
-#define DIR_MODE	S_IRWXU | S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP
+#define DIR_MODE	(S_IRWXU | S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP)
 
-static char *Fstype;
-static char mntpoint[20];
-static int mount_flag = 0;
-static char *fstype;
-static char *device;
-static int Tflag = 0;
-static int Dflag = 0;
+static char *mntpoint = "mntpoint";
+static int mount_flag;
+static const char *device;
+static const char *fs_type;
 
-static option_t options[] = {	/* options supported by mount01 test */
-	{"T:", &Tflag, &fstype},	/* -T type of filesystem        */
-	{"D:", &Dflag, &device},	/* -D device used for mounting  */
-	{NULL, NULL, NULL}
-};
-
-int main(int ac, char **av)
+int main(int argc, char *argv[])
 {
-	char *msg;
 	int ret;
 	int len, i, test_num;
 
-	if ((msg = parse_opts(ac, av, options, &help)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	/* Check for mandatory option of the testcase */
-	if (!Dflag) {
-		tst_brkm(TBROK, NULL, "You must specifiy the device used for "
-			 " mounting with -D option, Run '%s  -h' for option "
-			 " information.", TCID);
-	}
-
-	if (Tflag) {
-		Fstype = (char *)malloc(strlen(fstype) + 1);
-		if (Fstype == NULL) {
-			tst_brkm(TBROK, NULL, "malloc - failed to alloc %zu"
-				 "errno %d", strlen(fstype), errno);
-		}
-		strncpy(Fstype, fstype, strlen(fstype) + 1);
-	} else {
-		Fstype = (char *)malloc(strlen(DEFAULT_FSTYPE) + 1);
-		if (Fstype == NULL) {
-			tst_brkm(TBROK, NULL, "malloc - failed to alloc %zu"
-				 "errno %d", strlen(DEFAULT_FSTYPE), errno);
-		}
-		strncpy(Fstype, DEFAULT_FSTYPE, strlen(DEFAULT_FSTYPE) + 1);
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
-	Tst_count = 0;
+	tst_count = 0;
 
-	event_set[Tst_count] = IN_UNMOUNT;
-	Tst_count++;
-	event_set[Tst_count] = IN_IGNORED;
-	Tst_count++;
+	event_set[tst_count] = IN_UNMOUNT;
+	tst_count++;
+	event_set[tst_count] = IN_IGNORED;
+	tst_count++;
 
 	/*check exit code from inotify_rm_watch */
-	Tst_count++;
+	tst_count++;
 
-	if (TST_TOTAL != Tst_count) {
+	if (TST_TOTAL != tst_count) {
 		tst_brkm(TBROK, cleanup,
-			 "TST_TOTAL and Tst_count are not equal");
+			 "TST_TOTAL and tst_count are not equal");
 	}
-	Tst_count = 0;
+	tst_count = 0;
 
 	tst_resm(TINFO, "umount %s", device);
-	TEST(umount(mntpoint));
+	TEST(tst_umount(mntpoint));
 	if (TEST_RETURN != 0) {
-		TEST_ERROR_LOG(TEST_ERRNO);
 		tst_brkm(TBROK, cleanup, "umount(2) Failed "
 			 "while unmounting errno = %d : %s",
 			 TEST_ERRNO, strerror(TEST_ERRNO));
@@ -206,10 +162,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-/*
- * setup() - performs all ONE TIME setup for this test.
- */
-void setup()
+static void setup(void)
 {
 	int ret;
 
@@ -217,9 +170,15 @@ void setup()
 
 	TEST_PAUSE;
 
+	fs_type = tst_dev_fs_type();
+
 	tst_tmpdir();
 
-	(void)sprintf(mntpoint, "mnt_%d", getpid());
+	device = tst_acquire_device(cleanup);
+	if (!device)
+		tst_brkm(TCONF, cleanup, "Failed to obtain block device");
+
+	tst_mkfs(cleanup, device, fs_type, NULL, NULL);
 
 	if (mkdir(mntpoint, DIR_MODE) < 0) {
 		tst_brkm(TBROK | TERRNO, cleanup, "mkdir(%s, %#o) failed",
@@ -227,12 +186,11 @@ void setup()
 	}
 
 	/* Call mount(2) */
-	tst_resm(TINFO, "mount %s to %s fstype=%s", device, mntpoint, Fstype);
-	TEST(mount(device, mntpoint, Fstype, 0, NULL));
+	tst_resm(TINFO, "mount %s to %s fs_type=%s", device, mntpoint, fs_type);
+	TEST(mount(device, mntpoint, fs_type, 0, NULL));
 
 	/* check return code */
 	if (TEST_RETURN != 0) {
-		TEST_ERROR_LOG(TEST_ERRNO);
 		tst_brkm(TBROK | TTERRNO, cleanup, "mount(2) failed");
 	}
 	mount_flag = 1;
@@ -251,75 +209,47 @@ void setup()
 	}
 
 	/* close the file we have open */
-	if (close(fd) == -1) {
+	if (close(fd) == -1)
 		tst_brkm(TBROK | TERRNO, cleanup, "close(%s) failed", fname);
-	}
 
 	fd_notify = myinotify_init();
 
 	if (fd_notify < 0) {
-		if (errno == ENOSYS) {
+		if (errno == ENOSYS)
 			tst_brkm(TCONF, cleanup,
 				 "inotify is not configured in this kernel.");
-		} else {
+		else
 			tst_brkm(TBROK | TERRNO, cleanup,
 				 "inotify_init failed");
-		}
 	}
 
 	wd = myinotify_add_watch(fd_notify, fname, IN_ALL_EVENTS);
-	if (wd < 0) {
+	if (wd < 0)
 		tst_brkm(TBROK | TERRNO, cleanup,
 			 "inotify_add_watch (%d, %s, IN_ALL_EVENTS) failed.",
 			 fd_notify, fname);
-	};
-
 }
 
-/*
- * cleanup() - performs all ONE TIME cleanup for this test at
- *		completion or premature exit.
- */
-void cleanup()
+static void cleanup(void)
 {
-	free(Fstype);
-	if (close(fd_notify) == -1) {
+	if (fd_notify > 0 && close(fd_notify) == -1)
 		tst_resm(TWARN | TERRNO, "close(%d) failed", fd_notify);
-	}
 
 	if (mount_flag) {
-		TEST(umount(mntpoint));
-		if (TEST_RETURN != 0) {
+		TEST(tst_umount(mntpoint));
+		if (TEST_RETURN != 0)
 			tst_resm(TWARN | TTERRNO, "umount(%s) failed",
 				 mntpoint);
-		}
 	}
 
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
+	tst_release_device(device);
 
 	tst_rmdir();
 }
 
-/*
- * issue a help message
- */
-void help()
-{
-	printf("-T type : specifies the type of filesystem to be mounted."
-	       " Default ext2. \n");
-	printf("-D device : device used for mounting \n");
-}
-
 #else
 
-char *TCID = "inotify03";	/* Test program identifier.     */
-int TST_TOTAL = 0;		/* Total number of test cases. */
-
-int main()
+int main(void)
 {
 	tst_brkm(TCONF, NULL, "system doesn't have required inotify support");
 }

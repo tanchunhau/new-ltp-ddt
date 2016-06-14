@@ -23,7 +23,6 @@
 
 #include "config.h"
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "io_getevents01";
 
@@ -36,7 +35,6 @@ int TST_TOTAL = 1;
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 }
 
 static void setup(void)
@@ -69,19 +67,17 @@ static void setup(void)
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
 
 	io_context_t ctx;
 
 	memset(&ctx, 0, sizeof(ctx));
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(io_getevents(ctx, 0, 0, NULL, NULL));
 
@@ -112,6 +108,5 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	tst_brkm(TCONF, NULL, "System doesn't support execution of the test");
-	tst_exit();
 }
 #endif

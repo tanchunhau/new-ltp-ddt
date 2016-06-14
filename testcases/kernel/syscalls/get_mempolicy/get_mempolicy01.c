@@ -57,16 +57,14 @@
 #if HAVE_NUMAIF_H
 #include <numaif.h>
 #endif
-
-#include "usctest.h"
 #include "test.h"
 #include "linux_syscall_numbers.h"
 #include "include_j_h.h"
 #include "common_j_h.c"
 #include "numa_helper.h"
 
-char *TCID = "get_mempolicy01";	/* Test program identifier. */
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+char *TCID = "get_mempolicy01";
+int TST_TOTAL = 1;
 
 #if HAVE_NUMA_H && HAVE_NUMAIF_H && HAVE_MPOL_CONSTANTS
 
@@ -203,9 +201,9 @@ int main(int argc, char **argv)
 	setup();
 
 	ret = 0;
-	testno = (int)(sizeof(tcase) / sizeof(*tcase));
+	testno = (int)ARRAY_SIZE(tcase);
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < testno; i++) {
 			tst_resm(TINFO, "(case%02d) START", i);
@@ -251,14 +249,15 @@ static int do_test(struct test_case *tc)
 		flags = 0;
 		p = NULL;
 		if (tc->from_node == NONE)
-			TEST(syscall(__NR_set_mempolicy, tc->policy, NULL, 0));
+			TEST(ltp_syscall(__NR_set_mempolicy, tc->policy,
+				NULL, 0));
 		else
 #if !defined(LIBNUMA_API_VERSION) || LIBNUMA_API_VERSION < 2
-			TEST(syscall(__NR_set_mempolicy, tc->policy,
-				     nodemask, maxnode));
+			TEST(ltp_syscall(__NR_set_mempolicy, tc->policy,
+				nodemask, maxnode));
 #else
-			TEST(syscall(__NR_set_mempolicy, tc->policy,
-				     nodemask->maskp, nodemask->size));
+			TEST(ltp_syscall(__NR_set_mempolicy, tc->policy,
+				nodemask->maskp, nodemask->size));
 #endif
 		if (TEST_RETURN < 0) {
 			tst_resm(TBROK | TERRNO, "set_mempolicy");
@@ -273,15 +272,15 @@ static int do_test(struct test_case *tc)
 		if (p == MAP_FAILED)
 			tst_brkm(TBROK | TERRNO, cleanup, "mmap");
 		if (tc->from_node == NONE)
-			TEST(syscall(__NR_mbind, p, len, tc->policy,
-				     NULL, 0, 0));
+			TEST(ltp_syscall(__NR_mbind, p, len, tc->policy,
+				NULL, 0, 0));
 		else
 #if !defined(LIBNUMA_API_VERSION) || LIBNUMA_API_VERSION < 2
-			TEST(syscall(__NR_mbind, p, len, tc->policy,
-				     nodemask, maxnode, 0));
+			TEST(ltp_syscall(__NR_mbind, p, len, tc->policy,
+				nodemask, maxnode, 0));
 #else
-			TEST(syscall(__NR_mbind, p, len, tc->policy,
-				     nodemask->maskp, nodemask->size, 0));
+			TEST(ltp_syscall(__NR_mbind, p, len, tc->policy,
+				nodemask->maskp, nodemask->size, 0));
 #endif
 		if (TEST_RETURN < 0) {
 			tst_resm(TBROK | TERRNO, "mbind");
@@ -301,10 +300,10 @@ static int do_test(struct test_case *tc)
 	errno = 0;
 	cmp_ok = 1;
 #if !defined(LIBNUMA_API_VERSION) || LIBNUMA_API_VERSION < 2
-	TEST(ret = syscall(__NR_get_mempolicy, &policy, getnodemask,
+	TEST(ret = ltp_syscall(__NR_get_mempolicy, &policy, getnodemask,
 			   maxnode, p, flags));
 #else
-	TEST(ret = syscall(__NR_get_mempolicy, &policy, getnodemask->maskp,
+	TEST(ret = ltp_syscall(__NR_get_mempolicy, &policy, getnodemask->maskp,
 			   getnodemask->size, p, flags));
 #endif
 	err = TEST_ERRNO;
@@ -332,14 +331,16 @@ TEST_END:
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 
 static void setup(void)
 {
 	/* check syscall availability */
-	syscall(__NR_get_mempolicy, NULL, NULL, 0, NULL, 0);
+	ltp_syscall(__NR_get_mempolicy, NULL, NULL, 0, NULL, 0);
+
+	if (!is_numa(NULL, NH_MEMS, 1))
+		tst_brkm(TCONF, NULL, "requires NUMA with at least 1 node");
 
 	TEST_PAUSE;
 	tst_tmpdir();

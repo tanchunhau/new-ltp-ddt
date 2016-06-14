@@ -47,9 +47,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include "usctest.h"
 #include "test.h"
 #include <libclone.h>
+#include "pidns_helper.h"
 
 #define INIT_PID	1
 #define CINIT_PID	1
@@ -59,11 +59,6 @@
 char *TCID = "pidns05";
 int TST_TOTAL = 1;
 int fd[2];
-
-void cleanup(void)
-{
-	TEST_CLEANUP;
-}
 
 int max_pid(void)
 {
@@ -191,12 +186,20 @@ void kill_nested_containers()
 	}
 }
 
+static void setup(void)
+{
+	tst_require_root();
+	check_newpid();
+}
+
 int main(int argc, char *argv[])
 {
 	int ret, nbytes, status;
 	char readbuffer[80];
 	pid_t pid, pgid;
 	int count = MAX_DEPTH;
+
+	setup();
 
 	/*
 	 * XXX (garrcoop): why in the hell is this fork-wait written this way?
@@ -230,12 +233,12 @@ int main(int argc, char *argv[])
 	pgid = getpgid(pid);
 	ret = pipe(fd);
 	if (ret == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "pipe failed");
+		tst_brkm(TBROK | TERRNO, NULL, "pipe failed");
 
 	TEST(do_clone_unshare_test(T_CLONE, CLONE_NEWPID,
 				   create_nested_container, (void *)&count));
 	if (TEST_RETURN == -1) {
-		tst_brkm(TFAIL | TTERRNO, cleanup, "clone failed");
+		tst_brkm(TFAIL | TTERRNO, NULL, "clone failed");
 	}
 
 	close(fd[1]);
@@ -245,12 +248,11 @@ int main(int argc, char *argv[])
 	if (nbytes > 0)
 		tst_resm(TINFO, " %d %s", MAX_DEPTH, readbuffer);
 	else
-		tst_brkm(TFAIL, cleanup, "unable to create %d containers",
+		tst_brkm(TFAIL, NULL, "unable to create %d containers",
 			 MAX_DEPTH);
 
 	/* Kill the container created */
 	kill_nested_containers();
-	cleanup();
 
 	tst_exit();
 }

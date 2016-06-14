@@ -81,7 +81,6 @@
 #include <pwd.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define LTPUSER		"nobody"
 #define LTPGRP		"users"
@@ -93,8 +92,8 @@
 #define TESTFILE	"testfile"
 
 int fd;				/* file descriptor variable */
-char *TCID = "fchmod02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fchmod02";
+int TST_TOTAL = 1;
 
 void setup();			/* Main setup function for the test */
 void cleanup();			/* Main cleanup function for the test */
@@ -103,20 +102,14 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat(2) struct contents */
 	int lc;
-	char *msg;
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call fchmod(2) with specified mode argument
@@ -130,36 +123,27 @@ int main(int ac, char **av)
 			continue;
 		}
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Get the testfile information using
+		 * fstat(2).
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Get the testfile information using
-			 * fstat(2).
-			 */
-			if (fstat(fd, &stat_buf) < 0) {
-				tst_brkm(TFAIL, cleanup, "fstat(2) of %s "
-					 "failed, errno:%d", TESTFILE,
-					 TEST_ERRNO);
-			}
+		if (fstat(fd, &stat_buf) < 0) {
+			tst_brkm(TFAIL, cleanup, "fstat(2) of %s "
+				 "failed, errno:%d", TESTFILE,
+				 TEST_ERRNO);
+		}
 
-			/* Check for expected mode permissions */
-			if ((stat_buf.st_mode & PERMS) == PERMS) {
-				tst_resm(TPASS, "Functionality of fchmod(%d, "
-					 "%#o) Successful", fd, PERMS);
-			} else {
-				tst_resm(TFAIL, "%s: Incorrect modes 0%03o, "
-					 "Expected 0%03o", TESTFILE,
-					 stat_buf.st_mode, PERMS);
-			}
+		/* Check for expected mode permissions */
+		if ((stat_buf.st_mode & PERMS) == PERMS) {
+			tst_resm(TPASS, "Functionality of fchmod(%d, "
+				 "%#o) Successful", fd, PERMS);
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			tst_resm(TFAIL, "%s: Incorrect modes 0%03o, "
+				 "Expected 0%03o", TESTFILE,
+				 stat_buf.st_mode, PERMS);
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -170,22 +154,18 @@ int main(int ac, char **av)
  *  Create a test file under temporary directory.
  *  Change the ownership of test file to that of "ltpuser1" user.
  */
-void setup()
+void setup(void)
 {
 	struct passwd *ltpuser;	/* password struct for ltpuser1 */
 	struct group *ltpgroup;	/* group struct for ltpuser1 */
 	gid_t group1_gid;	/* user and process group id's */
 	uid_t user1_uid;
 
+	tst_require_root();
+
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
-
-	/* Check that the test process id is super/root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be super/root for this test!");
-		tst_exit();
-	}
 
 	tst_tmpdir();
 
@@ -229,12 +209,8 @@ void setup()
  *  Close the testfile created in the setup.
  *  Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Close the testfile created in the setup() */
 	if (close(fd) == -1) {

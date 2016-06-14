@@ -91,27 +91,25 @@
 #include <unistd.h>
 #include <pwd.h>
 #include "test.h"
-#include "usctest.h"
 
 #define SET_MODE ( ADJ_OFFSET | ADJ_FREQUENCY | ADJ_MAXERROR | ADJ_ESTERROR | \
 	ADJ_STATUS | ADJ_TIMECONST | ADJ_TICK )
 
-static void setup();
-static int setup2();
-static int setup3();
-static int setup4();
-static int setup5();
-static int setup6();
-static void cleanup();
-static void cleanup6();
+static void setup(void);
+static int setup2(void);
+static int setup3(void);
+static int setup4(void);
+static int setup5(void);
+static int setup6(void);
+static void cleanup(void);
+static void cleanup6(void);
 
-char *TCID = "adjtimex02";	/* Test program identifier.    */
+char *TCID = "adjtimex02";
 
 static int hz;			/* HZ from sysconf */
 
 static struct timex tim_save;
 static struct timex buff;
-static int exp_enos[] = { EPERM, EINVAL, EFAULT, 0 };
 
 static char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
@@ -141,16 +139,14 @@ int main(int ac, char **av)
 {
 
 	int lc, i;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 			/*
@@ -186,7 +182,6 @@ int main(int ac, char **av)
 					 "Test Failed, adjtimex() returned %ld",
 					 TEST_RETURN);
 			}
-			TEST_ERROR_LOG(TEST_ERRNO);
 			if (test_cases[i].cleanup) {
 				test_cases[i].cleanup();
 			}
@@ -201,20 +196,13 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
+	tst_require_root();
 
 	tim_save.modes = 0;
 
-	/* Check whether we are root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
-
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
 	/* set the HZ from sysconf */
 	hz = sysconf(_SC_CLK_TCK);
@@ -234,7 +222,7 @@ void setup()
  *cleanup() -  performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 
 	tim_save.modes = SET_MODE;
@@ -242,38 +230,33 @@ void cleanup()
 	if ((adjtimex(&tim_save)) == -1) {
 		tst_resm(TWARN, "Failed to restore saved parameters");
 	}
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }
 
-int setup2()
+int setup2(void)
 {
 	buff.tick = 900000 / hz - 1;
 	return 0;
 }
 
-int setup3()
+int setup3(void)
 {
 	buff.tick = 1100000 / hz + 1;
 	return 0;
 }
 
-int setup4()
+int setup4(void)
 {
 	buff.offset = 512000L + 1;
 	return 0;
 }
 
-int setup5()
+int setup5(void)
 {
 	buff.offset = (-1) * (512000L) - 1;
 	return 0;
 }
 
-int setup6()
+int setup6(void)
 {
 	/* Switch to nobody user for correct error code collection */
 	if ((ltpuser = getpwnam(nobody_uid)) == NULL) {
@@ -286,7 +269,7 @@ int setup6()
 	return 0;
 }
 
-void cleanup6()
+void cleanup6(void)
 {
 	/* Set effective user id back to root */
 	if (seteuid(0) == -1) {

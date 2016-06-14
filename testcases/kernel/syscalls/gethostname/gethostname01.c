@@ -112,33 +112,26 @@
 #include <string.h>
 
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "gethostname01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0 };		/* must be a 0 terminated list */
+char *TCID = "gethostname01";
+int TST_TOTAL = 1;
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
 	char hname[100];	/* host name */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(gethostname(hname, sizeof(hname)));
 
@@ -147,17 +140,15 @@ int main(int ac, char **av)
 			continue;	/* next loop for MTKERNEL */
 		}
 
-		if (STD_FUNCTIONAL_TEST)
-			tst_resm(TPASS, "gethostname returned %ld",
-				 TEST_RETURN);
+		tst_resm(TPASS, "gethostname returned %ld",
+			 TEST_RETURN);
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -165,7 +156,6 @@ void setup()
 	TEST_PAUSE;
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
 }

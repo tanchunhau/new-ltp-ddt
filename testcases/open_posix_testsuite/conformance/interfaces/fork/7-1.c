@@ -94,6 +94,7 @@ static int create_catalog(void)
 
 	if (fputs(messcat_in, f) == EOF) {
 		perror("fputs");
+		fclose(f);
 		return 1;
 	}
 
@@ -105,7 +106,7 @@ static int create_catalog(void)
 	return 0;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	int ret, status;
 	pid_t child, ctl;

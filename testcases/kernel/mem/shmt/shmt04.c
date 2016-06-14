@@ -50,21 +50,20 @@
 
 /** LTP Port **/
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "shmt04";		/* Test program identifier.    */
 int TST_TOTAL = 2;		/* Total number of test cases. */
 /**************/
 
 key_t key;
-sigset_t sigset;
+sigset_t set;
 
 #define  SIZE  16*1024
 
 int child();
-int rm_shm(int);
+static int rm_shm(int);
 
-int main()
+int main(void)
 {
 	char *cp = NULL;
 	int pid, pid1, shmid;
@@ -72,15 +71,14 @@ int main()
 
 	key = (key_t) getpid();
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGUSR1);
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	sigprocmask(SIG_BLOCK, &set, NULL);
 
 	pid = fork();
 	switch (pid) {
 	case -1:
-		tst_resm(TBROK, "fork failed");
-		tst_exit();
+		tst_brkm(TBROK, NULL, "fork failed");
 	case 0:
 		child();
 	}
@@ -96,7 +94,7 @@ int main()
 		 */
 		(void)kill(pid, SIGINT);
 	} else {
-		cp = (char *)shmat(shmid, NULL, 0);
+		cp = shmat(shmid, NULL, 0);
 
 		if (cp == (char *)-1) {
 			perror("shmat");
@@ -142,18 +140,15 @@ int main()
 
 	rm_shm(shmid);
 	tst_exit();
-
-/*----------------------------------------------------------*/
-	return (0);
 }
 
-int child()
+int child(void)
 {
 	int shmid, chld_pid;
 	char *cp;
 	int sig;
 
-	sigwait(&sigset, &sig);
+	sigwait(&set, &sig);
 	chld_pid = getpid();
 /*--------------------------------------------------------*/
 
@@ -163,7 +158,7 @@ int child()
 			 "Error: shmget: errno=%d, shmid=%d, child_pid=%d\n",
 			 errno, shmid, chld_pid);
 	} else {
-		cp = (char *)shmat(shmid, NULL, 0);
+		cp = shmat(shmid, NULL, 0);
 
 		if (cp == (char *)-1) {
 			perror("shmat:child process");
@@ -187,18 +182,16 @@ int child()
 
 	}
 	tst_exit();
-	return (0);
 }
 
-int rm_shm(shmid)
-int shmid;
+static int rm_shm(int shmid)
 {
 	if (shmctl(shmid, IPC_RMID, NULL) == -1) {
 		perror("shmctl");
-		tst_resm(TFAIL,
+		tst_brkm(TFAIL,
+			 NULL,
 			 "shmctl Failed to remove: shmid = %d, errno = %d\n",
 			 shmid, errno);
-		tst_exit();
 	}
 	return (0);
 }

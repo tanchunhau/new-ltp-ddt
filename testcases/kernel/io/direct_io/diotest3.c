@@ -56,7 +56,6 @@
 #include "diotest_routines.h"
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "diotest03";	/* Test program identifier.    */
 int TST_TOTAL = 3;		/* Total number of test conditions */
@@ -239,6 +238,7 @@ int main(int argc, char *argv[])
 	int i, fail_count = 0, failed = 0, total = 0;
 
 	/* Options */
+	sprintf(filename, "testdata-3.%ld", syscall(__NR_gettid));
 	while ((i = getopt(argc, argv, "b:o:i:n:f:")) != -1) {
 		switch (i) {
 		case 'b':
@@ -277,7 +277,6 @@ int main(int argc, char *argv[])
 			prg_usage();
 		}
 	}
-	sprintf(filename, "testdata-3.%ld", syscall(__NR_gettid));
 
 	setup();
 

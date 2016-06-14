@@ -53,7 +53,6 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "pipe02";
 int TST_TOTAL = 1;
@@ -65,7 +64,7 @@ void setup(void);
 void cleanup(void);
 void catch_usr2(int);
 
-ssize_t safe_read(int fd, void *buf, size_t count)
+ssize_t do_read(int fd, void *buf, size_t count)
 {
 	ssize_t n;
 
@@ -81,16 +80,13 @@ int pp[2];			/* pipe descriptor */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	char rbuf[BUFSIZ], wbuf[BUFSIZ];
 	int pid, ret, len, rlen, status;
 	int sig = 0;
 
 	usrsig = 0;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&do_child, "dd", &pp[0], &pp[1]);
 #endif
@@ -99,8 +95,8 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		ret = pipe(pp);
 		if (ret == -1)
@@ -127,7 +123,7 @@ int main(int ac, char **av)
 			/* PARENT */
 			close(pp[1]);	/* close write end of pipe */
 			memset(rbuf, 0, sizeof(rbuf));
-			rlen = safe_read(pp[0], rbuf, len);
+			rlen = do_read(pp[0], rbuf, len);
 			if (memcmp(wbuf, rbuf, len) != 0)
 				tst_resm(TFAIL, "pipe read data and pipe "
 					 "write data didn't match");
@@ -158,7 +154,7 @@ void catch_usr2(int sig)
 /*
  * do_child()
  */
-void do_child()
+void do_child(void)
 {
 	char wbuf[BUFSIZ];
 	int len;
@@ -181,7 +177,7 @@ void do_child()
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -194,12 +190,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

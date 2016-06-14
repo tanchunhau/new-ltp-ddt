@@ -24,7 +24,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 
 #include <errno.h>
 #define _USE_BSD
@@ -41,18 +40,16 @@ static void setup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	pid_t pid;
 	int status = 1;
 	struct rusage rusage;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		pid = FORK_OR_VFORK();
 
@@ -75,22 +72,21 @@ int main(int ac, char **av)
 				 strerror(TEST_ERRNO));
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			if (WIFEXITED(status) == 0) {
-				tst_brkm(TFAIL, cleanup,
-					 "%s call succeeded but "
-					 "WIFEXITED() did not return expected value "
-					 "- %d", TCID, WIFEXITED(status));
-			} else if (TEST_RETURN != pid) {
-				tst_resm(TFAIL, "%s did not return the "
-					 "expected value (%d), actual: %ld",
-					 TCID, pid, TEST_RETURN);
-			} else {
+		if (WIFEXITED(status) == 0) {
+			tst_brkm(TFAIL, cleanup,
+				 "%s call succeeded but "
+				 "WIFEXITED() did not return expected value "
+				 "- %d", TCID, WIFEXITED(status));
+		} else if (TEST_RETURN != pid) {
+			tst_resm(TFAIL, "%s did not return the "
+				 "expected value (%d), actual: %ld",
+				 TCID, pid, TEST_RETURN);
+		} else {
 
-				tst_resm(TPASS,
-					 "Received child pid as expected.");
-			}
+			tst_resm(TPASS,
+				 "Received child pid as expected.");
 		}
+
 		tst_resm(TPASS, "%s call succeeded", TCID);
 	}
 
@@ -107,5 +103,4 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 }

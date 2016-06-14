@@ -55,7 +55,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "fork13";
 int TST_TOTAL = 1;
@@ -73,12 +72,7 @@ static void check(void);
 
 int main(int argc, char *argv[])
 {
-	/* message returned from parse_opts */
-	char *msg;
-
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 	setup();
 	check();
 	cleanup();
@@ -93,7 +87,7 @@ static void check(void)
 	int child_exit_code, distance, reaped, status;
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		child_exit_code = lc % RETURN;
 		switch (pid = fork()) {
 		case -1:
@@ -135,7 +129,7 @@ static void check(void)
 
 static void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	TEST_PAUSE;
@@ -149,9 +143,7 @@ static void setup(void)
 static void cleanup(void)
 {
 	/* Restore pid_max value. */
-	SAFE_FILE_PRINTF(NULL, PID_MAX_PATH, "%lu", pid_max);
-
-	TEST_CLEANUP;
+	FILE_PRINTF(PID_MAX_PATH, "%lu", pid_max);
 }
 
 /* The distance mod PIDMAX between two pids, where the first pid is

@@ -30,7 +30,6 @@
 #include <sys/types.h>
 
 #include "test.h"
-#include "usctest.h"
 
 void cleanup(void);
 void setup(void);
@@ -57,7 +56,6 @@ key_t msgkey;                   /* the ftok() generated message key */
 extern key_t msgkey;                   /* the ftok() generated message key */
 #endif
 
-void check_root();
 void init_buf(MSGBUF *, int, int);
 void rm_queue(int);
 

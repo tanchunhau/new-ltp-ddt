@@ -30,20 +30,6 @@
  *	05/2003 Modified by Manoj Iyer - Make setup function set up lo device.
  */
 
-/*
- * The #ifndef code below is for 2.5 64-bit kernels, where
- * the MSG_CMSG_COMPAT flag must be 0 in order for the syscall
- * and this test to function correctly.
- */
-#ifndef MSG_CMSG_COMPAT
-#if defined(__powerpc64__) || defined(__mips64) || defined(__x86_64__) || \
-     defined(__sparc64__) || defined(__ia64__) || defined(__s390x__)
-#define MSG_CMSG_COMPAT 0x80000000
-#else
-#define MSG_CMSG_COMPAT 0
-#endif
-#endif /* MSG_CMSG_COMPAT */
-
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -62,7 +48,6 @@
 #include <netinet/in.h>
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "sendmsg01";
 int testno;
@@ -87,7 +72,6 @@ static void setup3(void);
 static void setup4(void);
 static void setup5(void);
 static void setup6(void);
-static void setup7(void);
 static void setup8(void);
 
 static void cleanup(void);
@@ -212,7 +196,7 @@ struct test_case_t tdat[] = {
 	 .msg = &msgdat,
 	 .flags = 0,
 	 .to = (struct sockaddr *)&sin1,
-	 .tolen = -1,
+	 .tolen = 1,
 	 .retval = -1,
 	 .experrno = EINVAL,
 	 .setup = setup1,
@@ -228,9 +212,9 @@ struct test_case_t tdat[] = {
 	 .msg = &msgdat,
 	 .flags = 0,
 	 .to = (struct sockaddr *)-1,
-	 .tolen = -1,
+	 .tolen = sizeof(struct sockaddr),
 	 .retval = -1,
-	 .experrno = EINVAL,
+	 .experrno = EFAULT,
 	 .setup = setup1,
 	 .cleanup = cleanup1,
 	 .desc = "invalid to buffer"},
@@ -319,7 +303,7 @@ struct test_case_t tdat[] = {
 	 .cleanup = cleanup4,
 	 .desc = "rights passing"}
 	,
-	{.domain = PF_UNIX,
+	{.domain = PF_INET,
 	 .type = SOCK_DGRAM,
 	 .proto = 0,
 	 .iov = iov,
@@ -327,29 +311,12 @@ struct test_case_t tdat[] = {
 	 .buf = buf,
 	 .buflen = sizeof(buf),
 	 .msg = &msgdat,
-	 .flags = ~MSG_CMSG_COMPAT,
-	 .to = (struct sockaddr *)&sun1,
-	 .tolen = sizeof(sun1),
-	 .retval = -1,
-	 .experrno = EOPNOTSUPP,
-	 .setup = setup4,
-	 .cleanup = cleanup4,
-	 .desc = "invalid flags set w/ control"}
-	,
-	{.domain = PF_INET,
-	 .type = SOCK_STREAM,
-	 .proto = 0,
-	 .iov = iov,
-	 .iovcnt = 1,
-	 .buf = buf,
-	 .buflen = sizeof(buf),
-	 .msg = &msgdat,
-	 .flags = ~MSG_CMSG_COMPAT,
+	 .flags = MSG_OOB,
 	 .to = (struct sockaddr *)&sin1,
 	 .tolen = sizeof(sin1),
-	 .retval = 0,
+	 .retval = -1,
 	 .experrno = EOPNOTSUPP,
-	 .setup = setup7,
+	 .setup = setup1,
 	 .cleanup = cleanup1,
 	 .desc = "invalid flags set"}
 	,
@@ -390,11 +357,6 @@ struct test_case_t tdat[] = {
 
 int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);
 
-int exp_enos[] = {
-	EBADF, ENOTSOCK, EFAULT, EISCONN, ENOTCONN, EINVAL, EMSGSIZE, EPIPE,
-	ENOBUFS, 0
-};
-
 #ifdef UCLINUX
 static char *argv0;
 #endif
@@ -402,11 +364,8 @@ static char *argv0;
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 #ifdef UCLINUX
 	argv0 = argv[0];
@@ -415,10 +374,8 @@ int main(int argc, char *argv[])
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 			tdat[testno].setup();
 
@@ -437,9 +394,7 @@ int main(int argc, char *argv[])
 			TEST(sendmsg(s, tdat[testno].msg, tdat[testno].flags));
 
 			if (TEST_RETURN > 0)
-				TEST_RETURN = 0;	/* all success equal */
-
-			TEST_ERROR_LOG(TEST_ERRNO);
+				TEST_RETURN = 0;
 
 			if (TEST_RETURN != tdat[testno].retval ||
 			    (TEST_RETURN < 0 &&
@@ -462,8 +417,12 @@ int main(int argc, char *argv[])
 
 static pid_t start_server(struct sockaddr_in *sin0, struct sockaddr_un *sun0)
 {
-	struct sockaddr_in sin1 = *sin0;
 	pid_t pid;
+	socklen_t slen = sizeof(*sin0);
+
+	sin0->sin_family = AF_INET;
+	sin0->sin_port = 0; /* pick random free port */
+	sin0->sin_addr.s_addr = INADDR_ANY;
 
 	/* set up inet socket */
 	sfd = socket(PF_INET, SOCK_STREAM, 0);
@@ -472,7 +431,7 @@ static pid_t start_server(struct sockaddr_in *sin0, struct sockaddr_un *sun0)
 			 strerror(errno));
 		return -1;
 	}
-	if (bind(sfd, (struct sockaddr *)&sin1, sizeof(sin1)) < 0) {
+	if (bind(sfd, (struct sockaddr *)sin0, sizeof(*sin0)) < 0) {
 		tst_brkm(TBROK, cleanup, "server bind failed: %s",
 			 strerror(errno));
 		return -1;
@@ -482,6 +441,9 @@ static pid_t start_server(struct sockaddr_in *sin0, struct sockaddr_un *sun0)
 			 strerror(errno));
 		return -1;
 	}
+	if (getsockname(sfd, (struct sockaddr *)sin0, &slen) == -1)
+		tst_brkm(TBROK | TERRNO, cleanup, "getsockname failed");
+
 	/* set up UNIX-domain socket */
 	ufd = socket(PF_UNIX, SOCK_DGRAM, 0);
 	if (ufd < 0) {
@@ -527,7 +489,7 @@ static void do_child(void)
 	FD_SET(sfd, &afds);
 	FD_SET(ufd, &afds);
 
-	nfds = getdtablesize();
+	nfds = MAX(sfd + 1, ufd + 1);
 
 	/* accept connections until killed */
 	while (1) {
@@ -543,8 +505,10 @@ static void do_child(void)
 
 			fromlen = sizeof(fsin);
 			newfd = accept(sfd, (struct sockaddr *)&fsin, &fromlen);
-			if (newfd >= 0)
+			if (newfd >= 0) {
 				FD_SET(newfd, &afds);
+				nfds = MAX(nfds, newfd + 1);
+			}
 		}
 		if (FD_ISSET(ufd, &rfds)) {
 			int newfd;
@@ -573,12 +537,11 @@ static void setup(void)
 {
 
 	int ret = 0;
+
+	tst_require_root();
+	tst_sig(FORK, DEF_HANDLER, cleanup);
 	TEST_PAUSE;
 
-	/* initialize sockaddr's */
-	sin1.sin_family = AF_INET;
-	sin1.sin_port = htons((getpid() % 32768) + 11000);
-	sin1.sin_addr.s_addr = INADDR_ANY;
 
 	tst_tmpdir();
 	snprintf(tmpsunpath, 1024, "udsock%ld", (long)time(NULL));
@@ -586,13 +549,15 @@ static void setup(void)
 	strcpy(sun1.sun_path, tmpsunpath);
 
 	/* this test will fail or in some cases hang if no eth or lo is
-	 * configured, so making sure in setup that atleast lo is up
+	 * configured, so making sure in setup that at least lo is up
 	 */
-	ret = system("ifconfig lo up 127.0.0.1");
+	ret = system("ip link set lo up");
 	if (WEXITSTATUS(ret) != 0) {
-		tst_brkm(TBROK, cleanup,
-			 "ifconfig failed to bring up loop back device");
-		tst_exit();
+		ret = system("ifconfig lo up 127.0.0.1");
+		if (WEXITSTATUS(ret) != 0) {
+			tst_brkm(TBROK, cleanup,
+			    "ip/ifconfig failed to bring up loop back device");
+		}
 	}
 
 	pid = start_server(&sin1, &sun1);
@@ -605,9 +570,7 @@ static void cleanup(void)
 	if (pid > 0)
 		kill(pid, SIGKILL);	/* kill server, if server exists */
 	unlink(tmpsunpath);
-	TEST_CLEANUP;
 	tst_rmdir();
-
 }
 
 static void setup0(void)
@@ -709,7 +672,7 @@ static void setup5(void)
 	 * 5-tuple than already connected
 	 */
 	sin2 = sin1;
-	sin2.sin_port++;
+	sin2.sin_port = tst_get_unused_port(cleanup, AF_INET, SOCK_STREAM);
 }
 
 static void setup6(void)
@@ -719,14 +682,6 @@ static void setup6(void)
 	controllen = control->cmsg_len = sizeof(struct cmsghdr) - 4;
 */
 	controllen = control->cmsg_len = 0;
-}
-
-static void setup7(void)
-{
-	setup1();
-
-	if (tst_kvercmp(3, 6, 0) >= 0)
-		tdat[testno].retval = -1;
 }
 
 static void setup8(void)

@@ -71,67 +71,60 @@
 #include <sys/wait.h>
 
 #include "test.h"
-#include "usctest.h"
 
 void setup();			/* Main setup function of test */
 void cleanup();			/* cleanup function for the test */
 
-char *TCID = "getpid02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "getpid02";
+int TST_TOTAL = 1;
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	pid_t proc_id;		/* process id of the test process */
 	pid_t pid;		/* process id of the child process */
 	pid_t pproc_id;		/* parent process id */
 	int status;		/* exit status of child process */
 
-	if ((msg = parse_opts(ac, av, (option_t *) NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(getpid());
 
 		proc_id = TEST_RETURN;
 
-		if (STD_FUNCTIONAL_TEST) {
-			if ((pid = FORK_OR_VFORK()) == -1)
-				tst_resm(TFAIL | TERRNO, "fork failed");
-			else if (pid == 0) {
-				pproc_id = getppid();
+		if ((pid = FORK_OR_VFORK()) == -1)
+			tst_resm(TFAIL | TERRNO, "fork failed");
+		else if (pid == 0) {
+			pproc_id = getppid();
 
-				if (pproc_id != proc_id)
-					exit(1);
-				exit(0);
-			} else {
-				if (wait(&status) == -1)
-					tst_brkm(TBROK | TERRNO, cleanup,
-						 "wait failed");
-				if (!WIFEXITED(status) ||
-				    WEXITSTATUS(status) != 0)
-					tst_resm(TFAIL, "getpid() returned "
-						 "invalid pid %d", proc_id);
-				else
-					tst_resm(TPASS,
-						 "getpid functionality is correct");
-			}
-		} else
-			tst_resm(TPASS, "call succeeded");
+			if (pproc_id != proc_id)
+				exit(1);
+			exit(0);
+		} else {
+			if (wait(&status) == -1)
+				tst_brkm(TBROK | TERRNO, cleanup,
+					 "wait failed");
+			if (!WIFEXITED(status) ||
+			    WEXITSTATUS(status) != 0)
+				tst_resm(TFAIL, "getpid() returned "
+					 "invalid pid %d", proc_id);
+			else
+				tst_resm(TPASS,
+					 "getpid functionality is correct");
+		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -139,7 +132,6 @@ void setup()
 	TEST_PAUSE;
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
 }

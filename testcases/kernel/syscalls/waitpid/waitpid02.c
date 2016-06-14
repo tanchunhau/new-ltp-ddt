@@ -56,11 +56,9 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 static void do_child(void);
 static void setup(void);
-static void cleanup(void);
 
 char *TCID = "waitpid02";
 int TST_TOTAL = 1;
@@ -68,29 +66,26 @@ int TST_TOTAL = 1;
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
 	int pid, npid, sig, nsig;
-	int exno, nexno, status;
+	int nexno, status;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&do_child, "");
 #endif
 
 	setup();
 
-	/* check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		tst_count = 0;
 
-		exno = 1;
 		sig = SIGFPE;
 
 		pid = FORK_OR_VFORK();
+
+		if (pid < 0)
+			tst_brkm(TBROK|TERRNO, NULL, "fork failed");
 
 		if (pid == 0) {
 #ifdef UCLINUX
@@ -146,7 +141,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-	cleanup();
 	tst_exit();
 }
 
@@ -170,9 +164,4 @@ static void setup(void)
 	setrlimit(RLIMIT_CORE, &r);
 
 	TEST_PAUSE;
-}
-
-static void cleanup(void)
-{
-	TEST_CLEANUP;
 }

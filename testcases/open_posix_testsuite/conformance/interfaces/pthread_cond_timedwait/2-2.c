@@ -38,6 +38,8 @@ void *t1_func(void *arg)
 	struct timeval curtime;
 	struct timespec timeout;
 
+	(void) arg;
+
 	fprintf(stderr, "Thread1 started\n");
 
 	/* Lock the mutex */
@@ -73,10 +75,10 @@ void *t1_func(void *arg)
 	}
 }
 
-int main()
+int main(void)
 {
 	pthread_t thread1;
-	int th_ret;
+	void *th_ret;
 
 	if (pthread_mutex_init(&td.mutex, NULL) != 0) {
 		fprintf(stderr, "Fail to initialize mutex\n");
@@ -110,16 +112,16 @@ int main()
 	alarm(INTERVAL);
 
 	/* Wait for the thread to return. */
-	if (pthread_join(thread1, (void *)&th_ret) != 0) {
+	if (pthread_join(thread1, &th_ret) != 0) {
 		fprintf(stderr, "Could not join the thread.\n");
 		return PTS_UNRESOLVED;
 	}
 
-	if (th_ret == PTS_PASS) {
+	if ((long)th_ret == PTS_PASS) {
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		printf("Test FAILED\n");
-		return PTS_FAIL;
 	}
+
+	printf("Test FAILED\n");
+	return PTS_FAIL;
 }

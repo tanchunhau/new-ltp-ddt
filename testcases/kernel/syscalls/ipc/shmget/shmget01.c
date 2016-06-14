@@ -66,20 +66,17 @@ int shm_id_1 = -1;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	struct shmid_ds buf;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Use TEST macro to make the call
@@ -92,40 +89,36 @@ int main(int ac, char **av)
 				 TCID, TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
 			shm_id_1 = TEST_RETURN;
-			if (STD_FUNCTIONAL_TEST) {
-				/* do a STAT and check some info */
-				if (shmctl(shm_id_1, IPC_STAT, &buf) == -1) {
-					tst_resm(TBROK, "shmctl failed in "
-						 "functional test");
-					continue;
-				}
-				/* check the seqment size */
-				if (buf.shm_segsz != SHM_SIZE) {
-					tst_resm(TFAIL, "seqment size is not "
-						 "correct");
-					continue;
-				}
-				/* check the pid of the creator */
-				if (buf.shm_cpid != getpid()) {
-					tst_resm(TFAIL, "creator pid is not "
-						 "correct");
-					continue;
-				}
-				/*
-				 * check the mode of the seqment
-				 * mask out all but the lower 9 bits
-				 */
-				if ((buf.shm_perm.mode & MODE_MASK) !=
-				    ((SHM_RW) & MODE_MASK)) {
-					tst_resm(TFAIL, "segment mode is not "
-						 "correct");
-					continue;
-				}
-				/* if we get here, everything looks good */
-				tst_resm(TPASS, "size, pid & mode are correct");
-			} else {
-				tst_resm(TPASS, "call succeeded");
+			/* do a STAT and check some info */
+			if (shmctl(shm_id_1, IPC_STAT, &buf) == -1) {
+				tst_resm(TBROK, "shmctl failed in "
+					 "functional test");
+				continue;
 			}
+			/* check the seqment size */
+			if (buf.shm_segsz != SHM_SIZE) {
+				tst_resm(TFAIL, "seqment size is not "
+					 "correct");
+				continue;
+			}
+			/* check the pid of the creator */
+			if (buf.shm_cpid != getpid()) {
+				tst_resm(TFAIL, "creator pid is not "
+					 "correct");
+				continue;
+			}
+			/*
+			 * check the mode of the seqment
+			 * mask out all but the lower 9 bits
+			 */
+			if ((buf.shm_perm.mode & MODE_MASK) !=
+			    ((SHM_RW) & MODE_MASK)) {
+				tst_resm(TFAIL, "segment mode is not "
+					 "correct");
+				continue;
+			}
+			/* if we get here, everything looks good */
+			tst_resm(TPASS, "size, pid & mode are correct");
 		}
 
 		/*
@@ -174,11 +167,5 @@ void cleanup(void)
 	rm_shm(shm_id_1);
 
 	tst_rmdir();
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

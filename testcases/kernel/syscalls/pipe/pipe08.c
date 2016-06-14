@@ -52,7 +52,6 @@
 #include <signal.h>
 #include <string.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "pipe08";
 int TST_TOTAL = 1;
@@ -64,26 +63,20 @@ void sighandler(int);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
 	int pipefd[2];		/* fds for pipe read/write */
 	char wrbuf[BUFSIZ];
 	int written, length;
 	int close_stat;		/*  exit status of close(read fd) */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	if (!STD_FUNCTIONAL_TEST) {
-		tst_resm(TWARN, "-f option should not be used");
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		TEST(pipe(pipefd));
 
@@ -125,7 +118,7 @@ void sighandler(int sig)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, sighandler, cleanup);
@@ -137,11 +130,6 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }

@@ -78,31 +78,26 @@
 #include <errno.h>
 #include <stdio.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup(void);
 void cleanup(void);
 
-int exp_enos[] = { EBADF, EINVAL, 0 };
-
-char *TCID = "flock02";		/* Test program identifier */
-int TST_TOTAL = 3;		/* Total number of test cases */
+char *TCID = "flock02";
+int TST_TOTAL = 3;
 char filename[100];
 int fd;
 
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(flock(-1, LOCK_SH));
 
@@ -149,8 +144,6 @@ void setup(void)
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	TEST_EXP_ENOS(exp_enos);
-
 	TEST_PAUSE;
 
 	tst_tmpdir();
@@ -164,8 +157,6 @@ void setup(void)
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	unlink(filename);
 	tst_rmdir();
 

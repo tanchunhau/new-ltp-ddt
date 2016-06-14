@@ -74,7 +74,6 @@
 #include <linux/utsname.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define MAX_LENGTH __NEW_UTS_LEN
 
@@ -83,7 +82,6 @@ int TST_TOTAL = 1;
 
 static char ltpthost[] = "ltphost";
 static char hname[MAX_LENGTH];
-static int exp_enos[] = { EPERM, 0 };
 
 static char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
@@ -94,12 +92,8 @@ static void cleanup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/* Do initial setup */
 	setup();
@@ -107,7 +101,7 @@ int main(int ac, char **av)
 	/* Check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* call sethostname() */
 		TEST(sethostname(ltpthost, sizeof(ltpthost)));
@@ -119,7 +113,6 @@ int main(int ac, char **av)
 				 "expected error;  errno: %d : %s",
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		}
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 	}
 
@@ -132,19 +125,13 @@ int main(int ac, char **av)
 /*
  * setup() - performs all one time setup for this test.
  */
-void setup()
+void setup(void)
 {
 	int ret;
 
-	/* set up expected errnos */
-	TEST_EXP_ENOS(exp_enos);
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Test should be executed as root user */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 
 	/* Switch to nobody user for correct error code collection */
 	if ((ltpuser = getpwnam(nobody_uid)) == NULL) {
@@ -172,14 +159,9 @@ void setup()
  * cleanup()  - performs all one time cleanup for this test
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	int ret;
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Set effective user id back to root/super user */
 	if (seteuid(0) == -1) {

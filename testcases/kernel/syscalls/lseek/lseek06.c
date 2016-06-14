@@ -77,14 +77,13 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define OFFSET		4
 #define TEMP_FILE	"tmp_file"
 #define FILE_MODE	S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 
-char *TCID = "lseek06";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "lseek06";
+int TST_TOTAL = 1;
 int fildes;			/* file handle for temp file */
 
 void setup();			/* Main setup function of test */
@@ -93,18 +92,15 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	char read_buf[1];	/* data read from temp. file */
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Invoke lseek(2) to move the read/write file
@@ -118,49 +114,40 @@ int main(int ac, char **av)
 			continue;
 		}
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Check if the return value from lseek(2)
+		 * is equal to the specified OFFSET value.
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Check if the return value from lseek(2)
-			 * is equal to the specified OFFSET value.
-			 */
-			if (TEST_RETURN != OFFSET) {
-				tst_resm(TFAIL, "lseek() returned incorrect "
-					 "value %ld, expected %d",
-					 TEST_RETURN, OFFSET);
-				continue;
-			}
-			/*
-			 * The return value is good, now check data.
-			 * Read the data byte from this location.
-			 */
-			if (read(fildes, &read_buf, sizeof(read_buf)) < 0) {
-				tst_brkm(TFAIL, cleanup, "read() failed "
-					 "on %s, error=%d", TEMP_FILE, errno);
-			} else {
-				/*
-				 * Check if read byte is the expected character.
-				 * For pos 4 ---> 'e'
-				 */
-				if (read_buf[0] != 'e') {
-					tst_resm(TFAIL, "Incorrect data read "
-						 "from file %s", TEMP_FILE);
-				} else {
-					tst_resm(TPASS, "Functionality "
-						 "of lseek() on %s "
-						 "successful", TEMP_FILE);
-				}
-			}
+		if (TEST_RETURN != OFFSET) {
+			tst_resm(TFAIL, "lseek() returned incorrect "
+				 "value %ld, expected %d",
+				 TEST_RETURN, OFFSET);
+			continue;
+		}
+		/*
+		 * The return value is good, now check data.
+		 * Read the data byte from this location.
+		 */
+		if (read(fildes, &read_buf, sizeof(read_buf)) < 0) {
+			tst_brkm(TFAIL, cleanup, "read() failed "
+				 "on %s, error=%d", TEMP_FILE, errno);
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			/*
+			 * Check if read byte is the expected character.
+			 * For pos 4 ---> 'e'
+			 */
+			if (read_buf[0] != 'e') {
+				tst_resm(TFAIL, "Incorrect data read "
+					 "from file %s", TEMP_FILE);
+			} else {
+				tst_resm(TPASS, "Functionality "
+					 "of lseek() on %s "
+					 "successful", TEMP_FILE);
+			}
 		}
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -169,7 +156,7 @@ int main(int ac, char **av)
  *	     Create a test file under temporary directory and write some
  *	     data into it.
  */
-void setup()
+void setup(void)
 {
 	char write_buf[BUFSIZ];	/* buffer to hold data */
 
@@ -201,13 +188,8 @@ void setup()
  *             completion or premature exit.
  *	       Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Close the temporary file created */
 	if (close(fildes) < 0) {

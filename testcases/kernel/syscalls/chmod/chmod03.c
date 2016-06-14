@@ -80,7 +80,6 @@
 #include <pwd.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define FILE_MODE       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 #define PERMS		01777	/*
@@ -89,8 +88,8 @@
 				 */
 #define TESTFILE	"testfile"
 
-char *TCID = "chmod03";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "chmod03";
+int TST_TOTAL = 1;
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
 
@@ -101,17 +100,15 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;
 	int lc;
-	char *msg;
 	mode_t file_mode;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(chmod(TESTFILE, PERMS));
 
@@ -120,39 +117,34 @@ int main(int ac, char **av)
 				 TESTFILE, PERMS);
 			continue;
 		}
+		if (stat(TESTFILE, &stat_buf) < 0) {
+			tst_brkm(TFAIL | TERRNO, cleanup,
+				 "stat(%s) failed", TESTFILE);
+		}
+		file_mode = stat_buf.st_mode;
 
-		if (STD_FUNCTIONAL_TEST) {
-			if (stat(TESTFILE, &stat_buf) < 0) {
-				tst_brkm(TFAIL | TERRNO, cleanup,
-					 "stat(%s) failed", TESTFILE);
-			}
-			file_mode = stat_buf.st_mode;
-
-			/* Verify STICKY BIT set on testfile */
-			if ((file_mode & PERMS) != PERMS) {
-				tst_resm(TFAIL, "%s: Incorrect modes 0%3o, "
-					 "Expected 0777", TESTFILE, file_mode);
-			} else {
-				tst_resm(TPASS, "Functionality of "
-					 "chmod(%s, %#o) successful",
-					 TESTFILE, PERMS);
-			}
-		} else
-			tst_resm(TPASS, "call succeeded");
+		/* Verify STICKY BIT set on testfile */
+		if ((file_mode & PERMS) != PERMS) {
+			tst_resm(TFAIL, "%s: Incorrect modes 0%3o, "
+				 "Expected 0777", TESTFILE, file_mode);
+		} else {
+			tst_resm(TPASS, "Functionality of "
+				 "chmod(%s, %#o) successful",
+				 TESTFILE, PERMS);
+		}
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
-void setup()
+void setup(void)
 {
 	int fd;
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	tst_require_root(NULL);
+	tst_require_root();
 	ltpuser = getpwnam(nobody_uid);
 	if (ltpuser == NULL)
 		tst_brkm(TBROK | TERRNO, NULL, "getpwnam failed");
@@ -186,12 +178,8 @@ void setup()
  *		completion or premature exit.
  *  Delete the testfile and temporary directory created in setup().
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

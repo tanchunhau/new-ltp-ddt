@@ -47,7 +47,6 @@
 #include <errno.h>
 #include <wait.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "setpgrp02";
 int TST_TOTAL = 1;
@@ -58,21 +57,18 @@ void cleanup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;		/* message returned by parse_opts */
 
 	int pid, oldpgrp;
 	int e_code, status, retval = 0;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		if ((pid = FORK_OR_VFORK()) == -1) {
 			tst_brkm(TBROK, cleanup, "fork() failed");
@@ -87,11 +83,6 @@ int main(int ac, char **av)
 				retval = 1;
 				tst_resm(TFAIL, "setpgrp() FAILED, errno:%d",
 					 errno);
-				continue;
-			}
-
-			if (!STD_FUNCTIONAL_TEST) {
-				tst_resm(TPASS, "call succeeded");
 				continue;
 			}
 
@@ -121,7 +112,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -133,12 +124,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

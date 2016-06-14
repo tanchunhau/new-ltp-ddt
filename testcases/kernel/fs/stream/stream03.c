@@ -35,7 +35,6 @@
 #include <sys/stat.h>
 #include <inttypes.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "stream03";
 int TST_TOTAL = 1;
@@ -55,15 +54,11 @@ int main(int ac, char *av[])
 	long pos;
 	off_t opos;
 	int lc;
-	char *msg;
 
 	/*
 	 * parse standard options
 	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_resm(TBROK, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	local_flag = PASSED;
 	tst_tmpdir();
@@ -75,9 +70,9 @@ int main(int ac, char *av[])
 		//block0:
 
 		if ((stream = fopen(tempfile1, "a+")) == NULL) {
-			tst_resm(TBROK, "fopen(%s) a+ failed: %s", tempfile1,
+			tst_brkm(TBROK, NULL, "fopen(%s) a+ failed: %s",
+				 tempfile1,
 				 strerror(errno));
-			tst_exit();
 		}
 
 		/* make sure offset of zero at start */
@@ -90,8 +85,8 @@ int main(int ac, char *av[])
 
 		/* write something and check */
 		if (fwrite(junk, sizeof(*junk), strlen(junk), stream) == 0) {
-			tst_resm(TFAIL, "fwrite failed: %s", strerror(errno));
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "fwrite failed: %s",
+				 strerror(errno));
 		}
 
 		pos = ftell(stream);
@@ -116,8 +111,8 @@ int main(int ac, char *av[])
 
 		/* seek from current position and then check */
 		if (fseek(stream, strlen(junk), 1) != 0) {
-			tst_resm(TFAIL, "fseek failed: %s", strerror(errno));
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "fseek failed: %s",
+				 strerror(errno));
 		}
 
 		pos = ftell(stream);
@@ -131,8 +126,8 @@ int main(int ac, char *av[])
 
 		/* seek from end of file and then check */
 		if (fseek(stream, 0, 2) != 0) {
-			tst_resm(TFAIL, "fseek failed: %s", strerror(errno));
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "fseek failed: %s",
+				 strerror(errno));
 		}
 
 		pos = ftell(stream);
@@ -146,8 +141,8 @@ int main(int ac, char *av[])
 
 		/* rewind with seek and then check */
 		if (fseek(stream, 0, 0) != 0) {
-			tst_resm(TFAIL, "fseek failed: %s", strerror(errno));
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "fseek failed: %s",
+				 strerror(errno));
 		}
 
 		pos = ftell(stream);
@@ -186,9 +181,9 @@ int main(int ac, char *av[])
 	/*--------------------------------------------------------------------*/
 		//block1:
 		if ((stream = fopen(tempfile1, "a+")) == NULL) {
-			tst_resm(TFAIL, "fopen(%s) a+ failed: %s", tempfile1,
+			tst_brkm(TFAIL, NULL, "fopen(%s) a+ failed: %s",
+				 tempfile1,
 				 strerror(errno));
-			tst_exit();
 		}
 
 		/* make sure offset of zero at start */
@@ -203,8 +198,8 @@ int main(int ac, char *av[])
 
 		/* write something and check */
 		if (fwrite(junk, sizeof(*junk), strlen(junk), stream) == 0) {
-			tst_resm(TFAIL, "fwrite failed: %s", strerror(errno));
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "fwrite failed: %s",
+				 strerror(errno));
 		}
 
 		opos = ftello(stream);
@@ -229,8 +224,8 @@ int main(int ac, char *av[])
 
 		/* seek from current position and then check */
 		if (fseeko(stream, strlen(junk), 1) != 0) {
-			tst_resm(TFAIL, "fseeko failed: %s", strerror(errno));
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "fseeko failed: %s",
+				 strerror(errno));
 		}
 
 		opos = ftello(stream);
@@ -244,8 +239,8 @@ int main(int ac, char *av[])
 
 		/* seek from end of file and then check */
 		if (fseeko(stream, 0, 2) != 0) {
-			tst_resm(TFAIL, "fseeko failed: %s", strerror(errno));
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "fseeko failed: %s",
+				 strerror(errno));
 		}
 
 		opos = ftello(stream);
@@ -259,8 +254,8 @@ int main(int ac, char *av[])
 
 		/* rewind with seek and then check */
 		if (fseeko(stream, 0, 0) != 0) {
-			tst_resm(TFAIL, "fseeko failed: %s", strerror(errno));
-			tst_exit();
+			tst_brkm(TFAIL, NULL, "fseeko failed: %s",
+				 strerror(errno));
 		}
 
 		opos = ftello(stream);

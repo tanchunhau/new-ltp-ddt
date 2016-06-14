@@ -1,217 +1,138 @@
-#! /bin/sh
-unset LIBPATH
+#!/bin/sh
+# Copyright (c) 2015 Oracle and/or its affiliates. All Rights Reserved.
+# Copyright (c) International Business Machines  Corp., 2000
 #
-#   Copyright (c) International Business Machines  Corp., 2000
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
 #
-#   This program is free software;  you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; either version 2 of the License, or
-#   (at your option) any later version.
+# This program is distributed in the hope that it would be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY;  without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
-#   the GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write the Free Software Foundation,
+# Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
-#   You should have received a copy of the GNU General Public License
-#   along with this program;  if not, write to the Free Software
-#   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+# TEST DESCRIPTION : To verify that two of the new options for level IPPROTO_IP
+#                    Service Interface allow the list of host group memberships
+#                    to be updated properly in response to the JoinHostGroup and
+#                    LeaveHostGroup requests. To test boundary conditions while
+#                    exercising IP Multicast JoinHostGroup and LeaveHostGroup
+#                    Service Interfaces.
 #
-#
-#
-#  FILE             : mc_member
-#
-#  TEST DESCRIPTION : To verify that two of the new options for level IPPROTO_IP
-#                     Service Interface allow the list of host group memberships
-#                     to be updated properly in response to the JoinHostGroup and
-#                     LeaveHostGroup requests. To test boundary conditions while
-#                     exercising IP Multicast JoinHostGroup and LeaveHostGroup
-#                     Service Interfaces.
-#
-#  HISTORY:
-#    03/26/01 Robbie Williamson (robbiew@us.ibm.com)
-#      -Ported
-#
-#******************************************************************************
-#Uncomment the line below for debug output
-#trace_logic=${trace_logic:-"set -x"}
-$trace_logic
+# HISTORY: 03/26/01 Robbie Williamson (robbiew@us.ibm.com) Ported
 
-TC=mc_member
-TCsrc=${TCsrc:-`pwd`}
-TCtmp=${TCtmp:-$TCsrc/$TC$$}
-CLEANUP=${CLEANUP:-ON}
+GLIST=${GLIST:-$LTPROOT/testcases/data/mc_member/ManyGroups}
+TooManyGLIST=${TooManyGLIST:-$LTPROOT/testcases/data/mc_member/TooManyGroups}
+ERRFILE=${ERRFILE:-errors}
 
-LTPROOT=${LTPROOT:-"../../../../"}
-EXECUTABLES=${EXECUTABLES:-"member"}
-NUMLOOPS=${NUMLOOPS:-2}
-INTERFACE=${INTERFACE:-$("$LTPROOT/bin/gethost" `hostname`| grep address |awk '{ print $2 }')}
-GLIST=${GLIST:-$TCsrc/ManyGroups}
-TooManyGLIST=${TooManyGLIST:-$TCsrc/TooManyGroups}
-ERRFILE=${ERRFILE:-$TCtmp/errors}
+TCID=mc_member
+TST_TOTAL=1
+TST_COUNT=1
 
-this_file=${0##*/}
-trap "interrupt_test" 2
+. test_net.sh
 
 setup()
 {
-  mkdir -p $TCtmp
+	tst_check_cmds netstat
+	tst_tmpdir
 }
 
 get_address()
 {
-  DIGIT=`ps -ef | grep mc_member | grep -v grep | wc -l`
-  ADDRESS=$DIGIT.$DIGIT.$DIGIT.$DIGIT
+	DIGIT=`ps -ef | grep mc_member | grep -v grep | wc -l`
+	ADDRESS=$DIGIT.$DIGIT.$DIGIT.$DIGIT
 }
-
-#******************************************************************************
-#
-# FUNCTION:  do_test
-# PURPOSE:   Executes the testcases.
-# INPUT:     Number of iterations
-# OUTPUT:    Error messages are logged when any verification test
-#            fails.
-#
-#-----------------------------------------------------------------------
 
 do_test()
 {
-   $trace_logic
-   echo "$this_file: doing $0."
+	tst_resm TINFO "doing test."
+	local ipaddr=$(tst_ipaddr)
+	COUNT=1
+	while [ $COUNT -le 2 ]
+	do
+		# Run setsockopt test with bogus network
+		get_address
+		tst_resm TINFO "Running mc_member_e on $ADDRESS"
+		mc_member_test -j -g $GLIST -s 30 -i $ADDRESS >/dev/null 2>&1
 
-   COUNT=1
-   while [ $COUNT -le $NUMLOOPS ]
-   do
-      # Run setsockopt test with bogus network
-      get_address
-      echo "Running mc_member_e on $ADDRESS"
-      $TCsrc/$EXECUTABLES -j -g $GLIST -s 30 -i $ADDRESS >/dev/null 2>&1
+		# Run setsockopt/getsockopt test
+		mc_member_test -g $GLIST -s 80 -i $ipaddr > $ERRFILE 2>&1 &
 
-      # Run setsockopt/getsockopt test
+		# Join twice and leave once and see if the groups are still
+		# joined on all specified interfaces.
+		for agroup in `cat $GLIST`
+		do
+			tst_resm TINFO "Running (1st) member on $ipaddr"
+			mc_member_test -j -g $GLIST -s 30 -i $ipaddr \
+				       > $ERRFILE 2>&1 &
+			sleep 5
+			grep "cannot join group" $ERRFILE
+			if [ $? -eq 0 ]; then
+				tst_brkm TFAIL "MC group could NOT join "\
+					      "$ipaddr"
+			fi
 
-      $TCsrc/$EXECUTABLES -g $GLIST -s 80 -i $INTERFACE > $ERRFILE 2>&1 &
+			tst_resm TINFO "Running (2nd) member on $ipaddr"
+			mc_member_test -g $GLIST -s 60 -i $ipaddr \
+				       > $ERRFILE 2>&1 &
+			sleep 5
+			grep "cannot join group" $ERRFILE
+			if [ $? -eq 0 ]; then
+				tst_brkm TFAIL "MC group could NOT join "\
+					      "$ipaddr"
+			fi
+		done
 
-      # Join twice and leave once and see if the groups are still joined on
-      # all specified interfaces.
+		# See if the groups are joined
+		for agroup in `cat $GLIST`
+		do
+			netstat -gn | grep $agroup
+			if [ $? -ne 0 ]; then
+				tst_brkm TFAIL "$agroup NOT joined to $ipaddr"
+			fi
+		done
 
-      for agroup in `cat $GLIST`
-      do
-         echo "Running (1st) member on $INTERFACE"
-         $TCsrc/$EXECUTABLES -j -g $GLIST -s 30 -i $INTERFACE > $ERRFILE 2>&1 &
-         sleep 5
-         grep "cannot join group" $ERRFILE
-         [ $? = 0 ] && end_testcase "MC group could NOT join $INTERFACE"
+		tst_resm TINFO "Waiting 60 seconds! Do not interrupt!"
+		sleep 60 # Make sure the first process has stopped
 
-         echo "Running (2nd) member on  $INTERFACE"
-         $TCsrc/$EXECUTABLES -g $GLIST -s 60 -i $INTERFACE > $ERRFILE 2>&1 &
-         sleep 5
-         grep "cannot join group" $ERRFILE
-         [ $? = 0 ] && end_testcase "MC group could NOT join $INTERFACE"
-      done
+		for agroup in `cat $GLIST`
+		do
+			netstat -gn | grep $agroup
+			if [ $? -ne 1 ]; then
+				tst_brkm TFAIL "$agroup still joined on "\
+					      "$ipaddr"
+			fi
+		done
 
-      # See if the groups are joined
+		# Test the membership boundaries
+		tst_resm TINFO "Running member on too many groups over "\
+			       "$ipaddr"
+		mc_member_test -j -g $TooManyGLIST -i $ipaddr \
+			       > $ERRFILE 2>&1 &
 
-      for agroup in `cat $GLIST`
-      do
-	 netstat -gn | grep $agroup
-         [ $? = 0 ] || end_testcase "$agroup NOT joined to $INTERFACE"
+		count=`grep 105 $ERRFILE | wc -l`
+		if [ $count -gt 3 ]; then
+			tst_brkm TFAIL "Could not join members!"
+		fi
 
-         # See if they respond to a ping.
-	 #ping -c 3 -I $INTERFACE $agroup
-	 #[ $? != 0 ] && { echo "Error - $TC: $agroup NOT responding over $INTERFACE" ;}
+		COUNT=$(( $COUNT + 1 ))
 
-      done
+	done
 
-      echo "Waiting 60 seconds! Do not interrupt!"
-      sleep 60 # Make sure the first process has stopped
-
-      for agroup in `cat $GLIST`
-      do
-	netstat -gn | grep $agroup
-        if [ $? != 1 ]; then
-	   end_testcase "$agroup still joined on $INTERFACE"
-	fi
-      done
-
-      # Test the membership boundaries
-
-      echo "Running member on too many groups over $INTERFACE"
-      $TCsrc/$EXECUTABLES -j -g $TooManyGLIST -i $INTERFACE > $ERRFILE 2>&1 &
-
-      count=`grep 105 $ERRFILE | wc -l`
-
-      [ $count -gt 3 ] && end_testcase "Could not join members!"
-
-      COUNT=$(( $COUNT + 1 ))
-
-   done   # end of while numloop
+	tst_resm TPASS "Test Successful"
+	tst_exit
 }
-
-#-----------------------------------------------------------------------
-#
-# FUNCTION:     do_cleanup
-# PURPOSE:      Called when the testcase is interrupted by the user
-#               or by interrupt_testcase() when time limit expired
-# INPUT:        None.
-# OUTPUT:       None.
-#
-#-----------------------------------------------------------------------
 
 do_cleanup()
 {
-   $trace_logic
-   echo "$this_file: doing $0."
-
-   rm -rf $TCtmp
+	tst_rmdir
 }
 
-#=============================================================================
-# FUNCTION NAME:        end_testcase
-#
-# FUNCTION DESCRIPTION: Clean up
-#
-# PARAMETERS:           string, IF AND ONLY IF the testcase fails
-#
-# RETURNS:              None.
-#=============================================================================
-
-end_testcase()
-{
-   $trace_logic
-   echo "$this_file: doing $0."
-
-   # Call other cleanup functions
-   [ $CLEANUP = "ON" ] && do_cleanup
-
-   [ $# = 0 ] && { echo "Test Successful"; exit 0; }
-   echo "Test Failed: $@"
-   exit 1
-}
-
-#******************************************************************************
-#
-# FUNCTION:  interrupt_test
-# PURPOSE:   Handle process interrupts set by trap.
-# INPUT:     none
-# OUTPUT:    none
-#
-#******************************************************************************
-
-interrupt_test()
-{
-   echo "test interrupted"
-   end_testcase
-}
-
-#******************************************************************************
-#
-# FUNCTION:  MAIN
-# PURPOSE:   To invoke functions that perform the tasks as described in
-#            the design in the prolog above.
-# INPUT:     See SETUP in the prolog above.
-# OUTPUT:    Logged run results written to testcase run log
-#
-#******************************************************************************
 setup
+TST_CLEANUP=do_cleanup
+
 do_test
-end_testcase

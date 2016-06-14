@@ -58,7 +58,6 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include "test.h"
-#include "usctest.h"
 #include "libftest.h"
 
 char *TCID = "ftest01";
@@ -97,10 +96,8 @@ static int local_flag;
 int main(int ac, char *av[])
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, cleanup, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -265,36 +262,37 @@ static void dotest(int testers, int me, int fd)
 	char *bits, *hold_bits, *buf, *val_buf, *zero_buf;
 	char val;
 	int count, collide, chunk, whenmisc, xfr, i;
+	struct stat stat;
 
 	nchunks = max_size / csize;
 
 	if ((bits = calloc((nchunks + 7) / 8, 1)) == 0) {
-		tst_resm(TBROK,
+		tst_brkm(TBROK,
+			 NULL,
 			 "Test broken due to inability of malloc(bits).");
-		tst_exit();
 	}
 
 	if ((hold_bits = calloc((nchunks + 7) / 8, 1)) == 0) {
-		tst_resm(TBROK,
+		tst_brkm(TBROK,
+			 NULL,
 			 "Test broken due to inability of malloc(hold_bits).");
-		tst_exit();
 	}
 
 	if ((buf = (calloc(csize, 1))) == 0) {
-		tst_resm(TBROK, "Test broken due to inability of malloc(buf).");
-		tst_exit();
+		tst_brkm(TBROK, NULL,
+			 "Test broken due to inability of malloc(buf).");
 	}
 
 	if ((val_buf = (calloc(csize, 1))) == 0) {
-		tst_resm(TBROK,
+		tst_brkm(TBROK,
+			 NULL,
 			 "Test broken due to inability of malloc(val_buf).");
-		tst_exit();
 	}
 
 	if ((zero_buf = (calloc(csize, 1))) == 0) {
-		tst_resm(TBROK,
+		tst_brkm(TBROK,
+			 NULL,
 			 "Test broken due to inability of malloc(zero_buf).");
-		tst_exit();
 	}
 
 	/*
@@ -338,17 +336,16 @@ static void dotest(int testers, int me, int fd)
 			 * Read it.
 			 */
 			if (lseek(fd, CHUNK(chunk), 0) < 0) {
-				tst_resm(TFAIL,
+				tst_brkm(TFAIL,
+					 NULL,
 					 "Test[%d]: lseek(0) fail at %x, errno = %d.",
 					 me, CHUNK(chunk), errno);
-
-				tst_exit();
 			}
 			if ((xfr = read(fd, buf, csize)) < 0) {
-				tst_resm(TFAIL,
+				tst_brkm(TFAIL,
+					 NULL,
 					 "Test[%d]: read fail at %x, errno = %d.",
 					 me, CHUNK(chunk), errno);
-				tst_exit();
 			}
 			/*
 			 * If chunk beyond EOF just write on it.
@@ -360,10 +357,10 @@ static void dotest(int testers, int me, int fd)
 				++count;
 			} else if ((bits[chunk / 8] & (1 << (chunk % 8))) == 0) {
 				if (xfr != csize) {
-					tst_resm(TFAIL,
+					tst_brkm(TFAIL,
+						 NULL,
 						 "Test[%d]: xfr=%d != %d, zero read.",
 						 me, xfr, csize);
-					tst_exit();
 				}
 				if (memcmp(buf, zero_buf, csize)) {
 					tst_resm(TFAIL,
@@ -371,9 +368,13 @@ static void dotest(int testers, int me, int fd)
 						 "count %d xfr %d file_max 0x%x, should be %d.",
 						 me, CHUNK(chunk), val, count,
 						 xfr, file_max, zero_buf[0]);
-					tst_resm(TFAIL,
-						 "Test[%d]: last_trunc = 0x%x.",
+					tst_resm(TINFO,
+						 "Test[%d]: last_trunc = 0x%x",
 						 me, last_trunc);
+					fstat(fd, &stat);
+					tst_resm(TINFO,
+						 "\tStat: size=%llx, ino=%x",
+						 stat.st_size, (unsigned)stat.st_ino);
 					sync();
 					ft_dumpbuf(buf, csize);
 					ft_dumpbits(bits, (nchunks + 7) / 8);
@@ -388,10 +389,10 @@ static void dotest(int testers, int me, int fd)
 				++count;
 			} else {
 				if (xfr != csize) {
-					tst_resm(TFAIL,
+					tst_brkm(TFAIL,
+						 NULL,
 						 "\tTest[%d]: xfr=%d != %d, val read.",
 						 me, xfr, csize);
-					tst_exit();
 				}
 				++collide;
 				if (memcmp(buf, val_buf, csize)) {
@@ -400,9 +401,13 @@ static void dotest(int testers, int me, int fd)
 						 "count %d xfr %d file_max 0x%x.",
 						 me, CHUNK(chunk), val, count,
 						 xfr, file_max);
-					tst_resm(TFAIL,
-						 "Test[%d]: last_trunc = 0x%x.",
+					tst_resm(TINFO,
+						 "Test[%d]: last_trunc = 0x%x",
 						 me, last_trunc);
+					fstat(fd, &stat);
+					tst_resm(TINFO,
+						 "\tStat: size=%llx, ino=%x",
+						 stat.st_size, (unsigned)stat.st_ino);
 					sync();
 					ft_dumpbuf(buf, csize);
 					ft_dumpbits(bits, (nchunks + 7) / 8);
@@ -418,10 +423,10 @@ static void dotest(int testers, int me, int fd)
 			 * Write it.
 			 */
 			if (lseek(fd, -xfr, 1) < 0) {
-				tst_resm(TFAIL,
+				tst_brkm(TFAIL,
+					 NULL,
 					 "Test[%d]: lseek(1) fail at %x, errno = %d.",
 					 me, CHUNK(chunk), errno);
-				tst_exit();
 			}
 			if ((xfr = write(fd, val_buf, csize)) < csize) {
 				if (errno == ENOSPC) {
@@ -431,10 +436,10 @@ static void dotest(int testers, int me, int fd)
 					fsync(fd);
 					tst_exit();
 				}
-				tst_resm(TFAIL,
+				tst_brkm(TFAIL,
+					 NULL,
 					 "Test[%d]: write fail at %x xfr %d, errno = %d.",
 					 me, CHUNK(chunk), xfr, errno);
-				tst_exit();
 			}
 			if (CHUNK(chunk) + csize > file_max)
 				file_max = CHUNK(chunk) + csize;
@@ -555,11 +560,6 @@ static void term(int sig LTP_ATTRIBUTE_UNUSED)
 
 static void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 }

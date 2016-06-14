@@ -44,7 +44,6 @@
 #include <errno.h>
 #include <string.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "fork12";
 int TST_TOTAL = 1;
@@ -58,16 +57,13 @@ int main(int ac, char **av)
 	int forks, pid1, fork_errno, waitstatus;
 	int ret, status;
 	int lc;
-	char *msg;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		tst_resm(TINFO, "Forking as many kids as possible");
 		forks = 0;
@@ -112,20 +108,19 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-static void setup()
+static void setup(void)
 {
 	tst_sig(FORK, fork12_sigs, cleanup);
 	TEST_PAUSE;
 }
 
-static void cleanup()
+static void cleanup(void)
 {
 	int waitstatus;
 
 	/* collect our kids */
 	kill(0, SIGQUIT);
 	while (wait(&waitstatus) > 0) ;
-	TEST_CLEANUP;
 }
 
 static void fork12_sigs(int signum)

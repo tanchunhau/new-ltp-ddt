@@ -67,11 +67,12 @@
 #include <string.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 #include "mem.h"
 
 char *TCID = "ksm01";
 int TST_TOTAL = 1;
+
+static int merge_across_nodes;
 
 option_t ksm_options[] = {
 	{"n:", &opt_num, &opt_numstr},
@@ -83,15 +84,12 @@ option_t ksm_options[] = {
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
 	int size = 128, num = 3, unit = 1;
 
-	msg = parse_opts(argc, argv, ksm_options, ksm_usage);
-	if (msg != NULL)
-		tst_brkm(TBROK, tst_exit, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, ksm_options, ksm_usage);
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		check_ksm_options(&size, &num, &unit);
 		create_same_memory(size, num, unit);
 	}
@@ -101,12 +99,27 @@ int main(int argc, char *argv[])
 
 void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 
 	if (tst_kvercmp(2, 6, 32) < 0)
 		tst_brkm(TCONF, NULL, "2.6.32 or greater kernel required");
 	if (access(PATH_KSM, F_OK) == -1)
 		tst_brkm(TCONF, NULL, "KSM configuration is not enabled");
+
+	save_max_page_sharing();
+
+	/*
+	 * kernel commit 90bd6fd introduced a new KSM sysfs knob
+	 * /sys/kernel/mm/ksm/merge_across_nodes, setting it to '0'
+	 * will prevent KSM pages being merged across numa nodes,
+	 * which will cause the case fail, so we need to make sure
+	 * it is enabled before testing.
+	 */
+	if (access(PATH_KSM "merge_across_nodes", F_OK) == 0) {
+		SAFE_FILE_SCANF(NULL, PATH_KSM "merge_across_nodes",
+				"%d", &merge_across_nodes);
+		SAFE_FILE_PRINTF(NULL, PATH_KSM "merge_across_nodes", "1");
+	}
 
 	tst_sig(FORK, DEF_HANDLER, NULL);
 	TEST_PAUSE;
@@ -114,5 +127,9 @@ void setup(void)
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
+	if (access(PATH_KSM "merge_across_nodes", F_OK) == 0)
+		FILE_PRINTF(PATH_KSM "merge_across_nodes",
+				 "%d", merge_across_nodes);
+
+	restore_max_page_sharing();
 }

@@ -53,7 +53,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "dup202";
 int TST_TOTAL = 3;
@@ -87,18 +86,16 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i, ofd;
 	struct stat oldbuf, newbuf;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -115,26 +112,22 @@ int main(int ac, char **av)
 				continue;
 			}
 
-			if (STD_FUNCTIONAL_TEST) {
+			/* stat the original file */
+			if (fstat(ofd, &oldbuf) == -1)
+				tst_brkm(TBROK | TERRNO, cleanup,
+					 "fstat #1 failed");
 
-				/* stat the original file */
-				if (fstat(ofd, &oldbuf) == -1)
-					tst_brkm(TBROK | TERRNO, cleanup,
-						 "fstat #1 failed");
+			/* stat the duped file */
+			if (fstat(*TC[i].nfd, &newbuf) == -1)
+				tst_brkm(TBROK | TERRNO, cleanup,
+					 "fstat #2 failed");
 
-				/* stat the duped file */
-				if (fstat(*TC[i].nfd, &newbuf) == -1)
-					tst_brkm(TBROK | TERRNO, cleanup,
-						 "fstat #2 failed");
-
-				if (oldbuf.st_mode != newbuf.st_mode)
-					tst_resm(TFAIL, "original and dup "
-						 "modes do not match");
-				else
-					tst_resm(TPASS, "fstat shows new and "
-						 "old modes are the same");
-			} else
-				tst_resm(TPASS, "call succeeded");
+			if (oldbuf.st_mode != newbuf.st_mode)
+				tst_resm(TFAIL, "original and dup "
+					 "modes do not match");
+			else
+				tst_resm(TPASS, "fstat shows new and "
+					 "old modes are the same");
 
 			/* remove the file so that we can use it again */
 			if (close(*TC[i].nfd) == -1)
@@ -145,15 +138,15 @@ int main(int ac, char **av)
 				perror("unlink failed");
 		}
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -171,9 +164,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 }

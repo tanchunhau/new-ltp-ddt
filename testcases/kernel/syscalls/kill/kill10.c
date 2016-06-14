@@ -156,7 +156,6 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void help();
@@ -186,12 +185,10 @@ int child_checklist_total = 0;
 int checklist_cmp(const void *a, const void *b);
 void checklist_reset(int bit);
 
-inline int k_sigaction(int sig, struct sigaction *sa, struct sigaction *osa);
+static inline int k_sigaction(int sig, struct sigaction *sa, struct sigaction *osa);
 
-char *TCID = "kill10";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0, 0 };
+char *TCID = "kill10";
+int TST_TOTAL = 1;
 
 int num_procs = 10;
 int num_pgrps = 2;
@@ -207,7 +204,6 @@ pid_t mypid = 0;
 char *narg, *garg, *darg;
 int nflag = 0, gflag = 0, dflag = 0;
 
-/* for test specific parse_opts options */
 option_t options[] = {
 	{"n:", &nflag, &narg},	/* -n #procs */
 	{"g:", &gflag, &garg},	/* -g #pgrps */
@@ -218,12 +214,9 @@ option_t options[] = {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int cnt;
 
-	if ((msg = parse_opts(ac, av, options, &help))) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, options, &help);
 
 	if (nflag) {
 		if (sscanf(narg, "%i", &num_procs) != 1) {
@@ -244,11 +237,9 @@ int main(int ac, char **av)
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 		child_signal_counter = 0;
 		pgrps_ready = 0;
 		checklist_reset(0x03);
@@ -279,7 +270,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void help()
+void help(void)
 {
 	printf("  -g n    Create n process groups (default: %d)\n", num_pgrps);
 	printf
@@ -288,7 +279,7 @@ void help()
 	printf("  -d n    Set debug level to n (default: %d)\n", debug_flag);
 }
 
-void setup()
+void setup(void)
 {
 	struct sigaction sa;
 	int i;
@@ -429,7 +420,7 @@ void ack_done(int sig, siginfo_t * si, void *data)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	int i;
 	/* send SIGHUP to all pgroups */
@@ -439,11 +430,6 @@ void cleanup()
 		waitpid(child_checklist[i].pid, NULL, 0);
 	}
 	free(child_checklist);
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }
 
@@ -770,7 +756,7 @@ void checklist_reset(int bit)
 
 }
 
-inline int k_sigaction(int sig, struct sigaction *sa, struct sigaction *osa)
+static inline int k_sigaction(int sig, struct sigaction *sa, struct sigaction *osa)
 {
 	int ret;
 	if ((ret = sigaction(sig, sa, osa)) == -1) {

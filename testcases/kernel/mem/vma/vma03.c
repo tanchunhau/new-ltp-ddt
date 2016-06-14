@@ -49,7 +49,6 @@
 #include <unistd.h>
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "vma03";
 int TST_TOTAL = 1;
@@ -67,7 +66,6 @@ static void cleanup(void);
 
 int main(int argc, char *argv[])
 {
-	char *msg;
 	int lc;
 	void *map, *remap;
 	off_t pgoff;
@@ -75,15 +73,13 @@ int main(int argc, char *argv[])
 #if __WORDSIZE != 32
 	tst_brkm(TCONF, NULL, "test is designed for 32-bit system only.");
 #endif
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	pgsz = sysconf(_SC_PAGE_SIZE);
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		fd = open(TESTFILE, O_RDWR);
 		if (fd == -1)
@@ -101,8 +97,10 @@ int main(int argc, char *argv[])
 				tst_resm(TPASS, "mremap failed as expected.");
 			else
 				tst_resm(TFAIL | TERRNO, "mremap");
+			munmap(map, pgsz);
 		} else {
 			tst_resm(TFAIL, "mremap succeeded unexpectedly.");
+			munmap(remap, 2 * pgsz);
 		}
 
 		close(fd);
@@ -135,8 +133,6 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 }
 #else /* __NR_mmap2 */

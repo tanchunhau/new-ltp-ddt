@@ -61,9 +61,9 @@
 #include <unistd.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 #include "mem.h"
+#include "hugetlb.h"
 
 static char TEMPFILE[MAXPATHLEN];
 
@@ -77,16 +77,13 @@ static long beforetest;
 static long aftertest;
 static long hugepagesmapped;
 static long hugepages = 128;
-static long orig_hugepages;
 static char *Hopt;
-static char *nr_opt;
 
 static void help(void);
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int Hflag = 0;
 	int sflag = 0;
 	int huge_pagesize = 0;
@@ -97,14 +94,11 @@ int main(int ac, char **av)
 		{NULL, NULL, NULL}
 	};
 
-	msg = parse_opts(ac, av, options, &help);
-	if (msg)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s,"
-			 " use -help", msg);
+	tst_parse_opts(ac, av, options, &help);
 
 	if (!Hflag) {
 		tst_tmpdir();
-		Hopt = get_tst_tmpdir();
+		Hopt = tst_get_tmpdir();
 	}
 	if (sflag)
 		hugepages = SAFE_STRTOL(NULL, nr_opt, 0, LONG_MAX);
@@ -118,7 +112,7 @@ int main(int ac, char **av)
 			tst_brkm(TFAIL | TERRNO, cleanup, "open %s failed",
 				 TEMPFILE);
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* Note the number of free huge pages BEFORE testing */
 		freepages = read_meminfo("HugePages_Free:");
@@ -179,7 +173,8 @@ int main(int ac, char **av)
 void setup(void)
 {
 	TEST_PAUSE;
-	tst_require_root(NULL);
+	tst_require_root();
+	check_hugepage();
 	if (mount("none", Hopt, "hugetlbfs", 0, NULL) < 0)
 		tst_brkm(TBROK | TERRNO, NULL, "mount failed on %s", Hopt);
 	orig_hugepages = get_sys_tune("nr_hugepages");
@@ -189,8 +184,6 @@ void setup(void)
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	unlink(TEMPFILE);
 	set_sys_tune("nr_hugepages", orig_hugepages, 0);
 

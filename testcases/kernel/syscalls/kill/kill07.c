@@ -60,7 +60,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 
 #include <signal.h>
 #include <errno.h>
@@ -87,14 +86,11 @@ extern void rm_shm(int);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	pid_t pid;
 	int exno, status, nsig, asig, ret;
 	struct sigaction my_act, old_act;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&do_child, "");
 #endif
@@ -104,8 +100,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 		status = 1;
 		exno = 1;
 		my_act.sa_handler = sighandler;
@@ -118,7 +114,7 @@ int main(int ac, char **av)
 				 "Failed to setup shared memory");
 		}
 
-		if (*(flag = (int *)shmat(shmid1, 0, 0)) == -1) {
+		if (*(flag = shmat(shmid1, 0, 0)) == -1) {
 			tst_brkm(TBROK, cleanup,
 				 "Failed to attatch shared memory:%d", *flag);
 		}
@@ -153,35 +149,34 @@ int main(int ac, char **av)
 				 TCID, TEST_ERRNO, strerror(TEST_ERRNO));
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Check to see if the process was terminated with the
-			 * expected signal.
-			 */
-			nsig = WTERMSIG(status);
-			asig = WIFSIGNALED(status);
-			if ((asig == 0) & (*flag == 1)) {
-				tst_resm(TFAIL, "SIGKILL was unexpectedly"
-					 " caught");
-			} else if ((asig == 1) & (nsig == TEST_SIG)) {
-				tst_resm(TINFO, "received expected signal %d",
-					 nsig);
-				tst_resm(TPASS,
-					 "Did not catch signal as expected");
-			} else if (nsig) {
-				tst_resm(TFAIL,
-					 "expected signal %d received %d",
-					 TEST_SIG, nsig);
-			} else {
-				tst_resm(TFAIL, "No signals received");
-			}
+		/*
+		 * Check to see if the process was terminated with the
+		 * expected signal.
+		 */
+		nsig = WTERMSIG(status);
+		asig = WIFSIGNALED(status);
+		if ((asig == 0) & (*flag == 1)) {
+			tst_resm(TFAIL, "SIGKILL was unexpectedly"
+				 " caught");
+		} else if ((asig == 1) & (nsig == TEST_SIG)) {
+			tst_resm(TINFO, "received expected signal %d",
+				 nsig);
+			tst_resm(TPASS,
+				 "Did not catch signal as expected");
+		} else if (nsig) {
+			tst_resm(TFAIL,
+				 "expected signal %d received %d",
+				 TEST_SIG, nsig);
+		} else {
+			tst_resm(TFAIL, "No signals received");
 		}
+
 		if (shmdt(flag)) {
 			tst_brkm(TBROK, cleanup, "shmdt failed ");
 		}
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 
@@ -199,7 +194,7 @@ void sighandler(int sig)
 /*
  * do_child()
  */
-void do_child()
+void do_child(void)
 {
 	int exno = 1;
 
@@ -234,11 +229,6 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing status if that option was specified.
-	 * print errno log if that option was specified
-	 */
-	TEST_CLEANUP;
 
 	/*
 	 * remove the shared memory

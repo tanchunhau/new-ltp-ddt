@@ -52,11 +52,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include <sys/mman.h>
-
-/* 0 terminated list of expected errnos */
-int exp_enos[] = { 14, 0 };
 
 char *TCID = "write03";
 int TST_TOTAL = 1;
@@ -73,14 +69,11 @@ char filename[100];
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
 	char wbuf[BUFSIZ], rbuf[BUFSIZ];
 	int fd;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	/* global setup */
 	setup();
@@ -88,8 +81,8 @@ int main(int argc, char **argv)
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 //block1:
 		tst_resm(TINFO, "Enter Block 1: test to check if write "
@@ -112,7 +105,6 @@ int main(int argc, char **argv)
 			tst_resm(TFAIL, "write(2) failed to fail");
 			cleanup();
 		}
-		TEST_ERROR_LOG(errno);
 		close(fd);
 
 		if ((fd = open(filename, O_RDONLY)) == -1) {
@@ -141,7 +133,7 @@ int main(int argc, char **argv)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -156,9 +148,6 @@ void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	/* Pause if that option was specified
 	 * TEST_PAUSE contains the code to fork the test with the -i option.
@@ -186,11 +175,6 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	unlink(filename);
 	tst_rmdir();

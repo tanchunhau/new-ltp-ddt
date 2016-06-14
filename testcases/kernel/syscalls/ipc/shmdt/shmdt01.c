@@ -78,20 +78,17 @@ sigjmp_buf env;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	void check_functionality(void);
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Use TEST macro to make the shmdt() call
@@ -103,15 +100,11 @@ int main(int ac, char **av)
 			tst_resm(TFAIL, "%s call failed - errno = %d : %s",
 				 TCID, TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				check_functionality();
-			} else {
-				tst_resm(TPASS, "call succeeded");
-			}
+			check_functionality();
 		}
 
 		/* reattach the shared memory segment in case we are looping */
-		shared = (int *)shmat(shm_id_1, 0, 0);
+		shared = shmat(shm_id_1, 0, 0);
 
 		if (shared == (void *)-1) {
 			tst_brkm(TBROK, cleanup, "memory reattach failed");
@@ -129,7 +122,7 @@ int main(int ac, char **av)
 /*
  * check_functionality() - make sure the memory is detached correctly
  */
-void check_functionality()
+void check_functionality(void)
 {
 	/* stat the shared memory segment */
 	if (shmctl(shm_id_1, IPC_STAT, &buf) == -1)
@@ -166,7 +159,7 @@ void check_functionality()
 	}
 }
 
-void sighandler(sig)
+void sighandler(int sig)
 {
 	/* if we have received a SIGSEGV, we are almost done */
 	if (sig == SIGSEGV) {
@@ -206,7 +199,7 @@ void setup(void)
 	}
 
 	/* attach the shared memory segment */
-	shared = (int *)shmat(shm_id_1, 0, 0);
+	shared = shmat(shm_id_1, 0, 0);
 
 	if (shared == (void *)-1) {
 		tst_brkm(TBROK, cleanup, "Couldn't attach shared memory");
@@ -226,11 +219,5 @@ void cleanup(void)
 	rm_shm(shm_id_1);
 
 	tst_rmdir();
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

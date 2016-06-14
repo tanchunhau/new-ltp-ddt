@@ -57,7 +57,6 @@
 #include <inttypes.h>
 #include <limits.h>
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 #include "rmobj.h"
 #include "safe_macros.h"
@@ -203,14 +202,13 @@ int TST_TOTAL = sizeof(test_desc) / sizeof(*test_desc);
 static int mylinkat(int olddirfd, const char *oldfilename, int newdirfd,
 		    const char *newfilename, int flags)
 {
-	return syscall(__NR_linkat, olddirfd, oldfilename, newdirfd,
+	return ltp_syscall(__NR_linkat, olddirfd, oldfilename, newdirfd,
 		       newfilename, flags);
 }
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
 	if ((tst_kvercmp(2, 6, 16)) < 0) {
@@ -219,14 +217,13 @@ int main(int ac, char **av)
 		exit(0);
 	}
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			setup_every_copy();
@@ -239,7 +236,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-static void setup_every_copy()
+static void setup_every_copy(void)
 {
 	close(newdirfd);
 	rmobj(TEST_DIR2, NULL);
@@ -258,40 +255,35 @@ static void mylinkat_test(struct test_struct *desc)
 	      desc->flags));
 
 	if (TEST_ERRNO == desc->expected_errno) {
+		if (TEST_RETURN == 0 && desc->referencefn1 != NULL) {
+			int tnum = rand(), vnum = ~tnum;
+			fd = SAFE_OPEN(cleanup, desc->referencefn1,
+				       O_RDWR);
+			SAFE_WRITE(cleanup, 1, fd, &tnum, sizeof(tnum));
+			SAFE_CLOSE(cleanup, fd);
 
-		if (STD_FUNCTIONAL_TEST) {
+			fd = SAFE_OPEN(cleanup, desc->referencefn2,
+				       O_RDONLY);
+			SAFE_READ(cleanup, 1, fd, &vnum, sizeof(vnum));
+			SAFE_CLOSE(cleanup, fd);
 
-			if (TEST_RETURN == 0 && desc->referencefn1 != NULL) {
-				int tnum = rand(), vnum = ~tnum;
-				fd = SAFE_OPEN(cleanup, desc->referencefn1,
-					       O_RDWR);
-				SAFE_WRITE(cleanup, 1, fd, &tnum, sizeof(tnum));
-				SAFE_CLOSE(cleanup, fd);
-
-				fd = SAFE_OPEN(cleanup, desc->referencefn2,
-					       O_RDONLY);
-				SAFE_READ(cleanup, 1, fd, &vnum, sizeof(vnum));
-				SAFE_CLOSE(cleanup, fd);
-
-				if (tnum == vnum)
-					tst_resm(TPASS,
-						 "linkat is functionality correct");
-				else {
-					tst_resm(TFAIL,
-						 "The link file's content isn't "
-						 "as same as the original file's "
-						 "although linkat returned 0");
-				}
-			} else {
-				if (TEST_RETURN == 0)
-					tst_resm(TPASS,
-						 "linkat succeeded as expected");
-				else
-					tst_resm(TPASS | TTERRNO,
-						 "linkat failed as expected");
+			if (tnum == vnum)
+				tst_resm(TPASS,
+					 "linkat is functionality correct");
+			else {
+				tst_resm(TFAIL,
+					 "The link file's content isn't "
+					 "as same as the original file's "
+					 "although linkat returned 0");
 			}
-		} else
-			tst_resm(TPASS, "Test passed");
+		} else {
+			if (TEST_RETURN == 0)
+				tst_resm(TPASS,
+					 "linkat succeeded as expected");
+			else
+				tst_resm(TPASS | TTERRNO,
+					 "linkat failed as expected");
+		}
 	} else {
 		if (TEST_RETURN == 0)
 			tst_resm(TFAIL, "linkat succeeded unexpectedly");
@@ -303,7 +295,7 @@ static void mylinkat_test(struct test_struct *desc)
 	}
 }
 
-void setup()
+void setup(void)
 {
 	char *cwd;
 
@@ -347,5 +339,4 @@ void setup()
 static void cleanup(void)
 {
 	tst_rmdir();
-	TEST_CLEANUP;
 }

@@ -78,18 +78,16 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define INVAL_FLAGS	9999
 
-char *TCID = "sigaltstack02";	/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
-int exp_enos[] = { EINVAL, ENOMEM, 0 };
+char *TCID = "sigaltstack02";
+int TST_TOTAL = 2;
 
 stack_t sigstk;			/* signal stack storing struct. */
 
-void setup();			/* Main setup function of test */
-void cleanup();			/* cleanup function for the test */
+void setup(void);			/* Main setup function of test */
+void cleanup(void);			/* cleanup function for the test */
 
 struct test_case_t {		/* test case struct. to hold diff. test.conds */
 	int flag;
@@ -99,13 +97,12 @@ struct test_case_t {		/* test case struct. to hold diff. test.conds */
 } Test_cases[] = {
 	{
 	INVAL_FLAGS, SIGSTKSZ, "Invalid Flag value", EINVAL},
-#ifdef __ia64__
+	/* use value low enough for all kernel versions
+	 * avoid using MINSIGSTKSZ defined by glibc as it could be different
+	 * from the one in kernel ABI
+	 */
 	{
-	0, (131027 - 1), "alternate stack is < MINSIGSTKSZ", ENOMEM},
-#else
-	{
-	0, (MINSIGSTKSZ - 1), "alternate stack is < MINSIGSTKSZ", ENOMEM},
-#endif
+	0, (2048 - 1), "alternate stack is < MINSIGSTKSZ", ENOMEM},
 	{
 	0, 0, NULL, 0}
 };
@@ -113,25 +110,16 @@ struct test_case_t {		/* test case struct. to hold diff. test.conds */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	char *test_desc;	/* test specific error message */
 	int ind;		/* counter to test different test conditions */
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; Test_cases[ind].desc != NULL; ind++) {
 			sigstk.ss_size = Test_cases[ind].size;
@@ -139,32 +127,22 @@ int main(int ac, char **av)
 			test_desc = Test_cases[ind].desc;
 
 			/* Verify sigaltstack() fails and sets errno */
-			TEST(sigaltstack(&sigstk, (stack_t *) 0));
+			TEST(sigaltstack(&sigstk, NULL));
 
 			/* Check return code from sigaltstack() */
 			if (TEST_RETURN == -1) {
-				TEST_ERROR_LOG(TEST_ERRNO);
-				/*
-				 * Perform functional verification if test
-				 * executed without (-f) option.
-				 */
-				if (STD_FUNCTIONAL_TEST) {
-					if (TEST_ERRNO ==
-					    Test_cases[ind].exp_errno) {
-						tst_resm(TPASS, "stgaltstack() "
-							 "fails, %s, errno:%d",
-							 test_desc, TEST_ERRNO);
-					} else {
-						tst_resm(TFAIL, "sigaltstack() "
-							 "fails, %s, errno:%d, "
-							 "expected errno:%d",
-							 test_desc, TEST_ERRNO,
-							 Test_cases
-							 [ind].exp_errno);
-					}
+				if (TEST_ERRNO ==
+				    Test_cases[ind].exp_errno) {
+					tst_resm(TPASS, "stgaltstack() "
+						 "fails, %s, errno:%d",
+						 test_desc, TEST_ERRNO);
 				} else {
-					tst_resm(TPASS, "Call returned -1 as "
-						 "expected.");
+					tst_resm(TFAIL, "sigaltstack() "
+						 "fails, %s, errno:%d, "
+						 "expected errno:%d",
+						 test_desc, TEST_ERRNO,
+						 Test_cases
+						 [ind].exp_errno);
 				}
 			} else {
 				tst_resm(TFAIL, "sigaltstack() returned %ld, "
@@ -172,7 +150,7 @@ int main(int ac, char **av)
 					 Test_cases[ind].exp_errno);
 			}
 		}
-		Tst_count++;	/* incr. TEST_LOOP counter */
+		tst_count++;	/* incr. TEST_LOOP counter */
 	}
 
 	cleanup();
@@ -185,7 +163,7 @@ int main(int ac, char **av)
  * setup() - performs all ONE TIME setup for this test.
  * Allocate memory for the alternative stack.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -193,7 +171,7 @@ void setup()
 	TEST_PAUSE;
 
 	/* Allocate memory for the alternate stack */
-	if ((sigstk.ss_sp = (void *)malloc(SIGSTKSZ)) == NULL) {
+	if ((sigstk.ss_sp = malloc(SIGSTKSZ)) == NULL) {
 		tst_brkm(TFAIL, cleanup,
 			 "could not allocate memory for the alternate stack");
 	}
@@ -205,13 +183,8 @@ void setup()
  *             completion or premature exit.
  *  Free the memory allocated for alternate stack.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	free(sigstk.ss_sp);
 

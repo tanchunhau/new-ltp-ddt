@@ -54,7 +54,9 @@ FAIL=1
 # Check if the test process is killed on crossing boundary
 test_proc_kill()
 {
-	( cd $TMP && mem_process -m $PROC_MEM & )
+	cd $TMP
+	mem_process -m $PROC_MEM &
+	cd $OLDPWD
 	sleep 1
 	echo $! > tasks
 
@@ -145,6 +147,8 @@ while [ $TST_NUM -le $TST_TOTAL ]; do
 	rmdir $TST_PATH/mnt/$TST_NUM
 	: $((TST_NUM += 1))
 done
+
+echo 0 > mnt/memory.use_hierarchy 2> /dev/null
 
 cleanup
 

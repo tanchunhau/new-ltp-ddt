@@ -49,7 +49,6 @@
 #include <signal.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "read03";
 int TST_TOTAL = 1;
@@ -58,8 +57,6 @@ char fifo[100] = "fifo";
 int rfd, wfd;
 struct stat buf;
 
-int exp_enos[] = { EAGAIN, 0 };
-
 void alarm_handler();
 void setup();
 void cleanup();
@@ -67,24 +64,19 @@ void cleanup();
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
 	int c;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	TEST_EXP_ENOS(exp_enos);
 
 	/*
 	 * The following loop checks looping state if -i option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		TEST(read(rfd, &c, 1));
 
@@ -93,8 +85,6 @@ int main(int ac, char **av)
 				 "is written to a pipe");
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		if (TEST_ERRNO != EAGAIN) {
 			tst_resm(TFAIL, "read set bad errno, expected "
@@ -143,13 +133,8 @@ void setup(void)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	close(rfd);
 	close(wfd);

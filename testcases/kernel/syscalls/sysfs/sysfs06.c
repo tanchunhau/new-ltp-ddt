@@ -73,15 +73,14 @@
 #include <syscall.h>
 #include <sys/mman.h>
 #include "test.h"
-#include "usctest.h"
+#include "linux_syscall_numbers.h"
 
 static void setup();
 static void cleanup();
 
-char *TCID = "sysfs06";		/* Test program identifier.    */
+char *TCID = "sysfs06";
 static int option[3] = { 2, 4, 2 };	/* valid and invalid option */
 static int fsindex[3] = { 10000, 0, 1 };	/*invalid and valid fsindex */
-static int exp_enos[] = { EINVAL, EFAULT, 0 };
 
 static struct test_case_t {
 	char *err_desc;		/*error description */
@@ -94,28 +93,24 @@ static struct test_case_t {
 	"buf is outside your accessible address space", EFAULT, "EFAULT"}
 };
 
-int TST_TOTAL = sizeof(testcase) / sizeof(*testcase);
+int TST_TOTAL = ARRAY_SIZE(testcase);
 
 char *bad_addr = 0;
 
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-#ifdef __NR_sysfs
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
-			Tst_count = 0;
-			TEST(syscall
+			tst_count = 0;
+			TEST(ltp_syscall
 			     (__NR_sysfs, option[i], fsindex[i], bad_addr));
 
 			/* check return code */
@@ -133,13 +128,8 @@ int main(int ac, char **av)
 					 testcase[i].exp_errno,
 					 testcase[i].exp_errval, TEST_ERRNO);
 			}
-			TEST_ERROR_LOG(TEST_ERRNO);
 		}		/*End of TEST LOOPS */
 	}
-#else
-	tst_resm(TWARN,
-		 "This test can only run on kernels that support the sysfs system call");
-#endif
 
 	/*Clean up and exit */
 	cleanup();
@@ -148,13 +138,10 @@ int main(int ac, char **av)
 }				/*End of main */
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Setting up expected errnos */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -169,12 +156,7 @@ void setup()
 * cleanup() - Performs one time cleanup for this test at
 * completion or premature exit
 */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

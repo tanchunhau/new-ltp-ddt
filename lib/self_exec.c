@@ -67,7 +67,7 @@ int asprintf(char **app, const char *fmt, ...)
 	return rv;
 }
 
-void maybe_run_child(void (*child) (), char *fmt, ...)
+void maybe_run_child(void (*child) (), const char *fmt, ...)
 {
 	va_list ap;
 	char *child_dir;
@@ -117,6 +117,7 @@ void maybe_run_child(void (*child) (), char *fmt, ...)
 				}
 				if (j != i) {
 					va_end(ap);
+					free(args);
 					return;
 				}
 				break;
@@ -144,7 +145,7 @@ void maybe_run_child(void (*child) (), char *fmt, ...)
 		}
 
 		va_end(ap);
-
+		free(args);
 		if (chdir(child_dir) < 0)
 			tst_brkm(TBROK, NULL,
 				 "Could not change to %s for child", child_dir);
@@ -155,7 +156,7 @@ void maybe_run_child(void (*child) (), char *fmt, ...)
 	}
 }
 
-int self_exec(char *argv0, char *fmt, ...)
+int self_exec(const char *argv0, const char *fmt, ...)
 {
 	va_list ap;
 	char *p;
@@ -170,8 +171,7 @@ int self_exec(char *argv0, char *fmt, ...)
 	}
 
 	arg = strdup(tmp_cwd);
-
-	if ((arg = strdup(tmp_cwd)) == NULL) {
+	if (arg == NULL) {
 		tst_resm(TBROK, "Could not produce self_exec string");
 		return -1;
 	}

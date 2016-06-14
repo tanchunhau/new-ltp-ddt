@@ -688,16 +688,6 @@
 		ltp/testcases/kernel/syscalls/acct/acct01.c
 	<\test_location>
 <\testname>
-<testname=acct02>
-	<description>
-		Issues calls to acct() and tests the returned values against expected
-		results
-
-	<\description>
-	<test_location>
-		ltp/testcases/kernel/syscalls/acct/acct02.c
-	<\test_location>
-<\testname>
 <testname=adjtimex01>
 	<description>
 		Basic test for adjtimex().
@@ -1244,15 +1234,6 @@
 	<\description>
 	<test_location>
 		ltp/testcases/kernel/syscalls/creat/creat08.c
-	<\test_location>
-<\testname>
-<testname=creat09>
-	<description>
-		Basic test for creat(2) using 0700 argument.
-
-	<\description>
-	<test_location>
-		ltp/testcases/kernel/syscalls/creat/creat09.c
 	<\test_location>
 <\testname>
 <testname=dup01>
@@ -2084,16 +2065,6 @@
 	<\description>
 	<test_location>
 		ltp/testcases/kernel/syscalls/fstat/fstat03.c
-	<\test_location>
-<\testname>
-<testname=fstat04>
-	<description>
-		Verify that, fstat(2) succeeds to get the status of a file pointed by
-		file descriptor and fills the stat structure elements.
-
-	<\description>
-	<test_location>
-		ltp/testcases/kernel/syscalls/fstat/fstat04.c
 	<\test_location>
 <\testname>
 <testname=fstat05>

@@ -21,34 +21,29 @@
 #define _GNU_SOURCE 1
 
 #include "test.h"
-#include "usctest.h"
 
 #include <errno.h>
 
 char *TCID = "getsid02";
 int TST_TOTAL = 1;
 
-static unsigned long pid_max;
+static pid_t unused_pid;
 
 static void cleanup(void);
 static void setup(void);
 
-int exp_enos[] = { ESRCH, 0 };
-
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
-		TEST(getsid(pid_max + 1));
+		TEST(getsid(unused_pid));
 
 		if (TEST_RETURN == 0) {
 			tst_resm(TFAIL, "call succeed when failure expected");
@@ -74,16 +69,13 @@ int main(int ac, char **av)
 
 void setup(void)
 {
-	SAFE_FILE_SCANF(NULL, "/proc/sys/kernel/pid_max", "%lu", &pid_max);
+	unused_pid = tst_get_unused_pid(cleanup);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 }
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
 }

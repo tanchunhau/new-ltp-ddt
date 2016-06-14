@@ -48,7 +48,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #define FAILED 0
 #define PASSED 1
 
@@ -74,7 +73,7 @@ char *str2 = "TO FIX: This is correct output, no action needed  LTP:msg:001";
 char *str3 = "LTP:fmtmsg: LTP_TEST: LTP fmtmsg() test2 message, NOT an error";
 char *str4 = "TO FIX: This is correct output, no action needed  LTP:msg:002";
 
-void clearbuf()
+void clearbuf(void)
 {
 	int i;
 	for (i = 0; i < 80; i++)
@@ -231,30 +230,29 @@ int main(int argc, char *argv[])
 /*****	LTP Port	*****/
 /* FUNCTIONS GO HERE */
 
-int anyfail()
+int anyfail(void)
 {
 	(local_flag == FAILED) ? tst_resm(TFAIL,
 					  "Test failed") : tst_resm(TPASS,
 								    "Test passed");
 	tst_rmdir();
 	tst_exit();
-	return 0;
 }
 
-void setup()
+void setup(void)
 {
 	temp = stderr;
 	tst_tmpdir();
 }
 
-int blenter()
+int blenter(void)
 {
 	//tst_resm(TINFO, "Enter block %d", block_number);
 	local_flag = PASSED;
 	return 0;
 }
 
-int blexit()
+int blexit(void)
 {
 	//tst_resm(TINFO, "Exitng test");
 	(local_flag == FAILED) ? tst_resm(TFAIL,
@@ -265,7 +263,7 @@ int blexit()
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();

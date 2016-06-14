@@ -56,7 +56,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 
 #include <sys/stat.h>
 #include <errno.h>
@@ -79,17 +78,15 @@ const char *TEST_DIR = "alpha";
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	void check_functionality(void);
 	int r_val;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* get the name of the test dirctory */
 		if ((temp_dir = (getcwd(temp_dir, 0))) == NULL)
@@ -107,14 +104,11 @@ int main(int ac, char **av)
 
 		TEST(fchdir(fd));
 
-		if (TEST_RETURN == -1)
+		if (TEST_RETURN == -1) {
 			tst_brkm(TFAIL | TTERRNO, cleanup,
 				 "fchdir call failed");
-		else {
-			if (STD_FUNCTIONAL_TEST)
+		} else {
 				check_functionality();
-			else
-				tst_resm(TPASS, "call succeeded");
 		}
 
 		/*
@@ -140,7 +134,6 @@ int main(int ac, char **av)
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -175,6 +168,4 @@ void setup(void)
 void cleanup(void)
 {
 	tst_rmdir();
-
-	TEST_CLEANUP;
 }

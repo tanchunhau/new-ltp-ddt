@@ -65,19 +65,15 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
-extern void do_file_setup(char *);
 
-char *TCID = "rename10";	/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "rename10";
+int TST_TOTAL = 2;
 
 char badmname[] =
     "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyz";
-
-int exp_enos[] = { ENAMETOOLONG, ENOENT, 0 };	/* List must end with 0 */
 
 int fd;
 char fname[255], mname[255];
@@ -99,29 +95,24 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
 	/*
 	 * parse standard options
 	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/*
 	 * perform global setup for test
 	 */
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	/*
 	 * check looping state if -i option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -132,8 +123,6 @@ int main(int ac, char **av)
 				tst_resm(TFAIL, "call succeeded unexpectedly");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == TC[i].error) {
 				tst_resm(TPASS, "expected failure - "
@@ -155,7 +144,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -169,20 +158,15 @@ void setup()
 	sprintf(mdir, "./rndir_%d", getpid());
 	sprintf(mname, "%s/rnfile_%d", mdir, getpid());
 
-	do_file_setup(fname);
+	SAFE_TOUCH(cleanup, fname, 0700, NULL);
 }
 
 /*
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/*
 	 * Remove the temporary directory.

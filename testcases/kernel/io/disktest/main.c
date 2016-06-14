@@ -290,7 +290,7 @@ void *threadedMain(void *vtest)
 	int i;
 	unsigned char *sharedMem;
 
-	extern unsigned long glb_run;
+	extern unsigned short glb_run;
 	extern int signal_action;
 
 	test->args->pid = GETPID();
@@ -501,6 +501,7 @@ test_ll_t *run()
 			     &cleanArgs,
 			     "%s is not a regular file, could not be opened for reading, or was not found.",
 			     filespec);
+			FREE(aFilespec);
 
 			return newTest;
 		}

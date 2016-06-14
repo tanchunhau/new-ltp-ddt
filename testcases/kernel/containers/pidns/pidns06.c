@@ -41,10 +41,10 @@
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h>
-#include "usctest.h"
 #include "test.h"
 #include <libclone.h>
 #include <signal.h>
+#include "pidns_helper.h"
 
 #define CINIT_PID       1
 #define PARENT_PID      0
@@ -52,12 +52,6 @@
 
 char *TCID = "pidns06";
 int TST_TOTAL = 1;
-
-void cleanup()
-{
-	/* Clean the test testcase as LTP wants */
-	TEST_CLEANUP;
-}
 
 /*
  * kill_pid_in_childfun()
@@ -113,20 +107,28 @@ static int kill_pid_in_childfun(void *vtest)
 	exit(0);
 }
 
+static void setup(void)
+{
+	tst_require_root();
+	check_newpid();
+}
+
 int main()
 {
 	int status;
+
+	setup();
+
 	pid_t pid = getpid();
 
 	tst_resm(TINFO, "Parent: Passing the pid of the process %d", pid);
 	TEST(do_clone_unshare_test(T_CLONE, CLONE_NEWPID, kill_pid_in_childfun,
 				   (void *)&pid));
 	if (TEST_RETURN == -1) {
-		tst_brkm(TFAIL | TERRNO, cleanup, "clone failed");
+		tst_brkm(TFAIL | TERRNO, NULL, "clone failed");
 	} else if (wait(&status) == -1) {
-		tst_brkm(TFAIL | TERRNO, cleanup, "wait failed");
+		tst_brkm(TFAIL | TERRNO, NULL, "wait failed");
 	}
 
-	cleanup();
 	tst_exit();
 }

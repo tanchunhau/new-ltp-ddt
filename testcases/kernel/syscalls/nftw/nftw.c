@@ -43,8 +43,8 @@ int local_flag = PASSED;
 int block_number;
 
 FILE *temp;
-char *TCID = "nftw01";		/* Test program identifier.    */
-int TST_TOTAL = 10;		/* Total number of test cases. */
+char *TCID = "nftw01";
+int TST_TOTAL = 10;
 
 struct passwd *ltpuser;		/* password struct for ltpuser */
 /**************/
@@ -254,10 +254,10 @@ int main(void)
 {
 	setup();		/* temp file is now open        */
 
-	npathdats = (sizeof(pathdat) / sizeof(pathdat[0]));
-	ngoods = (sizeof(goodlist) / sizeof(goodlist[0]));
-	nbads = (sizeof(badlist) / sizeof(badlist[0]));
-	nmnem = (sizeof(mnem) / sizeof(mnem[0]));
+	npathdats = ARRAY_SIZE(pathdat);
+	ngoods = ARRAY_SIZE(goodlist);
+	nbads = ARRAY_SIZE(badlist);
+	nmnem = ARRAY_SIZE(mnem);
 
 	setup_path();
 
@@ -671,7 +671,7 @@ int main(void)
  *
  * Do set up - here its a dummy function
  */
-void setup()
+void setup(void)
 {
 	/* Direct debug output to stderr */
 	temp = stderr;
@@ -693,7 +693,7 @@ void setup()
  *
  * Description: Print message on entering a new block
  */
-void blenter()
+void blenter(void)
 {
 	local_flag = PASSED;
 	return;
@@ -706,7 +706,7 @@ void blenter()
  *              of a test. It will report the status if the test ie fail or
  *              pass.
  */
-void blexit()
+void blexit(void)
 {
 	(local_flag == PASSED) ? tst_resm(TPASS, "Test block %d", block_number)
 	    : tst_resm(TFAIL, "Test block %d", block_number);
@@ -720,7 +720,7 @@ void blexit()
  *
  * Description: Exit a test.
  */
-void anyfail()
+void anyfail(void)
 {
 	(local_flag == FAILED) ? tst_resm(TFAIL, "Test failed")
 	    : tst_resm(TPASS, "Test passed");

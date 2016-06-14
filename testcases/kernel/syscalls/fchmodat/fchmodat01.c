@@ -23,17 +23,6 @@
  *	This test case will verify basic function of fchmodat
  *	added by kernel 2.6.16 or up.
  *
- * USAGE:  <for command-line>
- * fchmodat01 [-c n] [-e] [-i n] [-I x] [-P x] [-t] [-p]
- * where:
- *      -c n : Run n copies simultaneously.
- *      -e   : Turn on errno logging.
- *      -i n : Execute test n times.
- *      -I x : Execute test for x seconds.
- *      -p   : Pause for SIGUSR1 before starting
- *      -P x : Pause for x seconds between iterations.
- *      -t   : Turn on syscall timing.
- *
  * Author
  *	Yi Yang <yyangcdl@cn.ibm.com>
  *
@@ -54,7 +43,7 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
+#include "safe_macros.h"
 #include "linux_syscall_numbers.h"
 
 #define TEST_CASES 6
@@ -63,28 +52,25 @@
 #endif
 void setup();
 void cleanup();
-void setup_every_copy();
 
-char *TCID = "fchmodat01";	/* Test program identifier.    */
-int TST_TOTAL = TEST_CASES;	/* Total number of test cases. */
-char pathname[256] = "";
-char testfile[256] = "";
-char testfile2[256] = "";
-char testfile3[256] = "";
-int dirfd, fd, ret;
+char *TCID = "fchmodat01";
+int TST_TOTAL = TEST_CASES;
+char pathname[256];
+char testfile[256];
+char testfile2[256];
+char testfile3[256];
 int fds[TEST_CASES];
 char *filenames[TEST_CASES];
 int expected_errno[TEST_CASES] = { 0, 0, ENOTDIR, EBADF, 0, 0 };
 
 int myfchmodat(int dirfd, const char *filename, mode_t mode)
 {
-	return syscall(__NR_fchmodat, dirfd, filename, mode);
+	return ltp_syscall(__NR_fchmodat, dirfd, filename, mode);
 }
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
 	/* Disable test if the version of the kernel is less than 2.6.16 */
@@ -94,139 +80,74 @@ int main(int ac, char **av)
 		exit(0);
 	}
 
-	/***************************************************************
-	 * parse standard options
-	 ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
-	/***************************************************************
-	 * perform global setup for test
-	 ***************************************************************/
 	setup();
 
-	/***************************************************************
-	 * check looping state if -c option given
-	 ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		setup_every_copy();
+		tst_count = 0;
 
-		Tst_count = 0;
-
-		/*
-		 * Call fchmodat
-		 */
 		for (i = 0; i < TST_TOTAL; i++) {
 			TEST(myfchmodat(fds[i], filenames[i], 0600));
 
-			/* check return code */
 			if (TEST_ERRNO == expected_errno[i]) {
-
-				/***************************************************************
-				 * only perform functional verification if flag set (-f not given)
-				 ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "fchmodat() returned the expected  errno %d: %s",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO));
-				}
+				tst_resm(TPASS,
+					 "fchmodat() returned the expected  errno %d: %s",
+					 TEST_ERRNO, strerror(TEST_ERRNO));
 			} else {
-				TEST_ERROR_LOG(TEST_ERRNO);
 				tst_resm(TFAIL,
 					 "fchmodat() Failed, errno=%d : %s",
 					 TEST_ERRNO, strerror(TEST_ERRNO));
 			}
 		}
-
 	}
 
-	/***************************************************************
-	 * cleanup and exit
-	 ***************************************************************/
 	cleanup();
-
-	return (0);
+	tst_exit();
 }
 
-void setup_every_copy()
+void setup(void)
 {
+	tst_sig(NOFORK, DEF_HANDLER, cleanup);
+
+	tst_tmpdir();
+
 	/* Initialize test dir and file names */
-	sprintf(pathname, "fchmodattestdir%d", getpid());
-	sprintf(testfile, "fchmodattestfile%d.txt", getpid());
-	sprintf(testfile2, "/tmp/fchmodattestfile%d.txt", getpid());
-	sprintf(testfile3, "fchmodattestdir%d/fchmodattestfile%d.txt", getpid(),
-		getpid());
+	char *abs_path = tst_get_tmpdir();
+	int p = getpid();
 
-	ret = mkdir(pathname, 0700);
-	if (ret < 0) {
-		perror("mkdir: ");
-		exit(-1);
-	}
+	sprintf(pathname, "fchmodattestdir%d", p);
+	sprintf(testfile, "fchmodattest%d.txt", p);
+	sprintf(testfile2, "%s/fchmodattest%d.txt", abs_path, p);
+	sprintf(testfile3, "fchmodattestdir%d/fchmodattest%d.txt", p, p);
 
-	dirfd = open(pathname, O_DIRECTORY);
-	if (dirfd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	free(abs_path);
 
-	fd = open(testfile, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	SAFE_MKDIR(cleanup, pathname, 0700);
 
-	fd = open(testfile2, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	fds[0] = SAFE_OPEN(cleanup, pathname, O_DIRECTORY);
+	fds[1] = fds[4] = fds[0];
 
-	fd = open(testfile3, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	SAFE_FILE_PRINTF(cleanup, testfile, testfile);
+	SAFE_FILE_PRINTF(cleanup, testfile2, testfile2);
 
-	fds[0] = fds[1] = fds[4] = dirfd;
-	fds[2] = fd;
+	fds[2] = SAFE_OPEN(cleanup, testfile3, O_CREAT | O_RDWR, 0600);
 	fds[3] = 100;
 	fds[5] = AT_FDCWD;
 
 	filenames[0] = filenames[2] = filenames[3] = filenames[4] = testfile;
 	filenames[1] = testfile2;
 	filenames[5] = testfile3;
-}
-
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- ***************************************************************/
-void setup()
-{
-
-	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- *             completion or premature exit.
- ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/* Remove them */
-	close(fd);
-	unlink(testfile);
-	unlink(testfile2);
-	unlink(testfile3);
-	rmdir(pathname);
+	if (fds[0] > 0)
+		close(fds[0]);
+	if (fds[2] > 0)
+		close(fds[2]);
 
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
-
+	tst_rmdir();
 }

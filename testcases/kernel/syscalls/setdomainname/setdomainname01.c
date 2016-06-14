@@ -68,15 +68,14 @@
 #include <string.h>
 #include <sys/utsname.h>
 #include "test.h"
-#include "usctest.h"
 
 #define MAX_NAME_LEN _UTSNAME_DOMAIN_LENGTH
 
 static void setup();
 static void cleanup();
 
-char *TCID = "setdomainname01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "setdomainname01";
+int TST_TOTAL = 1;
 
 static char *test_domain_name = "test_dom";
 static char old_domain_name[MAX_NAME_LEN];
@@ -85,18 +84,14 @@ int main(int ac, char **av)
 {
 
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call setdomainname(2)
@@ -122,15 +117,11 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Check whether we are root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 
 	/* Save current domain name */
 	if ((getdomainname(old_domain_name, sizeof(old_domain_name))) < 0) {
@@ -146,14 +137,8 @@ void setup()
  *cleanup() -  performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Restore domain name */
 	if ((setdomainname(old_domain_name, strlen(old_domain_name))) < 0) {

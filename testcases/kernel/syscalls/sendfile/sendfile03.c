@@ -50,7 +50,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/sendfile.h>
-#include "usctest.h"
 #include "test.h"
 
 #define FAILED 1
@@ -79,33 +78,26 @@ struct test_case_t {
 	int exp_errno;
 } testcases[] = {
 	{
-	"Test for EBADF, in_fd = -1", NULL, 8, -1, (void *)0, 0, EBADF}, {
-	"Test for EBADF, out_fd = -1", NULL, -1, 7, (void *)0, 0, EBADF}, {
-	"Test for EBADF, in_fd = out_fd = -1", NULL, -1, -1, (void *)0,
+	"Test for EBADF, in_fd = -1", NULL, 8, -1, NULL, 0, EBADF}, {
+	"Test for EBADF, out_fd = -1", NULL, -1, 7, NULL, 0, EBADF}, {
+	"Test for EBADF, in_fd = out_fd = -1", NULL, -1, -1, NULL,
 		    0, EBADF}
 };
-
-int exp_enos[] = { EBADF, 0 };
 
 int main(int ac, char **av)
 {
 	int i;
 	int lc;
-	char *msg;		/* parse_opts() return message */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	TEST_EXP_ENOS(exp_enos);
 
 	/*
 	 * The following loop checks looping state if -c option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 			if (testcases[i].setupfunc != NULL) {
@@ -119,8 +111,6 @@ int main(int ac, char **av)
 				tst_resm(TFAIL, "call succeeded unexpectedly");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO != testcases[i].exp_errno) {
 				tst_resm(TFAIL, "sendfile returned unexpected "
@@ -140,7 +130,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	char buf[100];
 
@@ -174,7 +164,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.
@@ -182,8 +172,6 @@ void cleanup()
 	 */
 	close(out_fd);
 	close(in_fd);
-
-	TEST_CLEANUP;
 
 	/* delete the test directory created in setup() */
 	tst_rmdir();

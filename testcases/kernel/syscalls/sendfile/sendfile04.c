@@ -56,7 +56,6 @@
 #include <sys/mman.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "usctest.h"
 #include "test.h"
 
 #ifndef OFF_T
@@ -130,8 +129,6 @@ void do_sendfile(int prot, int pass_unmapped_buffer)
 	if (TEST_RETURN != -1) {
 		tst_resm(TFAIL, "call succeeded unexpectedly");
 	} else {
-		TEST_ERROR_LOG(TEST_ERRNO);
-
 		if (TEST_ERRNO != EFAULT) {
 			tst_resm(TFAIL, "sendfile returned unexpected "
 				 "errno, expected: %d, got: %d",
@@ -156,7 +153,7 @@ void do_sendfile(int prot, int pass_unmapped_buffer)
 /*
  * do_child
  */
-void do_child()
+void do_child(void)
 {
 	int lc;
 	socklen_t length;
@@ -173,7 +170,7 @@ void do_child()
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	int fd;
 	char buf[100];
@@ -201,13 +198,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	close(out_fd);
 	/* delete the test directory created in setup() */
@@ -218,6 +210,7 @@ void cleanup()
 int create_server(void)
 {
 	static int count = 0;
+	socklen_t slen = sizeof(sin1);
 
 	sockfd = socket(PF_INET, SOCK_DGRAM, 0);
 	if (sockfd < 0) {
@@ -226,7 +219,7 @@ int create_server(void)
 		return -1;
 	}
 	sin1.sin_family = AF_INET;
-	sin1.sin_port = htons(((getpid() * TST_TOTAL) % 32768) + 11000 + count);
+	sin1.sin_port = 0; /* pick random free port */
 	sin1.sin_addr.s_addr = INADDR_ANY;
 	count++;
 	if (bind(sockfd, (struct sockaddr *)&sin1, sizeof(sin1)) < 0) {
@@ -234,6 +227,9 @@ int create_server(void)
 			 strerror(errno));
 		return -1;
 	}
+	if (getsockname(sockfd, (struct sockaddr *)&sin1, &slen) == -1)
+		tst_brkm(TBROK | TERRNO, cleanup, "getsockname failed");
+
 	child_pid = FORK_OR_VFORK();
 	if (child_pid < 0) {
 		tst_brkm(TBROK, cleanup, "client/server fork failed: %s",
@@ -271,11 +267,8 @@ int main(int ac, char **av)
 {
 	int i;
 	int lc;
-	char *msg;		/* parse_opts() return message */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	argv0 = av[0];
 	maybe_run_child(&do_child, "");
@@ -287,7 +280,7 @@ int main(int ac, char **av)
 	 * The following loop checks looping state if -c option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 			do_sendfile(testcases[i].protection,

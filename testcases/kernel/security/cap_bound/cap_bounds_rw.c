@@ -30,10 +30,14 @@
 #include <sys/capability.h>
 #endif
 #include <sys/prctl.h>
+#include <unistd.h>
 #include "test.h"
+
+#define PROC_CAP_LAST "/proc/sys/kernel/cap_last_cap"
 
 char *TCID = "cap_bounds_rw";
 int TST_TOTAL = 1;
+static int cap_last_cap;
 
 int check_remaining_caps(int lastdropped)
 {
@@ -48,9 +52,9 @@ int check_remaining_caps(int lastdropped)
 		ret = -1;
 #endif
 		if (ret == -1) {
-			tst_resm(TBROK,
+			tst_brkm(TBROK,
+				 NULL,
 				 "Failed to read bounding set during sanity check\n");
-			tst_exit();
 		}
 		if (ret == 1) {
 			tst_resm(TFAIL,
@@ -60,7 +64,7 @@ int check_remaining_caps(int lastdropped)
 		}
 	}
 #ifdef HAVE_LIBCAP
-	for (; i <= CAP_LAST_CAP; i++) {
+	for (; i <= cap_last_cap; i++) {
 #if HAVE_DECL_PR_CAPBSET_READ
 		ret = prctl(PR_CAPBSET_READ, i);
 #else
@@ -68,9 +72,9 @@ int check_remaining_caps(int lastdropped)
 		ret = -1;
 #endif
 		if (ret == -1) {
-			tst_resm(TBROK,
+			tst_brkm(TBROK,
+				 NULL,
 				 "Failed to read bounding set during sanity check\n");
-			tst_exit();
 		}
 		if (ret == 0) {
 			tst_resm(TFAIL,
@@ -83,12 +87,18 @@ int check_remaining_caps(int lastdropped)
 	return 0;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	int ret = 1;
 	int i;
 
 #ifdef HAVE_LIBCAP
+	cap_last_cap = CAP_LAST_CAP;
+	if (access(PROC_CAP_LAST, R_OK) == 0) {
+		SAFE_FILE_SCANF(NULL, PROC_CAP_LAST, "%d", &cap_last_cap);
+		if (cap_last_cap > CAP_LAST_CAP)
+		       cap_last_cap = CAP_LAST_CAP;
+	}
 #if HAVE_DECL_PR_CAPBSET_DROP
 	ret = prctl(PR_CAPBSET_READ, -1);
 #else
@@ -96,9 +106,9 @@ int main(int argc, char *argv[])
 	ret = -1;
 #endif
 	if (ret != -1) {
-		tst_resm(TFAIL, "prctl(PR_CAPBSET_DROP, -1) returned %d\n",
+		tst_brkm(TFAIL, NULL,
+			 "prctl(PR_CAPBSET_DROP, -1) returned %d\n",
 			 ret);
-		tst_exit();
 	}
 	/* Ideally I'd check CAP_LAST_CAP+1, but userspace
 	 * tends to be far too unreliable to trust CAP_LAST_CAP>
@@ -119,7 +129,7 @@ int main(int argc, char *argv[])
 			 max(INSANE, CAP_LAST_CAP + 1));
 		tst_exit();
 	}
-	for (i = 0; i <= CAP_LAST_CAP; i++) {
+	for (i = 0; i <= cap_last_cap; i++) {
 #if HAVE_DECL_PR_CAPBSET_DROP
 		ret = prctl(PR_CAPBSET_DROP, i);
 #else
@@ -136,15 +146,15 @@ int main(int argc, char *argv[])
 		}
 		ret = check_remaining_caps(i);
 		if (ret > 0) {
-			tst_resm(TFAIL,
+			tst_brkm(TFAIL,
+				 NULL,
 				 "after dropping bits 0..%d, %d was still in bounding set\n",
 				 i, ret);
-			tst_exit();
 		} else if (ret < 0) {
-			tst_resm(TFAIL,
+			tst_brkm(TFAIL,
+				 NULL,
 				 "after dropping bits 0..%d, %d was not in bounding set\n",
 				 i, -ret);
-			tst_exit();
 		}
 	}
 	tst_resm(TPASS, "PR_CAPBSET_DROP tests passed\n");

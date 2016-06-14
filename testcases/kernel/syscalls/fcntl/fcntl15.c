@@ -54,7 +54,6 @@
 #include <signal.h>
 #include <fcntl.h>
 #include "test.h"
-#include "usctest.h"
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -78,23 +77,10 @@ struct flock flock;
 static char *argv0;		/* set by main, passed to self_exec */
 #endif
 
-/*
- * cleanup() - performs all ONE TIME cleanup for this test at
- *	       completion or premature exit.
- */
-void cleanup()
-{
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
-}
-
-void alarm_sig()
+void alarm_sig(int sig)
 {
-	signal(SIGALRM, (void (*)())alarm_sig);
+	signal(SIGALRM, alarm_sig);
 	alarm_flag = 1;
 	if ((syscall(__NR_gettid)) == parent) {
 		tst_resm(TINFO, "Alarm caught by parent");
@@ -103,15 +89,15 @@ void alarm_sig()
 	}
 }
 
-void child_sig()
+void child_sig(int sig)
 {
-	signal(SIGUSR1, (void (*)())child_sig);
+	signal(SIGUSR1, child_sig);
 	child_flag++;
 }
 
-void parent_sig()
+void parent_sig(int sig)
 {
-	signal(SIGUSR2, (void (*)())parent_sig);
+	signal(SIGUSR2, parent_sig);
 	parent_flag++;
 }
 
@@ -184,12 +170,12 @@ int dochild1(int file_flag, int file_mode)
 #ifdef UCLINUX
 int uc_file_flag, uc_file_mode, uc_dup_flag;
 
-void dochild1_uc()
+void dochild1_uc(void)
 {
 	dochild1(uc_file_flag, uc_file_mode);
 }
 
-void dochild2_uc()
+void dochild2_uc(void)
 {
 	dochild2(uc_file_flag, uc_dup_flag);
 }
@@ -363,13 +349,9 @@ int dochild2(int file_flag, int file_mode, int dup_flag)
 	exit(0);
 }
 
-/*
- * setup() - performs all ONE TIME setup for this test.
- */
-void setup()
+void setup(void)
 {
-
-	tst_sig(FORK, DEF_HANDLER, cleanup);
+	tst_sig(FORK, DEF_HANDLER, NULL);
 
 	TEST_PAUSE;
 }
@@ -543,13 +525,8 @@ int run_test(int file_flag, int file_mode, int dup_flag)
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	int fail = 0;
-
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&dochild1_uc, "nddds", 1, &uc_file_flag,
 			&uc_file_mode, &parent, tmpname);
@@ -560,47 +537,28 @@ int main(int ac, char **av)
 
 	setup();
 
-	/* Check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		tst_count = 0;
 
-		/* Set up to catch alarm signal */
 		if ((signal(SIGALRM, alarm_sig)) == SIG_ERR) {
 			perror("SIGALRM signal set up failed");
 			exit(1);
 		}
 
-/* //block1: */
-		tst_resm(TINFO, "Entering block 1");
-		if (run_test(O_CREAT | O_RDWR | O_TRUNC, 0777, DUP)) {
-			tst_resm(TINFO, "Test 1: test with \"dup\" FAILED");
-			fail = 1;
-		} else {
-			tst_resm(TINFO, "Test 1: test with \"dup\" PASSED");
-		}
-		tst_resm(TINFO, "Exiting block 1");
+		if (run_test(O_CREAT | O_RDWR | O_TRUNC, 0777, DUP))
+			tst_resm(TFAIL, "Test 1: test with \"dup\" FAILED");
+		else
+			tst_resm(TPASS, "Test 1: test with \"dup\" PASSED");
 
-/* //block2: */
-		tst_resm(TINFO, "Entering block 2");
-		if (run_test(O_CREAT | O_RDWR | O_TRUNC, 0777, OPEN)) {
-			tst_resm(TINFO, "Test 2: test with \"open\" FAILED");
-			fail = 1;
-		} else {
-			tst_resm(TINFO, "Test 2: test with \"open\" PASSED");
-		}
-		tst_resm(TINFO, "Exiting block 2");
+		if (run_test(O_CREAT | O_RDWR | O_TRUNC, 0777, OPEN))
+			tst_resm(TFAIL, "Test 2: test with \"open\" FAILED");
+		else
+			tst_resm(TPASS, "Test 2: test with \"open\" PASSED");
 
-/* //block3: */
-		tst_resm(TINFO, "Entering block 3");
-		if (run_test(O_CREAT | O_RDWR | O_TRUNC, 0777, FORK_)) {
-			tst_resm(TINFO, "Test 3: test with \"fork\" FAILED");
-			fail = 1;
-		} else {
-			tst_resm(TINFO, "Test 3: test with \"fork\" PASSED");
-		}
-		tst_resm(TINFO, "Exiting block 3");
+		if (run_test(O_CREAT | O_RDWR | O_TRUNC, 0777, FORK_))
+			tst_resm(TFAIL, "Test 3: test with \"fork\" FAILED");
+		else
+			tst_resm(TPASS, "Test 3: test with \"fork\" PASSED");
 	}
-	cleanup();
 	tst_exit();
 }

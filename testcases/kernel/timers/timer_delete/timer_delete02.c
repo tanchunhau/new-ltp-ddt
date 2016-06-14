@@ -70,7 +70,6 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "common_timers.h"
 
 void setup(void);
@@ -81,28 +80,25 @@ int TST_TOTAL = 1;		/* Total number of test cases. */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	kernel_timer_t timer_id;
 
-	if ((msg = parse_opts(ac, av, (option_t *) NULL, NULL)) != (char *)NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* Create a Posix timer */
-		if (syscall(__NR_timer_create, CLOCK_REALTIME, NULL, &timer_id)
-		    < 0) {
-			Tst_count = TST_TOTAL;
+		if (ltp_syscall(__NR_timer_create, CLOCK_REALTIME, NULL,
+			&timer_id) < 0) {
+			tst_count = TST_TOTAL;
 			tst_brkm(TBROK | TERRNO, cleanup,
 				 "timer_delete can't be tested because "
 				 "timer_create failed");
 		}
-		TEST(syscall(__NR_timer_delete, timer_id));
+		TEST(ltp_syscall(__NR_timer_delete, timer_id));
 		tst_resm((TEST_RETURN == 0 ? TPASS : TFAIL | TTERRNO),
 			 "%s", (TEST_RETURN == 0 ? "passed" : "failed"));
 	}
@@ -126,9 +122,4 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }

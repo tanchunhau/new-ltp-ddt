@@ -32,6 +32,7 @@
 #include <sys/sem.h>
 #include <libclone.h>
 #include "test.h"
+#include "ipcns_helper.h"
 
 #define MY_KEY     154326L
 #define UNSHARESTR "unshare"
@@ -48,6 +49,8 @@ int check_semaphore(void *vtest)
 	char buf[3];
 	int id;
 
+	(void) vtest;
+
 	close(p1[1]);
 	close(p2[0]);
 
@@ -61,8 +64,12 @@ int check_semaphore(void *vtest)
 			 getpid(), id);
 	}
 	tst_exit();
+}
 
-	return 0;
+static void setup(void)
+{
+	tst_require_root();
+	check_newipc();
 }
 
 int main(int argc, char *argv[])
@@ -71,11 +78,12 @@ int main(int argc, char *argv[])
 	char *tsttype = NONESTR;
 	char buf[7];
 
+	setup();
+
 	if (argc != 2) {
 		tst_resm(TFAIL, "Usage: %s <clone| unshare| none>", argv[0]);
-		tst_resm(TFAIL, " where clone, unshare, or fork specifies"
+		tst_brkm(TFAIL, NULL, " where clone, unshare, or fork specifies"
 			 " unshare method.");
-		tst_exit();
 	}
 
 	/* Using PIPE's to sync between container and Parent */
@@ -102,14 +110,12 @@ int main(int argc, char *argv[])
 		perror("Semaphore create");
 		if (errno != EEXIST) {
 			perror("semget failure");
-			tst_resm(TBROK, "Semaphore creation failed");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "Semaphore creation failed");
 		}
 		id = semget(MY_KEY, 1, 0);
 		if (id == -1) {
 			perror("Semaphore create");
-			tst_resm(TBROK, "Semaphore operation failed");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "Semaphore operation failed");
 		}
 	}
 
@@ -119,8 +125,7 @@ int main(int argc, char *argv[])
 	    do_clone_unshare_test(use_clone, CLONE_NEWIPC, check_semaphore,
 				  NULL);
 	if (ret < 0) {
-		tst_resm(TFAIL, "%s failed", tsttype);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "%s failed", tsttype);
 	}
 
 	close(p1[0]);
@@ -148,8 +153,6 @@ int main(int argc, char *argv[])
 	/* Delete the semaphore */
 	id = semget(MY_KEY, 1, 0);
 	semctl(id, IPC_RMID, 0);
-
-	tst_exit();
 
 	tst_exit();
 }

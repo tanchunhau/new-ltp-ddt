@@ -93,17 +93,14 @@
 #include <pwd.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define TEST_FILE       "testfile"
 
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
-extern struct passwd *my_getpwnam(char *);
 
-char *TCID = "fstat05";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-int exp_enos[] = { EFAULT, 0 };
+char *TCID = "fstat05";
+int TST_TOTAL = 1;
 
 int fildes;			/* testfile descriptor */
 
@@ -134,11 +131,8 @@ int main(int ac, char **av)
 	struct stat stat_buf;	/* stat structure buffer */
 	struct stat *ptr_str;
 	int lc;
-	char *msg;
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/* Buffer points outside user's accessible address space. */
 	ptr_str = &stat_buf;	/* if it was for conformance testing */
@@ -149,12 +143,9 @@ int main(int ac, char **av)
 	 */
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call fstat(2).
@@ -165,7 +156,6 @@ int main(int ac, char **av)
 
 		/* Check return code from fstat(2) */
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			if (TEST_ERRNO == EFAULT)
 				tst_resm(TPASS,
 					 "fstat failed with EFAULT as expected");
@@ -188,7 +178,7 @@ int main(int ac, char **av)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_brkm(TCONF, NULL, "test is not available on uClinux");
 }
@@ -201,11 +191,11 @@ int main()
  *	Exit the test program on receipt of unexpected signals.
  *	Create a temporary directory and change directory to it.
  */
-void setup()
+void setup(void)
 {
 	int i;
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	/*
 	 * Capture unexpected signals SIGSEGV included
@@ -239,13 +229,8 @@ void setup()
  *	created during setup().
  *	Exit the test program with normal exit code.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	if (close(fildes) == -1)
 		tst_brkm(TBROK | TERRNO, cleanup, "close(%s) failed",

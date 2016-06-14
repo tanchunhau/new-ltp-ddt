@@ -1,37 +1,32 @@
 /*
+ * Copyright (c) International Business Machines  Corp., 2001
+ * Copyright (c) 2013 Oracle and/or its affiliates. All Rights Reserved.
+ * Copyright (c) 2014 Cyril Hrubis <chrubis@suse.cz>
  *
- *   Copyright (c) International Business Machines  Corp., 2001
+ * This program is free software;  you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   This program is free software;  you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ * the GNU General Public License for more details.
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program;  if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /*
- * NAME
- * 	setpgid03.c
+ * Test to check the error and trivial conditions in setpgid system call
  *
- * DESCRIPTION
- * 	Test to check the error and trivial conditions in setpgid system call
+ * EPERM   -  The calling process, process specified by pid and the target
+ *            process group must be in the same session.
  *
- * USAGE
- * 	setuid03
- *
- * RESTRICTIONS
- * 	This test is not completely written in the LTP format - PLEASE FIX!
+ * EACCESS -  Proccess cannot change process group ID of a child after child
+ *            has performed exec()
  */
-
-#define DEBUG 0
 
 #include <wait.h>
 #include <limits.h>
@@ -42,164 +37,127 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
+
+#define TEST_APP "setpgid03_child"
 
 char *TCID = "setpgid03";
 int TST_TOTAL = 1;
 
-void do_child(void);
-void setup(void);
-void cleanup(void);
+static void do_child(void);
+static void setup(void);
+static void cleanup(void);
 
 int main(int ac, char **av)
 {
-	int pid;
-	int rval, fail = 0;
-	int ret, status;
-	int exno = 0;
-
+	int child_pid;
+	int status;
+	int rval;
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&do_child, "");
 #endif
 
-	/*
-	 * perform global setup for the test
-	 */
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		tst_count = 0;
 
-//test1:
-		/* sid of the calling process is not same */
-		if ((pid = FORK_OR_VFORK()) == -1) {
+		/* Child is in new session we are not alowed to change pgid */
+		if ((child_pid = FORK_OR_VFORK()) == -1)
 			tst_brkm(TBROK, cleanup, "fork() failed");
-		}
 
-		if (pid == 0) {	/* child */
+		if (child_pid == 0) {
 #ifdef UCLINUX
-			if (self_exec(av[0], "") < 0) {
+			if (self_exec(av[0], "") < 0)
 				tst_brkm(TBROK, cleanup, "self_exec failed");
-			}
 #else
 			do_child();
 #endif
-		} else {	/* parent */
-			sleep(1);
-			rval = setpgid(pid, getppid());
-			if (errno == EPERM) {
-				tst_resm(TPASS, "setpgid SUCCESS to set "
-					 "errno to EPERM");
-			} else {
-				tst_resm(TFAIL, "setpgid FAILED, "
-					 "expect %d, return %d", EPERM, errno);
-				fail = 1;
-			}
-			sleep(1);
-			if ((ret = wait(&status)) > 0) {
-				if (DEBUG)
-					tst_resm(TINFO, "Test {%d} exited "
-						 "status 0x%0x", ret, status);
+		}
 
-				if (status != 0) {
-					fail = 1;
-				}
-			}
+		TST_SAFE_CHECKPOINT_WAIT(cleanup, 0);
+		rval = setpgid(child_pid, getppid());
+		if (rval == -1 && errno == EPERM) {
+			tst_resm(TPASS, "setpgid failed with EPERM");
+		} else {
+			tst_resm(TFAIL,
+				"retval %d, errno %d, expected errno %d",
+				rval, errno, EPERM);
 		}
-		if (DEBUG) {
-			if (fail || exno) {
-				tst_resm(TINFO, "Test test 1: FAILED");
-			} else {
-				tst_resm(TINFO, "Test test 1: PASSED");
-			}
-		}
-//test2:
-		/*
-		 * Value of pid matches the pid of the child process and
-		 * the child process has exec successfully. Error
-		 */
-		if ((pid = FORK_OR_VFORK()) == -1) {
+		TST_SAFE_CHECKPOINT_WAKE(cleanup, 0);
+
+		if (wait(&status) < 0)
+			tst_resm(TFAIL | TERRNO, "wait() for child 1 failed");
+
+		if (!(WIFEXITED(status)) || (WEXITSTATUS(status) != 0))
+			tst_resm(TFAIL, "child 1 failed with status %d",
+				WEXITSTATUS(status));
+
+		/* Child after exec() we are no longer allowed to set pgid */
+		if ((child_pid = FORK_OR_VFORK()) == -1)
 			tst_resm(TFAIL, "Fork failed");
 
-		}
-		if (pid == 0) {
-			if (execlp("sleep", "sleep", "3", NULL) < 0) {
+		if (child_pid == 0) {
+			if (execlp(TEST_APP, TEST_APP, NULL) < 0)
 				perror("exec failed");
-			}
+
 			exit(127);
-		} else {
-			sleep(1);
-			rval = setpgid(pid, getppid());
-			if (errno == EACCES) {
-				tst_resm(TPASS, "setpgid SUCCEEDED to set "
-					 "errno to EACCES");
-			} else {
-				tst_resm(TFAIL, "setpgid FAILED, expect EACCES "
-					 "got %d", errno);
-			}
-			if ((ret = wait(&status)) > 0) {
-				if (DEBUG)
-					tst_resm(TINFO, "Test {%d} exited "
-						 "status 0x%0x", ret, status);
-				if (status != 0) {
-					fail = 1;
-				}
-			}
 		}
+
+		TST_SAFE_CHECKPOINT_WAIT(cleanup, 0);
+		rval = setpgid(child_pid, getppid());
+		if (rval == -1 && errno == EACCES) {
+			tst_resm(TPASS, "setpgid failed with EACCES");
+		} else {
+			tst_resm(TFAIL,
+				"retval %d, errno %d, expected errno %d",
+				rval, errno, EACCES);
+		}
+		TST_SAFE_CHECKPOINT_WAKE(cleanup, 0);
+
+		if (wait(&status) < 0)
+			tst_resm(TFAIL | TERRNO, "wait() for child 2 failed");
+
+		if (!(WIFEXITED(status)) || (WEXITSTATUS(status) != 0))
+			tst_resm(TFAIL, "child 2 failed with status %d",
+				WEXITSTATUS(status));
 	}
+
 	cleanup();
 	tst_exit();
-
 }
 
-/*
- * do_child()
- */
-void do_child()
+static void do_child(void)
 {
-	int exno = 0;
-
 	if (setsid() < 0) {
-		tst_resm(TFAIL, "setsid failed, errno :%d", errno);
-		exno = 1;
+		printf("CHILD: setsid() failed, errno: %d\n", errno);
+		exit(2);
 	}
-	sleep(2);
-	exit(exno);
+
+	TST_SAFE_CHECKPOINT_WAKE(NULL, 0);
+
+	TST_SAFE_CHECKPOINT_WAIT(NULL, 0);
+
+	exit(0);
 }
 
-/*
- * setup()
- * 	performs all ONE TIME setup for this test
- */
-void setup(void)
+static void setup(void)
 {
-
 	tst_sig(FORK, DEF_HANDLER, cleanup);
+
+	tst_tmpdir();
+
+	TST_CHECKPOINT_INIT(tst_rmdir);
 
 	umask(0);
 
 	TEST_PAUSE;
 }
 
-/*
- * cleanup()
- * 	performs all the ONE TIME cleanup for this test at completion
- * 	or premature exit
- */
-void cleanup(void)
+static void cleanup(void)
 {
-	/*
-	 * print timing status if that option was specified
-	 * print errno log if that option was specified
-	 */
-	TEST_CLEANUP;
-
+	tst_rmdir();
 }

@@ -65,14 +65,12 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
-extern void do_file_setup(char *);
 
-char *TCID = "rename13";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "rename13";
+int TST_TOTAL = 1;
 
 int fd;
 char fname[255], mname[255];
@@ -83,13 +81,11 @@ ino_t oldino;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
 	/*
 	 * parse standard options
 	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/*
 	 * perform global setup for test
@@ -101,7 +97,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * TEST rename()works when
@@ -116,56 +112,48 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			/* check the existence of "new", and get the status */
-			if (stat(mname, &buf2) == -1) {
-				tst_brkm(TBROK, cleanup, "failed to stat file "
-					 "%s in rename()", mname);
+		/* check the existence of "new", and get the status */
+		if (stat(mname, &buf2) == -1) {
+			tst_brkm(TBROK, cleanup, "failed to stat file "
+				 "%s in rename()", mname);
 
-			}
-
-			/* check the existence of "old", and get the status */
-			if (stat(fname, &buf1) == -1) {
-				tst_brkm(TBROK, cleanup, "failed to stat file "
-					 "%s in rename()", fname);
-
-			}
-
-			/* verify the new file is the same as the original */
-			if (buf2.st_dev != olddev || buf2.st_ino != oldino) {
-				tst_resm(TFAIL,
-					 "rename() failed: new file does "
-					 "not point to the same file as old "
-					 "file");
-				continue;
-			}
-
-			/* verify the old file is unchanged */
-			if (buf1.st_dev != olddev || buf1.st_ino != oldino) {
-				tst_resm(TFAIL,
-					 "rename() failed: old file does "
-					 "not point to the original file");
-				continue;
-			}
-
-			tst_resm(TPASS, "functionality of rename() is correct");
-		} else {
-			tst_resm(TPASS, "call succeeded");
 		}
+
+		/* check the existence of "old", and get the status */
+		if (stat(fname, &buf1) == -1) {
+			tst_brkm(TBROK, cleanup, "failed to stat file "
+				 "%s in rename()", fname);
+
+		}
+
+		/* verify the new file is the same as the original */
+		if (buf2.st_dev != olddev || buf2.st_ino != oldino) {
+			tst_resm(TFAIL,
+				 "rename() failed: new file does "
+				 "not point to the same file as old "
+				 "file");
+			continue;
+		}
+
+		/* verify the old file is unchanged */
+		if (buf1.st_dev != olddev || buf1.st_ino != oldino) {
+			tst_resm(TFAIL,
+				 "rename() failed: old file does "
+				 "not point to the original file");
+			continue;
+		}
+
+		tst_resm(TPASS, "functionality of rename() is correct");
 	}
 
-	/*
-	 * cleanup and exit
-	 */
 	cleanup();
 	tst_exit();
-
 }
 
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -178,8 +166,7 @@ void setup()
 	sprintf(fname, "./tfile_%d", getpid());
 	sprintf(mname, "./rnfile_%d", getpid());
 
-	/* create the "old" file */
-	do_file_setup(fname);
+	SAFE_TOUCH(cleanup, fname, 0700, NULL);
 
 	if (stat(fname, &buf1) == -1) {
 		tst_brkm(TBROK, cleanup, "failed to stat file %s"
@@ -202,13 +189,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/*
 	 * Remove the temporary directory.

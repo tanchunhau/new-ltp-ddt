@@ -124,7 +124,6 @@
 #include <unistd.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define HOSTIDLEN 40
 /* Bitmasks for the 64 bit operating system checks */
@@ -134,32 +133,26 @@
 void setup();
 void cleanup();
 
-char *TCID = "gethostid01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0 };		/* must be a 0 terminated list */
+char *TCID = "gethostid01";
+int TST_TOTAL = 1;
 
 int main(int ac, char **av)
 {
 	int lc, i, j;		/* loop counters */
-	int bit_64 = 0;		/* used when compiled 64bit on some 64bit machines */
-	char *msg;
+	int bit_64 = 0;
 	char *result;
 	char name[HOSTIDLEN], name2[HOSTIDLEN], hostid[HOSTIDLEN],
 	    hostid2[HOSTIDLEN], *hostid3, hex[2] = "0x";
 	char hex_64[8] = "ffffffff";
 	FILE *fp;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(gethostid());
 
@@ -169,85 +162,82 @@ int main(int ac, char **av)
 		}
 		sprintf(hostid, "%08lx", TEST_RETURN);
 
-		if (STD_FUNCTIONAL_TEST) {
-			if (system("hostid > hostid.x") == -1)
-				tst_brkm(TFAIL, cleanup,
-					 "system() returned errno %d", errno);
-			if ((fp = fopen("hostid.x", "r")) == NULL)
-				tst_brkm(TFAIL, cleanup, "fopen failed");
-			if (fgets(name, HOSTIDLEN, fp) == NULL)
-				tst_brkm(TFAIL, cleanup, "fgets failed");
-			fclose(fp);
+		if (system("hostid > hostid.x") == -1)
+			tst_brkm(TFAIL, cleanup,
+				 "system() returned errno %d", errno);
+		if ((fp = fopen("hostid.x", "r")) == NULL)
+			tst_brkm(TFAIL, cleanup, "fopen failed");
+		if (fgets(name, HOSTIDLEN, fp) == NULL)
+			tst_brkm(TFAIL, cleanup, "fgets failed");
+		fclose(fp);
 
-			name[strlen(name) - 1] = 0;
+		name[strlen(name) - 1] = 0;
 
-			if (strstr(hostid, "000000"))
-				tst_resm(TCONF, "Host ID has not been set.");
+		if (strstr(hostid, "000000"))
+			tst_resm(TCONF, "Host ID has not been set.");
 
-			if (strcmp(name, hostid) == 0) {
+		if (strcmp(name, hostid) == 0) {
+			tst_resm(TPASS,
+				 "Hostid command and gethostid both report "
+				 "hostid is %s", hostid);
+		} else {
+
+			/*
+			 * Some distros add an "0x" to the front of the
+			 * `hostid` output. We compare the first 2
+			 * characters of the `hostid` output with "0x",
+			 * if it's equal, remove these first 2
+			 * characters & re-test. -RW
+			 */
+			if (name[0] == hex[0] && name[1] == hex[1])
+				for (i = 0; i < 38; i++)
+					name2[i] = name[i + 2];
+			else
+				strncpy(name2, name, HOSTIDLEN);
+
+			/*
+			 * This code handles situations where ffffffff
+			 * is appended. Fixed to not clobber the first
+			 * check with the 2nd check MR
+			 */
+
+			if (0 == strncmp(hostid, hex_64, 8))
+				bit_64 |= FIRST_64_CHKBIT;
+
+			if (0 == strncmp(name2, hex_64, 8))
+				bit_64 |= SECOND_64_CHKBIT;
+
+			if (bit_64 & FIRST_64_CHKBIT)
+				for (j = 0; j < 8; j++)
+					hostid2[j] = hostid[j + 8];
+			else
+				strncpy(hostid2, hostid,
+					strlen(hostid) + 1);
+
+			if (bit_64 & SECOND_64_CHKBIT)
+				for (j = 0; j < 9; j++)
+					name2[j] = name2[j + 8];
+
+			if ((result = strstr(hostid2, name2)) != NULL) {
+				hostid3 = strdup(name2);
+
 				tst_resm(TPASS,
-					 "Hostid command and gethostid both report "
-					 "hostid is %s", hostid);
-			} else {
-
-				/*
-				 * Some distros add an "0x" to the front of the
-				 * `hostid` output. We compare the first 2
-				 * characters of the `hostid` output with "0x",
-				 * if it's equal, remove these first 2
-				 * characters & re-test. -RW
-				 */
-				if (name[0] == hex[0] && name[1] == hex[1])
-					for (i = 0; i < 38; i++)
-						name2[i] = name[i + 2];
-				else
-					strncpy(name2, name, HOSTIDLEN);
-
-				/*
-				 * This code handles situations where ffffffff
-				 * is appended. Fixed to not clobber the first
-				 * check with the 2nd check MR
-				 */
-
-				if (0 == strncmp(hostid, hex_64, 8))
-					bit_64 |= FIRST_64_CHKBIT;
-
-				if (0 == strncmp(name2, hex_64, 8))
-					bit_64 |= SECOND_64_CHKBIT;
-
-				if (bit_64 & FIRST_64_CHKBIT)
-					for (j = 0; j < 8; j++)
-						hostid2[j] = hostid[j + 8];
-				else
-					strncpy(hostid2, hostid,
-						strlen(hostid) + 1);
-
-				if (bit_64 & SECOND_64_CHKBIT)
-					for (j = 0; j < 9; j++)
-						name2[j] = name2[j + 8];
-
-				if ((result = strstr(hostid2, name2)) != NULL) {
-					hostid3 = strdup(name2);
-
-					tst_resm(TPASS,
-						 "Hostid command reports "
-						 "hostid is %s, and gethostid "
-						 "reports %s", name2, hostid3);
-				} else
-					tst_resm(TFAIL,
-						 "Hostid command reports "
-						 "hostid is %s, but gethostid "
-						 "reports %s", name2, hostid2);
-			}
+					 "Hostid command reports "
+					 "hostid is %s, and gethostid "
+					 "reports %s", name2, hostid3);
+			} else
+				tst_resm(TFAIL,
+					 "Hostid command reports "
+					 "hostid is %s, but gethostid "
+					 "reports %s", name2, hostid2);
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -257,10 +247,8 @@ void setup()
 	tst_tmpdir();
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 
 }

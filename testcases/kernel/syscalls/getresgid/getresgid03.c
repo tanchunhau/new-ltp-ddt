@@ -77,13 +77,12 @@
 #include <pwd.h>
 
 #include "test.h"
-#include "usctest.h"
 
 extern int getresgid(gid_t *, gid_t *, gid_t *);
 extern int setresgid(gid_t, gid_t, gid_t);
 
-char *TCID = "getresgid03";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "getresgid03";
+int TST_TOTAL = 1;
 gid_t pr_gid, pe_gid, ps_gid;	/* calling process real/effective/saved gid */
 
 void setup();			/* Main setup function of test */
@@ -92,22 +91,16 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	gid_t real_gid,		/* real/eff./saved user id from getresgid() */
 	 eff_gid, sav_gid;
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call getresgid() to get the real/effective/saved
@@ -122,31 +115,22 @@ int main(int ac, char **av)
 			continue;
 		}
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Verify the real/effective/saved gid
+		 * values returned by getresgid with the
+		 * expected values.
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Verify the real/effective/saved gid
-			 * values returned by getresgid with the
-			 * expected values.
-			 */
-			if ((real_gid != pr_gid) || (eff_gid != pe_gid) ||
-			    (sav_gid != ps_gid)) {
-				tst_resm(TFAIL, "real:%d, effective:%d, "
-					 "saved-user:%d ids differ",
-					 real_gid, eff_gid, sav_gid);
-			} else {
-				tst_resm(TPASS, "Functionality of getresgid() "
-					 "successful");
-			}
+		if ((real_gid != pr_gid) || (eff_gid != pe_gid) ||
+		    (sav_gid != ps_gid)) {
+			tst_resm(TFAIL, "real:%d, effective:%d, "
+				 "saved-user:%d ids differ",
+				 real_gid, eff_gid, sav_gid);
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			tst_resm(TPASS, "Functionality of getresgid() "
+				 "successful");
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -157,18 +141,15 @@ int main(int ac, char **av)
  *	     Get the user info. of test user "ltpuser1" from /etc/passwd file.
  *	     Set the eff. user id of test process to that of "ltpuser1" user.
  */
-void setup()
+void setup(void)
 {
 	struct passwd *user_id;	/* passwd struct for test user */
+
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
-
-	/* Check that the test process id is super/root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, cleanup, "Must be super/root for this test!");
-	}
 
 	/* Real user-id of the calling process */
 	pr_gid = getgid();
@@ -201,13 +182,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Reset the effective/saved gid of the calling process */
 	if (setregid(-1, pr_gid) < 0) {

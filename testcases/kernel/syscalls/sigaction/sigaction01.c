@@ -69,7 +69,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
@@ -211,7 +210,7 @@ int set_handler(int flags, int sig_to_mask)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	TEST_PAUSE;
@@ -221,65 +220,53 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;		/* message got from parse_opts */
 	int i;
 	int test_flags[] = { SA_RESETHAND | SA_SIGINFO, SA_RESETHAND,
 		SA_RESETHAND | SA_SIGINFO, SA_RESETHAND | SA_SIGINFO
 	};
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		testcase_no = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			if (set_handler(test_flags[i], 0) == 0) {
-				if (STD_FUNCTIONAL_TEST) {
-					testcase_no++;
-					switch (i) {
-					case 0:
-					 /*FALLTHROUGH*/ case 1:
-						(void)kill(getpid(), SIGUSR1);
-						break;
-					case 2:
-					 /*FALLTHROUGH*/ case 3:
-						(void)
-						    pthread_kill(pthread_self(),
-								 SIGUSR1);
-						break;
-					default:
-						tst_brkm(TBROK, cleanup,
-							 "illegal case number");
-						break;
-					}
-				} else {
-					tst_resm(TPASS, "call succeeded");
+				testcase_no++;
+				switch (i) {
+				case 0:
+				 /*FALLTHROUGH*/ case 1:
+					(void)kill(getpid(), SIGUSR1);
+					break;
+				case 2:
+				 /*FALLTHROUGH*/ case 3:
+					(void)
+					    pthread_kill(pthread_self(),
+							 SIGUSR1);
+					break;
+				default:
+					tst_brkm(TBROK, cleanup,
+						 "illegal case number");
+					break;
 				}
 			}
 		}
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }

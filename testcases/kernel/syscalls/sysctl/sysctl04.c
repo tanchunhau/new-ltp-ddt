@@ -46,7 +46,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -54,6 +53,10 @@
 #include <linux/sysctl.h>
 
 char *TCID = "sysctl04";
+
+/* This is an older/deprecated syscall that newer arches are omitting */
+#ifdef __NR_sysctl
+
 int TST_TOTAL = 2;
 
 int sysctl(int *name, int nlen, void *oldval, size_t * oldlenp,
@@ -64,10 +67,7 @@ int sysctl(int *name, int nlen, void *oldval, size_t * oldlenp,
 	return syscall(__NR__sysctl, &args);
 }
 
-#define SIZE(x) sizeof(x)/sizeof(x[0])
 #define OSNAMESZ 100
-
-int exp_enos[] = { ENOTDIR, 0 };
 
 void setup(void);
 void cleanup(void);
@@ -87,28 +87,22 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
 	char osname[OSNAMESZ];
 	int i;
 	size_t osnamelth;
 	int name[] = { CTL_KERN, KERN_OSREV };
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	osnamelth = SIZE(osname);
-
-	/* set up the expected errnos */
-	TEST_EXP_ENOS(exp_enos);
+	osnamelth = sizeof(osname);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -119,8 +113,6 @@ int main(int ac, char **av)
 				tst_resm(TFAIL, "call succeeded unexpectedly");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == TC[i].error) {
 				tst_resm(TPASS, "expected failure - "
@@ -145,7 +137,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -157,12 +149,18 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }
+
+#else
+int TST_TOTAL = 0;
+
+int main(void)
+{
+
+	tst_brkm(TCONF, NULL,
+		 "This test needs a kernel that has sysctl syscall.");
+}
+#endif

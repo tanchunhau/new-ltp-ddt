@@ -76,11 +76,7 @@
  *		-Robbie Williamson
  *
  * RESTRICTIONS:
-//wjh
-//Actually it seems that this test has to be run by root (check setup()) and
-//it calls another program (change_owner) to change ownership on the directory
-//it creates. But this test never gives up it's uid/gid to be nonroot
- *  This test should be run by 'non-super-user' only.
+ *  This test should be run by root.
  *
  */
 
@@ -101,7 +97,6 @@
 #include <pwd.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define DEBUG 0
 
@@ -110,8 +105,8 @@
 #define PERMS		(mode_t)(MODE_RWX | DIR_MODE)
 #define TESTDIR		"testdir"
 
-char *TCID = "chmod05";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "chmod05";
+int TST_TOTAL = 1;
 
 void setup();			/* Main setup function for test */
 void cleanup();			/* Main cleanup function for test */
@@ -120,17 +115,15 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat struct */
 	int lc;
-	char *msg;
 	mode_t dir_mode;	/* mode permissions set on test directory */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(chmod(TESTDIR, PERMS));
 
@@ -140,41 +133,32 @@ int main(int ac, char **av)
 			continue;
 		}
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Get the directory information using
+		 * stat(2).
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Get the directory information using
-			 * stat(2).
-			 */
-			if (stat(TESTDIR, &stat_buf) < 0) {
-				tst_brkm(TFAIL | TERRNO, cleanup,
-					 "stat(%s) failed", TESTDIR);
-			}
-			dir_mode = stat_buf.st_mode;
+		if (stat(TESTDIR, &stat_buf) < 0) {
+			tst_brkm(TFAIL | TERRNO, cleanup,
+				 "stat(%s) failed", TESTDIR);
+		}
+		dir_mode = stat_buf.st_mode;
 #if DEBUG
-			printf("DIR_MODE = 0%03o\n", DIR_MODE);
-			printf("MODE_RWX = 0%03o\n", MODE_RWX);
-			printf("PERMS = 0%03o\n", PERMS);
-			printf("dir_mode = 0%03o\n", dir_mode);
+		printf("DIR_MODE = 0%03o\n", DIR_MODE);
+		printf("MODE_RWX = 0%03o\n", MODE_RWX);
+		printf("PERMS = 0%03o\n", PERMS);
+		printf("dir_mode = 0%03o\n", dir_mode);
 #endif
-			if ((PERMS & ~S_ISGID) != dir_mode)
-				tst_resm(TFAIL, "%s: Incorrect modes 0%03o, "
-					 "Expected 0%03o", TESTDIR, dir_mode,
-					 PERMS & ~S_ISGID);
-			else
-				tst_resm(TPASS,
-					 "Functionality of chmod(%s, %#o) successful",
+		if ((PERMS & ~S_ISGID) != dir_mode)
+			tst_resm(TFAIL, "%s: Incorrect modes 0%03o, "
+				 "Expected 0%03o", TESTDIR, dir_mode,
+				 PERMS & ~S_ISGID);
+		else
+			tst_resm(TPASS,
+				 "Functionality of chmod(%s, %#o) successful",
 					 TESTDIR, PERMS);
-		} else
-			tst_resm(TPASS, "call succeeded");
 	}
 
 	cleanup();
-
 	tst_exit();
-
 }
 
 /*
@@ -186,16 +170,12 @@ int main(int ac, char **av)
  *  Invoke setuid to root program to modify group ownership
  *  on test directory.
  */
-void setup()
+void setup(void)
 {
 	struct passwd *nobody_u;
 	struct group *bin_group;
 
-//wjh Improper comment! This makes sure we _are_ "root" not "nobody"
-	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
+	tst_require_root();
 
 	TEST_PAUSE;
 
@@ -232,10 +212,8 @@ void setup()
 			 "Couldn't switch to nobody:nobody");
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	if (setegid(0) == -1)
 		tst_resm(TWARN | TERRNO, "setegid(0) failed");
 	if (seteuid(0) == -1)

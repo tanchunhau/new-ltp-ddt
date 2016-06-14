@@ -71,15 +71,11 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
-extern void do_file_setup(char *);
 
-char *TCID = "rename08";	/* Test program identifier.    */
-
-int exp_enos[] = { EFAULT, 0 };	/* List must end with 0 */
+char *TCID = "rename08";
 
 char *bad_addr = 0;
 
@@ -104,31 +100,26 @@ struct test_case_t {
 	NULL, NULL, EFAULT}
 };
 
-int TST_TOTAL = (sizeof(TC) / sizeof(*TC));
+int TST_TOTAL = ARRAY_SIZE(TC);
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
 	/*
 	 * parse standard options
 	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
 	/*
 	 * check looping state if -i option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -139,8 +130,6 @@ int main(int ac, char **av)
 				tst_resm(TFAIL, "call succeeded unexpectedly");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == TC[i].error) {
 				tst_resm(TPASS, "expected failure - "
@@ -162,7 +151,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -174,7 +163,7 @@ void setup()
 
 	sprintf(fname, "./tfile_%d", getpid());
 
-	do_file_setup(fname);
+	SAFE_TOUCH(cleanup, fname, 0700, NULL);
 
 #if !defined(UCLINUX)
 	bad_addr = mmap(0, 1, PROT_NONE,
@@ -191,13 +180,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *              completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/*
 	 * Remove the temporary directory.

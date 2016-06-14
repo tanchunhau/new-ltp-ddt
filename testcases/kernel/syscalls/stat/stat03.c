@@ -87,7 +87,6 @@
 #include <pwd.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define MODE_RWX	S_IRWXU | S_IRWXG | S_IRWXO
 #define FILE_MODE	S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
@@ -126,14 +125,8 @@ struct test_case_t {		/* test case struct. to hold ref. test cond's */
 	NULL, NULL, 0, no_setup}
 };
 
-char *TCID = "stat03";		/* Test program identifier.    */
-int TST_TOTAL = (sizeof(Test_cases) / sizeof(*Test_cases));
-int exp_enos[] = { EACCES,
-#if !defined(UCLINUX)
-	EFAULT, ENAMETOOLONG,
-#endif
-	ENOENT, ENOTDIR, 0
-};
+char *TCID = "stat03";
+int TST_TOTAL = ARRAY_SIZE(Test_cases);
 
 char *bad_addr = 0;
 
@@ -144,14 +137,11 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat structure buffer */
 	int lc;
-	char *msg;
 	char *file_name;	/* ptr. for file name whose mode is modified */
 	char *test_desc;	/* test specific error message */
 	int ind;		/* counter to test different test conditions */
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/*
 	 * Invoke setup function to call individual test setup functions
@@ -159,12 +149,9 @@ int main(int ac, char **av)
 	 */
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; Test_cases[ind].desc != NULL; ind++) {
 			file_name = Test_cases[ind].pathname;
@@ -185,7 +172,6 @@ int main(int ac, char **av)
 
 			/* Check return code from stat(2) */
 			if (TEST_RETURN == -1) {
-				TEST_ERROR_LOG(TEST_ERRNO);
 				if (TEST_ERRNO == Test_cases[ind].exp_errno) {
 					tst_resm(TPASS,
 						 "stat() fails, %s, errno:%d",
@@ -203,7 +189,7 @@ int main(int ac, char **av)
 					 Test_cases[ind].exp_errno);
 			}
 		}
-		Tst_count++;	/* incr TEST_LOOP counter */
+		tst_count++;	/* incr TEST_LOOP counter */
 	}
 
 	/*
@@ -211,7 +197,6 @@ int main(int ac, char **av)
 	 * in the setup().
 	 */
 	cleanup();
-	tst_exit();
 	tst_exit();
 
 }
@@ -224,17 +209,16 @@ int main(int ac, char **av)
  *	Invoke individual test setup functions according to the order
  *	set in struct. definition.
  */
-void setup()
+void setup(void)
 {
 	int ind;
+
+	tst_require_root();
 
 	/* Capture unexpected signals */
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	ltpuser = getpwnam(nobody_uid);
 	if (setuid(ltpuser->pw_uid) == -1) {
 		tst_resm(TINFO, "setuid failed to "
@@ -273,7 +257,7 @@ void setup()
  *              Hence, this function just returns 0.
  *  This function simply returns 0.
  */
-int no_setup()
+int no_setup(void)
 {
 	return 0;
 }
@@ -289,7 +273,7 @@ int no_setup()
  *
  *  The function returns 0.
  */
-int setup1()
+int setup1(void)
 {
 	int fd;			/* file handle for testfile */
 
@@ -327,7 +311,7 @@ int setup1()
  *  change mode of a testfile "tfile_2" under "t_file" which happens to be
  *  another regular file.
  */
-int setup2()
+int setup2(void)
 {
 	int fd;			/* File handle for test file */
 
@@ -352,7 +336,7 @@ int setup2()
  *                    the MAX. length of PATH_MAX.
  *   This function retruns 0.
  */
-int longpath_setup()
+int longpath_setup(void)
 {
 	int ind;		/* counter variable */
 
@@ -371,13 +355,8 @@ int longpath_setup()
  *	created during setup().
  *	Exit the test program with normal exit code.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Restore mode permissions on test directory created in setup2() */
 	if (chmod(DIR_TEMP, MODE_RWX) < 0) {

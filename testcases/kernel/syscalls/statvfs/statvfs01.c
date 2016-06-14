@@ -1,5 +1,6 @@
 /*
  * Copyright (c) Wipro Technologies Ltd, 2005.  All Rights Reserved.
+ *    AUTHOR: Prashant P Yendigeri <prashant.yendigeri@wipro.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -14,25 +15,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  */
-/**********************************************************
- *
- *    TEST IDENTIFIER   : statvfs01
- *
- *    EXECUTED BY       : root / superuser
- *
- *    TEST TITLE        : Basic tests for statvfs(2)
- *
- *    TEST CASE TOTAL   : 1
- *
- *    AUTHOR            : Prashant P Yendigeri
- *                        <prashant.yendigeri@wipro.com>
- *
+/*
  *    DESCRIPTION
  *      This is a Phase I test for the statvfs(2) system call.
  *      It is intended to provide a limited exposure of the system call.
  *	This call behaves similar to statfs.
- *
- **********************************************************/
+ */
 
 #include <stdio.h>
 #include <unistd.h>
@@ -41,43 +29,36 @@
 #include <stdint.h>
 
 #include "test.h"
-#include "usctest.h"
 
-#define TEST_PATH "/"		/* Should be a mounted FS */
+#define TEST_PATH "/"
 
-void setup();
-void cleanup();
+static void setup(void);
+static void cleanup(void);
 
-char *TCID = "statvfs01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0 };		/* must be a 0 terminated list */
+char *TCID = "statvfs01";
+int TST_TOTAL = 1;
 
 int main(int ac, char **av)
 {
 	struct statvfs buf;
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(statvfs(TEST_PATH, &buf));
 
-		if (TEST_RETURN == -1)
+		if (TEST_RETURN == -1) {
 			tst_resm(TFAIL | TERRNO, "statvfs(%s, ...) failed",
 				 TEST_PATH);
-		else
+		} else {
 			tst_resm(TPASS, "statvfs(%s, ...) passed", TEST_PATH);
+		}
 
 	}
 
@@ -96,30 +77,16 @@ int main(int ac, char **av)
 	tst_resm(TINFO, "file system max filename length = %lu", buf.f_namemax);
 
 	cleanup();
-
 	tst_exit();
 }
 
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- ***************************************************************/
-void setup()
+static void setup(void)
 {
-
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- *              completion or premature exit.
- ***************************************************************/
-void cleanup()
+static void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }

@@ -45,7 +45,6 @@
 
 /** LTP Port **/
 #include "test.h"
-#include "usctest.h"
 
 #define FAILED 0
 #define PASSED 1
@@ -96,9 +95,7 @@ char *prog;
 {
 	tst_resm(TCONF, "Usage: %s <nchild> <size> <chunk_size> <iterations>",
 		 prog);
-	tst_resm(TCONF, "DEFAULTS: 10 1024*1024 4096 25");
-	tst_exit();
-	return 0;
+	tst_brkm(TCONF, NULL, "DEFAULTS: 10 1024*1024 4096 25");
 }
 
 int main(argc, argv)
@@ -243,7 +240,7 @@ int me;
 	 */
 
 	nchunks = max_size / csize;
-	bits = (char *)malloc((nchunks + 7) / 8);
+	bits = malloc((nchunks + 7) / 8);
 	if (bits == 0)
 		okexit(me);
 	val_buf = (char *)(malloc(csize));
@@ -252,7 +249,7 @@ int me;
 	zero_buf = (char *)(malloc(csize));
 	if (zero_buf == 0)
 		okexit(me);
-	mondobuf = (char *)malloc(max_size);
+	mondobuf = malloc(max_size);
 	if (mondobuf == 0)
 		okexit(me);
 
@@ -494,9 +491,9 @@ int me;
 		tst_resm(TINFO, "\tThis is ok - probably swap space limit.\n");
 		tst_exit();
 	} else {
-		tst_resm(TBROK,
+		tst_brkm(TBROK,
+			 NULL,
 			 "\tThis is not ok for first child - check parameters.\n");
-		tst_exit();
 	}
 
 	return 0;

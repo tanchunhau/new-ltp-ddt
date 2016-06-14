@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2000 Silicon Graphics, Inc.  All Rights Reserved.
+ *    AUTHOR		: William Roske
+ *    CO-PILOT		: Dave Fenner
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -30,84 +32,6 @@
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  *
  */
-/* $Id: fchown01.c,v 1.4 2009/10/26 14:55:46 subrata_modak Exp $ */
-/**********************************************************
- *
- *    OS Test - Silicon Graphics, Inc.
- *
- *    TEST IDENTIFIER	: fchown01
- *
- *    EXECUTED BY	: anyone
- *
- *    TEST TITLE	: Basic test for fchown(2)
- *
- *    PARENT DOCUMENT	: usctpl01
- *
- *    TEST CASE TOTAL	: 1
- *
- *    WALL CLOCK TIME	: 1
- *
- *    CPU TYPES		: ALL
- *
- *    AUTHOR		: William Roske
- *
- *    CO-PILOT		: Dave Fenner
- *
- *    DATE STARTED	: 02/14/92
- *
- *    INITIAL RELEASE	: UNICOS 7.0
- *
- *    TEST CASES
- *
- * 	1.) fchown(2) returns...(See Description)
- *
- *    INPUT SPECIFICATIONS
- * 	The standard options for system call tests are accepted.
- *	(See the parse_opts(3) man page).
- *
- *    OUTPUT SPECIFICATIONS
- *
- *    DURATION
- * 	Terminates - with frequency and infinite modes.
- *
- *    SIGNALS
- * 	Uses SIGUSR1 to pause before test if option set.
- * 	(See the parse_opts(3) man page).
- *
- *    RESOURCES
- * 	None
- *
- *    ENVIRONMENTAL NEEDS
- *      No run-time environmental needs.
- *
- *    SPECIAL PROCEDURAL REQUIREMENTS
- * 	None
- *
- *    INTERCASE DEPENDENCIES
- * 	None
- *
- *    DETAILED DESCRIPTION
- *	This is a Phase I test for the fchown(2) system call.  It is intended
- *	to provide a limited exposure of the system call, for now.  It
- *	should/will be extended when full functional tests are written for
- *	fchown(2).
- *
- * 	Setup:
- * 	  Setup signal handling.
- *	  Pause for SIGUSR1 if option specified.
- *
- * 	Test:
- *	 Loop if the proper options are given.
- * 	  Execute system call
- *	  Check return code, if system call failed (return=-1)
- *		Log the errno and Issue a FAIL message.
- *	  Otherwise, Issue a PASS message.
- *
- * 	Cleanup:
- * 	  Print errno log and/or timing stats if options given
- *
- *
- *#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#**/
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -116,65 +40,61 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
+#include "safe_macros.h"
+#include "compat_16.h"
 
-void setup();
-void cleanup();
+static void setup(void);
+static void cleanup(void);
 
-char *TCID = "fchown01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+TCID_DEFINE(fchown01);
+int TST_TOTAL = 1;
 
-int fd;				/* file descriptor for fchown */
+static int fd;
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
-		TEST(fchown(fd, geteuid(), getegid()));
+		UID16_CHECK(geteuid(), "fchown", cleanup)
+		GID16_CHECK(getegid(), "fchown", cleanup)
 
-		if (TEST_RETURN == -1)
+		TEST(FCHOWN(cleanup, fd, geteuid(), getegid()));
+
+		if (TEST_RETURN == -1) {
 			tst_resm(TFAIL | TTERRNO, "fchown failed");
-		else if (STD_FUNCTIONAL_TEST)
+		} else {
 			tst_resm(TPASS,
 				 "fchown(fd, geteuid(), getegid()) "
 				 "returned %ld", TEST_RETURN);
+		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+static void setup(void)
 {
-	char fname[1024];
-
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 
 	tst_tmpdir();
-
-	sprintf(fname, "./tmpfile.%d", getpid());
-	if ((fd = open(fname, O_RDWR | O_CREAT, 0700)) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "open failed");
+	fd = SAFE_OPEN(cleanup, "tempfile", O_RDWR | O_CREAT, 0700);
 }
 
-void cleanup()
+static void cleanup(void)
 {
-	close(fd);
-
-	TEST_CLEANUP;
+	if (fd > 0 && close(fd))
+		tst_resm(TWARN | TERRNO, "Failed to close fd");
 
 	tst_rmdir();
 }

@@ -44,7 +44,6 @@
 #include <err.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "getppid02";
 int TST_TOTAL = 1;
@@ -58,15 +57,13 @@ int main(int ac, char **av)
 	int lc;
 	int status;
 	pid_t pid, ppid;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		ppid = getpid();
 		pid = FORK_OR_VFORK();
@@ -76,15 +73,12 @@ int main(int ac, char **av)
 		if (pid == 0) {
 			TEST(getppid());
 
-			if (STD_FUNCTIONAL_TEST) {
-				if (TEST_RETURN != ppid)
-					errx(1, "getppid failed (%ld != %d)",
-					     TEST_RETURN, ppid);
-				else
-					printf("return value and parent's pid "
-					       "value match\n");
-			} else
-				tst_resm(TPASS, "call succeeded");
+			if (TEST_RETURN != ppid)
+				errx(1, "getppid failed (%ld != %d)",
+				     TEST_RETURN, ppid);
+			else
+				printf("return value and parent's pid "
+				       "value match\n");
 			exit(0);
 		} else {
 			if (wait(&status) == -1)
@@ -100,7 +94,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -108,8 +102,6 @@ void setup()
 	TEST_PAUSE;
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 }

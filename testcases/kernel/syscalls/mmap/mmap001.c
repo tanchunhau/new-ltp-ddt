@@ -1,6 +1,4 @@
 /*
- * mmap001.c - Tests mmapping a big file and writing it once
- *
  * Copyright (C) 2000 Juan Quintela <quintela@fi.udc.es>
  *                    Aaron Laffin <alaffin@sgi.com>
  *
@@ -17,6 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * mmap001.c - Tests mmapping a big file and writing it once
  */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -29,7 +29,6 @@
 #include <string.h>
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "mmap001";
 int TST_TOTAL = 5;
@@ -37,21 +36,14 @@ static char *filename = NULL;
 static int m_opt = 0;
 static char *m_copt;
 
-void cleanup()
+static void cleanup(void)
 {
-	/*
-	 * remove the tmp directory and exit
-	 */
-
-	if (filename)
-		free(filename);
-
-	TEST_CLEANUP;
+	free(filename);
 
 	tst_rmdir();
 }
 
-void setup()
+static void setup(void)
 {
 	char buf[1024];
 	/*
@@ -72,7 +64,7 @@ void setup()
 
 }
 
-void help()
+static void help(void)
 {
 	printf("  -m x    size of mmap in pages (default 1000)\n");
 }
@@ -88,13 +80,12 @@ option_t options[] = {
 
 int main(int argc, char *argv[])
 {
-	char *array, *msg;
+	char *array;
 	int i, lc;
 	int fd;
 	unsigned int pages, memsize;
 
-	if ((msg = parse_opts(argc, argv, options, help)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, options, help);
 
 	if (m_opt) {
 		memsize = pages = atoi(m_copt);
@@ -120,7 +111,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		fd = open(filename, O_RDWR | O_CREAT, 0666);
 		if ((fd == -1))
@@ -141,7 +132,7 @@ int main(int argc, char *argv[])
 		}
 
 		array = mmap(0, memsize, PROT_WRITE, MAP_SHARED, fd, 0);
-		if (array == (char *)MAP_FAILED) {
+		if (array == MAP_FAILED) {
 			TEST_ERRNO = errno;
 			close(fd);
 			tst_brkm(TBROK | TTERRNO, cleanup,
@@ -150,33 +141,29 @@ int main(int argc, char *argv[])
 			tst_resm(TPASS, "mmap() completed successfully.");
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
+		tst_resm(TINFO, "touching mmaped memory");
 
-			tst_resm(TINFO, "touching mmaped memory");
-
-			for (i = 0; i < memsize; i++) {
-				array[i] = (char)i;
-			}
-
-			/*
-			 * seems that if the map area was bad, we'd get SEGV,
-			 * hence we can indicate a PASS.
-			 */
-			tst_resm(TPASS,
-				 "we're still here, mmaped area must be good");
-
-			TEST(msync(array, memsize, MS_SYNC));
-
-			if (TEST_RETURN == -1) {
-				tst_resm(TFAIL | TTERRNO,
-					 "synchronizing mmapped page failed");
-			} else {
-				tst_resm(TPASS,
-					 "synchronizing mmapped page passed");
-			}
-
+		for (i = 0; i < memsize; i++) {
+			array[i] = (char)i;
 		}
-		/* STD_FUNCTIONAL_TEST */
+
+		/*
+		 * seems that if the map area was bad, we'd get SEGV,
+		 * hence we can indicate a PASS.
+		 */
+		tst_resm(TPASS,
+			 "we're still here, mmaped area must be good");
+
+		TEST(msync(array, memsize, MS_SYNC));
+
+		if (TEST_RETURN == -1) {
+			tst_resm(TFAIL | TTERRNO,
+				 "synchronizing mmapped page failed");
+		} else {
+			tst_resm(TPASS,
+				 "synchronizing mmapped page passed");
+		}
+
 		TEST(munmap(array, memsize));
 
 		if (TEST_RETURN == -1) {

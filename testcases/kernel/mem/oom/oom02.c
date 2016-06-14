@@ -1,5 +1,5 @@
 /*
- * Out Of Memory (OOM) for NUMA
+ * Out Of Memory (OOM) for mempolicy - need NUMA system support
  *
  * The program is designed to cope with unpredictable like amount and
  * system physical memory, swap size and other VMM technology like KSM,
@@ -35,8 +35,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include "numa_helper.h"
 #include "test.h"
-#include "usctest.h"
 #include "mem.h"
 
 char *TCID = "oom02";
@@ -44,14 +44,12 @@ int TST_TOTAL = 1;
 
 #if HAVE_NUMA_H && HAVE_LINUX_MEMPOLICY_H && HAVE_NUMAIF_H \
 	&& HAVE_MPOL_CONSTANTS
+
 int main(int argc, char *argv[])
 {
-	char *msg;
 	int lc;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 #if __WORDSIZE == 32
 	tst_brkm(TCONF, NULL, "test is not designed for 32-bit system.");
@@ -60,13 +58,16 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
-		tst_resm(TINFO, "process mempolicy.");
-		testoom(1, 0, 1);
+		tst_resm(TINFO, "OOM on MPOL_BIND mempolicy...");
+		testoom(MPOL_BIND, 0, ENOMEM, 1);
 
-		tst_resm(TINFO, "process cpuset.");
-		testoom(0, 0, 1);
+		tst_resm(TINFO, "OOM on MPOL_INTERLEAVE mempolicy...");
+		testoom(MPOL_INTERLEAVE, 0, ENOMEM, 1);
+
+		tst_resm(TINFO, "OOM on MPOL_PREFERRED mempolicy...");
+		testoom(MPOL_PREFERRED, 0, ENOMEM, 1);
 	}
 	cleanup();
 	tst_exit();
@@ -74,21 +75,20 @@ int main(int argc, char *argv[])
 
 void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	TEST_PAUSE;
 
+	if (!is_numa(NULL, NH_MEMS, 2))
+		tst_brkm(TCONF, NULL, "The case need a NUMA system.");
+
 	overcommit = get_sys_tune("overcommit_memory");
 	set_sys_tune("overcommit_memory", 1, 1);
-	mount_mem("cpuset", "cpuset", NULL, CPATH, CPATH_NEW);
 }
 
 void cleanup(void)
 {
 	set_sys_tune("overcommit_memory", overcommit, 0);
-	umount_mem(CPATH, CPATH_NEW);
-
-	TEST_CLEANUP;
 }
 
 #else /* no NUMA */

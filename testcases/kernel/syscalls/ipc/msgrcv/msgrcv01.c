@@ -61,7 +61,6 @@
 #include <sys/wait.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #include "ipcmsg.h"
 
@@ -80,13 +79,11 @@ pid_t c_pid;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	void check_functionality(void);
 	int status, e_code;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
+
 #ifdef UCLINUX
 	maybe_run_child(&do_child, "d", &msg_q_1);
 #endif
@@ -96,8 +93,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * fork a child to read from the queue while the parent
@@ -142,7 +139,7 @@ int main(int ac, char **av)
 /*
  * do_child()
  */
-void do_child()
+void do_child(void)
 {
 	int retval = 0;
 
@@ -153,23 +150,19 @@ void do_child()
 		tst_resm(TFAIL, "%s call failed - errno = %d : %s",
 			 TCID, TEST_ERRNO, strerror(TEST_ERRNO));
 	} else {
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Build a new message and compare it
-			 * with the one received.
-			 */
-			init_buf(&cmp_buf, MSGTYPE, MSGSIZE);
+		/*
+		 * Build a new message and compare it
+		 * with the one received.
+		 */
+		init_buf(&cmp_buf, MSGTYPE, MSGSIZE);
 
-			if (strcmp(rcv_buf.mtext, cmp_buf.mtext) == 0) {
-				tst_resm(TPASS,
-					 "message received = " "message sent");
-			} else {
-				retval = 1;
-				tst_resm(TFAIL,
-					 "message received != " "message sent");
-			}
+		if (strcmp(rcv_buf.mtext, cmp_buf.mtext) == 0) {
+			tst_resm(TPASS,
+				 "message received = " "message sent");
 		} else {
-			tst_resm(TPASS, "call succeeded");
+			retval = 1;
+			tst_resm(TFAIL,
+				 "message received != " "message sent");
 		}
 	}
 	exit(retval);
@@ -213,11 +206,5 @@ void cleanup(void)
 	rm_queue(msg_q_1);
 
 	tst_rmdir();
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

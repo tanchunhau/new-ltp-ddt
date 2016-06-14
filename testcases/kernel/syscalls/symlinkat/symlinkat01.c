@@ -23,17 +23,6 @@
  *	This test case will verify basic function of symlinkat
  *	added by kernel 2.6.16 or up.
  *
- * USAGE:  <for command-line>
- * symlinkat01 [-c n] [-e] [-i n] [-I x] [-P x] [-t] [-p]
- * where:
- *      -c n : Run n copies simultaneously.
- *      -e   : Turn on errno logging.
- *      -i n : Execute test n times.
- *      -I x : Execute test for x seconds.
- *      -p   : Pause for SIGUSR1 before starting
- *      -P x : Pause for x seconds between iterations.
- *      -t   : Turn on syscall timing.
- *
  * Author
  *	Yi Yang <yyangcdl@cn.ibm.com>
  *
@@ -54,7 +43,6 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 #include "rmobj.h"
 #include "linux_syscall_numbers.h"
 
@@ -133,8 +121,8 @@ struct test_struct {
 	    /*      { TEST_FIFO, &newdirfd, TEST_FILE1, TEST_DIR1"/"TEST_FIFO, TEST_DIR2"/"TEST_FILE1, 0 }, */
 };
 
-char *TCID = "symlinkat01";	/* Test program identifier.    */
-int TST_TOTAL = sizeof(test_desc) / sizeof(*test_desc);	/* Total number of test cases. */
+char *TCID = "symlinkat01";
+int TST_TOTAL = sizeof(test_desc) / sizeof(*test_desc);
 
 #define SUCCEED_OR_DIE(syscall, message, ...)														\
 	(errno = 0,																														\
@@ -146,13 +134,12 @@ int TST_TOTAL = sizeof(test_desc) / sizeof(*test_desc);	/* Total number of test 
 static int mysymlinkat(const char *oldfilename,
 		       int newdirfd, const char *newfilename)
 {
-	return syscall(__NR_symlinkat, oldfilename, newdirfd, newfilename);
+	return ltp_syscall(__NR_symlinkat, oldfilename, newdirfd, newfilename);
 }
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
 	/* Disable test if the version of the kernel is less than 2.6.16 */
@@ -162,27 +149,14 @@ int main(int ac, char **av)
 		exit(0);
 	}
 
-	/***************************************************************
-	 * parse standard options
-	 ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
-	/***************************************************************
-	 * perform global setup for test
-	 ***************************************************************/
 	setup();
 
-	/***************************************************************
-	 * check looping state if -c option given
-	 ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
-		/*
-		 * Call symlinkat
-		 */
 		for (i = 0; i < TST_TOTAL; i++) {
 			setup_every_copy();
 			mysymlinkat_test(&test_desc[i]);
@@ -191,15 +165,11 @@ int main(int ac, char **av)
 
 	}
 
-	/***************************************************************
-	 * cleanup and exit
-	 ***************************************************************/
 	cleanup();
-
-	return (0);
+	tst_exit();
 }
 
-static void setup_every_copy()
+static void setup_every_copy(void)
 {
 	close(newdirfd);
 	rmobj(TEST_DIR2, NULL);
@@ -218,57 +188,48 @@ static void mysymlinkat_test(struct test_struct *desc)
 
 	/* check return code */
 	if (TEST_ERRNO == desc->expected_errno) {
+		if (TEST_RETURN == 0 && desc->referencefn1 != NULL) {
+			int tnum = rand(), vnum = ~tnum;
+			int len;
+			fd = SUCCEED_OR_DIE(open,
+					    "open(%s, 0x%x) failed: %s",
+					    desc->referencefn1, O_RDWR);
+			if ((len =
+			     write(fd, &tnum,
+				   sizeof(tnum))) != sizeof(tnum))
+				tst_brkm(TBROK, cleanup,
+					 "write() failed: expected %zu, returned %d; error: %s",
+					 sizeof(tnum), len,
+					 strerror(errno));
+			SUCCEED_OR_DIE(close, "close(%d) failed: %s",
+				       fd);
 
-		/***************************************************************
-		 * only perform functional verification if flag set (-f not given)
-		 ***************************************************************/
-		if (STD_FUNCTIONAL_TEST) {
-			/* No Verification test, yet... */
+			fd = SUCCEED_OR_DIE(open,
+					    "open(%s, 0x%x) failed: %s",
+					    desc->referencefn2,
+					    O_RDONLY);
+			if ((len =
+			     read(fd, &vnum,
+				  sizeof(vnum))) != sizeof(tnum))
+				tst_brkm(TBROK, cleanup,
+					 "read() failed: expected %zu, returned %d; error: %s",
+					 sizeof(vnum), len,
+					 strerror(errno));
+			SUCCEED_OR_DIE(close, "close(%d) failed: %s",
+				       fd);
 
-			if (TEST_RETURN == 0 && desc->referencefn1 != NULL) {
-				int tnum = rand(), vnum = ~tnum;
-				int len;
-				fd = SUCCEED_OR_DIE(open,
-						    "open(%s, 0x%x) failed: %s",
-						    desc->referencefn1, O_RDWR);
-				if ((len =
-				     write(fd, &tnum,
-					   sizeof(tnum))) != sizeof(tnum))
-					tst_brkm(TBROK, cleanup,
-						 "write() failed: expected %zu, returned %d; error: %s",
-						 sizeof(tnum), len,
-						 strerror(errno));
-				SUCCEED_OR_DIE(close, "close(%d) failed: %s",
-					       fd);
-
-				fd = SUCCEED_OR_DIE(open,
-						    "open(%s, 0x%x) failed: %s",
-						    desc->referencefn2,
-						    O_RDONLY);
-				if ((len =
-				     read(fd, &vnum,
-					  sizeof(vnum))) != sizeof(tnum))
-					tst_brkm(TBROK, cleanup,
-						 "read() failed: expected %zu, returned %d; error: %s",
-						 sizeof(vnum), len,
-						 strerror(errno));
-				SUCCEED_OR_DIE(close, "close(%d) failed: %s",
-					       fd);
-
-				if (tnum == vnum)
-					tst_resm(TPASS, "Test passed");
-				else
-					tst_resm(TFAIL,
-						 "The link file's content isn't as same as the original file's "
-						 "although symlinkat returned 0");
-			} else
-				tst_resm(TPASS,
-					 "symlinkat() returned the expected  errno %d: %s",
-					 TEST_ERRNO, strerror(TEST_ERRNO));
-		} else
-			tst_resm(TPASS, "Test passed");
+			if (tnum == vnum)
+				tst_resm(TPASS, "Test passed");
+			else
+				tst_resm(TFAIL,
+					 "The link file's content isn't as same as the original file's "
+					 "although symlinkat returned 0");
+		} else {
+			tst_resm(TPASS,
+				 "symlinkat() returned the expected  errno %d: %s",
+				 TEST_ERRNO, strerror(TEST_ERRNO));
+		}
 	} else {
-		TEST_ERROR_LOG(TEST_ERRNO);
 		tst_resm(TFAIL,
 			 TEST_RETURN ==
 			 0 ? "symlinkat() surprisingly succeeded" :
@@ -277,10 +238,7 @@ static void mysymlinkat_test(struct test_struct *desc)
 	}
 }
 
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- ***************************************************************/
-static void setup()
+static void setup(void)
 {
 	char *tmp;
 
@@ -309,17 +267,7 @@ static void setup()
 	TEST_PAUSE;
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- *             completion or premature exit.
- ***************************************************************/
-static void cleanup()
+static void cleanup(void)
 {
 	tst_rmdir();
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
-
 }

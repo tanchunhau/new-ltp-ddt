@@ -58,14 +58,11 @@
 #include <sys/wait.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #include "ipcmsg.h"
 
 char *TCID = "msgctl05";
 int TST_TOTAL = 1;
-
-int exp_enos[] = { EPERM, 0 };	/* 0 terminated list of expected errnos */
 
 int msg_q_1 = -1;		/* The message queue id created in setup */
 uid_t ltp_uid;			/* The user ID for a non root user */
@@ -75,13 +72,10 @@ struct msqid_ds q_buf;
 
 int main(int ac, char **av)
 {
-	char *msg;
 	pid_t pid;
 	void do_child(void);
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
@@ -116,7 +110,7 @@ int main(int ac, char **av)
 /*
  * do_child - make the TEST call as the child process
  */
-void do_child()
+void do_child(void)
 {
 	int lc;
 	int i;
@@ -124,8 +118,8 @@ void do_child()
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* loop through the test cases */
 
@@ -137,8 +131,6 @@ void do_child()
 					 "on expected fail");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			switch (TEST_ERRNO) {
 			case EPERM:
@@ -160,13 +152,9 @@ void do_child()
  */
 void setup(void)
 {
-	/* check for root as user id of process */
-	check_root();
+	tst_require_root();
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -194,10 +182,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

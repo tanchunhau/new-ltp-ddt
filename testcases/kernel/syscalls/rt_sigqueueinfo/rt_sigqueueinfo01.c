@@ -48,25 +48,21 @@
 #include <sys/syscall.h>
 #include <string.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-/* Global Variables */
-char *TCID = "rt_sigqueueinfo01";	/* Test program identifier. */
+char *TCID = "rt_sigqueueinfo01";
 int testno;
-int TST_TOTAL = 2;		/* total number of tests in this file.   */
+int TST_TOTAL = 2;
 
-extern void cleanup()
+void cleanup(void)
 {
 
-	TEST_CLEANUP;
 	tst_rmdir();
 
 }
 
-void setup()
+void setup(void)
 {
 	TEST_PAUSE;
 	tst_tmpdir();
@@ -79,7 +75,7 @@ int main(int ac, char **av)
 	pid = getpid();
 	siginfo_t uinfo;
 
-	Tst_count = 0;
+	tst_count = 0;
 	for (testno = 0; testno < TST_TOTAL; ++testno) {
 		TEST(pid = fork());
 		setup();
@@ -88,8 +84,8 @@ int main(int ac, char **av)
 		else if (TEST_RETURN == 0) {
 			uinfo.si_errno = 0;
 			uinfo.si_code = SI_QUEUE;
-			TEST(syscall(__NR_rt_sigqueueinfo, getpid(), SIGCHLD,
-				     &uinfo));
+			TEST(ltp_syscall(__NR_rt_sigqueueinfo, getpid(),
+				SIGCHLD, &uinfo));
 			if (TEST_RETURN != 0)
 				err(1, "rt_sigqueueinfo");
 			exit(0);

@@ -26,7 +26,7 @@
 #define SIGTOTEST SIGALRM
 #define TIMERSEC 3
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct sigevent ev;
 	timer_t tid;
@@ -58,11 +58,8 @@ int main(int argc, char *argv[])
 			printf("errno!=EINVAL after a timer_delete()\n");
 			return PTS_FAIL;
 		}
-	} else {
-		printf("timer_settime() did not fail after timer_delete()\n");
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed\n");
-	return PTS_UNRESOLVED;
+	printf("timer_settime() did not fail after timer_delete()\n");
+	return PTS_FAIL;
 }

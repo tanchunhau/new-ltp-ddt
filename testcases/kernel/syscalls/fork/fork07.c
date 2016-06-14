@@ -46,7 +46,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "fork07";
 int TST_TOTAL = 1;
@@ -77,14 +76,11 @@ int main(int ac, char **av)
 	int c_pass, c_fail;
 
 	int lc;
-	char *msg;
 
 	rea = NULL;
 	writ = NULL;
 
-	msg = parse_opts(ac, av, options, &help);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, options, &help);
 
 	if (Nflag) {
 		if (sscanf(Nforkarg, "%i", &Nforks) != 1)
@@ -96,7 +92,7 @@ int main(int ac, char **av)
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		writ = fopen(fnamebuf, "w");
 		if (writ == NULL)
@@ -186,13 +182,13 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-static void help()
+static void help(void)
 {
 	printf("  -N n    Create n children each iteration\n");
 	printf("  -v      Verbose mode\n");
 }
 
-static void setup()
+static void setup(void)
 {
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	umask(0);
@@ -204,10 +200,9 @@ static void setup()
 	strcat(fnamebuf, pbuf);
 }
 
-static void cleanup()
+static void cleanup(void)
 {
 	int waitstatus;
-	TEST_CLEANUP;
 
 	/* collect our zombies */
 	while (wait(&waitstatus) > 0) ;

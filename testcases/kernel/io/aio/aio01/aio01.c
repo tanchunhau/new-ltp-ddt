@@ -48,7 +48,6 @@
 #define _XOPEN_SOURCE 600
 
 #include "test.h"
-#include "usctest.h"
 #include "config.h"
 
 char *TCID = "aio01";
@@ -101,7 +100,6 @@ int main(int argc, char **argv)
 	int failflag = 0;
 	int bflag = 0, nflag = 0, Fflag = 0;
 	char *optb, *optn, *optF;
-	char *msg;		/* for parse_opts */
 	struct io_event event;
 	static struct timespec ts;
 	struct timeval stv, etv;
@@ -113,16 +111,12 @@ int main(int argc, char **argv)
 		{NULL, NULL, NULL}
 	};
 
-	msg = parse_opts(argc, argv, options, &help);
-	if (msg != (char *)NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(argc, argv, options, &help);
 
 	bufsize = (bflag ? atoi(optb) : 8192);
 	nr = (nflag ? atoi(optn) : 10);
 	if (Fflag) {
-		sprintf(fname, optF);
+		sprintf(fname, "%s", optF);
 	} else {
 		sprintf(fname, "aiofile");
 	}
@@ -140,9 +134,8 @@ int main(int argc, char **argv)
 			TEST(io_submit(io_ctx, 1, iocbs));
 		} while (TEST_RETURN == -EAGAIN);
 		if (TEST_RETURN < 0) {
-			TEST_ERROR_LOG(TEST_ERRNO);
-			tst_resm(TFAIL, "Test 1: io_submit failed - retval=%d, "
-				 "errno=%d", TEST_RETURN, TEST_ERRNO);
+			tst_resm(TFAIL, "Test 1: io_submit failed - retval=%ld"
+				 ", errno=%d", TEST_RETURN, TEST_ERRNO);
 			failflag = 1;
 			continue;
 		}
@@ -172,9 +165,8 @@ int main(int argc, char **argv)
 			TEST(io_submit(io_ctx, 1, iocbs));
 		} while (TEST_RETURN == -EAGAIN);
 		if (TEST_RETURN < 0) {
-			TEST_ERROR_LOG(TEST_ERRNO);
-			tst_resm(TFAIL, "Test 2: io_submit failed - retval=%d, "
-				 "errno=%d", TEST_RETURN, TEST_ERRNO);
+			tst_resm(TFAIL, "Test 2: io_submit failed - retval=%ld"
+				 ", errno=%d", TEST_RETURN, TEST_ERRNO);
 			failflag = 1;
 			continue;
 		}
@@ -204,9 +196,8 @@ int main(int argc, char **argv)
 			TEST(io_submit(io_ctx, 1, iocbs));
 		} while (TEST_RETURN == -EAGAIN);
 		if (TEST_RETURN < 0) {
-			TEST_ERROR_LOG(TEST_ERRNO);
-			tst_resm(TFAIL, "Test 3: io_submit failed - retval=%d, "
-				 "errno=%d", TEST_RETURN, TEST_ERRNO);
+			tst_resm(TFAIL, "Test 3: io_submit failed - retval=%ld"
+				 ", errno=%d", TEST_RETURN, TEST_ERRNO);
 			failflag = 1;
 			continue;
 		}
@@ -236,9 +227,8 @@ int main(int argc, char **argv)
 			TEST(io_submit(io_ctx, 1, iocbs));
 		} while (TEST_RETURN == -EAGAIN);
 		if (TEST_RETURN < 0) {
-			TEST_ERROR_LOG(TEST_ERRNO);
-			tst_resm(TFAIL, "Test 4: io_submit failed - retval=%d, "
-				 "errno=%d", TEST_RETURN, TEST_ERRNO);
+			tst_resm(TFAIL, "Test 4: io_submit failed - retval=%ld"
+				 ", errno=%d", TEST_RETURN, TEST_ERRNO);
 			failflag = 1;
 			continue;
 		}
@@ -268,9 +258,8 @@ int main(int argc, char **argv)
 			TEST(io_submit(io_ctx, 1, iocbs));
 		} while (TEST_RETURN == -EAGAIN);
 		if (TEST_RETURN < 0) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL, "Test 5: write io_submit failed - "
-				 "retval=%d, errno=%d", TEST_RETURN,
+				 "retval=%ld, errno=%d", TEST_RETURN,
 				 TEST_ERRNO);
 			failflag = 1;
 			continue;
@@ -283,9 +272,8 @@ int main(int argc, char **argv)
 			TEST(io_submit(io_ctx, 1, iocbs));
 		} while (TEST_RETURN == -EAGAIN);
 		if (TEST_RETURN < 0) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL, "Test 5: read io_submit failed - "
-				 "retval=%d, errno=%d", TEST_RETURN,
+				 "retval=%ld, errno=%d", TEST_RETURN,
 				 TEST_ERRNO);
 			failflag = 1;
 			continue;
@@ -316,9 +304,8 @@ int main(int argc, char **argv)
 			TEST(io_submit(io_ctx, 1, iocbs));
 		} while (TEST_RETURN == -EAGAIN);
 		if (TEST_RETURN < 0) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL, "Test 6: write io_submit failed - "
-				 "retval=%d, errno=%d", TEST_RETURN,
+				 "retval=%ld, errno=%d", TEST_RETURN,
 				 TEST_ERRNO);
 			failflag = 1;
 			continue;
@@ -331,20 +318,20 @@ int main(int argc, char **argv)
 			TEST(io_submit(io_ctx, 1, iocbs));
 		} while (TEST_RETURN == -EAGAIN);
 		if (TEST_RETURN < 0) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL, "Test 6: read io_submit failed - "
-				 "retval=%d, errno=%d", TEST_RETURN,
+				 "retval=%ld, errno=%d", TEST_RETURN,
 				 TEST_ERRNO);
 			failflag = 1;
 			continue;
 		}
 		while (io_getevents(io_ctx, 1, 1, &event, &ts) != 1) ;
 		for (j = 0; j < bufsize; j++) {
-			if (srcbuf[j] != dstbuf[j])
+			if (srcbuf[j] != dstbuf[j]) {
 				tst_resm(TFAIL, "Test 6: compare failed - "
 					 "read: %c, " "actual: %c",
 					 dstbuf[j], srcbuf[j]);
-			break;
+				break;
+			}
 		}
 		gettimeofday(&etv, NULL);
 	}
@@ -419,7 +406,6 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	free(dstbuf);
 	free(srcbuf);
 	free(iocbs[0]);
@@ -434,8 +420,7 @@ static void cleanup(void)
 
 int main(void)
 {
-	tst_resm(TCONF, "libaio missing");
-	tst_exit();
+	tst_brkm(TCONF, NULL, "libaio missing");
 }
 
 #endif

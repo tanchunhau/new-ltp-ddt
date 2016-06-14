@@ -76,12 +76,12 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
+#include "compat_16.h"
 
 #define FILE_MODE	(S_IFREG|S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 #define TESTFILE	"testfile"
 
-char *TCID = "chown05";
+TCID_DEFINE(chown05);
 
 struct test_case_t {
 	uid_t user_id;
@@ -94,7 +94,7 @@ struct test_case_t {
 	-1, 704}, {
 703, 705},};
 
-int TST_TOTAL = sizeof(test_cases) / sizeof(*test_cases);
+int TST_TOTAL = ARRAY_SIZE(test_cases);
 
 void setup();			/* setup function for the test */
 void cleanup();			/* cleanup function for the test */
@@ -103,63 +103,57 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat(2) struct contents */
 	int lc;
-	char *msg;
 	int i;
 	uid_t user_id;		/* user id of the user set for testfile */
 	gid_t group_id;		/* group id of the user set for testfile */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			user_id = test_cases[i].user_id;
 			group_id = test_cases[i].group_id;
 
-			TEST(chown(TESTFILE, user_id, group_id));
+			TEST(CHOWN(cleanup, TESTFILE, user_id, group_id));
 
 			if (TEST_RETURN == -1) {
 				tst_resm(TFAIL | TTERRNO, "chown failed");
 				continue;
 			}
-			if (STD_FUNCTIONAL_TEST) {
-				if (stat(TESTFILE, &stat_buf) == -1)
-					tst_brkm(TFAIL, cleanup, "stat failed");
-				if (user_id == -1)
-					user_id = test_cases[i - 1].user_id;
-				if (group_id == -1)
-					group_id = test_cases[i - 1].group_id;
+			if (stat(TESTFILE, &stat_buf) == -1)
+				tst_brkm(TFAIL, cleanup, "stat failed");
+			if (user_id == -1)
+				user_id = test_cases[i - 1].user_id;
+			if (group_id == -1)
+				group_id = test_cases[i - 1].group_id;
 
-				if (stat_buf.st_uid != user_id ||
-				    stat_buf.st_gid != group_id)
-					tst_resm(TFAIL, "%s: incorrect "
-						 "ownership set, Expected %d "
-						 "%d", TESTFILE, user_id,
-						 group_id);
-				else
-					tst_resm(TPASS, "chown succeeded");
-			} else
-				tst_resm(TPASS, "call succeeded");
+			if (stat_buf.st_uid != user_id ||
+			    stat_buf.st_gid != group_id)
+				tst_resm(TFAIL, "%s: incorrect "
+					 "ownership set, Expected %d "
+					 "%d", TESTFILE, user_id,
+					 group_id);
+			else
+				tst_resm(TPASS, "chown succeeded");
 		}
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	int fd;
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	TEST_PAUSE;
 
@@ -173,9 +167,7 @@ void setup()
 
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 }

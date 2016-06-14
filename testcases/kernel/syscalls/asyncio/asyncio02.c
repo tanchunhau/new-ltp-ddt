@@ -97,7 +97,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include "test.h"
-#include "usctest.h"
 
 #define FLAG O_RDWR | O_CREAT | O_TRUNC	/* Flags used when opening temp tile */
 #define MODE  0777		/* Mode to open file with */
@@ -119,10 +118,8 @@ void setup();
 void cleanup();
 int testrun(int flag, int bytes, int ti);
 
-char *TCID = "asyncio02";	/* Test program identifier.    */
-int TST_TOTAL = 6;		/* Total number of test cases. */
-
-int exp_enos[] = { 0 };		/* Array of expected errnos */
+char *TCID = "asyncio02";
+int TST_TOTAL = 6;
 
 char *filename;			/* name of the temporary file */
 
@@ -146,20 +143,18 @@ int main(int ac, char **av)
 	int ret_val;
 	int eok;		/* everything is ok flag */
 	int lc;
-	char *msg;
 	int flag_cnt;
 
 	Num_flags = sizeof(Flags) / sizeof(int);
 	TST_TOTAL = 3 * Num_flags;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (flag_cnt = 0; flag_cnt < Num_flags; flag_cnt++) {
 
@@ -168,10 +163,9 @@ int main(int ac, char **av)
 			 */
 
 			filename = FNAME1;
-			if (testrun(Flags[flag_cnt], BUFSIZ + 1, 1) != OK)
+			if (testrun(Flags[flag_cnt], BUFSIZ + 1, 1) != OK) {
 				tst_resm(TFAIL, ERR_MSG1);
-
-			else if (STD_FUNCTIONAL_TEST) {
+			} else {
 				tst_resm(TPASS,
 					 "More than BUFSIZE bytes multiple synchronous writes to a file check out ok");
 			}
@@ -183,7 +177,7 @@ int main(int ac, char **av)
 			filename = FNAME2;
 			if (testrun(Flags[flag_cnt], BUFSIZ, 2) != OK) {
 				tst_resm(TFAIL, ERR_MSG1);
-			} else if (STD_FUNCTIONAL_TEST) {
+			} else {
 				tst_resm(TPASS,
 					 "BUFSIZE bytes multiple synchronous writes to a file checks out ok");
 			}
@@ -203,10 +197,10 @@ int main(int ac, char **av)
 				}
 			}
 
-			if (eok && STD_FUNCTIONAL_TEST)
+			if (eok) {
 				tst_resm(TPASS,
 					 "Less than BUFSIZE bytes multiple synchronous writes to a file checks out ok");
-
+			}
 		}
 	}
 	cleanup();
@@ -249,20 +243,18 @@ int testrun(int flag, int bytes, int ti)
 	}
 
 	ret = OK;
-	if (STD_FUNCTIONAL_TEST) {
 
-		/*
-		 *  Now check to see if the number of bytes written is the
-		 *  same as the number of bytes in the file.
-		 */
+	/*
+	 *  Now check to see if the number of bytes written is the
+	 *  same as the number of bytes in the file.
+	 */
 
-		if (stat(filename, &buffer) == -1) {
-			tst_brkm(TBROK | TERRNO, cleanup, "stat() failed");
-		}
+	if (stat(filename, &buffer) == -1) {
+		tst_brkm(TBROK | TERRNO, cleanup, "stat() failed");
+	}
 
-		if (buffer.st_size != (off_t) (bytes * WRITES)) {
-			ret = (int)buffer.st_size;
-		}
+	if (buffer.st_size != (off_t) (bytes * WRITES)) {
+		ret = (int)buffer.st_size;
 	}
 
 	if (unlink(filename) == -1) {
@@ -277,7 +269,7 @@ int testrun(int flag, int bytes, int ti)
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -287,14 +279,11 @@ void setup()
 	/* create a temporary directory and go to it */
 	tst_tmpdir();
 
-	/* Indicate which errnos are expected */
-	TEST_EXP_ENOS(exp_enos);
-
 	/*
 	 *  Attempt to get some memory to work with.
 	 */
 
-	if ((dp = (char *)malloc((unsigned)BUFSIZ + 1)) == NULL) {
+	if ((dp = malloc((unsigned)BUFSIZ + 1)) == NULL) {
 		tst_brkm(TBROK | TERRNO, cleanup, "malloc() failed");
 	}
 
@@ -304,13 +293,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *              completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 }

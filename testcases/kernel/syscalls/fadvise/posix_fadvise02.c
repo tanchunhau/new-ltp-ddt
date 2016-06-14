@@ -40,7 +40,6 @@
 #include <signal.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 #include "linux_syscall_numbers.h"
 #ifndef _FILE_OFFSET_BITS
@@ -54,7 +53,7 @@
 void setup();
 void cleanup();
 
-TCID_DEFINE(posix_fadvise02);	/* Test program identifier.    */
+TCID_DEFINE(posix_fadvise02);
 
 #define WRONG_FD       42	/* The number has no meaning.
 				   Just used as something wrong fd */
@@ -79,7 +78,6 @@ int TST_TOTAL = sizeof(TC) / sizeof(TC[0]);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
 	/* Check this system has fadvise64 system which is used
@@ -94,8 +92,7 @@ int main(int ac, char **av)
 	/*
 	 * parse standard options
 	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/*
 	 * perform global setup for test
@@ -107,7 +104,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -146,7 +143,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -172,12 +169,7 @@ retry:
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

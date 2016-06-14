@@ -53,7 +53,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 
 #include <errno.h>
 #include <sys/time.h>
@@ -64,32 +63,25 @@ void setup(void);
 char *TCID = "setitimer02";
 int TST_TOTAL = 1;
 
-int exp_enos[] = { EFAULT, 0 };
-
 #if !defined(UCLINUX)
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	struct itimerval *value;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* allocate some space for a timer structure */
-		if ((value = (struct itimerval *)malloc((size_t)
-							sizeof(struct
-							       itimerval))) ==
+		if ((value = malloc((size_t)sizeof(struct itimerval))) ==
 		    NULL) {
 			tst_brkm(TBROK, cleanup, "value malloc failed");
 		}
@@ -114,8 +106,6 @@ int main(int ac, char **av)
 				 strerror(TEST_ERRNO));
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		switch (TEST_ERRNO) {
 		case EFAULT:
@@ -142,7 +132,7 @@ int main(int ac, char **av)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -158,9 +148,6 @@ void setup(void)
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	/* set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
-
 	TEST_PAUSE;
 }
 
@@ -170,10 +157,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

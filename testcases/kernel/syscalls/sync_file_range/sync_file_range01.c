@@ -81,7 +81,6 @@
  ******************************************************************************/
 #define _GNU_SOURCE
 
-/* Standard Include Files */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
@@ -92,9 +91,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 
 #ifndef SYNC_FILE_RANGE_WAIT_BEFORE
@@ -105,10 +102,7 @@
 
 #define SYNC_FILE_RANGE_INVALID 8
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "sync_file_range01";	/* test program identifier.       */
+char *TCID = "sync_file_range01";
 char filename[255];		/* file used for testing */
 char spl_file[] = "/dev/null";
 int filed, sfd;			/* normal and special fds */
@@ -149,13 +143,8 @@ int TST_TOTAL = sizeof(test_data) / sizeof(test_data[0]);
 /*	      On success - Exits calling tst_exit(). With '0' return code.  */
 /*									    */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* close the file we have open */
 	if (close(filed) == -1) {
@@ -183,7 +172,7 @@ extern void cleanup()
 /*	      On success - returns 0.				       */
 /*									    */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -207,23 +196,30 @@ void setup()
 static inline long syncfilerange(int fd, off64_t offset, off64_t nbytes,
 				 unsigned int flags)
 {
-
+/* arm and powerpc */
 #if (defined(__arm__) || defined(__powerpc__) || defined(__powerpc64__))
 #if (__WORDSIZE == 32)
 #if __BYTE_ORDER == __BIG_ENDIAN
-	return syscall(__NR_sync_file_range2, fd, flags, (int)(offset >> 32),
-		       (int)offset, (int)(nbytes >> 32), (int)nbytes);
+	return ltp_syscall(__NR_sync_file_range2, fd, flags,
+		(int)(offset >> 32), (int)offset, (int)(nbytes >> 32),
+		(int)nbytes);
 #elif __BYTE_ORDER == __LITTLE_ENDIAN
-	return syscall(__NR_sync_file_range2, fd, flags, (int)offset,
+	return ltp_syscall(__NR_sync_file_range2, fd, flags, (int)offset,
 		       (int)(offset >> 32), nbytes, (int)(nbytes >> 32));
 #endif
 #else
-	return syscall(__NR_sync_file_range2, fd, flags, offset, nbytes);
-#endif
-#else
-	return syscall(__NR_sync_file_range, fd, offset, nbytes, flags);
+	return ltp_syscall(__NR_sync_file_range2, fd, flags, offset, nbytes);
 #endif
 
+/* s390 */
+#elif (defined(__s390__) || defined(__s390x__)) && __WORDSIZE == 32
+	return ltp_syscall(__NR_sync_file_range, fd, (int)(offset >> 32),
+		(int)offset, (int)(nbytes >> 32), (int)nbytes, flags);
+
+/* other */
+#else
+	return ltp_syscall(__NR_sync_file_range, fd, offset, nbytes, flags);
+#endif
 }
 
 /******************************************************************************/
@@ -249,10 +245,8 @@ int main(int ac, char **av)
 {
 
 	int test_index = 0;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 #if defined(__powerpc__) || defined(__powerpc64__)	/* for PPC, kernel version > 2.6.21 needed */
 	if (tst_kvercmp(2, 16, 22) < 0) {
@@ -283,8 +277,6 @@ int main(int ac, char **av)
 				 TEST_RETURN);
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		if (TEST_ERRNO == test_data[test_index].error) {
 			tst_resm(TPASS | TTERRNO, "got expected error");

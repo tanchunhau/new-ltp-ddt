@@ -74,7 +74,6 @@
 #include <stdio.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 
 char *TCID = "execve03";
@@ -89,8 +88,6 @@ void *bad_addr = NULL;
 
 void setup(void);
 void cleanup(void);
-
-int exp_enos[] = { ENAMETOOLONG, ENOENT, ENOTDIR, EFAULT, EACCES, ENOEXEC, 0 };
 
 char long_file[] =
     "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyz";
@@ -125,24 +122,20 @@ struct test_case_t {
 	test_name6, ENOEXEC}
 };
 
-int TST_TOTAL = sizeof(TC) / sizeof(*TC);
+int TST_TOTAL = ARRAY_SIZE(TC);
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -152,8 +145,6 @@ int main(int ac, char **av)
 				tst_resm(TFAIL, "call succeeded unexpectedly");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == TC[i].error)
 				tst_resm(TPASS | TTERRNO,
@@ -170,10 +161,12 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	char *cwdname = NULL;
 	int fd;
+
+	tst_require_root();
 
 	umask(0);
 
@@ -207,14 +200,12 @@ void setup()
 #endif
 }
 
-void cleanup()
+void cleanup(void)
 {
 #ifndef UCLINUX
 	SAFE_MUNMAP(NULL, bad_addr, 1);
 #endif
 	SAFE_CLOSE(NULL, fileHandle);
-
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

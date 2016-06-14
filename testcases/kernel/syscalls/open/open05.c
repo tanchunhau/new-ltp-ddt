@@ -18,28 +18,14 @@
  */
 
 /*
- * NAME
- *	open05.c
- *
  * DESCRIPTION
  *	Testcase to check open(2) sets errno to EACCES correctly.
  *
  * ALGORITHM
  *	Create a file owned by root with no read permission for other users.
  *	Attempt to open it as ltpuser(1). The attempt should fail with EACCES.
- *
- * USAGE:  <for command-line>
- *  open05 [-c n] [-e] [-i n] [-I x] [-P x] [-t]
- *     where,  -c n : Run n copies concurrently.
- *             -e   : Turn on errno logging.
- *             -i n : Execute test n times.
- *             -I x : Execute test for x seconds.
- *             -P x : Pause for x seconds between iterations.
- *             -t   : Turn on syscall timing.
- *
  * RESTRICTION
  *	Must run test as root.
- *
  */
 #include <errno.h>
 #include <pwd.h>
@@ -47,50 +33,41 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "test.h"
-#include "usctest.h"
 
-char user1name[] = "nobody";
+#include "test.h"
+#include "safe_macros.h"
 
 char *TCID = "open05";
 int TST_TOTAL = 1;
 
-extern struct passwd *my_getpwnam(char *);
-char fname[20];
-struct passwd *nobody;
-int fd;
+static char fname[20];
+static int fd;
 
-int exp_enos[] = { EACCES, 0 };
+static uid_t nobody_uid;
 
-void cleanup(void);
-void setup(void);
+static void cleanup(void);
+static void setup(void);
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int e_code, status, retval = 0;
 	pid_t pid;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
-
-		if ((pid = FORK_OR_VFORK()) == -1) {
+		pid = FORK_OR_VFORK();
+		if (pid == -1)
 			tst_brkm(TBROK, cleanup, "fork() failed");
-		}
 
-		if (pid == 0) {	/* child */
-			if (seteuid(nobody->pw_uid) == -1) {
+		if (pid == 0) {
+			if (seteuid(nobody_uid) == -1) {
 				tst_resm(TWARN, "seteuid() failed, errno: %d",
 					 errno);
 			}
@@ -102,8 +79,6 @@ int main(int ac, char **av)
 				continue;
 			}
 
-			TEST_ERROR_LOG(TEST_ERRNO);
-
 			if (TEST_ERRNO != EACCES) {
 				retval = 1;
 				tst_resm(TFAIL, "Expected EACCES got %d",
@@ -114,37 +89,36 @@ int main(int ac, char **av)
 			}
 
 			/* set the id back to root */
-			if (seteuid(0) == -1) {
+			if (seteuid(0) == -1)
 				tst_resm(TWARN, "seteuid(0) failed");
-			}
+
 			exit(retval);
 
-		} else {	/* parent */
+		} else {
 			/* wait for the child to finish */
 			wait(&status);
 			/* make sure the child returned a good exit status */
 			e_code = status >> 8;
-			if ((e_code != 0) || (retval != 0)) {
+			if ((e_code != 0) || (retval != 0))
 				tst_resm(TFAIL, "Failures reported above");
-			}
 
 			close(fd);
 			cleanup();
 
 		}
 	}
+
 	tst_exit();
 }
 
-/*
- * setup() - performs all ONE TIME setup for this test.
- */
-void setup()
+static void setup(void)
 {
-	/* test must be run as root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must run test as root");
-	}
+	struct passwd *pw;
+
+	tst_require_root();
+
+	pw = SAFE_GETPWNAM(NULL, "nobody");
+	nobody_uid = pw->pw_uid;
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
@@ -155,28 +129,15 @@ void setup()
 
 	sprintf(fname, "file.%d", getpid());
 
-	nobody = my_getpwnam(user1name);
-
-	if ((fd = open(fname, O_RDWR | O_CREAT, 0700)) == -1) {
+	fd = open(fname, O_RDWR | O_CREAT, 0700);
+	if (fd == -1)
 		tst_brkm(TBROK, cleanup, "open() failed, errno: %d", errno);
-	}
 }
 
-/*
- * cleanup() - performs all ONE TIME cleanup for this test at
- *	       completion or premature exit.
- */
-void cleanup()
+static void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
-
 	unlink(fname);
 
 	/* delete the test directory created in setup() */
 	tst_rmdir();
-
 }

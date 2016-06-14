@@ -49,7 +49,6 @@
 #include <errno.h>
 #include <string.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup(void);
 void cleanup(void);
@@ -64,16 +63,14 @@ int main(int ac, char **av)
 	char buf[40];
 
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 //block1:
 		tst_resm(TINFO, "Enter block 1");
 		tst_resm(TINFO, "Test duping over an open fd");
@@ -107,7 +104,7 @@ int main(int ac, char **av)
 
 		if ((fd2 = TEST_RETURN) == -1) {
 			tst_resm(TFAIL, "call failed unexpectedly");
-		} else if (STD_FUNCTIONAL_TEST) {
+		} else {
 			if (fd1 != fd2) {
 				tst_resm(TFAIL, "file descriptors don't match");
 				break;
@@ -119,8 +116,7 @@ int main(int ac, char **av)
 			if (strcmp(buf, filename0) != 0)
 				tst_resm(TFAIL, "read from file got bad data");
 			tst_resm(TPASS, "dup2 test 1 functionality is correct");
-		} else
-			tst_resm(TPASS, "call succeeded");
+		}
 
 		close(fd0);
 		close(fd1);
@@ -157,7 +153,7 @@ int main(int ac, char **av)
 
 		if ((fd1 = TEST_RETURN) == -1) {
 			tst_resm(TFAIL, "call failed unexpectedly");
-		} else if (STD_FUNCTIONAL_TEST) {
+		} else {
 			if (fd1 != fd2) {
 				tst_resm(TFAIL, "bad dup2 descriptor %d", fd1);
 				break;
@@ -176,9 +172,8 @@ int main(int ac, char **av)
 					 rval);
 			}
 			tst_resm(TPASS, "dup2 test 2 functionality is correct");
-		} else {
-			tst_resm(TPASS, "call succeeded");
 		}
+
 		close(fd0);
 		close(fd1);
 
@@ -186,15 +181,15 @@ int main(int ac, char **av)
 		unlink(filename1);
 		tst_resm(TINFO, "Exit block 2");
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -208,9 +203,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 }

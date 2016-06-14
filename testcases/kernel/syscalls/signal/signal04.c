@@ -58,7 +58,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -85,21 +84,18 @@ sighandler_t Tret;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 	sighandler_t rval, first;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * loop through the list of signals and test each one
@@ -131,30 +127,25 @@ int main(int ac, char **av)
 					 strerror(TEST_ERRNO));
 			}
 
-			if (STD_FUNCTIONAL_TEST) {
-				/* now set the handler back to our own */
-				if ((rval = signal(siglist[i], &sighandler))
-				    == SIG_ERR) {
-					tst_brkm(TBROK, cleanup, "initial "
-						 "signal call failed");
-				}
+			/* now set the handler back to our own */
+			if ((rval = signal(siglist[i], &sighandler))
+			    == SIG_ERR) {
+				tst_brkm(TBROK, cleanup, "initial "
+					 "signal call failed");
+			}
 
-				/*
-				 * the first return value should equal the
-				 * second one.
-				 */
-				if (rval == first) {
-					tst_resm(TPASS, "%s call succeeded "
-						 "received %p.", TCID, rval);
-				} else {
-					tst_brkm(TFAIL, cleanup, "return "
-						 "values for signal(%d) don't "
-						 "match. Got %p, expected %p.",
-						 siglist[i], rval, first);
-				}
+			/*
+			 * the first return value should equal the
+			 * second one.
+			 */
+			if (rval == first) {
+				tst_resm(TPASS, "%s call succeeded "
+					 "received %p.", TCID, rval);
 			} else {
-				tst_resm(TPASS, "Call of signal(%d) succeeded",
-					 siglist[i]);
+				tst_brkm(TFAIL, cleanup, "return "
+					 "values for signal(%d) don't "
+					 "match. Got %p, expected %p.",
+					 siglist[i], rval, first);
 			}
 		}
 	}
@@ -186,10 +177,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

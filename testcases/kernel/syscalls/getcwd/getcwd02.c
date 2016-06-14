@@ -60,7 +60,6 @@
 #include <string.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #define FAILED 1
 
 char *pwd = "/bin/pwd";
@@ -70,13 +69,13 @@ int TST_TOTAL = 7;
 
 void cleanup(void);
 void setup(void);
-void do_block1();
-void do_block2();
-void do_block3();
-void do_block4();
-void do_block5();
-void do_block6();
-void do_block7();
+void do_block1(void);
+void do_block2(void);
+void do_block3(void);
+void do_block4(void);
+void do_block5(void);
+void do_block6(void);
+void do_block7(void);
 
 char pwd_buf[BUFSIZ];		//holds results of pwd pipe
 char cwd[BUFSIZ];		//used as our valid buffer
@@ -86,20 +85,17 @@ char *cwd_ptr = NULL;		//catches the return value from getcwd() when passing cwd
 int main(int ac, char **av)
 {
 	FILE *fin;
-	char *cp, *cp_cur;
+	char *cp;
 	int lc;
-	char *msg;		/* parse_opts() return message */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 	setup();
 
 	/*
 	 * The following loop checks looping state if -i option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		if ((fin = popen(pwd, "r")) == NULL) {
 			tst_resm(TINFO, "%s: can't run %s", TCID, pwd);
@@ -110,7 +106,6 @@ int main(int ac, char **av)
 				tst_brkm(TBROK, cleanup, "pwd output too long");
 			}
 			*cp = 0;
-			cp_cur = pwd_buf;
 		}
 		pclose(fin);
 
@@ -126,14 +121,13 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void do_block1()		//valid cwd[]: -> Should work fine
+void do_block1(void)		//valid cwd[]: -> Should work fine
 {
 	int flag = 0;
 	tst_resm(TINFO, "Enter Block 1");
 
 	if ((cwd_ptr = getcwd(cwd, sizeof(cwd))) == NULL) {
-		tst_resm(TFAIL, "getcwd() failed unexpectedly: "
-			 "errno = %d\n", errno);
+		tst_resm(TFAIL|TERRNO, "getcwd() failed unexpectedly");
 		flag = FAILED;
 	}
 	if ((flag != FAILED) && (strcmp(pwd_buf, cwd) != 0)) {
@@ -149,15 +143,14 @@ void do_block1()		//valid cwd[]: -> Should work fine
 	}
 }
 
-void do_block2()		//valid cwd[], size = 0: -> Should return NULL, errno = EINVAL
+void do_block2(void)		//valid cwd[], size = 0: -> Should return NULL, errno = EINVAL
 {
 	int flag = 0;
 	tst_resm(TINFO, "Enter Block 2");
 
 	if (((cwd_ptr = getcwd(cwd, 0)) == NULL)
 	    && (errno != EINVAL)) {
-		tst_resm(TFAIL, "getcwd() failed unexpectedly: "
-			 "errno = %d expected EINVAL(%d)\n", errno, EINVAL);
+		tst_resm(TFAIL|TERRNO, "getcwd() failed unexpectedly (wanted EINVAL)");
 		flag = FAILED;
 	}
 	tst_resm(TINFO, "Exit Block 2");
@@ -168,15 +161,14 @@ void do_block2()		//valid cwd[], size = 0: -> Should return NULL, errno = EINVAL
 	}
 }
 
-void do_block3()		//valid cwd[], size = 1 -> Should return NULL, errno = ERANGE
+void do_block3(void)		//valid cwd[], size = 1 -> Should return NULL, errno = ERANGE
 {
 	int flag = 0;
 	tst_resm(TINFO, "Enter Block 3");
 
 	if (((cwd_ptr = getcwd(cwd, 1)) != NULL)
 	    || (errno != ERANGE)) {
-		tst_resm(TFAIL, "getcwd() failed unexpectedly: "
-			 "errno = %d, expected ERANGE(%d)\n", errno, ERANGE);
+		tst_resm(TFAIL|TERRNO, "getcwd() failed unexpectedly (wanted ERANGE)");
 		flag = FAILED;
 	}
 	tst_resm(TINFO, "Exit Block 3");
@@ -187,7 +179,7 @@ void do_block3()		//valid cwd[], size = 1 -> Should return NULL, errno = ERANGE
 	}
 }
 
-void do_block4()		//invalid cwd[] = -1, size = BUFSIZ: -> return NULL, errno = FAULT
+void do_block4(void)		//invalid cwd[] = -1, size = BUFSIZ: -> return NULL, errno = FAULT
 {
 /* Skip since uClinux does not implement memory protection */
 #ifndef UCLINUX
@@ -196,8 +188,7 @@ void do_block4()		//invalid cwd[] = -1, size = BUFSIZ: -> return NULL, errno = F
 
 	if (((cwd_ptr = getcwd((char *)-1, sizeof(cwd))) != NULL)
 	    || (errno != EFAULT)) {
-		tst_resm(TFAIL, "getcwd() failed unexpectedly: "
-			 "errno = %d, expected EFAULT(%d)\n", errno, EFAULT);
+		tst_resm(TFAIL|TERRNO, "getcwd() failed unexpectedly (wanted EFAULT)");
 		flag = FAILED;
 	}
 	tst_resm(TINFO, "Exit Block 4");
@@ -211,14 +202,13 @@ void do_block4()		//invalid cwd[] = -1, size = BUFSIZ: -> return NULL, errno = F
 #endif
 }
 
-void do_block5()		//buffer = NULL, and size = 0, should succeed
+void do_block5(void)		//buffer = NULL, and size = 0, should succeed
 {
 	int flag = 0;
 	tst_resm(TINFO, "Enter Block 5");
 
 	if ((buffer = getcwd(NULL, 0)) == NULL) {
-		tst_resm(TFAIL, "getcwd() failed unexpectedly: "
-			 "errno = %d\n", errno);
+		tst_resm(TFAIL|TERRNO, "getcwd() failed unexpectedly");
 		flag = FAILED;
 	}
 	if ((flag != FAILED) && (strcmp(pwd_buf, buffer) != 0)) {
@@ -236,15 +226,14 @@ void do_block5()		//buffer = NULL, and size = 0, should succeed
 	buffer = NULL;
 }
 
-void do_block6()		//buffer = NULL, size = 1: -> return NULL, errno = ERANGE
+void do_block6(void)		//buffer = NULL, size = 1: -> return NULL, errno = ERANGE
 {
 	int flag = 0;
 	tst_resm(TINFO, "Enter Block 6");
 
 	if (((buffer = getcwd(NULL, 1)) != NULL)
 	    || (errno != ERANGE)) {
-		tst_resm(TFAIL, "getcwd() failed unexpectedly: "
-			 "errno = %d, expected ERANGE(%d)\n", errno, ERANGE);
+		tst_resm(TFAIL|TERRNO, "getcwd() failed unexpectedly (wanted ERANGE)");
 		flag = FAILED;
 	}
 	tst_resm(TINFO, "Exit Block 6");
@@ -255,14 +244,13 @@ void do_block6()		//buffer = NULL, size = 1: -> return NULL, errno = ERANGE
 	}
 }
 
-void do_block7()		//buffer = NULL, size = BUFSIZ: -> work fine, allocate buffer
+void do_block7(void)		//buffer = NULL, size = BUFSIZ: -> work fine, allocate buffer
 {
 	int flag = 0;
 	tst_resm(TINFO, "Enter Block 7");
 
 	if ((buffer = getcwd(NULL, sizeof(cwd))) == NULL) {
-		tst_resm(TFAIL, "getcwd() failed unexpectedly: "
-			 "errno = %d\n", errno);
+		tst_resm(TFAIL|TERRNO, "getcwd() failed unexpectedly");
 		flag = FAILED;
 	}
 	if ((flag != FAILED) && (strcmp(pwd_buf, buffer) != 0)) {
@@ -280,9 +268,8 @@ void do_block7()		//buffer = NULL, size = BUFSIZ: -> work fine, allocate buffer
 	buffer = NULL;
 }
 
-void setup()
+void setup(void)
 {
-
 	/* FORK is set here because of the popen() call above */
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
@@ -292,9 +279,8 @@ void setup()
 	tst_tmpdir();
 }
 
-void cleanup()
+void cleanup(void)
 {
 	/* remove the test directory */
 	tst_rmdir();
-
 }

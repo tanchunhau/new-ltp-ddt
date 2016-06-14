@@ -45,7 +45,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include <linux/fs.h>
 
 char *TCID = "setrlimit03";
@@ -59,26 +58,18 @@ int TST_TOTAL = 1;
 void setup();
 void cleanup();
 
-int exp_enos[] = { EPERM, 0 };
-
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	struct rlimit rlim;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set up the expected errnos */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		if (getrlimit(RLIMIT_NOFILE, &rlim) != 0)
 			tst_brkm(TFAIL, cleanup, "getrlimit failed, "
@@ -91,8 +82,6 @@ int main(int ac, char **av)
 			tst_resm(TFAIL, "call succeeded unexpectedly");
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		if (TEST_ERRNO != EPERM) {
 			tst_resm(TFAIL, "Expected EPERM, got %d", TEST_ERRNO);
@@ -108,12 +97,9 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
-	/* must run test as root */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "must run test as root");
-	}
+	tst_require_root();
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
@@ -124,12 +110,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

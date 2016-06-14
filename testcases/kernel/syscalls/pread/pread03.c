@@ -79,19 +79,17 @@
 #include <sys/file.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define PREAD_TEMPDIR	"test"
 #define K1              2048
 #define NBUFS           1
 
-char *TCID = "pread03";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "pread03";
+int TST_TOTAL = 1;
 
 char *read_buf[NBUFS];		/* buffer to hold data read from file */
 char test_dir[100];
-int fd1;			/* file descriptor of temporary file */
-int exp_enos[] = { EISDIR, 0 };
+int fd1;
 
 void setup();			/* Main setup function of test */
 void cleanup();			/* cleanup function for the test */
@@ -100,23 +98,18 @@ void init_buffers();		/* function to initialize/allocate buffers */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	size_t nbytes;		/* no. of bytes to be written */
 	off_t offset;		/* offset position in the specified file */
 	char *test_desc;	/* test specific error message */
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	/* Check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		test_desc = "EISDIR";
 		nbytes = K1;
@@ -131,19 +124,17 @@ int main(int ac, char **av)
 				 TEST_RETURN, EISDIR);
 		}
 
-		TEST_ERROR_LOG(TEST_ERRNO);
-
 		/*
 		 * Verify whether expected errno is set.
 		 */
-		if (TEST_ERRNO == exp_enos[0]) {
+		if (TEST_ERRNO == EISDIR) {
 			tst_resm(TPASS,
 				 "pread() fails with expected error EISDIR errno:%d",
 				 TEST_ERRNO);
 		} else {
 			tst_resm(TFAIL, "pread() fails, %s, unexpected "
 				 "errno:%d, expected:%d\n", test_desc,
-				 TEST_ERRNO, exp_enos[0]);
+				 TEST_ERRNO, EISDIR);
 		}
 	}
 
@@ -156,7 +147,7 @@ int main(int ac, char **av)
  * setup() - performs all ONE TIME setup for this test.
  *           create temporary directory and open it
  */
-void setup()
+void setup(void)
 {
 	char *cur_dir = NULL;
 
@@ -198,13 +189,13 @@ void setup()
  *
  *  Allocate read buffer.
  */
-void init_buffers()
+void init_buffers(void)
 {
 	int count;		/* counter variable for loop */
 
 	/* Allocate and Initialize read buffer */
 	for (count = 0; count < NBUFS; count++) {
-		read_buf[count] = (char *)malloc(K1);
+		read_buf[count] = malloc(K1);
 
 		if (read_buf[count] == NULL) {
 			tst_brkm(TBROK, NULL,
@@ -219,15 +210,9 @@ void init_buffers()
  *
  *  Close/Remove the temporary directory created.
  */
-void cleanup()
+void cleanup(void)
 {
-	int count;		/* index for the loop */
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
+	int count;
 
 	/* Free the memory allocated for the read buffer */
 	for (count = 0; count < NBUFS; count++) {

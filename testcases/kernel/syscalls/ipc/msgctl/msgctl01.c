@@ -57,7 +57,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 
 #include "ipcmsg.h"
 
@@ -71,19 +70,16 @@ struct msqid_ds qs_buf;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Get the msqid_ds structure values for the queue
@@ -94,16 +90,12 @@ int main(int ac, char **av)
 		if (TEST_RETURN == -1) {
 			tst_resm(TFAIL | TTERRNO, "msgctl() call failed");
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				if (qs_buf.msg_qbytes > 0) {
-					tst_resm(TPASS, "qs_buf.msg_qbytes is"
-						 " a positive value");
-				} else {
-					tst_resm(TFAIL, "qs_buf.msg_qbytes did"
-						 " not change");
-				}
+			if (qs_buf.msg_qbytes > 0) {
+				tst_resm(TPASS, "qs_buf.msg_qbytes is"
+					 " a positive value");
 			} else {
-				tst_resm(TPASS, "msgctl() call succeeded");
+				tst_resm(TFAIL, "qs_buf.msg_qbytes did"
+					 " not change");
 			}
 		}
 
@@ -157,11 +149,5 @@ void cleanup(void)
 	rm_queue(msg_q_1);
 
 	tst_rmdir();
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

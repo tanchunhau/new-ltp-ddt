@@ -51,7 +51,6 @@
 #include <wait.h>
 #include <sys/types.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup(void);
 void cleanup(void);
@@ -61,8 +60,6 @@ int TST_TOTAL = 2;
 
 int pgid_0, pgid_1;
 #define BADPID -99
-
-int exp_enos[] = { ESRCH, 0 };
 
 struct test_case_t {
 	int *id;
@@ -80,20 +77,14 @@ int main(int ac, char **av)
 {
 	int lc;
 	int i;
-	char *msg;		/* message returned by parse_opts */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set up the expected errnos */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -104,8 +95,6 @@ int main(int ac, char **av)
 				tst_resm(TFAIL, "call succeeded unexpectedly");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == TC[i].error) {
 				tst_resm(TPASS, "expected failure - "
@@ -126,7 +115,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -135,30 +124,14 @@ void setup()
 
 	pgid_0 = BADPID;
 
-	/*
-	 * Find a pid that isn't currently being used.  Start
-	 * at 'our pid - 1' and go backwards until we find one.
-	 * In this way, we can be reasonably sure that the pid
-	 * we find won't be reused for a while as new pids are
-	 * allocated counting up to PID_MAX.
-	 */
-	for (pgid_1 = getpid() - 1; --pgid_1 > 0;) {
-		if (kill(pgid_1, 0) < 0 && errno == ESRCH) {
-			break;
-		}
-	}
+	pgid_1 = tst_get_unused_pid(cleanup);
 }
 
 /*
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

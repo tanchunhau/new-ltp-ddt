@@ -78,11 +78,9 @@
 #include <ucontext.h>
 
 #include "test.h"
-#include "usctest.h"
 
-char *TCID = "sigsuspend01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-int exp_enos[] = { EINTR, 0 };
+char *TCID = "sigsuspend01";
+int TST_TOTAL = 1;
 
 struct sigaction sa_new;	/* struct to hold signal info */
 sigset_t sigset;		/* signal set to hold signal lists */
@@ -96,20 +94,14 @@ void sig_handler(int sig);	/* signal catching function */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* Set the alarm timer */
 		alarm(5);
@@ -125,30 +117,16 @@ int main(int ac, char **av)
 		alarm(0);
 
 		if ((TEST_RETURN == -1) && (TEST_ERRNO == EINTR)) {
-			TEST_ERROR_LOG(TEST_ERRNO);
-			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
-			 */
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Read the current signal mask of process,
-				 * Check whether previous signal mask preserved
-				 */
-				if (sigprocmask(SIG_UNBLOCK, 0, &sigset2) == -1) {
-					tst_resm(TFAIL, "sigprocmask() Failed "
-						 "to get previous signal mask "
-						 "of process");
-				} else if (sigset2.__val[0] != sigset1.__val[0]) {
-					tst_resm(TFAIL, "sigsuspend failed to "
-						 "preserve signal mask");
-				} else {
-					tst_resm(TPASS, "Functionality of "
-						 "sigsuspend() successful");
-				}
+			if (sigprocmask(SIG_UNBLOCK, 0, &sigset2) == -1) {
+				tst_resm(TFAIL, "sigprocmask() Failed "
+					 "to get previous signal mask "
+					 "of process");
+			} else if (sigset2.__val[0] != sigset1.__val[0]) {
+				tst_resm(TFAIL, "sigsuspend failed to "
+					 "preserve signal mask");
 			} else {
-				tst_resm(TPASS,
-					 "Received expected return value.");
+				tst_resm(TPASS, "Functionality of "
+					 "sigsuspend() successful");
 			}
 		} else {
 			tst_resm(TFAIL | TTERRNO,
@@ -156,12 +134,11 @@ int main(int ac, char **av)
 				 TEST_RETURN);
 		}
 
-		Tst_count++;	/* incr TEST_LOOP counter */
+		tst_count++;	/* incr TEST_LOOP counter */
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -172,7 +149,7 @@ int main(int ac, char **av)
  * Set the signal handler to catch SIGALRM signal.
  * Get the current signal mask of test process using sigprocmask().
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -228,12 +205,7 @@ void sig_handler(int sig)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

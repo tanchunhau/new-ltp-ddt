@@ -61,9 +61,10 @@
  *	none
  */
 
-#include "ipcshm.h"
+#include "hugetlb.h"
 #include "safe_macros.h"
 #include "mem.h"
+#include "hugetlb.h"
 
 char *TCID = "hugeshmctl01";
 int TST_TOTAL = 4;
@@ -111,18 +112,16 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
 
-	msg = parse_opts(ac, av, options, &help);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, options, NULL);
+
 	if (sflag)
 		hugepages = SAFE_STRTOL(NULL, nr_opt, 0, LONG_MAX);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* initialize stat_time */
 		stat_time = FIRST;
@@ -149,21 +148,7 @@ int main(int ac, char **av)
 				tst_resm(TFAIL | TERRNO, "shmctl #main");
 				continue;
 			}
-			if (STD_FUNCTIONAL_TEST) {
-				(*TC[i].func_test) ();
-			} else {
-				tst_resm(TPASS, "shmctl call succeeded");
-
-				/* now perform command related cleanup */
-				switch (TC[i].cmd) {
-				case IPC_STAT:
-					stat_cleanup();
-					break;
-				case IPC_RMID:
-					shm_id_1 = -1;
-					break;
-				}
-			}
+			(*TC[i].func_test) ();
 		}
 	}
 	cleanup();
@@ -407,7 +392,8 @@ void setup(void)
 {
 	long hpage_size;
 
-	tst_require_root(NULL);
+	tst_require_root();
+	check_hugepage();
 	tst_sig(FORK, sighandler, cleanup);
 	tst_tmpdir();
 
@@ -417,15 +403,13 @@ void setup(void)
 
 	shm_size = hpage_size * hugepages / 2;
 	update_shm_size(&shm_size);
-	shmkey = getipckey();
+	shmkey = getipckey(cleanup);
 
 	TEST_PAUSE;
 }
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	rm_shm(shm_id_1);
 
 	set_sys_tune("nr_hugepages", orig_hugepages, 0);

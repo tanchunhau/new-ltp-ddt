@@ -72,14 +72,12 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
-extern void do_file_setup(char *);
 
-char *TCID = "rename01";	/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "rename01";
+int TST_TOTAL = 2;
 
 char fname[255], mname[255];
 char fdir[255], mdir[255];
@@ -105,14 +103,12 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
 	/*
 	 * parse standard options
 	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/*
 	 * perform global setup for test
@@ -124,7 +120,7 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -136,40 +132,35 @@ int main(int ac, char **av)
 				continue;
 			}
 
-			if (STD_FUNCTIONAL_TEST) {
-				if (stat(TC[i].name2, &buf1) == -1) {
-					tst_brkm(TBROK, cleanup, "stat of %s "
-						 "failed", TC[i].desc);
+			if (stat(TC[i].name2, &buf1) == -1) {
+				tst_brkm(TBROK, cleanup, "stat of %s "
+					 "failed", TC[i].desc);
 
-				}
-
-				/*
-				 * verify the new file or directory is the
-				 * same as the old one
-				 */
-				if (buf1.st_dev != *TC[i].olddev ||
-				    buf1.st_ino != *TC[i].oldino) {
-					tst_resm(TFAIL, "rename() failed: the "
-						 "new %s points to a different "
-						 "inode/location", TC[i].desc);
-					continue;
-				}
-				/*
-				 * verify that the old file or directory
-				 * does not exist
-				 */
-				if (stat(fname, &buf1) != -1) {
-					tst_resm(TFAIL, "the old %s still "
-						 "exists", TC[i].desc);
-					continue;
-				}
-
-				tst_resm(TPASS, "functionality is correct "
-					 "for renaming a %s", TC[i].desc);
-			} else {
-				tst_resm(TPASS, "call succeeded on %s rename",
-					 TC[i].desc);
 			}
+
+			/*
+			 * verify the new file or directory is the
+			 * same as the old one
+			 */
+			if (buf1.st_dev != *TC[i].olddev ||
+			    buf1.st_ino != *TC[i].oldino) {
+				tst_resm(TFAIL, "rename() failed: the "
+					 "new %s points to a different "
+					 "inode/location", TC[i].desc);
+				continue;
+			}
+			/*
+			 * verify that the old file or directory
+			 * does not exist
+			 */
+			if (stat(fname, &buf1) != -1) {
+				tst_resm(TFAIL, "the old %s still "
+					 "exists", TC[i].desc);
+				continue;
+			}
+
+			tst_resm(TPASS, "functionality is correct "
+				 "for renaming a %s", TC[i].desc);
 		}
 		/* reset things in case we are looping */
 		if (rename(mname, fname) == -1) {
@@ -189,7 +180,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -204,8 +195,7 @@ void setup()
 	sprintf(fdir, "./tdir_%d", getpid());
 	sprintf(mdir, "./rndir_%d", getpid());
 
-	/* create the "old" file */
-	do_file_setup(fname);
+	SAFE_TOUCH(cleanup, fname, 0700, NULL);
 
 	if (stat(fname, &buf1) == -1) {
 		tst_brkm(TBROK, cleanup, "failed to stat file %s"
@@ -235,13 +225,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/*
 	 * Remove the temporary directory.

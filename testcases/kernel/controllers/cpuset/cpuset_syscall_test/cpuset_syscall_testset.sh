@@ -22,25 +22,29 @@
 #                                                                              #
 ################################################################################
 
-cd $LTPROOT/testcases/bin
-
-. ./cpuset_funcs.sh
-
-export TCID="cpuset05"
+export TCID="cpuset_syscall"
 export TST_TOTAL=16
 export TST_COUNT=1
 
+. cpuset_funcs.sh
+
+check
+
+tst_flag2mask TCONF
+TCONF=$?
 exit_status=0
+
+nr_mems=$N_NODES
 
 TEST_CPUSET="$CPUSET/0"
 TEST_OUTPUT="$CPUSET_TMP/result"
 TEST_PROCSTATUS="$CPUSET_TMP/status"
 TEST_PROCNUMA="$CPUSET_TMP/numa_maps"
 
-# do_syscall_test - call ./syscall_test
+# do_syscall_test - call syscall_test
 # $1 - cpus
 # $2 - mems
-# $3 - ./syscall_test's args
+# $3 - syscall_test's args
 # $4 - expect return value of test task
 
 do_syscall_test()
@@ -63,7 +67,7 @@ do_syscall_test()
 		tst_resm TFAIL "set $TEST_CPUSET/mems as $2 fail."
 		return 1
 	fi
-	./cpuset_syscall_test $3 >"$TEST_OUTPUT" &
+	cpuset_syscall_test $3 >"$TEST_OUTPUT" &
 	testpid=$!
 	echo $testpid > "$TEST_CPUSET/tasks"
 	if [ $? -ne 0 ]; then
@@ -78,6 +82,11 @@ do_syscall_test()
 	/bin/kill -s SIGINT $testpid
 	wait $testpid
 	ret=$?
+
+	if [ "$ret" -eq "$TCONF" ]; then
+		return $TCONF
+	fi
+
 	if [ $4 -eq 0 ]; then
 		if [ $ret -ne 0 ]; then
 			tst_resm TFAIL "Test task exited abnormally.(expect return value is 0)"
@@ -94,7 +103,7 @@ do_syscall_test()
 
 test1()
 {
-	do_syscall_test 0 0 --setaffinity=1 0 || return 1
+	do_syscall_test 0 0 --setaffinity=1 0 || return $?
 	allowed_list="$(awk '/Cpus_allowed_list:/{print $2}' $TEST_PROCSTATUS )"
 	test "$allowed_list" = "0"
 	if [ $? -ne 0 ]; then
@@ -106,7 +115,7 @@ test1()
 
 test2()
 {
-	do_syscall_test 0-1 0 --setaffinity=1 0 || return 1
+	do_syscall_test 0-1 0 --setaffinity=1 0 || return $?
 	allowed_list="$(awk '/Cpus_allowed_list:/{print $2}' $TEST_PROCSTATUS )"
 	test "$allowed_list" = "0"
 	if [ $? -ne 0 ]; then
@@ -118,7 +127,7 @@ test2()
 
 test3()
 {
-	do_syscall_test 0-1 0 --setaffinity=6 0 || return 1
+	do_syscall_test 0-1 0 --setaffinity=6 0 || return $?
 	allowed_list="$(awk '/Cpus_allowed_list:/{print $2}' $TEST_PROCSTATUS )"
 	test "$allowed_list" = "1"
 	if [ $? -ne 0 ]; then
@@ -130,7 +139,7 @@ test3()
 
 test4()
 {
-	do_syscall_test 0-1 0 --setaffinity=12 1 || return 1
+	do_syscall_test 0-1 0 --setaffinity=12 1 || return $?
 	allowed_list="$(awk '/Cpus_allowed_list:/{print $2}' $TEST_PROCSTATUS )"
 	test "$allowed_list" = "0-1" || return 1
 	if [ $? -ne 0 ]; then
@@ -142,7 +151,7 @@ test4()
 
 test5()
 {
-	do_syscall_test 0 0 --getaffinity 0 || return 1
+	do_syscall_test 0 0 --getaffinity 0 || return $?
 	allowed_list="$(awk '/Cpus_allowed_list:/{print $2}' $TEST_PROCSTATUS )"
 	test "$(cat "$TEST_OUTPUT")" = "0,"
 	if [ $? -ne 0 ]; then
@@ -159,7 +168,7 @@ test5()
 
 test6()
 {
-	do_syscall_test 0-1 0 --getaffinity 0 || return 1
+	do_syscall_test 0-1 0 --getaffinity 0 || return $?
 	allowed_list="$(awk '/Cpus_allowed_list:/{print $2}' $TEST_PROCSTATUS )"
 	test "$(cat "$TEST_OUTPUT")" = "0,1,"
 	if [ $? -ne 0 ]; then
@@ -176,10 +185,10 @@ test6()
 
 test7()
 {
-	do_syscall_test 0 0 --mbind=1 0 || return 1
+	do_syscall_test 0 0 --mbind=1 0 || return $?
 	memory_addr="$(cat $TEST_OUTPUT)"
 	memory_addr=${memory_addr##*0x}
-	allowed_list=$(cat $TEST_PROCNUMA | grep "$memory_addr" | \
+	allowed_list=$(grep "$memory_addr" $TEST_PROCNUMA | \
 			awk '{print $2}')
 	allowed_list="$(echo $allowed_list | sed -e s/bind://)"
 	test "$allowed_list" = "0" || return 1
@@ -192,10 +201,10 @@ test7()
 
 test8()
 {
-	do_syscall_test 0 0-1 --mbind=1 0 || return 1
+	do_syscall_test 0 0-1 --mbind=1 0 || return $?
 	memory_addr="$(cat $TEST_OUTPUT)"
 	memory_addr=${memory_addr##*0x}
-	allowed_list=$(cat $TEST_PROCNUMA | grep "$memory_addr" | \
+	allowed_list=$(grep "$memory_addr" $TEST_PROCNUMA | \
 			awk '{print $2}')
 	allowed_list="$(echo $allowed_list | sed -e s/bind://)"
 	test "$allowed_list" = "0"
@@ -208,10 +217,10 @@ test8()
 
 test9()
 {
-	do_syscall_test 0 0-1 --mbind=6 0 || return 1
+	do_syscall_test 0 0-1 --mbind=6 0 || return $?
 	memory_addr="$(cat $TEST_OUTPUT)"
 	memory_addr=${memory_addr##*0x}
-	allowed_list=$(cat $TEST_PROCNUMA | grep "$memory_addr" | \
+	allowed_list=$(grep "$memory_addr" $TEST_PROCNUMA | \
 			awk '{print $2}')
 	allowed_list="$(echo $allowed_list | sed -e s/bind://)"
 	test "$allowed_list" = "1"
@@ -224,21 +233,26 @@ test9()
 
 test10()
 {
-	do_syscall_test 0 0 --mbind=6 1 || return 1
+	do_syscall_test 0 0 --mbind=6 1 || return $?
 	memory_addr="$(cat $TEST_OUTPUT)"
 	memory_addr=${memory_addr##*0x}
-	allowed_list=$(cat $TEST_PROCNUMA | grep "$memory_addr" | \
+	allowed_list=$(grep "$memory_addr" $TEST_PROCNUMA | \
 			awk '{print $2}')
 	allowed_list="$(echo $allowed_list | sed -e s/bind://)"
-	test "$allowed_list" = "default"
+
+	task_policy=$(grep -e "  *stack  *anon" $TEST_PROCNUMA | \
+			awk '{print $2}')
+
+	test "$allowed_list" = "$task_policy"
 	if [ $? -ne 0 ]; then
-		tst_resm TFAIL "Result(/proc/<pid>/status) = \"$allowed_list\", expect = \"default\")"
+		tst_resm TFAIL "Result(/proc/<pid>/status) = \"$allowed_list\",\
+			expect = \"$task_policy\")"
 		return 1
 	fi
 	return 0
 }
 
-# this function is used by case 11-16
+# this function is used by case 11-13
 # check_result <expect>
 check_result()
 {
@@ -257,35 +271,42 @@ check_result()
 
 test11()
 {
-	do_syscall_test 0 0 --set_mempolicy=1 0 || return 1
+	do_syscall_test 0 0 --set_mempolicy=1 0 || return $?
 	check_result "0"
 	return $?
 }
 
 test12()
 {
-	do_syscall_test 0 0-1 --set_mempolicy=1 0 || return 1
+	do_syscall_test 0 0-1 --set_mempolicy=1 0 || return $?
 	check_result "0"
 	return $?
 }
 
 test13()
 {
-	do_syscall_test 0 0-1 --set_mempolicy=6 0 || return 1
+	if [ $nr_mems -ge 3 ]; then
+		do_syscall_test 0 0-1 --set_mempolicy=6 0 || return $?
+	else
+		do_syscall_test 0 0-1 --set_mempolicy=2 0 || return $?
+	fi
 	check_result "1"
 	return $?
 }
 
 test14()
 {
-	do_syscall_test 0 0 --set_mempolicy=6 1 || return 1
-	check_result "default"
-	return $?
+	if [ $nr_mems -ge 3 ]; then
+		do_syscall_test 0 0 --set_mempolicy=6 1 || return $?
+	else
+		do_syscall_test 0 0 --set_mempolicy=2 1 || return $?
+	fi
+	return 0
 }
 
 test15()
 {
-	do_syscall_test 0 0 --get_mempolicy 0 || return 1
+	do_syscall_test 0 0 --get_mempolicy 0 || return $?
 	allowed_list="$(awk '/Mems_allowed_list:/{print $2}' $TEST_PROCSTATUS )"
 	test "$(cat "$TEST_OUTPUT")" = "0"
 	if [ $? -ne 0 ]; then
@@ -297,13 +318,12 @@ test15()
 		tst_resm TFAIL "Result(/proc/<pid>/status) = \"$allowed_list\", expect = \"0\")"
 		return 1
 	fi
-	check_result "default" || return 1
 	return 0
 }
 
 test16()
 {
-	do_syscall_test 0 0-1 --get_mempolicy 0 || return 1
+	do_syscall_test 0 0-1 --get_mempolicy 0 || return $?
 	allowed_list="$(awk '/Mems_allowed_list:/{print $2}' $TEST_PROCSTATUS )"
 	test "$(cat "$TEST_OUTPUT")" = "0-1"
 	if [ $? -ne 0 ]; then
@@ -315,30 +335,34 @@ test16()
 		tst_resm TFAIL "Result(/proc/<pid>/status) = \"$allowed_list\", expect = \"0-1\")"
 		return 1
 	fi
-	check_result "default" || return 1
 	return 0
 }
 
 for c in $(seq 1 $TST_TOTAL)
 do
+	tst_resm TINFO "Starting test no. $c"
 	setup
 	if [ $? -ne 0 ]; then
 		exit_status=1
 	else
 		test$c
-		if [ $? -ne 0 ]; then
+		ret=$?
+		cleanup
+		ret=$((ret | $?))
+
+		case $ret in
+		0)
+			tst_resm TPASS "Cpuset vs systemcall test succeeded."
+			;;
+		"$TCONF")
+			tst_resm TCONF "Test exited with TCONF"
+			;;
+		*)
 			exit_status=1
-			cleanup
-		else
-			cleanup
-			if [ $? -ne 0 ]; then
-				exit_status=1
-			else
-				tst_resm TPASS "Cpuset vs systemcall test succeeded."
-			fi
-		fi
+			;;
+		esac
 	fi
-	: $((TST_COUNT++))
+	TST_COUNT=$(($TST_COUNT + 1))
 done
 
 exit $exit_status

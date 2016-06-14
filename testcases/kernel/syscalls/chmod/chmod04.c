@@ -80,7 +80,6 @@
 #include <pwd.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define DIR_MODE 	S_IRWXU | S_IRWXG | S_IRWXO
 #define PERMS		01777	/*
@@ -89,29 +88,27 @@
 				 */
 #define TESTDIR		"testdir_4"
 
-char *TCID = "chmod04";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "chmod04";
+int TST_TOTAL = 1;
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
 
-void setup();			/* Setup function for the test */
-void cleanup();			/* Cleanup function for the test */
+void setup();
+void cleanup();
 
 int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat struct. */
 	int lc;
-	char *msg;
 	mode_t dir_mode;	/* mode permissions set on testdirectory */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call chmod(2) with mode argument to
@@ -126,33 +123,26 @@ int main(int ac, char **av)
 		}
 
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Get the file information using
+		 * stat(2).
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Get the file information using
-			 * stat(2).
-			 */
-			if (stat(TESTDIR, &stat_buf) < 0) {
-				tst_brkm(TFAIL, cleanup,
-					 "stat(2) of %s failed, errno:%d",
-					 TESTDIR, TEST_ERRNO);
-			}
-			dir_mode = stat_buf.st_mode;
+		if (stat(TESTDIR, &stat_buf) < 0) {
+			tst_brkm(TFAIL, cleanup,
+				 "stat(2) of %s failed, errno:%d",
+				 TESTDIR, TEST_ERRNO);
+		}
+		dir_mode = stat_buf.st_mode;
 
-			/* Verify STICKY BIT SET on directory */
-			if ((dir_mode & PERMS) == PERMS) {
-				tst_resm(TPASS, "Functionality of "
-					 "chmod(%s, %#o) successful",
-					 TESTDIR, PERMS);
-			} else {
-				tst_resm(TFAIL, "%s: Incorrect modes 0%03o, "
-					 "Expected 0%03o",
-					 TESTDIR, dir_mode, PERMS);
-			}
-		} else
-			tst_resm(TPASS, "call succeeded");
+		/* Verify STICKY BIT SET on directory */
+		if ((dir_mode & PERMS) == PERMS) {
+			tst_resm(TPASS, "Functionality of "
+				 "chmod(%s, %#o) successful",
+				 TESTDIR, PERMS);
+		} else {
+			tst_resm(TFAIL, "%s: Incorrect modes 0%03o, "
+				 "Expected 0%03o",
+				 TESTDIR, dir_mode, PERMS);
+		}
 	}
 
 	cleanup();
@@ -165,12 +155,12 @@ int main(int ac, char **av)
  *  Create a temporary directory and cd to it.
  *  Create another test directory under temporary directory.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	tst_require_root(NULL);
+	tst_require_root();
 	ltpuser = getpwnam(nobody_uid);
 	if (setuid(ltpuser->pw_uid) == -1)
 		tst_resm(TINFO | TERRNO, "setuid(%u) failed", ltpuser->pw_uid);
@@ -194,12 +184,8 @@ void setup()
  *		completion or premature exit.
  *  Remove the test directory and temporary directory created in setup().
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

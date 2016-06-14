@@ -1,59 +1,25 @@
 /*
+ * Copyright (c) International Business Machines  Corp., 2001
+ *  07/2001 Ported by Wayne Boyer
  *
- *   Copyright (c) International Business Machines  Corp., 2001
+ * This program is free software;  you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   This program is free software;  you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ * the GNU General Public License for more details.
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program;  if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /*
- * NAME
- * 	close01.c
- *
  * DESCRIPTION
- * 	Test that closing a regular file and a pipe works correctly
- *
- * ALGORITHM
- * 	Creat a file, and dup() a fildes
- * 	Open a pipe
- *	call close() using the TEST macro
- *	if the call fails
- *	   issue a FAIL message and continue
- *	else if STD_FUNCTIONAL_TEST
- *	   attempt to close the file/pipe again
- *	   if there is an error
- *	      issue a PASS message
- *	   else
- *	      issue a FAIL message
- *	else
- *	   issue a PASS message
- *
- *
- * USAGE:  <for command-line>
- *  close01 [-c n] [-f] [-i n] [-I x] [-P x] [-t]
- *     where,  -c n : Run n copies concurrently.
- *             -f   : Turn off functionality Testing.
- *             -i n : Execute test n times.
- *             -I x : Execute test for x seconds.
- *             -P x : Pause for x seconds between iterations.
- *             -t   : Turn on syscall timing.
- *
- * HISTORY
- *	07/2001 Ported by Wayne Boyer
- *
- * RESTRICTIONS
- * 	None
+ *	Test that closing a regular file and a pipe works correctly
  */
 
 #include <stdio.h>
@@ -61,7 +27,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "test.h"
-#include "usctest.h"
 
 void cleanup(void);
 void setup(void);
@@ -90,16 +55,14 @@ int main(int ac, char **av)
 
 	int i;
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		if ((fild = creat(fname, 0777)) == -1)
 			tst_brkm(TBROK | TERRNO, cleanup, "can't open file %s",
@@ -122,22 +85,18 @@ int main(int ac, char **av)
 				continue;
 			}
 
-			if (STD_FUNCTIONAL_TEST) {
-				if (close(*TC[i].fd) == -1) {
-					tst_resm(TPASS, "%s appears closed",
-						 TC[i].type);
-				} else {
-					tst_resm(TFAIL, "%s close succeeded on"
-						 "second attempt", TC[i].type);
-				}
+			if (close(*TC[i].fd) == -1) {
+				tst_resm(TPASS, "%s appears closed",
+					 TC[i].type);
 			} else {
-				tst_resm(TPASS, "call succeeded");
+				tst_resm(TFAIL, "%s close succeeded on"
+					 "second attempt", TC[i].type);
 			}
 		}
 
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 
@@ -160,8 +119,6 @@ void setup(void)
 void cleanup(void)
 {
 	close(fild);
-
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

@@ -77,9 +77,8 @@
 #include <netinet/in.h>
 
 #include "test.h"
-#include "usctest.h"
 
-char *TCID = "socketcall02";	/* Test program identifier.    */
+char *TCID = "socketcall02";
 
 #ifdef __NR_socketcall
 
@@ -88,8 +87,7 @@ char *TCID = "socketcall02";	/* Test program identifier.    */
 void setup();
 void cleanup();
 
-int TST_TOTAL = 1;		/* Total number of test cases. */
-int exp_enos[] = { EINVAL, 0 };
+int TST_TOTAL = 1;
 
 struct test_case_t {
 	int call;
@@ -104,23 +102,17 @@ PF_INET, SOCK_STREAM, 0}, -1, EINVAL, "invalid call"};
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	/* check looping state */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(socketcall(TC.call, TC.args));
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		/* check return code */
 		if ((TEST_RETURN == -1)
@@ -142,13 +134,10 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test. */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/*set the expected errnos */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 }
@@ -157,20 +146,17 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 }
 
 #else
 
-int TST_TOTAL = 0;		/* Total number of test cases. */
+int TST_TOTAL = 0;
 
-int main()
+int main(void)
 {
 	tst_resm(TPASS, "socket call test on this architecture disabled.");
-	tst_exit();
 	tst_exit();
 }
 

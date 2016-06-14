@@ -53,16 +53,13 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void help();
 void cleanup();
 
-char *TCID = "sigpending02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { EFAULT, 0 };
+char *TCID = "sigpending02";
+int TST_TOTAL = 1;
 
 /***********************************************************************
  * Main
@@ -70,13 +67,9 @@ int exp_enos[] = { EFAULT, 0 };
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	sigset_t *sigset;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
     /***************************************************************
      * perform global setup for test
@@ -86,9 +79,6 @@ int main(int ac, char **av)
 	/* set sigset to point to an invalid location */
 	sigset = (sigset_t *) - 1;
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
     /***************************************************************
      * check looping state
      ***************************************************************/
@@ -97,13 +87,12 @@ int main(int ac, char **av)
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(sigpending(sigset));
 
 		/* check return code */
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			if (TEST_ERRNO != EFAULT)
 				tst_brkm(TFAIL, cleanup,
 					 "sigpending() Failed with wrong "
@@ -132,7 +121,7 @@ int main(int ac, char **av)
 /***************************************************************
  * help
  ***************************************************************/
-void help()
+void help(void)
 {
 	printf("test\n");
 }
@@ -140,7 +129,7 @@ void help()
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 	TEST_PAUSE;
 }
@@ -149,8 +138,6 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 }

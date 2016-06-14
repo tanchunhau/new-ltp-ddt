@@ -57,27 +57,22 @@ int max_ids;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 		TEST(shmctl(0, SHM_INFO, (struct shmid_ds *)&shm_info));
 
 		if (TEST_RETURN != -1) {
 			tst_resm(TPASS, "SHM_INFO call succeeded");
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		tst_resm(TFAIL, "SHM_INFO call failed with an unexpected error"
 			 " - %d : %s", TEST_ERRNO, strerror(TEST_ERRNO));
@@ -116,11 +111,5 @@ void cleanup(void)
 {
 
 	tst_rmdir();
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

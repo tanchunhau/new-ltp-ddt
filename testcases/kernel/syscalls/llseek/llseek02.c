@@ -82,15 +82,14 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define TEMP_FILE1	"tmp_file1"
 #define TEMP_FILE2	"tmp_file2"
 #define FILE_MODE	S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 #define SEEK_TOP	10
 
-char *TCID = "llseek02";	/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "llseek02";
+int TST_TOTAL = 2;
 
 int no_setup();
 int setup1();			/* setup function to test llseek() for EINVAL */
@@ -113,35 +112,24 @@ struct test_case_t {		/* test case struct. to hold ref. test cond's */
 	0, 0, NULL, 0, no_setup}
 };
 
-int exp_enos[] = { EINVAL, EBADF, 0 };
-
 void setup();			/* Main setup function of test */
 void cleanup();			/* cleanup function for the test */
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int fildes;		/* file handle for testfile */
 	int whence;		/* position of file handle in the file */
 	char *test_desc;	/* test specific error message */
 	int ind;		/* counter to test different test conditions */
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set up expected error numbers */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; Test_cases[ind].desc != NULL; ind++) {
 			fildes = Test_cases[ind].fd;
@@ -169,7 +157,6 @@ int main(int ac, char **av)
 					 Test_cases[ind].exp_errno);
 				continue;
 			}
-			TEST_ERROR_LOG(TEST_ERRNO);
 			if (TEST_ERRNO == Test_cases[ind].exp_errno) {
 				tst_resm(TPASS, "llseek() fails, %s, errno:%d",
 					 test_desc, TEST_ERRNO);
@@ -192,7 +179,7 @@ int main(int ac, char **av)
  *           Invoke individual test setup functions according to the order
  *           set in test struct. definition.
  */
-void setup()
+void setup(void)
 {
 	int ind;
 
@@ -211,7 +198,7 @@ void setup()
 /*
  * no_setup() - This is a dummy function which simply returns 0.
  */
-int no_setup()
+int no_setup(void)
 {
 	return 0;
 }
@@ -223,7 +210,7 @@ int no_setup()
  *            into it.
  *            This function returns 0 on success.
  */
-int setup1()
+int setup1(void)
 {
 	char write_buff[BUFSIZ];	/* buffer to hold data */
 
@@ -252,7 +239,7 @@ int setup1()
  *            Creat a temporary file for reading/writing and close it.
  *            This function returns 0 on success.
  */
-int setup2()
+int setup2(void)
 {
 	/* Creat/open a temporary file under above directory */
 	if ((fd2 = open(TEMP_FILE2, O_RDWR | O_CREAT, FILE_MODE)) == -1) {
@@ -276,13 +263,8 @@ int setup2()
  *             Close the temporary file.
  *             Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Close the temporary file(s) created in setup1/setup2 */
 	if (close(fd1) < 0) {

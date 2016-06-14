@@ -36,7 +36,6 @@ if [ $? -eq 0 ]; then
  export LTPROOT=${PWD}
 fi
 export TMPBASE="/tmp"
-export TMP="${TMPBASE}/ltpstress-$$"
 export PATH=$LTPROOT/testcases/bin:$PATH
 memsize=0
 hours=24
@@ -51,13 +50,16 @@ Sar=0
 Top=0
 Iostat=0
 LOGGING=0
+PRETTY_PRT=""
+QUIET_MODE=""
 NO_NETWORK=0
 
 usage()
 {
 
 	cat <<-END >&2
-	usage: ${0##*/} [ -d datafile ] [ -i # (in seconds) ] [ -I iofile ] [ -l logfile ] [ -m # (in Mb) ] [ -n ] [ -t duration ] [ [-S]|[-T] ]
+    usage: ${0##*/} [ -d datafile ] [ -i # (in seconds) ] [ -I iofile ] [ -l logfile ] [ -m # (in Mb) ]
+    [ -n ] [ -p ] [ -q ] [ -t duration ] [ -x TMPDIR ] [-b DEVICE] [-B LTP_DEV_FS_TYPE] [ [-S]|[-T] ]
 
     -d datafile     Data file for 'sar' or 'top' to log to. Default is "/tmp/ltpstress.data".
     -i # (in sec)   Interval that 'sar' or 'top' should take snapshots. Default is 10 seconds.
@@ -65,9 +67,16 @@ usage()
     -l logfile      Log results of test in a logfile. Default is "/tmp/ltpstress.log"
     -m # (in Mb)    Specify the _minimum_ memory load of # megabytes in background. Default is all the RAM + 1/2 swap.
     -n              Disable networking stress.
+    -p              Human readable format logfiles.
+    -q              Print less verbose output to the output files.
     -S              Use 'sar' to measure data.
     -T              Use LTP's modified 'top' tool to measure data.
     -t duration     Execute the testsuite for given duration in hours. Default is 24.
+    -x TMPDIR       Directory where temporary files will be created.
+    -b DEVICE       Some tests require an unmounted block device
+                    to run correctly. If DEVICE is not set, a loop device is
+                    created and used automatically.
+    -B LTP_DEV_FS_TYPE The file system of DEVICE.
 
 	example: ${0##*/} -d /tmp/sardata -l /tmp/ltplog.$$ -m 128 -t 24 -S
 	END
@@ -84,16 +93,7 @@ check_memsize()
   leftover_memsize=$memsize
 }
 
-
-mkdir -p ${TMP}
-
-cd ${TMP}
-if [ $? -ne 0 ]; then
-  echo "could not cd ${TMP} ... exiting"
-  exit
-fi
-
-while getopts d:hi:I:l:STt:m:n\? arg
+while getopts d:hi:I:l:STt:m:npqx:b:B:\? arg
 do  case $arg in
 
 	d)	datafile="$OPTARG";;
@@ -113,6 +113,10 @@ do  case $arg in
 		check_memsize;;
 
 	n)	NO_NETWORK=1;;
+
+	p)	PRETTY_PRT=" -p ";;
+
+	q)	QUIET_MODE=" -q ";;
 
         S)      if [ $Top -eq 0 ]; then
                   Sar=1
@@ -137,10 +141,33 @@ do  case $arg in
         t)      hours=$OPTARG
 		duration=$(($hours * 60 * 60));;
 
+	x)	export TMPBASE=$(readlink -f ${OPTARG});;
+
+	b)	export LTP_DEV=${OPTARG};;
+
+	B)	export LTP_DEV_FS_TYPE=${OPTARG};;
+
         \?)     echo "Help info:"
 		usage;;
         esac
 done
+
+export TMP="${TMPBASE}/ltpstress-$$"
+export TMPDIR=${TMP}
+mkdir -p ${TMP}
+
+# to write as user nobody into tst_tmpdir()
+chmod 777 $TMP || \
+{
+	echo "unable to chmod 777 $TMP ... aborting"
+	exit 1
+}
+
+cd $TMP || \
+{
+	echo "could not cd ${TMP} ... exiting"
+	exit 1
+}
 
 if [ $NO_NETWORK -eq 0 ];then
   # Networking setup
@@ -238,10 +265,10 @@ fi
 ulimit -u unlimited
 
 if [ $PROC_NUM -gt 0 ];then
-  genload --vm $PROC_NUM --vm-bytes 1073741824 2>&1 1>/dev/null &
+  genload --vm $PROC_NUM --vm-bytes 1073741824 >/dev/null 2>&1 &
 fi
 if [ $leftover_memsize -gt 0 ];then
-  genload --vm 1 --vm-bytes $(($leftover_memsize * 1024)) 2>&1 1>/dev/null &
+  genload --vm 1 --vm-bytes $(($leftover_memsize * 1024)) >/dev/null 2>&1 &
 fi
 
 if [ $NO_NETWORK -eq 0 ];then
@@ -254,7 +281,7 @@ ${LTPROOT}/bin/rand_lines -g ${LTPROOT}/runtest/stress.part3 > ${TMP}/stress.par
 sleep 2
 
 if [ $Sar -eq 1 ]; then
-  sar -o $datafile $interval 0 &
+  sar -o $datafile $interval > /dev/null &
 fi
 
 if [ $Top -eq 1 ]; then
@@ -275,9 +302,9 @@ output1=${TMPBASE}/ltpstress.$$.output1
 output2=${TMPBASE}/ltpstress.$$.output2
 output3=${TMPBASE}/ltpstress.$$.output3
 
-${LTPROOT}/bin/ltp-pan -e -p -q -S -t ${hours}h -a stress1 -n stress1 -l $logfile -f ${TMP}/stress.part1 -o $output1 &
-${LTPROOT}/bin/ltp-pan -e -p -q -S -t ${hours}h -a stress2 -n stress2 -l $logfile -f ${TMP}/stress.part2 -o $output2 &
-${LTPROOT}/bin/ltp-pan -e -p -q -S -t ${hours}h -a stress3 -n stress3 -l $logfile -f ${TMP}/stress.part3 -o $output3 &
+${LTPROOT}/bin/ltp-pan -e ${PRETTY_PRT} ${QUIET_MODE} -S -t ${hours}h -a stress1 -n stress1 -l $logfile -f ${TMP}/stress.part1 -o $output1 &
+${LTPROOT}/bin/ltp-pan -e ${PRETTY_PRT} ${QUIET_MODE} -S -t ${hours}h -a stress2 -n stress2 -l $logfile -f ${TMP}/stress.part2 -o $output2 &
+${LTPROOT}/bin/ltp-pan -e ${PRETTY_PRT} ${QUIET_MODE} -S -t ${hours}h -a stress3 -n stress3 -l $logfile -f ${TMP}/stress.part3 -o $output3 &
 
 echo "Running LTP Stress for $hours hour(s) using $(($memsize/1024)) Mb"
 echo ""
@@ -307,7 +334,12 @@ fi
 rm -rf ${TMP}
 echo "Testing done"
 if [ $LOGGING -eq 1 ];then
-  grep FAIL $logfile >/dev/null 2>&1
+  if [ ! -z $PRETTY_PRT ]; then
+    grep FAIL $logfile > /dev/null 2>&1
+  else
+    grep 'stat=' $logfile | grep -v 'stat=0' > /dev/null 2>&1
+  fi
+
   if [ $? -eq 1 ]; then
     echo "All Tests PASSED!"
   else

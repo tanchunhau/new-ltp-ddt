@@ -86,18 +86,16 @@
 #include <sys/shm.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define SHM_MODE	(SHM_R | SHM_W)	/* mode permissions of shared memory */
 
-char *TCID = "mremap04";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "mremap04";
+int TST_TOTAL = 1;
 char *addr;			/* addr of memory mapped region */
 char *shmaddr;			/* pointer to shared memory segment */
 int shmid;			/* shared memory identifier. */
 int memsize;			/* memory mapped size */
-int newsize;			/* new size of virtual memory blcok */
-int exp_enos[] = { ENOMEM, 0 };
+int newsize;			/* new size of virtual memory block */
 
 void setup();			/* Main setup function of test */
 void cleanup();			/* cleanup function for the test */
@@ -107,20 +105,14 @@ extern int getipckey();
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Attempt to expand the existing shared
@@ -146,8 +138,6 @@ int main(int ac, char **av)
 			}
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		if (TEST_ERRNO == ENOMEM) {
 			tst_resm(TPASS, "mremap() failed, "
@@ -176,7 +166,7 @@ int main(int ac, char **av)
  * calling process. The segment is attached at the first available address as
  * selected by the system.
  */
-void setup()
+void setup(void)
 {
 	key_t shmkey;
 
@@ -214,7 +204,7 @@ void setup()
 	 * the calling process at the first available address as selected
 	 * by the system.
 	 */
-	shmaddr = (char *)shmat(shmid, (char *)0, 0);
+	shmaddr = shmat(shmid, NULL, 0);
 	if (shmaddr == (void *)-1) {
 		tst_brkm(TBROK, cleanup, "shmat() Failed to attach shared "
 			 "memory, error:%d", errno);
@@ -227,13 +217,8 @@ void setup()
  *	       Detach the shared memory segment and remove the shared memory
  *	       identifier associated with the shared memory.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/*
 	 * Detach the shared memory segment attached to

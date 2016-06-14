@@ -58,7 +58,7 @@
  *	none
  */
 
-#include "ipcshm.h"
+#include "hugetlb.h"
 #include "safe_macros.h"
 #include "mem.h"
 
@@ -77,59 +77,53 @@ static option_t options[] = {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	struct shmid_ds buf;
 
-	msg = parse_opts(ac, av, options, &help);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, options, NULL);
+
 	if (sflag)
 		hugepages = SAFE_STRTOL(NULL, nr_opt, 0, LONG_MAX);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		shm_id_1 = shmget(shmkey, shm_size,
 				  SHM_HUGETLB | IPC_CREAT | IPC_EXCL | SHM_RW);
 		if (shm_id_1 == -1) {
 			tst_resm(TFAIL | TERRNO, "shmget");
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				/* do a STAT and check some info */
-				if (shmctl(shm_id_1, IPC_STAT, &buf) == -1) {
-					tst_resm(TBROK | TERRNO,
-						 "shmctl(IPC_STAT)");
-					continue;
-				}
-				/* check the seqment size */
-				if (buf.shm_segsz != shm_size) {
-					tst_resm(TFAIL, "seqment size is not "
-						 "correct");
-					continue;
-				}
-				/* check the pid of the creator */
-				if (buf.shm_cpid != getpid()) {
-					tst_resm(TFAIL, "creator pid is not "
-						 "correct");
-					continue;
-				}
-				/*
-				 * check the mode of the seqment
-				 * mask out all but the lower 9 bits
-				 */
-				if ((buf.shm_perm.mode & MODE_MASK) !=
-				    ((SHM_RW) & MODE_MASK)) {
-					tst_resm(TFAIL, "segment mode is not "
-						 "correct");
-					continue;
-				}
-				/* if we get here, everything looks good */
-				tst_resm(TPASS, "size, pid & mode are correct");
-			} else {
-				tst_resm(TPASS, "call succeeded");
+			/* do a STAT and check some info */
+			if (shmctl(shm_id_1, IPC_STAT, &buf) == -1) {
+				tst_resm(TBROK | TERRNO,
+					 "shmctl(IPC_STAT)");
+				continue;
 			}
+			/* check the seqment size */
+			if (buf.shm_segsz != shm_size) {
+				tst_resm(TFAIL, "seqment size is not "
+					 "correct");
+				continue;
+			}
+			/* check the pid of the creator */
+			if (buf.shm_cpid != getpid()) {
+				tst_resm(TFAIL, "creator pid is not "
+					 "correct");
+				continue;
+			}
+			/*
+			 * check the mode of the seqment
+			 * mask out all but the lower 9 bits
+			 */
+			if ((buf.shm_perm.mode & MODE_MASK) !=
+			    ((SHM_RW) & MODE_MASK)) {
+				tst_resm(TFAIL, "segment mode is not "
+					 "correct");
+				continue;
+			}
+			/* if we get here, everything looks good */
+			tst_resm(TPASS, "size, pid & mode are correct");
 		}
 
 		/*
@@ -148,7 +142,8 @@ void setup(void)
 {
 	long hpage_size;
 
-	tst_require_root(NULL);
+	tst_require_root();
+	check_hugepage();
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 	tst_tmpdir();
 
@@ -158,15 +153,13 @@ void setup(void)
 
 	shm_size = hpage_size * hugepages / 2;
 	update_shm_size(&shm_size);
-	shmkey = getipckey();
+	shmkey = getipckey(cleanup);
 
 	TEST_PAUSE;
 }
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	rm_shm(shm_id_1);
 
 	set_sys_tune("nr_hugepages", orig_hugepages, 0);

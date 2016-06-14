@@ -52,7 +52,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 
 #include <errno.h>
 #include <sys/utsname.h>
@@ -69,27 +68,23 @@ int TST_TOTAL = 1;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	struct utsname *buf;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* allocate some space for buf */
 
-	if ((buf = (struct utsname *)malloc((size_t)
-					    sizeof(struct utsname))) == NULL) {
+	if ((buf = malloc((size_t)sizeof(struct utsname))) == NULL) {
 		tst_brkm(TBROK, cleanup, "malloc failed for buf");
 	}
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* Now make the system call with the TEST() macro */
 
@@ -99,17 +94,12 @@ int main(int ac, char **av)
 			tst_resm(TFAIL, "%s failed - errno = %d - %s",
 				 TCID, TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-
-			if (STD_FUNCTIONAL_TEST) {
-				if ((strcmp(buf->sysname, LINUX)) == 0) {
-					tst_resm(TPASS, "%s functionality test "
-						 "succeeded", TCID);
-				} else {
-					tst_resm(TFAIL, "%s functionality test "
-						 "failed", TCID);
-				}
+			if ((strcmp(buf->sysname, LINUX)) == 0) {
+				tst_resm(TPASS, "%s functionality test "
+					 "succeeded", TCID);
 			} else {
-				tst_resm(TPASS, "%s call succeeded", TCID);
+				tst_resm(TFAIL, "%s functionality test "
+					 "failed", TCID);
 			}
 		}
 	}
@@ -118,9 +108,7 @@ int main(int ac, char **av)
 	buf = NULL;
 
 	cleanup();
-
 	tst_exit();
-
 }
 
 /*
@@ -140,10 +128,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

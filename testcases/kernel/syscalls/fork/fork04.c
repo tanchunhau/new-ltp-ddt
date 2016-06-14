@@ -103,7 +103,6 @@
 #include <signal.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "fork04";
 
@@ -118,13 +117,12 @@ char *environ_list[] = { "TERM", "NoTSetzWq", "TESTPROG" };
 #define NUMBER_OF_ENVIRON (sizeof(environ_list)/sizeof(char *))
 int TST_TOTAL = NUMBER_OF_ENVIRON;
 
-static void cleanup()
+static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 
-static void setup()
+static void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -135,7 +133,7 @@ static void setup()
 	putenv("TESTPROG=FRKTCS04");
 }
 
-static void child_environment()
+static void child_environment(void)
 {
 
 	int fildes;
@@ -233,7 +231,7 @@ static int cmp_env_strings(char *pstring, char *cstring)
  *        read the values determined by the child
  *        compare values
  ***************************************************************/
-void parent_environment()
+void parent_environment(void)
 {
 
 	int fildes;
@@ -276,64 +274,54 @@ void parent_environment()
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int kid_status;
 	int wait_status;
 	int fails;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		fails = 0;
 
 		TEST(fork());
 
 		if (TEST_RETURN == -1) {
 			/* fork failed */
-			if (STD_FUNCTIONAL_TEST) {
-				tst_brkm(TFAIL, cleanup,
-					 "fork() failed with %d (%s)",
-					 TEST_ERRNO, strerror(TEST_ERRNO));
-			}
+			tst_brkm(TFAIL, cleanup,
+				 "fork() failed with %d (%s)",
+				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else if (TEST_RETURN == 0) {
 			/* child */
-			if (STD_FUNCTIONAL_TEST)
-				/* determine environment variables */
-				child_environment();
+			/* determine environment variables */
+			child_environment();
 			/* exit with known value */
 			exit(KIDEXIT);
 		} else {
 			/* parent of successful fork */
 			/* wait for the child to complete */
 			wait_status = waitpid(TEST_RETURN, &kid_status, 0);
-			if (STD_FUNCTIONAL_TEST) {
-				/* validate the child exit status */
-				if (wait_status == TEST_RETURN) {
-					if (kid_status != KIDEXIT << 8) {
-						tst_brkm(TBROK, cleanup,
-							 "fork(): Incorrect child status returned on wait(): %d",
-							 kid_status);
-						fails++;
-					}
-				} else {
+			/* validate the child exit status */
+			if (wait_status == TEST_RETURN) {
+				if (kid_status != KIDEXIT << 8) {
 					tst_brkm(TBROK, cleanup,
-						 "fork(): wait() for child status failed with %d errno: %d : %s",
-						 wait_status, errno,
-						 strerror(errno));
+						 "fork(): Incorrect child status returned on wait(): %d",
+						 kid_status);
 					fails++;
 				}
+			} else {
+				tst_brkm(TBROK, cleanup,
+					 "fork(): wait() for child status failed with %d errno: %d : %s",
+					 wait_status, errno,
+					 strerror(errno));
+				fails++;
+			}
 
-				if (fails == 0) {
-					/* verification tests */
-					parent_environment();
-				}
+			if (fails == 0) {
+				/* verification tests */
+				parent_environment();
 			}
 		}
 

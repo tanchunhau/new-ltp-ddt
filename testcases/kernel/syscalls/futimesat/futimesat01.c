@@ -1,49 +1,29 @@
-/******************************************************************************
+/*
+ * Copyright (c) 2016 Oracle and/or its affiliates. All Rights Reserved.
+ * Copyright (c) International Business Machines  Corp., 2006
  *
- *   Copyright (c) International Business Machines  Corp., 2006
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
  *
- *   This program is free software;  you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * This program is distributed in the hope that it would be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * NAME
- *      futimesat01.c
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  * DESCRIPTION
  *	This test case will verify basic function of futimesat
  *	added by kernel 2.6.16 or up.
  *
- * USAGE:  <for command-line>
- * futimesat01 [-c n] [-e] [-i n] [-I x] [-P x] [-t] [-p]
- * where:
- *      -c n : Run n copies simultaneously.
- *      -e   : Turn on errno logging.
- *      -i n : Execute test n times.
- *      -I x : Execute test for x seconds.
- *      -p   : Pause for SIGUSR1 before starting
- *      -P x : Pause for x seconds between iterations.
- *      -t   : Turn on syscall timing.
- *
  * Author
  *	Yi Yang <yyangcdl@cn.ibm.com>
- *
- * History
- *      08/24/2006      Created first by Yi Yang <yyangcdl@cn.ibm.com>
- *
- *****************************************************************************/
+ */
 
 #define _GNU_SOURCE
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -54,181 +34,105 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
+#include "safe_macros.h"
 #include "linux_syscall_numbers.h"
 
 #define TEST_CASES 5
 #ifndef AT_FDCWD
 #define AT_FDCWD -100
 #endif
+
 void setup();
 void cleanup();
-void setup_every_copy();
 
-char *TCID = "futimesat01";	/* Test program identifier.    */
-int TST_TOTAL = TEST_CASES;	/* Total number of test cases. */
-char pathname[256];
-char testfile[256];
-char testfile2[256];
-char testfile3[256];
-int dirfd, fd, ret;
-int fds[TEST_CASES];
-char *filenames[TEST_CASES];
-int expected_errno[TEST_CASES] = { 0, 0, ENOTDIR, EBADF, 0 };
+char *TCID = "futimesat01";
+int TST_TOTAL = TEST_CASES;
 
-struct timeval times[2];
+static const char pathname[] = "futimesattestdir",
+		  testfile[] = "futimesattestfile.txt",
+		  testfile2[] = "futimesattestdir/futimesattestfile.txt";
+static char *testfile3;
+
+static int fds[TEST_CASES];
+static const char *filenames[TEST_CASES];
+static const int expected_errno[] = { 0, 0, ENOTDIR, EBADF, 0 };
 
 int myfutimesat(int dirfd, const char *filename, struct timeval *times)
 {
-	return syscall(__NR_futimesat, dirfd, filename, times);
+	return ltp_syscall(__NR_futimesat, dirfd, filename, times);
 }
 
 int main(int ac, char **av)
 {
-	int lc;
-	char *msg;
-	int i;
+	int lc, i;
+	struct timeval times[2];
 
-	/* Disable test if the version of the kernel is less than 2.6.16 */
-	if ((tst_kvercmp(2, 6, 16)) < 0) {
-		tst_resm(TWARN, "This test can only run on kernels that are ");
-		tst_resm(TWARN, "2.6.16 and higher");
-		exit(0);
-	}
+	if (tst_kvercmp(2, 6, 16) < 0)
+		tst_brkm(TCONF, NULL, "Test must be run with kernel 2.6.16+");
 
-	/***************************************************************
-	 * parse standard options
-	 ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
-	/***************************************************************
-	 * perform global setup for test
-	 ***************************************************************/
 	setup();
 
-	/***************************************************************
-	 * check looping state if -c option given
-	 ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		setup_every_copy();
+		tst_count = 0;
 
-		Tst_count = 0;
-
-		/*
-		 * Call futimesat
-		 */
 		for (i = 0; i < TST_TOTAL; i++) {
 			gettimeofday(&times[0], NULL);
 			gettimeofday(&times[1], NULL);
 			TEST(myfutimesat(fds[i], filenames[i], times));
 
-			/* check return code */
 			if (TEST_ERRNO == expected_errno[i]) {
-
-			/***************************************************************
-			 * only perform functional verification if flag set (-f not given)
-			 ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "futimesat() returned the expected  errno %d: %s",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO));
-				}
+				tst_resm(TPASS | TTERRNO,
+					 "futimesat() returned expected errno");
 			} else {
-				TEST_ERROR_LOG(TEST_ERRNO);
-				tst_resm(TFAIL,
-					 "futimesat() Failed, errno=%d : %s",
-					 TEST_ERRNO, strerror(TEST_ERRNO));
+				tst_resm(TFAIL | TTERRNO, "futimesat() failed");
 			}
 		}
 
 	}
 
-	/***************************************************************
-	 * cleanup and exit
-	 ***************************************************************/
 	cleanup();
-
-	return (0);
+	tst_exit();
 }
 
-void setup_every_copy()
+void setup(void)
 {
-	/* Initialize test dir and file names */
-	sprintf(pathname, "futimesattestdir%d", getpid());
-	sprintf(testfile, "futimesattestfile%d.txt", getpid());
-	sprintf(testfile2, "futimesattestdir%d/futimesattestfile%d.txt",
-		getpid(), getpid());
-	sprintf(testfile3, "/tmp/futimesattestfile%d.txt", getpid());
+	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	ret = mkdir(pathname, 0700);
-	if (ret < 0) {
-		perror("mkdir: ");
-		exit(-1);
-	}
+	tst_tmpdir();
 
-	dirfd = open(pathname, O_DIRECTORY);
-	if (dirfd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	char *abs_path = tst_get_tmpdir();
 
-	fd = open(testfile, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	SAFE_ASPRINTF(cleanup, &testfile3, "%s/futimesatfile3.txt", abs_path);
+	free(abs_path);
 
-	fd = open(testfile2, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	SAFE_MKDIR(cleanup, pathname, 0700);
 
-	fd = open(testfile3, O_CREAT | O_RDWR, 0600);
-	if (fd < 0) {
-		perror("open: ");
-		exit(-1);
-	}
+	fds[0] = SAFE_OPEN(cleanup, pathname, O_DIRECTORY);
+	fds[1] = fds[0];
 
-	fds[0] = fds[1] = dirfd;
-	fds[2] = fd;
+	SAFE_FILE_PRINTF(cleanup, testfile, testfile);
+	SAFE_FILE_PRINTF(cleanup, testfile2, testfile2);
+
+	fds[2] = SAFE_OPEN(cleanup, testfile3, O_CREAT | O_RDWR, 0600);
+
 	fds[3] = 100;
 	fds[4] = AT_FDCWD;
 
 	filenames[0] = filenames[2] = filenames[3] = filenames[4] = testfile;
 	filenames[1] = testfile3;
-}
-
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- ***************************************************************/
-void setup()
-{
-
-	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- *		completion or premature exit.
- ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/* Remove them */
-	unlink(testfile2);
-	unlink(testfile3);
-	unlink(testfile);
-	rmdir(pathname);
+	if (fds[0] > 0)
+		close(fds[0]);
+	if (fds[2] > 0)
+		close(fds[2]);
 
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
-
+	free(testfile3);
+	tst_rmdir();
 }

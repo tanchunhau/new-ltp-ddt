@@ -1,6 +1,6 @@
-/check_pidns_enabled
 /pidns01
 /pidns02
+/pidns03
 /pidns04
 /pidns05
 /pidns06
@@ -12,3 +12,4 @@
 /pidns20
 /pidns30
 /pidns31
+/pidns32

@@ -48,15 +48,12 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include "test.h"
-#include "usctest.h"
 #include <pwd.h>
 
 char *TCID = "chroot04";
 int TST_TOTAL = 1;
 
 #define TEST_TMPDIR	"chroot04_tmpdir"
-
-int exp_enos[] = { EACCES, 0 };
 
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
@@ -67,21 +64,16 @@ void cleanup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	/* set up expected errnos */
-	TEST_EXP_ENOS(exp_enos);
 
 	/* Check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		TEST(chroot(TEST_TMPDIR));
 
@@ -103,9 +95,11 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
+
+	tst_require_root();
 
 	TEST_PAUSE;
 
@@ -130,7 +124,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		        completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/* reset the process ID to the saved ID (root) */
 	if (setuid(0) == -1) {
@@ -139,11 +133,6 @@ void cleanup()
 	if (rmdir(TEST_TMPDIR) != 0) {
 		tst_brkm(TFAIL | TERRNO, NULL, "rmdir(%s) failed", TEST_TMPDIR);
 	}
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* delete the test directory created in setup() */
 	tst_rmdir();

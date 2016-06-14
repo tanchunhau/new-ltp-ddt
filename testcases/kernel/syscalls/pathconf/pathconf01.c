@@ -114,18 +114,10 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 void help();
-
-char *TCID = "pathconf01";	/* Test program identifier.    */
-int TST_TOTAL;			/* Total number of test cases. */
-
-int exp_enos[] = { 0, 0 };
-
-int i;
 
 struct pathconf_args {
 	char *define_tag;
@@ -141,6 +133,12 @@ struct pathconf_args {
 	NULL, 0}
 };
 
+char *TCID = "pathconf01";
+int TST_TOTAL = ARRAY_SIZE(args);
+
+int i;
+
+
 int lflag;
 char *path;
 
@@ -152,15 +150,8 @@ option_t options[] = {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	TST_TOTAL = (sizeof(args) / sizeof(args[0])) - 1;
-
-    /***************************************************************
-     * parse standard options
-     ***************************************************************/
-	if ((msg = parse_opts(ac, av, options, &help)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, options, &help);
 
 	if (!lflag) {
 		path = strdup("/tmp");
@@ -170,15 +161,12 @@ int main(int ac, char **av)
      ***************************************************************/
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
     /***************************************************************
      * check looping state if -c option given
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -200,17 +188,10 @@ int main(int ac, char **av)
 					 path, args[i].define_tag, TEST_ERRNO,
 					 strerror(TEST_ERRNO));
 			} else {
-
-		/***************************************************************
-		 * only perform functional verification if flag set (-f not given)
-		 ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "pathconf(%s, %s) returned %ld",
-						 path, args[i].define_tag,
-						 TEST_RETURN);
-				}
+				tst_resm(TPASS,
+					 "pathconf(%s, %s) returned %ld",
+					 path, args[i].define_tag,
+					 TEST_RETURN);
 			}
 		}
 	}
@@ -226,7 +207,7 @@ int main(int ac, char **av)
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -238,20 +219,15 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }
 
 /***************************************************************
  * help
  ***************************************************************/
-void help()
+void help(void)
 {
 	printf("  -l path a path to test with pathconf(2) (def: /tmp)\n");
 }

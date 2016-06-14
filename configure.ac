@@ -1,16 +1,15 @@
 AC_PREREQ(2.61)
-AC_INIT([ltp], [LTP_VERSION], [ltp-list@lists.sourceforge.net])
+AC_INIT([ltp], [LTP_VERSION], [ltp@lists.linux.it])
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([include/config.h])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_FILES([ \
     include/mk/config.mk \
     include/mk/features.mk \
     lib/ltp.pc \
-    ltp-devel.spec \
     m4/Makefile \
     execltp \
-    README.ltp-devel \
 ])
 
 AM_CONDITIONAL(CROSS_COMPILATION, test x$cross_compiling = xyes)
@@ -43,6 +42,7 @@ AC_CHECK_HEADERS([ \
     linux/netlink.h \
     sys/epoll.h \
     sys/inotify.h \
+    sys/fanotify.h \
     sys/jfsdmapi.h \
     sys/prctl.h \
 ])
@@ -102,20 +102,6 @@ fi
 
 # Testsuites knobs
 
-# testcases/kernel/power_management requires python.
-if test "x$with_python" = xyes; then
-    AC_ARG_WITH([power-management-testsuite],
-      [AC_HELP_STRING([--with-power-management-testsuite],
-        [compile and install the x86 power management testsuite (default=no)])],
-      [with_power_management_testsuite=yes],
-    )
-fi
-if test "x$with_power_management_testsuite" = xyes; then
-    AC_SUBST([WITH_POWER_MANAGEMENT_TESTSUITE],["yes"])
-else
-    AC_SUBST([WITH_POWER_MANAGEMENT_TESTSUITE],["no"])
-fi
-
 AC_ARG_WITH([open-posix-testsuite],
   [AC_HELP_STRING([--with-open-posix-testsuite],
     [compile and install the open posix testsuite (default=no)])],
@@ -143,8 +129,11 @@ else
     AC_SUBST([WITH_REALTIME_TESTSUITE],["no"])
 fi
 
-# END testsuites knobs
+AC_CONFIG_SUBDIRS([utils/ffsb-6.0-rc2])
 
+# END testsuites knobs
+LTP_CHECK_FORTIFY_SOURCE
+LTP_CHECK_CC_WARN_OLDSTYLE
 LTP_CHECK_MKDTEMP
 LTP_CHECK_CAPABILITY_SUPPORT
 LTP_CHECK_CRYPTO
@@ -155,17 +144,48 @@ LTP_CHECK_SECUREBITS
 LTP_CHECK_SELINUX
 LTP_CHECK_SIGNAL
 LTP_CHECK_SYSCALL_EVENTFD
-LTP_CHECK_SYSCALL_KEYCTL
 LTP_CHECK_SYSCALL_MODIFY_LDT
 LTP_CHECK_SYSCALL_NUMA
 LTP_CHECK_SYSCALL_QUOTACTL
 LTP_CHECK_SYSCALL_SIGNALFD
 LTP_CHECK_SYSCALL_UNSHARE
+LTP_CHECK_SYSCALL_UTIMENSAT
 LTP_CHECK_TASKSTATS
 LTP_CHECK_TIME
 LTP_CHECK_MADVISE
 LTP_CHECK_ACL_SUPPORT
 LTP_CHECK_FS_IOC_FLAGS
 LTP_CHECK_MREMAP_FIXED
+LTP_CHECK_KERNEL_DEVEL
+LTP_CHECK_XFS_QUOTACTL
+LTP_CHECK_CLONE_SUPPORTS_7_ARGS
+LTP_CHECK_MKDIRAT
+LTP_CHECK_FCHOWNAT
+LTP_CHECK_FSTATAT
+LTP_CHECK_MKNODAT
+LTP_CHECK_READLINKAT
+LTP_CHECK_OPENAT
+LTP_CHECK_RENAMEAT
+LTP_CHECK_RENAMEAT2
+LTP_CHECK_FALLOCATE
+LTP_CHECK_SYSCALL_FCNTL
+LTP_CHECK_SYSCALL_PERF_EVENT_OPEN
+LTP_CHECK_TIRPC
+LTP_CHECK_TEE
+LTP_CHECK_SPLICE
+LTP_CHECK_VMSPLICE
+LTP_CHECK_TIMERFD
+LTP_CHECK_CAN_SUPPORT
+LTP_CHECK_IOVEC
+LTP_CHECK_KEYCTL
+LTP_CHECK_LINUXRANDOM
+LTP_CHECK_IF_LINK
+LTP_CHECK_KCMP
+LTP_CHECK_KCMP_TYPE
+LTP_CHECK_PREADV
+LTP_CHECK_PWRITEV
+LTP_CHECK_EPOLL_PWAIT
+LTP_CHECK_KEYUTILS_SUPPORT
+LTP_CHECK_SYNC_ADD_AND_FETCH
 
 AC_OUTPUT

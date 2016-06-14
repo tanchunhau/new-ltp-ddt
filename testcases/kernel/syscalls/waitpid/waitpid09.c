@@ -62,14 +62,10 @@
 #include <stdlib.h>
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "waitpid09";
 int TST_TOTAL = 1;
 volatile int intintr;
-
-/* 0 terminated list of expected errnos */
-static int exp_enos[] = { 10, 0 };
 
 static void setup(void);
 static void cleanup(void);
@@ -83,13 +79,10 @@ static void do_exit_uclinux(void);
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
 	int fail, pid, status, ret;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 #ifdef UCLINUX
 	maybe_run_child(&do_exit_uclinux, "");
@@ -110,8 +103,8 @@ int main(int argc, char **argv)
 
 		/* check for looping state if -i option is given */
 		for (lc = 0; TEST_LOOPING(lc); lc++) {
-			/* reset Tst_count in case we are looping */
-			Tst_count = 0;
+			/* reset tst_count in case we are looping */
+			tst_count = 0;
 
 			intintr = 0;
 
@@ -220,7 +213,6 @@ int main(int argc, char **argv)
 				tst_resm(TFAIL, "Expected -1 got %d", ret);
 				fail = 1;
 			}
-			TEST_ERROR_LOG(errno);
 			if (errno != ECHILD) {
 				tst_resm(TFAIL, "Expected ECHILD got %d",
 					 errno);
@@ -233,7 +225,6 @@ int main(int argc, char **argv)
 					 ret);
 				fail = 1;
 			}
-			TEST_ERROR_LOG(errno);
 			if (errno != ECHILD) {
 				tst_resm(TFAIL, "WNOHANG: Expected ECHILD got "
 					 "%d", errno);
@@ -268,22 +259,19 @@ static void setup_sigint(void)
 	if ((sig_t) signal(SIGINT, inthandlr) == SIG_ERR) {
 		tst_brkm(TFAIL, cleanup, "signal SIGINT failed, errno = %d",
 			 errno);
-		tst_exit();
 	}
 }
 
 static void setup(void)
 {
-	TEST_EXP_ENOS(exp_enos);
 	TEST_PAUSE;
 }
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 }
 
-static void inthandlr()
+static void inthandlr(void)
 {
 	intintr++;
 }

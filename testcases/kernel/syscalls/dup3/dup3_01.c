@@ -58,18 +58,12 @@
 #include <sys/syscall.h>
 #include <errno.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
+#include "lapi/fcntl.h"
 #include "linux_syscall_numbers.h"
 
-#ifndef O_CLOEXEC
-#define O_CLOEXEC 02000000
-#endif
-
-/* Global Variables */
-char *TCID = "dup3_01";		/* test program identifier.              */
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+char *TCID = "dup3_01";
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -89,9 +83,8 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 
@@ -113,7 +106,7 @@ void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -130,7 +123,7 @@ int main(int argc, char *argv[])
 			 "This test can only run on kernels that are 2.6.27 and higher");
 	setup();
 
-	fd = syscall(__NR_dup3, 1, 4, 0);
+	fd = ltp_syscall(__NR_dup3, 1, 4, 0);
 	if (fd == -1) {
 		tst_brkm(TFAIL | TERRNO, cleanup, "dup3(0) failed");
 	}
@@ -143,7 +136,7 @@ int main(int argc, char *argv[])
 	}
 	close(fd);
 
-	fd = syscall(__NR_dup3, 1, 4, O_CLOEXEC);
+	fd = ltp_syscall(__NR_dup3, 1, 4, O_CLOEXEC);
 	if (fd == -1) {
 		tst_brkm(TFAIL | TERRNO, cleanup, "dup3(O_CLOEXEC) failed");
 	}

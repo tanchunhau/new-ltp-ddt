@@ -76,11 +76,9 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 
-char *TCID = "sigaltstack01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-int exp_enos[] = { 0 };
+char *TCID = "sigaltstack01";
+int TST_TOTAL = 1;
 
 void *addr, *main_stk;		/* address of main stack for signal */
 int got_signal = 0;
@@ -89,31 +87,22 @@ pid_t my_pid;			/* test process id */
 stack_t sigstk, osigstk;	/* signal stack storing struct. */
 struct sigaction act, oact;	/* sigaction() struct. */
 
-void setup();			/* Main setup function of test */
-void cleanup();			/* cleanup function for the test */
-void sig_handler();		/* signal catching function */
+void setup(void);		/* Main setup function of test */
+void cleanup(void);		/* cleanup function for the test */
+void sig_handler(int);		/* signal catching function */
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	void *alt_stk;		/* address of alternate stack for signal */
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* Call sigaltstack() to set up an alternate stack */
 		sigstk.ss_size = SIGSTKSZ;
@@ -121,70 +110,60 @@ int main(int ac, char **av)
 		TEST(sigaltstack(&sigstk, &osigstk));
 
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL,
 				 "sigaltstack() Failed, errno=%d : %s",
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
+			/* Set up the signal handler for 'SIGUSR1' */
+			act.sa_flags = SA_ONSTACK;
+			act.sa_handler = (void (*)())sig_handler;
+			if ((sigaction(SIGUSR1, &act, &oact)) == -1) {
+				tst_brkm(TFAIL, cleanup, "sigaction() "
+					 "fails to trap signal "
+					 "delivered on alt. stack, "
+					 "error=%d", errno);
+			}
+
+			/* Deliver signal onto the alternate stack */
+			kill(my_pid, SIGUSR1);
+
+			/* wait till the signal arrives */
+			while (!got_signal) ;
+
+			got_signal = 0;
+			alt_stk = addr;
+
 			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
+			 * First,
+			 * Check that alt_stk is within the
+			 * alternate stk boundaries
+			 *
+			 * Second,
+			 * Check that main_stk is outside the
+			 * alternate stk boundaries.
 			 */
-			if (STD_FUNCTIONAL_TEST) {
-				/* Set up the signal handler for 'SIGUSR1' */
-				act.sa_flags = SA_ONSTACK;
-				act.sa_handler = (void (*)())sig_handler;
-				if ((sigaction(SIGUSR1, &act, &oact)) == -1) {
-					tst_brkm(TFAIL, cleanup, "sigaction() "
-						 "fails to trap signal "
-						 "delivered on alt. stack, "
-						 "error=%d", errno);
-				}
-
-				/* Deliver signal onto the alternate stack */
-				kill(my_pid, SIGUSR1);
-
-				/* wait till the signal arrives */
-				while (!got_signal) ;
-
-				got_signal = 0;
-				alt_stk = addr;
-
-				/*
-				 * First,
-				 * Check that alt_stk is within the
-				 * alternate stk boundaries
-				 *
-				 * Second,
-				 * Check that main_stk is outside the
-				 * alternate stk boundaries.
-				 */
-				if ((alt_stk < sigstk.ss_sp) &&
-				    (alt_stk > (sigstk.ss_sp + SIGSTKSZ))) {
-					tst_resm(TFAIL,
-						 "alt. stack is not within the "
-						 "alternate stk boundaries");
-				} else if ((main_stk >= sigstk.ss_sp) &&
-					   (main_stk <=
-					    (sigstk.ss_sp + SIGSTKSZ))) {
-					tst_resm(TFAIL,
-						 "main stk. not outside the "
-						 "alt. stack boundaries");
-				} else {
-					tst_resm(TPASS,
-						 "Functionality of "
-						 "sigaltstack() successful");
-				}
+			if ((alt_stk < sigstk.ss_sp) &&
+			    (alt_stk > (sigstk.ss_sp + SIGSTKSZ))) {
+				tst_resm(TFAIL,
+					 "alt. stack is not within the "
+					 "alternate stk boundaries");
+			} else if ((main_stk >= sigstk.ss_sp) &&
+				   (main_stk <=
+				    (sigstk.ss_sp + SIGSTKSZ))) {
+				tst_resm(TFAIL,
+					 "main stk. not outside the "
+					 "alt. stack boundaries");
 			} else {
-				tst_resm(TPASS, "CALL succeeded.");
+				tst_resm(TPASS,
+					 "Functionality of "
+					 "sigaltstack() successful");
 			}
 		}
-		Tst_count++;	/* incr. TEST_LOOP counter */
+		tst_count++;	/* incr. TEST_LOOP counter */
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -195,7 +174,7 @@ int main(int ac, char **av)
  * wait till the signal arrives.
  * Allocate memory for the alternative stack.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -206,7 +185,7 @@ void setup()
 	my_pid = getpid();
 
 	/* Capture SIGUSR1 on the main stack */
-	act.sa_handler = (void (*)())sig_handler;
+	act.sa_handler = (void (*)(int))sig_handler;
 	if ((sigaction(SIGUSR1, &act, &oact)) == -1) {
 		tst_brkm(TFAIL, cleanup,
 			 "sigaction() fails in setup, errno=%d", errno);
@@ -222,7 +201,7 @@ void setup()
 	main_stk = addr;
 
 	/* Allocate memory for the alternate stack */
-	if ((sigstk.ss_sp = (void *)malloc(SIGSTKSZ)) == NULL) {
+	if ((sigstk.ss_sp = malloc(SIGSTKSZ)) == NULL) {
 		tst_brkm(TFAIL, cleanup,
 			 "could not allocate memory for the alternate stack");
 	}
@@ -236,10 +215,11 @@ void setup()
  *
  *  This function updates 'addr' variable and sets got_signal value.
  */
-void sig_handler()
+void sig_handler(int n)
 {
 	int i;
 
+	(void) n;
 	addr = &i;
 	got_signal = 1;
 }
@@ -250,13 +230,8 @@ void sig_handler()
  *             completion or premature exit.
  *  Free the memory allocated for alternate stack.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	free(sigstk.ss_sp);
 

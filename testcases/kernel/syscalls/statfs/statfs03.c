@@ -54,14 +54,11 @@
 #include <errno.h>
 #include <stdio.h>
 #include "test.h"
-#include "usctest.h"
 #include <pwd.h>
 
 char *TCID = "statfs03";
 int TST_TOTAL = 1;
 int fileHandle = 0;
-
-int exp_enos[] = { EACCES, 0 };
 
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
@@ -76,19 +73,14 @@ void cleanup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set up the expected errnos */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(statfs(path, &buf));
 
@@ -97,8 +89,6 @@ int main(int ac, char **av)
 
 		} else {
 
-			TEST_ERROR_LOG(TEST_ERRNO);
-
 			if (TEST_ERRNO == EACCES) {
 				tst_resm(TPASS, "expected failure - "
 					 "errno = %d : %s", TEST_ERRNO,
@@ -106,7 +96,7 @@ int main(int ac, char **av)
 			} else {
 				tst_resm(TFAIL, "unexpected error - %d : %s - "
 					 "expected %d", TEST_ERRNO,
-					 strerror(TEST_ERRNO), exp_enos[0]);
+					 strerror(TEST_ERRNO), EACCES);
 			}
 		}
 	}
@@ -118,10 +108,10 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -129,9 +119,9 @@ void setup()
 
 	/* make a temporary directory and cd to it */
 	tst_tmpdir();
-	if (chmod(get_tst_tmpdir(), S_IRWXU) == -1)
+	if (chmod(tst_get_tmpdir(), S_IRWXU) == -1)
 		tst_brkm(TBROK | TERRNO, cleanup, "chmod(%s, 700) failed",
-			 get_tst_tmpdir());
+			 tst_get_tmpdir());
 
 	/* create a test file */
 	sprintf(fname, "%s.%d", fname, getpid());
@@ -157,7 +147,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/* reset the process ID to the saved ID (root) */
 	if (setuid(0) == -1) {
@@ -169,8 +159,6 @@ void cleanup()
 	 * print errno log if that option was specified.
 	 */
 	close(fileHandle);
-
-	TEST_CLEANUP;
 
 	/* delete the test directory created in setup() */
 	tst_rmdir();

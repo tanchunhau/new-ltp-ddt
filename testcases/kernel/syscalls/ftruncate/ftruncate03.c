@@ -51,14 +51,13 @@
 #include <sys/fcntl.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define TESTFILE	"ftruncate03_tst_file"
 
 TCID_DEFINE(ftruncate03);
 int TST_TOTAL = 3;
 
-int main()
+int main(void)
 {
 	int wjh_ret = -1, wjh_f = -1, count = 0;
 	//used for the 2nd test
@@ -110,9 +109,8 @@ int main()
 	errno = 0;
 	wjh_f = open(TESTFILE, O_RDWR | O_CREAT, 0644);
 	if (wjh_f == -1) {
-		tst_resm(TFAIL | TERRNO, "open(%s) failed", TESTFILE);
-		tst_rmdir();
-		tst_exit();
+		tst_brkm(TFAIL | TERRNO, tst_rmdir, "open(%s) failed",
+			 TESTFILE);
 	}
 	while (count < strlen(str)) {
 		if ((count += write(wjh_f, str, strlen(str))) == -1) {
@@ -135,9 +133,8 @@ int main()
 
 	wjh_f = open(TESTFILE, flag);
 	if (wjh_f == -1) {
-		tst_resm(TFAIL | TERRNO, "open(%s) failed", TESTFILE);
-		tst_rmdir();
-		tst_exit();
+		tst_brkm(TFAIL | TERRNO, tst_rmdir, "open(%s) failed",
+			 TESTFILE);
 	}
 	wjh_ret = ftruncate(wjh_f, trunc_size);
 #ifdef DEBUG

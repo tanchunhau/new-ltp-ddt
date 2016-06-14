@@ -63,8 +63,6 @@
 char *TCID = "shmget05";
 int TST_TOTAL = 1;
 
-int exp_enos[] = { EACCES, 0 };	/* 0 terminated list of expected errnos */
-
 int shm_id_1 = -1;
 
 uid_t ltp_uid;
@@ -72,13 +70,10 @@ char *ltp_user = "nobody";
 
 int main(int ac, char **av)
 {
-	char *msg;
 	int pid;
 	void do_child(void);
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
@@ -114,15 +109,15 @@ int main(int ac, char **av)
 /*
  * do_child - make the TEST call as the child process
  */
-void do_child()
+void do_child(void)
 {
 	int lc;
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Look for a failure ...
@@ -134,8 +129,6 @@ void do_child()
 			tst_resm(TFAIL, "call succeeded when error expected");
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		switch (TEST_ERRNO) {
 		case EACCES:
@@ -156,13 +149,9 @@ void do_child()
  */
 void setup(void)
 {
-	/* check for root as process owner */
-	check_root();
+	tst_require_root();
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -193,10 +182,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

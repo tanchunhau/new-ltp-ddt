@@ -54,11 +54,32 @@
 #include <errno.h>
 #include "test.h"
 #include <libclone.h>
+#include "safe_macros.h"
 
 char *TCID = "uts_namespace";
 int TST_TOTAL = 1;
 
-int drop_root()
+static int dummy_child(void *v)
+{
+	(void) v;
+	return 0;
+}
+
+static void check_newuts(void)
+{
+	int pid, status;
+
+	if (tst_kvercmp(2, 6, 19) < 0)
+		tst_brkm(TCONF, NULL, "CLONE_NEWUTS not supported");
+
+	pid = do_clone_unshare_test(T_CLONE, CLONE_NEWUTS, dummy_child, NULL);
+	if (pid == -1)
+		tst_brkm(TCONF | TERRNO, NULL, "CLONE_NEWUTS not supported");
+
+	SAFE_WAIT(NULL, &status);
+}
+
+int drop_root(void)
 {
 	int ret;
 	ret = setresuid(1000, 1000, 1000);
@@ -69,12 +90,13 @@ int drop_root()
 	return 1;
 }
 
-int p1fd[2], p2fd[2];
-pid_t cpid;
-
 #define HLEN 100
 #define NAME1 "serge1"
 #define NAME2 "serge2"
+
+int p1fd[2], p2fd[2];
+static char oldhost[HLEN];
+pid_t cpid;
 
 void picknewhostname(char *orig, char *new)
 {
@@ -112,18 +134,18 @@ int P1(void *vtest)
 			tst_resm(TPASS, "test 1 (%s): success", tsttype);
 			tst_exit();
 		}
-		tst_resm(TFAIL, "test 1 (%s): hostname 1 %s, hostname 2 %s",
+		tst_brkm(TFAIL, NULL,
+			 "test 1 (%s): hostname 1 %s, hostname 2 %s",
 			 tsttype, hostname, rhostname);
-		tst_exit();
 	case 2:
 		gethostname(hostname, HLEN);
 		picknewhostname(hostname, newhostname);
 		err = sethostname(newhostname, strlen(newhostname));
 		write(p2fd[1], "1", 1);
 		if (err == -1) {
-			tst_resm(TFAIL, "test 2 (%s): failed to sethostname",
+			tst_brkm(TFAIL, NULL,
+				 "test 2 (%s): failed to sethostname",
 				 tsttype);
-			tst_exit();
 		}
 		zeroize(rhostname);
 		len = read(p1fd[0], rhostname, HLEN);
@@ -131,36 +153,36 @@ int P1(void *vtest)
 			tst_resm(TPASS, "test 2 (%s): success", tsttype);
 			tst_exit();
 		}
-		tst_resm(TFAIL, "test 2 (%s) hostname 1 %s, hostname 2 %s",
+		tst_brkm(TFAIL, NULL,
+			 "test 2 (%s) hostname 1 %s, hostname 2 %s",
 			 tsttype, newhostname, rhostname);
-		tst_exit();
 	case 3:
 		gethostname(hostname, HLEN);
 		picknewhostname(hostname, newhostname);
 		err = sethostname(newhostname, strlen(newhostname));
 		write(p2fd[1], "1", 1);
 		if (err == -1) {
-			tst_resm(TFAIL, "test 3 (%s): failed to sethostname",
+			tst_brkm(TFAIL, NULL,
+				 "test 3 (%s): failed to sethostname",
 				 tsttype);
-			tst_exit();
 		}
 
 		zeroize(rhostname);
 		len = read(p1fd[0], rhostname, HLEN);
 		if (strcmp(newhostname, rhostname) == 0) {
-			tst_resm(TFAIL,
+			tst_brkm(TFAIL,
+				 NULL,
 				 "test 3 (%s): hostname 1 %s, hostname 2 %s, these should have been different",
 				 tsttype, newhostname, rhostname);
-			tst_exit();
 		}
 		if (strcmp(hostname, rhostname) == 0) {
 			tst_resm(TPASS, "test 3 (%s): success", tsttype);
 			tst_exit();
 		}
-		tst_resm(TFAIL,
+		tst_brkm(TFAIL,
+			 NULL,
 			 "test 3 (%s): hostname 1 %s, hostname 2 %s, should have been same",
 			 tsttype, hostname, rhostname);
-		tst_exit();
 
 	case 4:
 		gethostname(hostname, HLEN);
@@ -169,16 +191,16 @@ int P1(void *vtest)
 		len = read(p1fd[0], rhostname, HLEN);
 		gethostname(newhostname, HLEN);
 		if (strcmp(hostname, newhostname) != 0) {
-			tst_resm(TFAIL,
+			tst_brkm(TFAIL,
+				 NULL,
 				 "test 4 (%s): hostname 1 %s, hostname 2 %s, should be same",
 				 tsttype, hostname, newhostname);
-			tst_exit();
 		}
 		if (strcmp(hostname, rhostname) == 0) {
-			tst_resm(TFAIL,
+			tst_brkm(TFAIL,
+				 NULL,
 				 "test 4 (%s): hostname 1 %s, hostname 2 %s, should be different",
 				 tsttype, hostname, rhostname);
-			tst_exit();
 		}
 		tst_resm(TPASS, "test 4 (%s): successful", tsttype);
 		tst_exit();
@@ -188,17 +210,17 @@ int P1(void *vtest)
 		len = read(p1fd[0], rhostname, HLEN);
 		gethostname(newhostname, HLEN);
 		if (strcmp(rhostname, newhostname) != 0) {
-			tst_resm(TFAIL,
+			tst_brkm(TFAIL,
+				 NULL,
 				 "test 5 (%s): hostnames %s and %s should be same",
 				 tsttype, rhostname, newhostname);
-			tst_exit();
 		}
 		tst_resm(TPASS, "test 5 (%s): successful", tsttype);
 		tst_exit();
 	default:
 		break;
 	}
-	return -1;
+	tst_exit();
 }
 
 int P2(void *vtest)
@@ -234,8 +256,7 @@ int P2(void *vtest)
 		}
 		if (hostname[0] == '0') {
 			tst_resm(TPASS, "P2: P1 claims error");
-			tst_exit();
-			exit(0);
+			return 0;
 		}
 		gethostname(hostname, HLEN);
 		picknewhostname(hostname, newhostname);
@@ -246,8 +267,19 @@ int P2(void *vtest)
 		tst_resm(TFAIL, "undefined test: %d", testnum);
 		break;
 	}
-	tst_exit();
 	return 0;
+}
+
+static void setup(void)
+{
+	gethostname(oldhost, HLEN);
+	tst_require_root();
+	check_newuts();
+}
+
+static void cleanup(void)
+{
+	sethostname(oldhost, strlen(oldhost));
 }
 
 #define UNSHARESTR "unshare"
@@ -258,6 +290,7 @@ int main(int argc, char *argv[])
 	int testnum;
 	void *vtest;
 
+	setup();
 	if (argc != 3) {
 		tst_resm(TFAIL, "Usage: %s <clone|unshare> <testnum>",
 			 argv[0]);
@@ -302,9 +335,7 @@ int main(int argc, char *argv[])
 		}
 		if (pid == 0) {
 			if (!drop_root()) {
-				tst_resm(TFAIL, "failed to drop root.");
-				tst_exit();
-				exit(1);
+				tst_brkm(TFAIL, NULL, "failed to drop root.");
 			}
 			r = do_clone_unshare_test(use_clone, CLONE_NEWUTS,
 						  P1, vtest);
@@ -320,5 +351,6 @@ int main(int argc, char *argv[])
 		break;
 	}
 
+	cleanup();
 	tst_exit();
 }

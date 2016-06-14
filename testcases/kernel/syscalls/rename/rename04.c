@@ -64,16 +64,12 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
-extern void do_file_setup(char *);
 
-char *TCID = "rename04";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { ENOTEMPTY, EEXIST, 0 };	/* List must end with 0 */
+char *TCID = "rename04";
+int TST_TOTAL = 1;
 
 int fd;
 char tstfile[40];
@@ -85,28 +81,23 @@ ino_t oldino, oldino1;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
 	/*
 	 * parse standard options
 	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/*
 	 * perform global setup for test
 	 */
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	/*
 	 * check looping state if -i option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* rename a directory to a non-empty directory */
 
@@ -118,8 +109,6 @@ int main(int ac, char **av)
 				 fdir, mdir);
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		if (TEST_ERRNO == ENOTEMPTY) {
 			tst_resm(TPASS, "rename() returned ENOTEMPTY");
@@ -143,7 +132,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -177,8 +166,7 @@ void setup()
 		tst_brkm(TBROK, cleanup, "Could not create directory %s", mdir);
 	}
 
-	/* create a file under "new" directory */
-	do_file_setup(tstfile);
+	SAFE_TOUCH(cleanup, tstfile, 0700, NULL);
 
 	if (stat(mdir, &buf2) == -1) {
 		tst_brkm(TBROK, cleanup, "failed to stat directory %s "
@@ -195,13 +183,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *              completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/*
 	 * Remove the temporary directory.

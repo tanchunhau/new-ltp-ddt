@@ -116,15 +116,12 @@
 #include <signal.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "lseek01";		/* Test program identifier.    */
-int TST_TOTAL = 3;		/* Total number of test cases. */
-
-int exp_enos[] = { 0, 0 };
+char *TCID = "lseek01";
+int TST_TOTAL = 3;
 
 char Fname[255];
 int Fd;
@@ -134,7 +131,6 @@ int Whence[] = { SEEK_SET, SEEK_CUR, SEEK_END, -1 };
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
 	int ind;
 	int offset;
@@ -142,25 +138,19 @@ int main(int ac, char **av)
     /***************************************************************
      * parse standard options
      ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
     /***************************************************************
      * perform global setup for test
      ***************************************************************/
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
     /***************************************************************
      * check looping state if -c option given
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		offset = (lc % 100) * 4096;	/* max size is 100 blocks */
 
@@ -173,41 +163,28 @@ int main(int ac, char **av)
 
 			/* check return code */
 			if (TEST_RETURN == -1) {
-				TEST_ERROR_LOG(TEST_ERRNO);
 				tst_resm(TFAIL,
 					 "lseek(%s, %d, 0) Failed, errno=%d : %s",
 					 Fname, offset, TEST_ERRNO,
 					 strerror(TEST_ERRNO));
 			} else {
-
-		/***************************************************************
-	         * only perform functional verification if flag set (-f not given)
-	         ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "lseek(%s, %d, %d) returned %ld",
-						 Fname, offset, Whence[ind],
-						 TEST_RETURN);
-				} else
-					Tst_count++;
+				tst_resm(TPASS,
+					 "lseek(%s, %d, %d) returned %ld",
+					 Fname, offset, Whence[ind],
+					 TEST_RETURN);
 			}
 		}
 
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -228,13 +205,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* close the file we have open */
 	if (close(Fd) == -1) {

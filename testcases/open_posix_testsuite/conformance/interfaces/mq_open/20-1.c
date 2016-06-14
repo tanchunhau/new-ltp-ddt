@@ -28,12 +28,13 @@
 
 void handler(int signo)
 {
+	(void) signo;
 #ifdef DEBUG
 	printf("in handler\n");
 #endif
 }
 
-int main()
+int main(void)
 {
 	char qname[NAMESIZE];
 	mqd_t queue;

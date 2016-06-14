@@ -40,7 +40,6 @@
 
 /** LTP Port **/
 #include "test.h"
-#include "usctest.h"
 
 #define FAILED 0
 #define PASSED 1
@@ -76,9 +75,7 @@ char *prog;			/* invoked name */
 int usage(char *prog)
 {
 	tst_resm(TCONF, "Usage: %s <nchild> <chunk_size> <iterations>", prog);
-	tst_resm(TCONF, "DEFAULTS: 20 1024 50");
-	tst_exit();
-	return 0;
+	tst_brkm(TCONF, NULL, "DEFAULTS: 20 1024 50");
 }
 
 int main(argc, argv)
@@ -92,8 +89,7 @@ char *argv[];
 	parent_pid = getpid();
 
 	if (signal(SIGTERM, term) == SIG_ERR) {
-		tst_resm(TBROK, "first sigset failed");
-		tst_exit();
+		tst_brkm(TBROK, NULL, "first sigset failed");
 
 	}
 
@@ -106,16 +102,16 @@ char *argv[];
 		if (sscanf(argv[i++], "%d", &nchild) != 1)
 			bd_arg(argv[i - 1]);
 		if (nchild > MAXCHILD) {
-			tst_resm(TBROK, "Too many children, max is %d\n",
+			tst_brkm(TBROK, NULL,
+				 "Too many children, max is %d\n",
 				 MAXCHILD);
-			tst_exit();
 		}
 		if (sscanf(argv[i++], "%d", &csize) != 1)
 			bd_arg(argv[i - 1]);
 		if (csize > MAXSIZE) {
-			tst_resm(TBROK, "Chunk size too large , max is %d\n",
+			tst_brkm(TBROK, NULL,
+				 "Chunk size too large , max is %d\n",
 				 MAXSIZE);
-			tst_exit();
 		}
 		if (sscanf(argv[i++], "%d", &iterations) != 1)
 			bd_arg(argv[i - 1]);
@@ -132,10 +128,9 @@ char *argv[];
 int bd_arg(str)
 char *str;
 {
-	tst_resm(TCONF, "Bad argument - %s - could not parse as number.\n",
+	tst_brkm(TCONF, NULL,
+		 "Bad argument - %s - could not parse as number.\n",
 		 str);
-	tst_exit();
-	return 0;
 }
 
 int runtest()
@@ -154,9 +149,8 @@ int runtest()
 			tst_resm(TBROK,
 				 "Fork failed (may be OK if under stress)");
 			tst_resm(TINFO, "System resource may be too low.\n");
-			tst_resm(TBROK, "Reason: %s\n", strerror(errno));
-			tst_rmdir();
-			tst_exit();
+			tst_brkm(TBROK, tst_rmdir, "Reason: %s\n",
+				 strerror(errno));
 
 		}
 	}
@@ -194,9 +188,6 @@ int runtest()
 	tst_rmdir();
 	tst_exit();
 
-	/**NOT REACHED**/
-	return 0;
-
 }
 
 /*
@@ -224,13 +215,12 @@ int dotest(int testers, int me)
 	char mondobuf[MAXSIZE];
 
 	nchunks = MAXSIZE / csize;
-	bits = (char *)malloc((nchunks + 7) / 8);
+	bits = malloc((nchunks + 7) / 8);
 	val_buf = (char *)(malloc(csize));
 	zero_buf = (char *)(malloc(csize));
 
 	if (bits == 0 || val_buf == 0 || zero_buf == 0) {
-		tst_resm(TFAIL, "\tmalloc failed, pid: %d\n", getpid());
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "\tmalloc failed, pid: %d\n", getpid());
 	}
 
 	/*

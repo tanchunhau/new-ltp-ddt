@@ -70,31 +70,27 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 
 static int fd;
 static char filename[30];
 static void setup(void);
 static void cleanup(void);
 
-char *TCID = "fdatasync01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fdatasync01";
+int TST_TOTAL = 1;
 
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* Test the system call */
 		TEST(fdatasync(fd));
@@ -153,8 +149,6 @@ void cleanup(void)
 	 * print errno log if that option was specified.
 	 */
 	close(fd);
-
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

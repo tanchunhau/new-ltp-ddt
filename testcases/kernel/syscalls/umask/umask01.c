@@ -115,60 +115,39 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "umask01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0, 0 };
+char *TCID = "umask01";
+int TST_TOTAL = 1;
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(umask(022));
 
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL, "umask(022) Failed, errno=%d : %s",
 				 TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				tst_resm(TPASS, "umask(022) returned %ld",
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS, "umask(022) returned %ld",
+				 TEST_RETURN);
 		}
 	}
-	cleanup();
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
-	void trapper();
-
-	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
 	TEST_PAUSE;
-
-}
-
-void cleanup()
-{
-	TEST_CLEANUP;
 }

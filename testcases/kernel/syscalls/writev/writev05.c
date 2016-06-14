@@ -51,7 +51,6 @@
 #include <memory.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include <sys/mman.h>
 
 #define	K_1	8192
@@ -69,11 +68,8 @@ char *bad_addr = 0;
 
 struct iovec wr_iovec[MAX_IOVEC] = {
 	{(caddr_t) - 1, CHUNK},
-	{(caddr_t) NULL, 0}
+	{NULL, 0}
 };
-
-/* 0 terminated list of expected errnos */
-int exp_enos[] = { 14, 0 };
 
 char name[K_1], f_name[K_1];
 int fd[2], in_sighandler;
@@ -93,21 +89,18 @@ int fail;
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
 	int nbytes;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();		/* set "tstdir", and "testfile" vars */
 
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		buf_list[0] = buf1;
 		buf_list[1] = buf2;
@@ -167,7 +160,6 @@ int main(int argc, char **argv)
 		l_seek(fd[0], 0, 0);
 		TEST(writev(fd[0], wr_iovec, 2));
 		if (TEST_RETURN < 0) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			if (TEST_ERRNO == EFAULT) {
 				tst_resm(TINFO, "Received EFAULT as expected");
 			} else {
@@ -202,7 +194,7 @@ int main(int argc, char **argv)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -218,9 +210,6 @@ void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	/* Pause if that option was specified.
 	 * TEST_PAUSE contains the code to fork the test with the -i option.
@@ -251,11 +240,6 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	if (unlink(f_name) < 0) {
 		tst_resm(TFAIL, "unlink Failed--file = %s, errno = %d",

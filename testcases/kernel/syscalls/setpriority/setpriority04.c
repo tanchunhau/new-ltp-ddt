@@ -52,7 +52,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 
 #include <errno.h>
 #include <sys/time.h>
@@ -64,45 +63,23 @@ void setup(void);
 char *TCID = "setpriority04";
 int TST_TOTAL = 1;
 
-int exp_enos[] = { ESRCH, 0 };
-
-/* Get the max number of message queues allowed on system */
-static long get_pid_max()
-{
-	FILE *fp;
-	char buff[512];
-
-	/* Get the max number of message queues allowed on system */
-	fp = fopen("/proc/sys/kernel/pid_max", "r");
-	if (fp == NULL)
-		tst_brkm(TBROK, cleanup,
-			 "Could not open /proc/sys/kernel/pid_max");
-	if (!fgets(buff, sizeof(buff), fp))
-		tst_brkm(TBROK, cleanup,
-			 "Could not read /proc/sys/kernel/pid_max");
-	fclose(fp);
-
-	return atol(buff);
-}
-
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int new_val = 2;
-	int pid_max = get_pid_max();
+	pid_t unused_pid;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
+
+	unused_pid = tst_get_unused_pid(cleanup);
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Try to access an invalid process.
@@ -110,7 +87,7 @@ int main(int ac, char **av)
 		 */
 
 		/* call the system call with the TEST() macro */
-		TEST(setpriority(PRIO_PROCESS, pid_max + 1, new_val));
+		TEST(setpriority(PRIO_PROCESS, unused_pid, new_val));
 
 		if (TEST_RETURN == 0) {
 			tst_resm(TFAIL, "call failed to produce expected error "
@@ -118,8 +95,6 @@ int main(int ac, char **av)
 				 strerror(TEST_ERRNO));
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		switch (TEST_ERRNO) {
 		case ESRCH:
@@ -146,9 +121,6 @@ void setup(void)
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	/* Set up the expected error numbers for the -e option */
-	TEST_EXP_ENOS(exp_enos);
-
 	TEST_PAUSE;
 }
 
@@ -158,10 +130,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

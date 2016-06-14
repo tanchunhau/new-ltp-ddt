@@ -47,7 +47,6 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 
 #define	MAXKIDS	8
 
@@ -69,17 +68,13 @@ static int fail;
 
 int main(int argc, char **argv)
 {
-	char *msg;
-
 	int kid_count, ret_val, status;
 	int i, j, k, found;
 	int group1, group2;
 	int fork_kid_pid[MAXKIDS], wait_kid_pid[MAXKIDS];
 	int pid;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 #ifdef UCLINUX
 	maybe_run_child(&do_exit_uclinux, "");
@@ -87,7 +82,7 @@ int main(int argc, char **argv)
 
 	setup();
 
-	Tst_count = 0;
+	tst_count = 0;
 	fail = 0;
 
 	/*
@@ -304,10 +299,9 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 }
 
-static void inthandlr()
+static void inthandlr(void)
 {
 	intintr++;
 }

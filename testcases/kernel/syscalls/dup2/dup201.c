@@ -64,13 +64,12 @@
 #include <unistd.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup(void);
 void cleanup(void);
 
-char *TCID = "dup201";		/* Test program identifier.    */
-int TST_TOTAL = 4;		/* Total number of test cases. */
+char *TCID = "dup201";
+int TST_TOTAL = 4;
 
 int maxfd;
 int goodfd = 5;
@@ -79,8 +78,6 @@ int mystdout = 0;
 int fd, fd1;
 int mypid;
 char fname[20];
-
-int exp_enos[] = { EBADF, 0 };
 
 struct test_case_t {
 	int *ofd;
@@ -105,19 +102,14 @@ int main(int ac, char **av)
 {
 	int lc;
 	int i, j;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set up the expected errnos */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* loop through the test cases */
 
@@ -133,8 +125,6 @@ int main(int ac, char **av)
 				tst_resm(TFAIL, "call succeeded unexpectedly");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == TC[i].error) {
 				tst_resm(TPASS,
@@ -162,7 +152,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -180,13 +170,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 }

@@ -81,7 +81,6 @@
 #include <sys/wait.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define OPTION_INVALID 999
 #define INVALID_ARG 999
@@ -89,8 +88,7 @@
 static void setup(void);
 static void cleanup(void);
 
-char *TCID = "prctl02";		/* Test program identifier.    */
-static int exp_enos[] = { EINVAL, EINVAL, 0 };
+char *TCID = "prctl02";
 
 struct test_cases_t {
 	int option;
@@ -108,18 +106,16 @@ int main(int ac, char **av)
 {
 
 	int lc, i;
-	char *msg;
 	pid_t child_pid;
 	int status;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 
@@ -161,7 +157,6 @@ int main(int ac, char **av)
 				} else {
 					tst_resm(TFAIL, "Test Failed");
 				}
-				TEST_ERROR_LOG(WEXITSTATUS(status));
 
 			}
 		}
@@ -175,13 +170,10 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -191,13 +183,7 @@ void setup()
  *cleanup() -  performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

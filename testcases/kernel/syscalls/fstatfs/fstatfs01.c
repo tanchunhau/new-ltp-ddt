@@ -30,84 +30,13 @@
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  *
  */
-/* $Id: fstatfs01.c,v 1.7 2009/10/26 14:55:47 subrata_modak Exp $ */
-/**********************************************************
- *
- *    OS Test - Silicon Graphics, Inc.
- *
- *    TEST IDENTIFIER	: fstatfs01
- *
- *    EXECUTED BY	: anyone
- *
- *    TEST TITLE	: Basic test for fstatfs(2)
- *
- *    PARENT DOCUMENT	: usctpl01
- *
- *    TEST CASE TOTAL	: 1
- *
- *    WALL CLOCK TIME	: 1
- *
- *    CPU TYPES		: ALL
- *
- *    AUTHOR		: William Roske
- *
- *    CO-PILOT		: Dave Fenner
- *
- *    DATE STARTED	: 03/30/92
- *
- *    INITIAL RELEASE	: UNICOS 7.0
- *
- *    TEST CASES
- *
- * 	1.) fstatfs(2) returns...(See Description)
- *
- *    INPUT SPECIFICATIONS
- * 	The standard options for system call tests are accepted.
- *	(See the parse_opts(3) man page).
- *
- *    OUTPUT SPECIFICATIONS
- *$
- *    DURATION
- * 	Terminates - with frequency and infinite modes.
- *
- *    SIGNALS
- * 	Uses SIGUSR1 to pause before test if option set.
- * 	(See the parse_opts(3) man page).
- *
- *    RESOURCES
- * 	None
- *
- *    ENVIRONMENTAL NEEDS
- *      No run-time environmental needs.
- *
- *    SPECIAL PROCEDURAL REQUIREMENTS
- * 	None
- *
- *    INTERCASE DEPENDENCIES
- * 	None
- *
- *    DETAILED DESCRIPTION
- *	This is a Phase I test for the fstatfs(2) system call.  It is intended
- *	to provide a limited exposure of the system call, for now.  It
- *	should/will be extended when full functional tests are written for
- *	fstatfs(2).
- *
- * 	Setup:
- * 	  Setup signal handling.
- *	  Pause for SIGUSR1 if option specified.
- *
- * 	Test:
- *	 Loop if the proper options are given.
- * 	  Execute system call
- *	  Check return code, if system call failed (return=-1)
- *		Log the errno and Issue a FAIL message.
- *	  Otherwise, Issue a PASS message.
- *
- * 	Cleanup:
- * 	  Print errno log and/or timing stats if options given
- *
- *
- *#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#**/
+/*
+ * DETAILED DESCRIPTION
+ *   This is a Phase I test for the fstatfs(2) system call.  It is intended
+ *   to provide a limited exposure of the system call, for now.  It
+ *   should/will be extended when full functional tests are written for
+ *   fstatfs(2).
+ */
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -115,62 +44,59 @@
 #include <errno.h>
 #include <signal.h>
 #include <string.h>
+
 #include "test.h"
-#include "usctest.h"
+#include "safe_macros.h"
 
-void setup();
-void cleanup();
+static void setup(void);
+static void cleanup(void);
 
-char *TCID = "fstatfs01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fstatfs01";
 
-int exp_enos[] = { 0, 0 };
+static int file_fd;
+static int pipe_fd;
 
-char fname[255];
-int fd;
-struct statfs stats;
+static struct tcase {
+	int *fd;
+	const char *msg;
+} tcases[2] = {
+	{&file_fd, "fstatfs() on a file"},
+	{&pipe_fd, "fstatfs() on a pipe"},
+};
+
+int TST_TOTAL = ARRAY_SIZE(tcases);
 
 int main(int ac, char **av)
 {
-	int lc;
-	char *msg;
+	int lc, i;
+	struct statfs stats;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
+		tst_count = 0;
 
-		Tst_count = 0;
+		for (i = 0; i < TST_TOTAL; i++) {
+			TEST(fstatfs(*tcases[i].fd, &stats));
 
-#ifdef __linux__
-#define FSTATFSCALL fstatfs(fd, &stats)
-#else
-#define FSTATFSCALL fstatfs(fd, &stats, sizeof(struct statfs), 0)
-#endif
-		TEST(FSTATFSCALL);
-
-		if (TEST_RETURN == -1)
-			tst_resm(TFAIL | TTERRNO, "fstatfs failed");
-		else {
-			if (STD_FUNCTIONAL_TEST)
-				tst_resm(TPASS,
-					 "fstatfs(%d, &stats, sizeof(struct statfs), 0) returned %ld",
-					 fd, TEST_RETURN);
+			if (TEST_RETURN == -1) {
+				tst_resm(TFAIL | TTERRNO, "%s", tcases[i].msg);
+			} else {
+				tst_resm(TPASS, "%s - f_type=%lx",
+				         tcases[i].msg, stats.f_type);
+			}
 		}
-
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+static void setup(void)
 {
+	int pipe[2];
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -178,18 +104,20 @@ void setup()
 
 	tst_tmpdir();
 
-	sprintf(fname, "tfile_%d", getpid());
-	if ((fd = open(fname, O_RDWR | O_CREAT, 0700)) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "open failed");
+	file_fd = SAFE_OPEN(cleanup, "test_file", O_RDWR | O_CREAT, 0700);
+
+	SAFE_PIPE(cleanup, pipe);
+	pipe_fd = pipe[0];
+	SAFE_CLOSE(cleanup, pipe[1]);
 }
 
-void cleanup()
+static void cleanup(void)
 {
-	TEST_CLEANUP;
+	if (file_fd > 0 && close(file_fd))
+		tst_resm(TWARN | TERRNO, "close(file_fd) failed");
 
-	if (close(fd) == -1)
-		tst_resm(TWARN | TERRNO, "close failed");
+	if (pipe_fd > 0 && close(pipe_fd))
+		tst_resm(TWARN | TERRNO, "close(pipe_fd) failed");
 
 	tst_rmdir();
-
 }

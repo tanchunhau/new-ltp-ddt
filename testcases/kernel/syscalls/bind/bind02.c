@@ -56,9 +56,8 @@
 #include <netinet/in.h>
 
 #include "test.h"
-#include "usctest.h"
 
-char *TCID = "bind02";		/* Test program identifier.    */
+char *TCID = "bind02";
 int testno;
 int TST_TOTAL = 1;
 
@@ -74,7 +73,7 @@ char nobody_uid[] = "nobody";
 
 int rc;
 
-void try_bind()
+void try_bind(void)
 {
 	struct sockaddr_in servaddr;
 	int sockfd, r_value;
@@ -82,16 +81,13 @@ void try_bind()
 	// Set effective user/group
 	if ((rc = setegid(gid)) == -1) {
 		tst_brkm(TBROK | TERRNO, 0, "setegid(%u) failed", gid);
-		tst_exit();
 	}
 	if ((rc = seteuid(uid)) == -1) {
 		tst_brkm(TBROK | TERRNO, 0, "seteuid(%u) failed", uid);
-		tst_exit();
 	}
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		tst_brkm(TBROK | TERRNO, 0, "socket() failed");
-		tst_exit();
 	}
 
 	memset(&servaddr, 0, sizeof(servaddr));
@@ -114,14 +110,12 @@ void try_bind()
 	// Set effective user/group
 	if ((rc = setegid(0)) == -1) {
 		tst_brkm(TBROK | TERRNO, 0, "setegid(0) reset failed");
-		tst_exit();
 	}
 	if ((rc = seteuid(uid)) == -1) {
 		/* XXX: is this seteuid() correct !?  it isnt a reset if we
 		 *      made the same exact call above ...
 		 */
 		tst_brkm(TBROK | TERRNO, 0, "seteuid(%u) reset failed", uid);
-		tst_exit();
 	}
 
 }
@@ -133,6 +127,8 @@ int main(int argc, char *argv[])
 	 * Linux doesn't have that limitation apparently. */
 	char *username = NULL;
 
+	tst_require_root();
+
 	if (argc != 2) {
 		tst_resm(TINFO, "Defaulting to user nobody");
 		username = strdup(nobody_uid);
@@ -143,12 +139,10 @@ int main(int argc, char *argv[])
 
 	if ((pw = getpwnam(username)) == NULL) {
 		tst_brkm(TBROK, 0, "Username - %s - not found", username);
-		tst_exit();
 	}
 
 	if ((gr = getgrgid(pw->pw_gid)) == NULL) {
 		tst_brkm(TBROK | TERRNO, 0, "getgrgid(%u) failed", pw->pw_gid);
-		tst_exit();
 	}
 
 	uid = pw->pw_uid;
@@ -158,7 +152,5 @@ int main(int argc, char *argv[])
 		 pw->pw_name, gr->gr_name);
 
 	try_bind();
-	tst_exit();
-
 	tst_exit();
 }

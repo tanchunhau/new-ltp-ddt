@@ -56,23 +56,15 @@
 #include <sys/syscall.h>
 #include <errno.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
+#include "lapi/fcntl.h"
 #include "linux_syscall_numbers.h"
-
-#ifndef O_CLOEXEC
-#define O_CLOEXEC 02000000
-#endif
 
 #define EFD_NONBLOCK O_NONBLOCK
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "eventfd2_02";	/* test program identifier.              */
+char *TCID = "eventfd2_02";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -92,10 +84,9 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 
@@ -117,7 +108,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -135,8 +126,8 @@ int main(int argc, char *argv[])
 	}
 	setup();
 
-	Tst_count = 0;
-	fd = syscall(__NR_eventfd2, 1, 0);
+	tst_count = 0;
+	fd = ltp_syscall(__NR_eventfd2, 1, 0);
 	if (fd == -1) {
 		tst_brkm(TFAIL, cleanup, "eventfd2(0) failed");
 	}
@@ -149,7 +140,7 @@ int main(int argc, char *argv[])
 	}
 	close(fd);
 
-	fd = syscall(__NR_eventfd2, 1, EFD_NONBLOCK);
+	fd = ltp_syscall(__NR_eventfd2, 1, EFD_NONBLOCK);
 	if (fd == -1) {
 		tst_brkm(TFAIL, cleanup, "eventfd2(EFD_NONBLOCK) failed");
 	}

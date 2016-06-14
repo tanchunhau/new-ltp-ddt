@@ -55,8 +55,6 @@
 char *TCID = "shmget03";
 int TST_TOTAL = 1;
 
-int exp_enos[] = { ENOSPC, 0 };	/* 0 terminated list of expected errnos */
-
 /*
  * The MAXIDS value is somewhat arbitrary and may need to be increased
  * depending on the system being tested.
@@ -71,19 +69,16 @@ int shm_id_arr[MAXIDS];
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * use the TEST() macro to make the call
@@ -96,8 +91,6 @@ int main(int ac, char **av)
 			tst_resm(TFAIL, "call succeeded when error expected");
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		switch (TEST_ERRNO) {
 		case ENOSPC:
@@ -124,9 +117,6 @@ void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -177,11 +167,5 @@ void cleanup(void)
 	}
 
 	tst_rmdir();
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

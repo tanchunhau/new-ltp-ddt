@@ -601,8 +601,7 @@ static void update_mask_sizes()
 			nodemask_sz = s2nbits(buf + strlen(nodemask_prefix));
 	}
 done:
-	if (buf != NULL)
-		free(buf);
+	free(buf);
 	if (fp != NULL)
 		fclose(fp);
 	if (cpumask_sz == 0)
@@ -634,8 +633,7 @@ err:
 		bitmask_free(cp->cpus);
 	if (cp && cp->mems)
 		bitmask_free(cp->mems);
-	if (cp)
-		free(cp);
+	free(cp);
 	return NULL;
 }
 
@@ -2588,8 +2586,7 @@ static void add_pidblock(const char *file, struct pidblock **ppbhead)
 err:
 	if (fp)
 		fclose(fp);
-	if (pb)
-		free(pb);
+	free(pb);
 }
 
 static void read_task_file(const char *relpath, struct pidblock **ppbhead)
@@ -2722,8 +2719,7 @@ void cpuset_freepidlist(struct cpuset_pidlist *pl)
 {
 	if (pl && pl->pids)
 		free(pl->pids);
-	if (pl)
-		free(pl);
+	free(pl);
 }
 
 static int __cpuset_move(pid_t pid, const char *path)
@@ -3090,21 +3086,22 @@ done:
 
 static int sched_setaffinity(pid_t pid, unsigned len, unsigned long *mask)
 {
-	return syscall(__NR_sched_setaffinity, pid, len, mask);
+	return ltp_syscall(__NR_sched_setaffinity, pid, len, mask);
 }
 
 #if HAVE_DECL_MPOL_F_ADDR && HAVE_DECL_MPOL_F_NODE
 static int get_mempolicy(int *policy, unsigned long *nmask,
 			 unsigned long maxnode, void *addr, int flags)
 {
-	return syscall(__NR_get_mempolicy, policy, nmask, maxnode, addr, flags);
+	return ltp_syscall(__NR_get_mempolicy, policy, nmask, maxnode,
+		addr, flags);
 }
 #endif
 
 #if HAVE_DECL_MPOL_BIND || HAVE_DECL_MPOL_DEFAULT
 static int set_mempolicy(int mode, unsigned long *nmask, unsigned long maxnode)
 {
-	return syscall(__NR_set_mempolicy, mode, nmask, maxnode);
+	return ltp_syscall(__NR_set_mempolicy, mode, nmask, maxnode);
 }
 #endif
 
@@ -3654,8 +3651,7 @@ eol:
 err:
 	if (elinenum)
 		*elinenum = linenum;
-	if (linebuf)
-		free(linebuf);
+	free(linebuf);
 	return -1;
 }
 

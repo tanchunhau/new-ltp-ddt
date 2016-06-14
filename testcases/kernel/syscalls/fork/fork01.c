@@ -94,7 +94,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 
 #define	KIDEXIT	42
 static void setup();
@@ -110,7 +109,7 @@ int TST_TOTAL = 2;
  * child_pid - the child side of the test
  *             determine the PID and write to a file
  */
-static void child_pid()
+static void child_pid(void)
 {
 
 	int fildes;
@@ -128,7 +127,7 @@ static void child_pid()
  *              read the value determined by the child
  *              compare and report results
  */
-static void parent_pid()
+static void parent_pid(void)
 {
 
 	int fildes;
@@ -164,62 +163,52 @@ static void parent_pid()
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int fails;
 	int kid_status, wait_status;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		fails = 0;
 
 		TEST(fork());
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
-			if (STD_FUNCTIONAL_TEST) {
-				tst_resm(TFAIL, "fork() Failed, errno=%d : %s",
-					 TEST_ERRNO, strerror(TEST_ERRNO));
-				tst_resm(TBROK, "unable to continue");
-			}
+			tst_resm(TFAIL, "fork() Failed, errno=%d : %s",
+				 TEST_ERRNO, strerror(TEST_ERRNO));
+			tst_resm(TBROK, "unable to continue");
 		}
 		if (TEST_RETURN == 0) {
 			/* child */
-			if (STD_FUNCTIONAL_TEST)
-				child_pid();
+			child_pid();
 			exit(KIDEXIT);
 		} else {
 			/* parent */
-			if (STD_FUNCTIONAL_TEST) {
-				tst_resm(TPASS, "fork() returned %ld",
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS, "fork() returned %ld",
+				 TEST_RETURN);
 			/* wait for the child to complete */
 			wait_status = waitpid(TEST_RETURN, &kid_status, 0);
-			if (STD_FUNCTIONAL_TEST) {
-				if (wait_status == TEST_RETURN) {
-					if (kid_status != KIDEXIT << 8) {
-						tst_resm(TBROK,
-							 "incorrect child status returned on wait(): %d",
-							 kid_status);
-						fails++;
-					}
-				} else {
+
+			if (wait_status == TEST_RETURN) {
+				if (kid_status != KIDEXIT << 8) {
 					tst_resm(TBROK,
-						 "wait() for child status failed with %d errno: %d : %s",
-						 wait_status, errno,
-						 strerror(errno));
+						 "incorrect child status returned on wait(): %d",
+						 kid_status);
 					fails++;
 				}
-				if (fails == 0) {
-					/* verification tests */
-					parent_pid();
-				}
-			}	/* STD_FUNCTIONAL_TEST */
+			} else {
+				tst_resm(TBROK,
+					 "wait() for child status failed with %d errno: %d : %s",
+					 wait_status, errno,
+					 strerror(errno));
+				fails++;
+			}
+			if (fails == 0) {
+				/* verification tests */
+				parent_pid();
+			}
 		}		/* TEST_RETURN */
 	}
 
@@ -227,7 +216,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-static void setup()
+static void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -237,13 +226,8 @@ static void setup()
 	tst_tmpdir();
 }
 
-static void cleanup()
+static void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

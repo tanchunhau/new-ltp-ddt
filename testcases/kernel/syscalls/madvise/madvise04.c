@@ -28,14 +28,10 @@
 #include <fcntl.h>
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "madvise04";
 
 #ifdef MADV_DONTDUMP
-
-/* Uncomment the following line in DEBUG mode */
-//#define MM_DEBUG 1
 
 int TST_TOTAL = 2;
 
@@ -51,15 +47,11 @@ int main(int argc, char *argv[])
 	int i;
 	char *file = NULL;
 	struct stat stat;
-
-	char *msg = NULL;
 	char filename[64];
 	char *progname = NULL;
 	char *str_for_file = "abcdefghijklmnopqrstuvwxyz12345\n";
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -67,12 +59,12 @@ int main(int argc, char *argv[])
 	sprintf(filename, "%s-out.%d", progname, getpid());
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		fd = open(filename, O_RDWR | O_CREAT, 0664);
 		if (fd < 0)
 			tst_brkm(TBROK, cleanup, "open failed");
-#ifdef MM_DEBUG
+#ifdef DEBUG
 		tst_resm(TINFO, "filename = %s opened successfully", filename);
 #endif
 
@@ -118,7 +110,6 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 
@@ -129,7 +120,7 @@ static void check_and_print(char *advice)
 			 "madvise test for %s failed with "
 			 "return = %ld, errno = %d : %s",
 			 advice, TEST_RETURN, TEST_ERRNO, strerror(TEST_ERRNO));
-	} else if (STD_FUNCTIONAL_TEST) {
+	} else {
 		tst_resm(TPASS, "madvise test for %s PASSED", advice);
 	}
 }

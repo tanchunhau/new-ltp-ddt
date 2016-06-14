@@ -68,7 +68,6 @@
 #include <asm/atomic.h>
 #include <linux/module.h>
 #include "test.h"
-#include "usctest.h"
 
 #define MODSIZE 10000		/* Arbitrarily selected MODSIZE */
 #define BASEMODNAME "dummy"
@@ -83,18 +82,15 @@ static char modname[20];	/* Name of the module */
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != (char *)NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* Test the system call */
 		TEST(create_module(modname, MODSIZE));
@@ -125,7 +121,7 @@ void setup(void)
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	if (tst_kvercmp(2, 5, 48) >= 0)
 		tst_brkm(TCONF, NULL, "This test will not work on "
@@ -162,11 +158,5 @@ void cleanup(void)
 				 errno);
 		}
 	}
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

@@ -85,7 +85,6 @@
 #include <sys/mman.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define MODE_RWX		S_IFIFO | S_IRWXU | S_IRWXG | S_IRWXO
 
@@ -118,13 +117,11 @@ struct test_case_t {		/* test case struct. to hold ref. test cond's */
 	NULL, NULL, 0, no_setup}
 };
 
-char *TCID = "mknod06";		/* Test program identifier.    */
-int TST_TOTAL = (sizeof(Test_cases) / sizeof(*Test_cases));
+char *TCID = "mknod06";
+int TST_TOTAL = ARRAY_SIZE(Test_cases);
 #if !defined(UCLINUX)
 extern char *get_high_address();
-int exp_enos[] = { EEXIST, EFAULT, ENOENT, ENAMETOOLONG, ENOTDIR, 0 };
 #else
-int exp_enos[] = { EEXIST, ENOENT, ENAMETOOLONG, ENOTDIR, 0 };
 #endif
 
 char *bad_addr = 0;
@@ -135,17 +132,11 @@ void cleanup();			/* cleanup function for the tests */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	char *node_name;	/* ptr. for node name created */
 	char *test_desc;	/* test specific error message */
 	int ind;		/* counter to test different test conditions */
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/*
 	 * Invoke setup function to call individual test setup functions
@@ -153,12 +144,9 @@ int main(int ac, char **av)
 	 */
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; Test_cases[ind].desc != NULL; ind++) {
 			node_name = Test_cases[ind].pathname;
@@ -185,8 +173,6 @@ int main(int ac, char **av)
 					 Test_cases[ind].exp_errno);
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == Test_cases[ind].exp_errno) {
 				tst_resm(TPASS, "mknod() fails, %s, errno:%d",
@@ -217,18 +203,14 @@ int main(int ac, char **av)
  *	Invoke individual test setup functions according to the order
  *	set in struct. definition.
  */
-void setup()
+void setup(void)
 {
 	int ind;
 
+	tst_require_root();
+
 	/* Capture unexpected signals */
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Check that the test process id is super/root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be super/root for this test!");
-		tst_exit();
-	}
 
 	TEST_PAUSE;
 
@@ -253,7 +235,7 @@ void setup()
  * no_setup() - Some test conditions for mknod(2) do not any setup.
  *		Hence, this function just returns 0.
  */
-int no_setup()
+int no_setup(void)
 {
 	return 0;
 }
@@ -263,7 +245,7 @@ int no_setup()
  *		      the MAX. length of PATH_MAX.
  *   This function retruns 0.
  */
-int longpath_setup()
+int longpath_setup(void)
 {
 	int ind;		/* counter variable */
 
@@ -280,7 +262,7 @@ int longpath_setup()
  *  same node in the test and fails with above errno.
  *  This function returns 0.
  */
-int setup1()
+int setup1(void)
 {
 	/* Create a node using mknod */
 	if (mknod("tnode_1", MODE_RWX, 0) < 0) {
@@ -298,7 +280,7 @@ int setup1()
  *  with ENOTDIR as the node created here is a regular file.
  *  This function returns 0.
  */
-int setup3()
+int setup3(void)
 {
 	/* Create a node using mknod */
 	if (mknod("tnode", MODE_RWX, 0) < 0) {
@@ -316,13 +298,8 @@ int setup3()
  *	created during setup().
  *	Exit the test program with normal exit code.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

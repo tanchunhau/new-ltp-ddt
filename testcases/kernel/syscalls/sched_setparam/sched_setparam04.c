@@ -74,13 +74,10 @@
  *********************************************************************/
 
 #include "test.h"
-#include "usctest.h"
 
 #include <errno.h>
 #include <sched.h>
 #include <pwd.h>
-
-#define LARGE_PID 999999
 
 static void cleanup(void);
 static void setup(void);
@@ -90,21 +87,22 @@ static struct sched_param param1 = { 1 };
 
 char *TCID = "sched_setparam04";
 
-static int exp_enos[] = { EINVAL, ESRCH, 0 };	/* 0 terminated list of *
-						 * expected errnos */
+static pid_t unused_pid;
+static pid_t inval_pid = -1;
+static pid_t zero_pid;
 
 static struct test_case_t {
 	char *desc;
-	pid_t pid;
+	pid_t *pid;
 	struct sched_param *p;
 	int exp_errno;
 	char err_desc[10];
 } test_cases[] = {
 	{
-	"test with non-existing pid", LARGE_PID, &param, ESRCH, "ESRCH"}, {
-	"test invalid pid value", -1, &param, EINVAL, "EINVAL"}, {
-	"test with invalid address for p", 0, NULL, EINVAL, "EINVAL"}, {
-	"test with invalid p.sched_priority", 0, &param1, EINVAL,
+	"test with non-existing pid", &unused_pid, &param, ESRCH, "ESRCH"}, {
+	"test invalid pid value", &inval_pid, &param, EINVAL, "EINVAL"}, {
+	"test with invalid address for p", &zero_pid, NULL, EINVAL, "EINVAL"}, {
+	"test with invalid p.sched_priority", &zero_pid, &param1, EINVAL,
 		    "EINVAL"}
 };
 
@@ -112,24 +110,22 @@ int TST_TOTAL = sizeof(test_cases) / sizeof(test_cases[0]);
 
 int main(int ac, char **av)
 {
-	int lc, ind;		/* loop counter */
-	char *msg;
+	int lc, ind;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (ind = 0; ind < TST_TOTAL; ind++) {
 			/*
 			 * call the system call with the TEST() macro
 			 */
-			TEST(sched_setparam(test_cases[ind].pid,
+			TEST(sched_setparam(*(test_cases[ind].pid),
 					    test_cases[ind].p));
 
 			if ((TEST_RETURN == -1) &&
@@ -143,7 +139,6 @@ int main(int ac, char **av)
 					 test_cases[ind].exp_errno,
 					 TEST_ERRNO, strerror(TEST_ERRNO));
 			}
-			TEST_ERROR_LOG(TEST_ERRNO);
 		}
 	}
 
@@ -157,11 +152,9 @@ int main(int ac, char **av)
  */
 void setup(void)
 {
+	unused_pid = tst_get_unused_pid(cleanup);
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -173,11 +166,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

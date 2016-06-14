@@ -51,7 +51,6 @@
 
 /** LTP Port **/
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "shmt09";		/* Test program identifier.    */
 int TST_TOTAL = 4;		/* Total number of test cases. */
@@ -61,15 +60,15 @@ int TST_TOTAL = 4;		/* Total number of test cases. */
 #define INCREMENT 		8388608	/* 8Mb */
 #elif defined (__mips__)  ||  defined (__hppa__) || defined (__sparc__)
 #define INCREMENT		262144	/* 256Kb */
-#elif defined __sh__ || defined (__arm__)
+#elif defined __sh__ || defined (__arm__) || defined(__aarch64__)
 #define INCREMENT 		16384	/* 16kb */
 #else
 #define INCREMENT 		SHMLBA
 #endif
 
-int rm_shm(int);
+static int rm_shm(int);
 
-int main()
+int main(void)
 {
 	char *c1 = NULL, *c2 = NULL, *c3 = NULL;
 	void *vp;
@@ -82,25 +81,25 @@ int main()
 
 	if ((unsigned long)sbrk(16384) >= (-4095UL)) {
 		perror("sbrk");
-		tst_resm(TFAIL, "Error: sbrk failed, errno = %d\n", errno);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "Error: sbrk failed, errno = %d\n",
+			 errno);
 	}
 
 	if ((unsigned long)sbrk(-4097) >= (-4095UL)) {
 		perror("sbrk");
-		tst_resm(TFAIL, "Error: sbrk failed, errno = %d\n", errno);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "Error: sbrk failed, errno = %d\n",
+			 errno);
 	}
 
 	if ((shmid = shmget(key, 10 * K_1, IPC_CREAT | 0666)) < 0) {
 		perror("shmget");
-		tst_resm(TFAIL,
+		tst_brkm(TFAIL,
+			 NULL,
 			 "Error: shmget Failed, shmid = %d, errno = %d\n",
 			 shmid, errno);
-		tst_exit();
 	}
 
-	c1 = (char *)shmat(shmid, (void *)0, 0);
+	c1 = shmat(shmid, NULL, 0);
 	if (c1 == (char *)-1) {
 		perror("shmat");
 		tst_resm(TFAIL,
@@ -121,7 +120,7 @@ int main()
 		tst_exit();
 	}
 	vp = (void *)((char *)sbrk(0) - 2 * K_1);
-	c2 = (char *)shmat(shmid, vp, 0);
+	c2 = shmat(shmid, vp, 0);
 	if (c2 != (char *)-1) {
 		tst_resm(TFAIL,
 			 "ERROR: shmat: succeeded!: shmid = %d, shmaddr = %p, "
@@ -149,7 +148,7 @@ int main()
 	vp = (void *)SHMALIGN((char *)sbrk(0) + 1);
 #endif
 
-	c3 = (char *)shmat(shmid, vp, SHM_RND);
+	c3 = shmat(shmid, vp, SHM_RND);
 	if (c3 == (char *)-1) {
 		perror("shmat1");
 		tst_resm(TFAIL,
@@ -162,7 +161,7 @@ int main()
 	tst_resm(TPASS, "sbrk, shmat");
 
 /*--------------------------------------------------------*/
-#if defined (__ia64__) || defined(__mips__) || defined(__hppa__) || defined(__arm__)
+#if defined (__ia64__) || defined(__mips__) || defined(__hppa__) || defined(__arm__) || defined(__aarch64__)
 	while ((vp = sbrk(INCREMENT)) != (void *)-1) ;
 	if (errno != ENOMEM) {
 		tst_resm(TFAIL, "Error: sbrk failed, errno = %d\n", errno);
@@ -185,20 +184,16 @@ int main()
 
 	rm_shm(shmid);
 	tst_exit();
-
-/*-----------------------------------------------------*/
-	return (0);
 }
 
-int rm_shm(shmid)
-int shmid;
+static int rm_shm(int shmid)
 {
 	if (shmctl(shmid, IPC_RMID, NULL) == -1) {
 		perror("shmctl");
-		tst_resm(TFAIL,
+		tst_brkm(TFAIL,
+			 NULL,
 			 "shmctl Failed to remove: shmid = %d, errno = %d\n",
 			 shmid, errno);
-		tst_exit();
 	}
 	return (0);
 }

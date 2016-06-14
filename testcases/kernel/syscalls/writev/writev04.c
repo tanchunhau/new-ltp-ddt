@@ -53,7 +53,6 @@
 #include <memory.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 #define	K_1	8192
 
@@ -70,11 +69,8 @@ struct iovec wr_iovec[MAX_IOVEC] = {
 	{buf1 + (CHUNK * 6), CHUNK},
 	{(caddr_t) - 1, CHUNK},
 	{buf1 + (CHUNK * 8), CHUNK},
-	{(caddr_t) NULL, 0}
+	{NULL, 0}
 };
-
-/* 0 terminated list of expected errnos */
-int exp_enos[] = { 0 };
 
 char name[K_1], f_name[K_1];
 int fd[2], in_sighandler;
@@ -94,22 +90,18 @@ int fail;
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
 	int nbytes;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();		/* set "tstdir", and "testfile" vars */
 
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		buf_list[0] = buf1;
 		buf_list[1] = buf2;
@@ -151,10 +143,8 @@ int main(int argc, char **argv)
 		}
 
 		if ((fd[0] = open(f_name, O_RDWR, 0666)) < 0) {
-			tst_resm(TFAIL, "open failed: fname = %s, errno = %d",
+			tst_brkm(TFAIL, cleanup, "open failed: fname = %s, errno = %d",
 				 f_name, errno);
-			cleanup();
-			tst_exit();
 		}
 //block1:
 		tst_resm(TINFO, "Enter block 1");
@@ -169,7 +159,6 @@ int main(int argc, char **argv)
 		 * contents of the first valid write() scheduled.
 		 */
 		if (writev(fd[0], wr_iovec, 3) < 0) {
-			TEST_ERROR_LOG(errno);
 			fail = 1;
 			if (errno == EFAULT) {
 				tst_resm(TFAIL, "Got error EFAULT");
@@ -206,7 +195,6 @@ int main(int argc, char **argv)
 		 */
 		l_seek(fd[0], 0, 0);
 		if (writev(fd[0], wr_iovec, 3) < 0) {
-			TEST_ERROR_LOG(errno);
 			fail = 1;
 			if (errno == EFAULT) {
 				tst_resm(TFAIL, "Got error EFAULT");
@@ -245,7 +233,6 @@ int main(int argc, char **argv)
 
 		l_seek(fd[0], 8192, 0);
 		if (writev(fd[0], wr_iovec, 3) < 0) {
-			TEST_ERROR_LOG(errno);
 			fail = 1;
 			if (errno == EFAULT) {
 				tst_resm(TFAIL, "Got error EFAULT");
@@ -277,7 +264,7 @@ int main(int argc, char **argv)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -293,9 +280,6 @@ void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -320,11 +304,6 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	if (unlink(f_name) < 0) {
 		tst_resm(TFAIL, "unlink Failed--file = %s, errno = %d",

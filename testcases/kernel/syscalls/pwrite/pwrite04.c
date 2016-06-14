@@ -38,7 +38,6 @@
 #include <sys/fcntl.h>
 #include <memory.h>
 #include <errno.h>
-#include "usctest.h"
 #include "test.h"
 
 char *TCID = "pwrite04";
@@ -71,18 +70,12 @@ int main(int ac, char *av[])
 	char *wbuf[NBUFS];
 	struct stat statbuf;
 	int lc;
-	char *msg;
 
 	strcpy(name, DATA_FILE);
 	sprintf(fname, "%s.%d", name, getpid());
 
-	/*
-	 * parse standard options
-	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_resm(TBROK, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
-	}
 	tst_tmpdir();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
@@ -231,10 +224,10 @@ void init_buffers(char *wbuf[])
 	int i;
 
 	for (i = 0; i < NBUFS; i++) {
-		wbuf[i] = (char *)malloc(K1);
+		wbuf[i] = malloc(K1);
 		if (wbuf[i] == NULL) {
-			tst_resm(TBROK, "ib: malloc failed: errno=%d", errno);
-			tst_exit();
+			tst_brkm(TBROK, NULL, "ib: malloc failed: errno=%d",
+				 errno);
 		}
 		memset(wbuf[i], i, K1);
 	}
@@ -250,9 +243,9 @@ void l_seek(int fdesc, off_t offset, int whence, off_t checkoff)
 	off_t offloc;
 
 	if ((offloc = lseek(fdesc, offset, whence)) != checkoff) {
-		tst_resm(TFAIL, "(%ld = lseek(%d, %ld, %d)) != %ld) errno = %d",
+		tst_brkm(TFAIL, NULL,
+			 "(%ld = lseek(%d, %ld, %d)) != %ld) errno = %d",
 			 offloc, fdesc, offset, whence, checkoff, errno);
-		tst_exit();
 	}
 }
 
@@ -266,13 +259,8 @@ void l_seek(int fdesc, off_t offset, int whence, off_t checkoff)
  *	created during setup().
  *	Exit the test program with normal exit code.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

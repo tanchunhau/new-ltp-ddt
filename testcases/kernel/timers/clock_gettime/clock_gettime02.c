@@ -69,34 +69,29 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "common_timers.h"
 
 void setup(void);
+static clockid_t clocks[2] = { CLOCK_REALTIME, CLOCK_MONOTONIC };
 
-char *TCID = "clock_gettime02";	/* Test program identifier.    */
-int TST_TOTAL;			/* Total number of test cases. */
+char *TCID = "clock_gettime02";
+int TST_TOTAL = ARRAY_SIZE(clocks);
 
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
 	struct timespec spec;
-	clockid_t clocks[2] = { CLOCK_REALTIME, CLOCK_MONOTONIC };
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	TST_TOTAL = sizeof(clocks) / sizeof(clocks[0]);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
-			TEST(syscall(__NR_clock_gettime, clocks[i], &spec));
+			TEST(ltp_syscall(__NR_clock_gettime, clocks[i], &spec));
 			tst_resm((TEST_RETURN < 0 ? TFAIL | TTERRNO : TPASS),
 				 "%s",
 				 (TEST_RETURN == 0 ? "passed" : "failed"));
@@ -122,9 +117,4 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }

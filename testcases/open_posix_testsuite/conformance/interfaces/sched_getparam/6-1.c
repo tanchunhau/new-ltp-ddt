@@ -68,7 +68,7 @@ int set_nonroot()
 	return 0;
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
 
 	struct sched_param param;
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 	}
 	if (result == 0) {
 		printf("The function sched_getparam has successed.\n");
-		return PTS_UNRESOLVED;
+		return PTS_UNTESTED;
 	}
 	if (errno != EPERM) {
 		perror("errno is not EPERM: The system allows a non-root"

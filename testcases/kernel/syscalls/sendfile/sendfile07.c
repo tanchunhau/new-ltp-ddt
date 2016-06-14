@@ -53,8 +53,6 @@
 #include <fcntl.h>
 #include <sys/sendfile.h>
 #include <sys/socket.h>
-
-#include "usctest.h"
 #include "test.h"
 
 #ifndef OFF_T
@@ -77,11 +75,8 @@ void setup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;		/* parse_opts() return message */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -89,7 +84,7 @@ int main(int ac, char **av)
 	 * The following loop checks looping state if -c option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(sendfile(out_fd, in_fd, NULL, 1));
 
@@ -97,8 +92,6 @@ int main(int ac, char **av)
 			tst_resm(TFAIL, "call succeeded unexpectedly");
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		if (TEST_ERRNO != EAGAIN) {
 			tst_resm(TFAIL, "sendfile returned unexpected "
@@ -112,14 +105,13 @@ int main(int ac, char **av)
 
 	cleanup();
 	tst_exit();
-	tst_exit();
 
 }
 
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 	char buf[100];
 	int p[2];
@@ -184,7 +176,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	/*
 	 * print timing stats if that option was specified.
@@ -195,8 +187,6 @@ void cleanup()
 	if (ignored_fd)
 		close(ignored_fd);
 	close(in_fd);
-
-	TEST_CLEANUP;
 
 	/* delete the test directory created in setup() */
 	tst_rmdir();

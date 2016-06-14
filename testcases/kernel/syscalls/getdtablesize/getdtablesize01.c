@@ -45,15 +45,14 @@
 #include <sys/resource.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "getdtablesize01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "getdtablesize01";
+int TST_TOTAL = 1;
 
-int main()
+int main(void)
 {
 	int table_size, loop, fd, count = 0;
 	int max_val_opfiles;
@@ -100,32 +99,18 @@ int main()
 		tst_resm(TPASS, "%d = %d", count, (max_val_opfiles - 1));
 	else
 		tst_resm(TFAIL, "%d != %d", count, (max_val_opfiles - 1));
-	cleanup();
 
-	return EXIT_SUCCESS;
+	cleanup();
+	tst_exit();
 }
 
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- ***************************************************************/
-void setup()
+void setup(void)
 {
-
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- *              completion or premature exit.
- ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
-
 }

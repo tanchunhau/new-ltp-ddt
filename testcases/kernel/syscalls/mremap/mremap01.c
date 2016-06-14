@@ -82,12 +82,11 @@
 #include <fcntl.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define TEMPFILE	"mremapfile"
 
-char *TCID = "mremap01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "mremap01";
+int TST_TOTAL = 1;
 char *addr;			/* addr of memory mapped region */
 int memsize;			/* memory mapped size */
 int newsize;			/* new size of virtual memory block */
@@ -98,14 +97,11 @@ void cleanup();			/* cleanup function for the test */
 
 int main(int ac, char **av)
 {
-	char *msg;
 	int ind;		/* counter variable */
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
-	Tst_count = 0;
+	tst_count = 0;
 
 	setup();
 
@@ -116,43 +112,33 @@ int main(int ac, char **av)
 	addr = mremap(addr, memsize, newsize, MREMAP_MAYMOVE);
 
 	/* Check for the return value of mremap() */
-	if (addr == MAP_FAILED) {
+	if (addr == MAP_FAILED)
 		tst_brkm(TFAIL | TERRNO, cleanup, "mremap failed");
+
+	/*
+	 * Attempt to initialize the expanded memory
+	 * mapped region with data. If the map area
+	 * was bad, we'd get SIGSEGV.
+	 */
+	for (ind = 0; ind < newsize; ind++) {
+		addr[ind] = (char)ind;
 	}
 
 	/*
-	 * Perform functional verification if test
-	 * executed without (-f) option.
+	 * Memory mapped area is good. Now, attempt
+	 * to synchronize the mapped memory region
+	 * with the file.
 	 */
-	if (STD_FUNCTIONAL_TEST) {
-		/*
-		 * Attempt to initialize the expanded memory
-		 * mapped region with data. If the map area
-		 * was bad, we'd get SIGSEGV.
-		 */
-		for (ind = 0; ind < newsize; ind++) {
-			addr[ind] = (char)ind;
-		}
-
-		/*
-		 * Memory mapped area is good. Now, attempt
-		 * to synchronize the mapped memory region
-		 * with the file.
-		 */
-		if (msync(addr, newsize, MS_SYNC) != 0) {
-			tst_resm(TFAIL | TERRNO, "msync failed to synch "
-				 "mapped file");
-		} else {
-			tst_resm(TPASS, "Functionality of "
-				 "mremap() is correct");
-		}
+	if (msync(addr, newsize, MS_SYNC) != 0) {
+		tst_resm(TFAIL | TERRNO, "msync failed to synch "
+			 "mapped file");
 	} else {
-		tst_resm(TPASS, "call succeeded");
+		tst_resm(TPASS, "Functionality of "
+			 "mremap() is correct");
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -166,7 +152,7 @@ int main(int ac, char **av)
  * write 1 byte (\0). Map the temporary file for the length of virtual
  * memory (memsize) into memory.
  */
-void setup()
+void setup(void)
 {
 	int pagesz;		/* system's page size */
 
@@ -236,13 +222,8 @@ void setup()
  *	       Close the temporary file.
  *	       Remove the temporary directory.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Unmap the mapped memory */
 	if (munmap(addr, newsize) != 0)

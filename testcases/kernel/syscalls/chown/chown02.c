@@ -78,7 +78,7 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
+#include "compat_16.h"
 
 #define FILE_MODE	(S_IFREG|S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 #define NEW_PERMS1	(S_IFREG|S_IRWXU|S_IRWXG|S_ISUID|S_ISGID)
@@ -87,7 +87,7 @@
 #define TESTFILE1	"testfile1"
 #define TESTFILE2	"testfile2"
 
-char *TCID = "chown02";		/* Test program identifier.    */
+TCID_DEFINE(chown02);
 
 int setup1();			/* Test specific setup functions */
 int setup2();
@@ -106,7 +106,7 @@ struct test_case_t {
 	{
 TESTFILE2, 700, 701, 2, setup2},};
 
-int TST_TOTAL = sizeof(test_cases) / sizeof(*test_cases);
+int TST_TOTAL = ARRAY_SIZE(test_cases);
 
 void setup();			/* setup function for the test */
 void cleanup();			/* cleanup function for the test */
@@ -115,22 +115,19 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat(2) struct contents */
 	int lc;
-	char *msg;
 	int i;
 	uid_t user_id;		/* user id of the user set for testfile */
 	gid_t group_id;		/* group id of the user set for testfile */
 	int test_flag;		/* test condition specific flag variable */
 	char *file_name;	/* ptr. for test file name */
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -143,7 +140,7 @@ int main(int ac, char **av)
 			 * Call chown(2) with different user id and
 			 * group id (numeric values) to set it on testfile.
 			 */
-			TEST(chown(file_name, user_id, group_id));
+			TEST(CHOWN(cleanup, file_name, user_id, group_id));
 
 			if (TEST_RETURN == -1) {
 				tst_resm(TFAIL | TTERRNO,
@@ -152,63 +149,55 @@ int main(int ac, char **av)
 			}
 
 			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
+			 * Get the testfile information using stat(2).
 			 */
-			if (STD_FUNCTIONAL_TEST) {
-				/*
-				 * Get the testfile information using stat(2).
-				 */
-				if (stat(file_name, &stat_buf) < 0) {
-					tst_brkm(TFAIL, cleanup, "stat(2) of "
-						 "%s failed, errno:%d",
-						 file_name, TEST_ERRNO);
-				}
+			if (stat(file_name, &stat_buf) < 0) {
+				tst_brkm(TFAIL, cleanup, "stat(2) of "
+					 "%s failed, errno:%d",
+					 file_name, TEST_ERRNO);
+			}
 
-				/*
-				 * Check for expected Ownership ids
-				 * set on testfile.
-				 */
-				if (stat_buf.st_uid != user_id ||
-				    stat_buf.st_gid != group_id) {
-					tst_brkm(TFAIL, cleanup, "%s: incorrect"
-						 " ownership set, Expected %d "
-						 "%d", file_name,
-						 user_id, group_id);
-				}
+			/*
+			 * Check for expected Ownership ids
+			 * set on testfile.
+			 */
+			if (stat_buf.st_uid != user_id ||
+			    stat_buf.st_gid != group_id) {
+				tst_brkm(TFAIL, cleanup, "%s: incorrect"
+					 " ownership set, Expected %d "
+					 "%d", file_name,
+					 user_id, group_id);
+			}
 
-				/*
-				 * Verify that S_ISUID/S_ISGID bits set on the
-				 * testfile(s) in setup()s are cleared by
-				 * chown().
-				 */
-				if (test_flag == 1 &&
-				    (stat_buf.st_mode & (S_ISUID | S_ISGID)) !=
-				    0)
-					tst_resm(TFAIL,
-						 "%s: incorrect mode "
-						 "permissions %#o, Expected "
-						 "%#o", file_name, NEW_PERMS1,
-						 EXP_PERMS);
-				else if (test_flag == 2
-					 && (stat_buf.st_mode & S_ISGID) == 0)
-					tst_resm(TFAIL,
-						 "%s: Incorrect mode "
-						 "permissions %#o, Expected "
-						 "%#o", file_name,
-						 stat_buf.st_mode, NEW_PERMS2);
-				else
-					tst_resm(TPASS,
-						 "chown(%s, ..) succeeded",
-						 file_name);
-			} else
-				tst_resm(TPASS, "call succeeded");
+			/*
+			 * Verify that S_ISUID/S_ISGID bits set on the
+			 * testfile(s) in setup()s are cleared by
+			 * chown().
+			 */
+			if (test_flag == 1 &&
+			    (stat_buf.st_mode & (S_ISUID | S_ISGID)) != 0) {
+				tst_resm(TFAIL,
+					 "%s: incorrect mode "
+					 "permissions %#o, Expected "
+					 "%#o", file_name, NEW_PERMS1,
+					 EXP_PERMS);
+			} else if (test_flag == 2
+				 && (stat_buf.st_mode & S_ISGID) == 0) {
+				tst_resm(TFAIL,
+					 "%s: Incorrect mode "
+					 "permissions %#o, Expected "
+					 "%#o", file_name,
+					 stat_buf.st_mode, NEW_PERMS2);
+			} else {
+				tst_resm(TPASS,
+					 "chown(%s, ..) succeeded",
+					 file_name);
+			}
 		}
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
 /*
@@ -217,13 +206,13 @@ int main(int ac, char **av)
  *  Create a temporary directory and change directory to it.
  *  Create a test file under temporary directory and close it
  */
-void setup()
+void setup(void)
 {
 	int i;
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	TEST_PAUSE;
 
@@ -240,7 +229,7 @@ void setup()
  *	      set on an executable file will not be cleared.
  *  Creat a testfile and set setuid/setgid bits on the mode of file.$
  */
-int setup1()
+int setup1(void)
 {
 	int fd;			/* File descriptor for testfile1 */
 
@@ -266,7 +255,7 @@ int setup1()
  *	      set on non-group executable file will not be cleared.
  *  Creat a testfile and set setgid bit on the mode of file.
  */
-int setup2()
+int setup2(void)
 {
 	int fd;			/* File descriptor for testfile2 */
 
@@ -291,12 +280,8 @@ int setup2()
  *	       completion or premature exit.
  *  Remove the test directory and testfile created in the setup.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

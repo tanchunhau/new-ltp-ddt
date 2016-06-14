@@ -44,7 +44,6 @@
 #include <stdlib.h>
 /*****	LTP Port	*****/
 #include "test.h"
-#include "usctest.h"
 #define FAILED 0
 #define PASSED 1
 /*****	**	**	*****/
@@ -283,12 +282,9 @@ int main(int argc, char *argv[])
 }
 
 /*****	LTP Port	*****/
-int anyfail()
+int anyfail(void)
 {
-	tst_resm(TFAIL, "Test failed\n");
-	tst_rmdir();
-	tst_exit();
-	return 0;
+	tst_brkm(TFAIL, tst_rmdir, "Test failed\n");
 }
 
 /*****	**	**	*****/

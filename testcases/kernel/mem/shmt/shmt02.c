@@ -43,7 +43,6 @@
 
 /** LTP Port **/
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "shmt02";		/* Test program identifier.    */
 int TST_TOTAL = 3;		/* Total number of test cases. */
@@ -52,9 +51,9 @@ int TST_TOTAL = 3;		/* Total number of test cases. */
 
 #define K_1 1024
 
-int rm_shm(int);
+static int rm_shm(int);
 
-int main()
+int main(void)
 {
 	register int shmid;
 	char *cp;
@@ -67,16 +66,16 @@ int main()
 
 	if ((shmid = shmget(key, 16 * K_1, IPC_CREAT | 0666)) < 0) {
 		perror("shmget");
-		tst_resm(TFAIL, "shmget Failed: shmid = %d, errno = %d\n",
+		tst_brkm(TFAIL, NULL,
+			 "shmget Failed: shmid = %d, errno = %d\n",
 			 shmid, errno);
-		tst_exit();
 	}
 
 	tst_resm(TPASS, "shmget");
 
 /*----------------------------------------------------------------*/
 
-	cp = (char *)shmat(shmid, NULL, 0);
+	cp = shmat(shmid, NULL, 0);
 
 	if (cp == (char *)-1) {
 		perror("shmat");
@@ -106,20 +105,16 @@ int main()
 /*------------------------------------------------------------------*/
 
 	tst_exit();
-
-/*-------------------- THIS LINE IS NOT REACHED -------------------*/
-	return (0);
 }
 
-int rm_shm(shmid)
-int shmid;
+static int rm_shm(int shmid)
 {
 	if (shmctl(shmid, IPC_RMID, NULL) == -1) {
 		perror("shmctl");
-		tst_resm(TFAIL,
+		tst_brkm(TFAIL,
+			 NULL,
 			 "shmctl Failed to remove: shmid = %d, errno = %d\n",
 			 shmid, errno);
-		tst_exit();
 	}
 	return (0);
 }

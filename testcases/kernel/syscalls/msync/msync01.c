@@ -71,13 +71,12 @@
 #include <sys/mman.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define TEMPFILE	"msync_file"
 #define BUF_SIZE	256
 
-char *TCID = "msync01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "msync01";
+int TST_TOTAL = 1;
 
 char *addr;			/* addr of memory mapped region */
 size_t page_sz;			/* system page size */
@@ -90,16 +89,14 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	char read_buf[BUF_SIZE];	/* buffer to hold data read from file */
 	int nread = 0, count, err_flg = 0;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		setup();
 
@@ -110,38 +107,35 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			if (lseek(fildes, (off_t) 100, SEEK_SET) != 100)
-				tst_brkm(TBROK | TERRNO, cleanup,
-					 "lseek failed");
+		if (lseek(fildes, (off_t) 100, SEEK_SET) != 100)
+			tst_brkm(TBROK | TERRNO, cleanup,
+				 "lseek failed");
 
+		/*
+		 * Seeking to specified offset. successful.
+		 * Now, read the data (256 bytes) and compare
+		 * them with the expected.
+		 */
+		nread = read(fildes, read_buf, sizeof(read_buf));
+		if (nread != BUF_SIZE)
+			tst_brkm(TBROK, cleanup, "read failed");
+		else {
 			/*
-			 * Seeking to specified offset. successful.
-			 * Now, read the data (256 bytes) and compare
-			 * them with the expected.
+			 * Check whether read data (from mapped
+			 * file) contains the expected data
+			 * which was initialised in the setup.
 			 */
-			nread = read(fildes, read_buf, sizeof(read_buf));
-			if (nread != BUF_SIZE)
-				tst_brkm(TBROK, cleanup, "read failed");
-			else {
-				/*
-				 * Check whether read data (from mapped
-				 * file) contains the expected data
-				 * which was initialised in the setup.
-				 */
-				for (count = 0; count < nread; count++)
-					if (read_buf[count] != 1)
-						err_flg++;
-			}
+			for (count = 0; count < nread; count++)
+				if (read_buf[count] != 1)
+					err_flg++;
+		}
 
-			if (err_flg != 0)
-				tst_resm(TFAIL,
-					 "data read from file doesn't match");
-			else
-				tst_resm(TPASS,
-					 "Functionality of msync() successful");
-		} else
-			tst_resm(TPASS, "call succeeded");
+		if (err_flg != 0)
+			tst_resm(TFAIL,
+				 "data read from file doesn't match");
+		else
+			tst_resm(TPASS,
+				 "Functionality of msync() successful");
 
 		cleanup();
 
@@ -157,7 +151,7 @@ int main(int ac, char **av)
  * Write 1 page size char data into file.
  * Initialize paged region (256 bytes) from the specified offset pos.
  */
-void setup()
+void setup(void)
 {
 	int c_total = 0, nwrite = 0;	/* no. of bytes to be written */
 
@@ -196,10 +190,8 @@ void setup()
 	memset(addr + 100, 1, 256);
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	if (munmap(addr, page_sz) == -1)
 		tst_resm(TBROK | TERRNO, "munmap failed");
 

@@ -98,29 +98,26 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 void trapper();
 
-char *TCID = "alarm03";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "alarm03";
+int TST_TOTAL = 1;
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int status, retval = 0;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call alarm(2)
@@ -140,7 +137,7 @@ int main(int ac, char **av)
 				printf("%d: alarm(100), fork, alarm(0) child's "
 				       "alarm returned %ld\n",
 				       getpid(), TEST_RETURN);
-			} else if (STD_FUNCTIONAL_TEST) {
+			} else {
 				printf("%d: alarm(100), fork, alarm(0) child's "
 				       "alarm returned %ld\n",
 				       getpid(), TEST_RETURN);
@@ -150,7 +147,7 @@ int main(int ac, char **av)
 			break;
 
 		default:
-			Tst_count++;
+			tst_count++;
 			TEST(alarm(0));
 /* The timer may be rounded up to the next nearest second, this is OK */
 			if (TEST_RETURN <= 0 || TEST_RETURN > 101) {
@@ -158,7 +155,7 @@ int main(int ac, char **av)
 				tst_resm(TFAIL,
 					 "alarm(100), fork, alarm(0) parent's alarm returned %ld",
 					 TEST_RETURN);
-			} else if (STD_FUNCTIONAL_TEST) {
+			} else {
 				tst_resm(TPASS,
 					 "alarm(100), fork, alarm(0) parent's alarm returned %ld",
 					 TEST_RETURN);
@@ -174,11 +171,10 @@ int main(int ac, char **av)
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -188,13 +184,8 @@ void setup()
 	TEST_PAUSE;
 }
 
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }
 
 void trapper(int sig)

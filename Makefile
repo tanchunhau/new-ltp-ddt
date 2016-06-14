@@ -176,7 +176,7 @@ Version:
 	if git describe >/dev/null 2>&1; then \
 		git describe > "$@"; \
 	else \
-		cp VERSION "$@"; \
+		cp $(top_srcdir)/VERSION "$@"; \
 	fi
 
 $(INSTALL_DIR)/Version: Version
@@ -218,9 +218,5 @@ help:
 ## Menuconfig
 menuconfig:
 	@$(SHELL) "$(top_srcdir)/ltpmenu"
-
-## Package
-package:
-	@$(RPMBUILD) -ba ltp-devel.spec
 
 ## End misc targets.

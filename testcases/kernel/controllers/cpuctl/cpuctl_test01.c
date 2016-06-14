@@ -45,7 +45,6 @@
 /*                                                                            */
 /******************************************************************************/
 
-/* Standard Include Files */
 #include <unistd.h>
 #include <math.h>
 #include <signal.h>
@@ -69,7 +68,7 @@
 #define NUM_SETS	4	/* How many share values (with same ratio) */
 #define MULTIPLIER   	10	/* decides the rate at which share value gets multiplied */
 #define GRANULARITY    5	/* % value by which shares of a group changes */
-char *TCID = "cpu_controller_test01";
+char *TCID = "cpuctl_test01";
 int TST_TOTAL = 1;
 pid_t scriptpid;
 char path[] = "/dev/cpuctl";

@@ -44,7 +44,6 @@
 
 /*****	LTP Port	*****/
 #include "test.h"
-#include "usctest.h"
 
 #define FAILED 0
 #define PASSED 1
@@ -165,43 +164,37 @@ int main(int argc, char *argv[])
 /*****	LTP Port	*****/
 /* functions */
 
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }
 
-void setup()
+void setup(void)
 {
 
 	temp = stderr;
 
 }
 
-int blenter()
+int blenter(void)
 {
 	local_flag = PASSED;
 	return 0;
 }
 
-int blexit()
+int blexit(void)
 {
 	(local_flag == PASSED) ? tst_resm(TPASS, "Test passed")
 	    : tst_resm(TFAIL, "Test failed");
 	return 0;
 }
 
-int anyfail()
+int anyfail(void)
 {
 	tst_exit();
-	return 0;
 }
 
-void fail_exit()
+void fail_exit(void)
 {
 	local_flag = FAILED;
 	blexit();

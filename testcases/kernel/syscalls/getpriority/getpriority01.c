@@ -74,10 +74,9 @@
 #include <sys/resource.h>
 
 #include "test.h"
-#include "usctest.h"
 
-char *TCID = "getpriority01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "getpriority01";
+int TST_TOTAL = 1;
 
 void setup();			/* setup function for the test */
 void cleanup();			/* cleanup function for the test */
@@ -87,24 +86,18 @@ int prio_which[] = { PRIO_PROCESS, PRIO_PGRP, PRIO_USER };
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int ind;
 	int which;		/* scheduling priority category */
 
 	TST_TOTAL = sizeof(prio_which) / sizeof(int);
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; ind < TST_TOTAL; ind++) {
 			which = prio_which[ind];
@@ -136,7 +129,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -148,12 +141,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

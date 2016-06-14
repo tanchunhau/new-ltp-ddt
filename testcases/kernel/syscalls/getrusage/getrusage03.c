@@ -40,7 +40,6 @@
 #include <string.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 
 char *TCID = "getrusage03";
@@ -69,16 +68,13 @@ static void cleanup(void);
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		tst_resm(TINFO, "allocate 100MB");
 		consume(100);
@@ -346,6 +342,12 @@ static void consume(int mega)
 
 static void setup(void)
 {
+	/* Disable test if the version of the kernel is less than 2.6.32 */
+	if ((tst_kvercmp(2, 6, 32)) < 0) {
+		tst_resm(TCONF, "This ru_maxrss field is not supported");
+		tst_brkm(TCONF, NULL, "before kernel 2.6.32");
+	}
+
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
@@ -353,5 +355,4 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 }

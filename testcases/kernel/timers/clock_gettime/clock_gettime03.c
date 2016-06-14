@@ -73,14 +73,9 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "common_timers.h"
 
 void setup(void);
-
-char *TCID = "clock_gettime03";	/* Test program identifier.    */
-int TST_TOTAL;			/* Total number of test cases. */
-static int exp_enos[] = { EINVAL, EFAULT, 0 };
 
 int testcase[6] = {
 	EFAULT,			/* Bad timespec   */
@@ -89,10 +84,12 @@ int testcase[6] = {
 	EINVAL			/* MAX_CLOCKS + 1 */
 };
 
+char *TCID = "clock_gettime03";	/* Test program identifier.    */
+int TST_TOTAL = ARRAY_SIZE(testcase);
+
 int main(int ac, char **av)
 {
-	int i, lc;		/* loop counter */
-	char *msg;
+	int i, lc;
 	struct timespec spec, *temp;
 
 	clockid_t clocks[] = {
@@ -104,10 +101,7 @@ int main(int ac, char **av)
 		CLOCK_THREAD_CPUTIME_ID
 	};
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	TST_TOTAL = sizeof(testcase) / sizeof(testcase[0]);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/*
 	 * PROCESS_CPUTIME_ID & THREAD_CPUTIME_ID are not supported on
@@ -125,7 +119,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			temp = &spec;
@@ -133,12 +127,12 @@ int main(int ac, char **av)
 			if (i == 0) {
 				temp = (struct timespec *)-1;
 			} else if (i == 1) {
-				temp = (struct timespec *)NULL;
+				temp = NULL;
 			} else if ((i >= 4) && (tst_kvercmp(2, 6, 12) >= 0)) {
-				temp = (struct timespec *)NULL;
+				temp = NULL;
 			}
 
-			TEST(syscall(__NR_clock_gettime, clocks[i], temp));
+			TEST(ltp_syscall(__NR_clock_gettime, clocks[i], temp));
 
 			/* check return code */
 			if (TEST_RETURN == -1 && TEST_ERRNO == testcase[i]) {
@@ -167,9 +161,6 @@ void setup(void)
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	TEST_PAUSE;
 }
 
@@ -179,9 +170,4 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }

@@ -117,15 +117,12 @@
 #include <signal.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "lseek04";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0, 0 };
+char *TCID = "lseek04";
+int TST_TOTAL = 1;
 
 char Fname[255];
 int Fd;
@@ -133,30 +130,23 @@ int Fd;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
     /***************************************************************
      * parse standard options
      ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
     /***************************************************************
      * perform global setup for test
      ***************************************************************/
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
     /***************************************************************
      * check looping state if -c option given
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 *  Call lseek(2)
@@ -165,20 +155,16 @@ int main(int ac, char **av)
 
 		/* check return code */
 		if (TEST_RETURN == -1) {
-			if (STD_FUNCTIONAL_TEST) {
-
-				if (TEST_ERRNO == ESPIPE)
-					tst_resm(TPASS,
-						 "lseek(fifofd, 1, SEEK_SET) Failed, errno=%d : %s",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO));
-				else
-					tst_resm(TFAIL,
-						 "lseek(fifofd, 1, SEEK_SET) Failed, errno=%d %s, expected %d(ESPIPE)",
-						 TEST_ERRNO,
-						 strerror(TEST_ERRNO), EINVAL);
-			} else
-				Tst_count++;
+			if (TEST_ERRNO == ESPIPE)
+				tst_resm(TPASS,
+					 "lseek(fifofd, 1, SEEK_SET) Failed, errno=%d : %s",
+					 TEST_ERRNO,
+					 strerror(TEST_ERRNO));
+			else
+				tst_resm(TFAIL,
+					 "lseek(fifofd, 1, SEEK_SET) Failed, errno=%d %s, expected %d(ESPIPE)",
+					 TEST_ERRNO,
+					 strerror(TEST_ERRNO), EINVAL);
 		} else {
 
 			tst_resm(TFAIL,
@@ -188,18 +174,14 @@ int main(int ac, char **av)
 
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -226,13 +208,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* close the file we have open */
 	if (close(Fd) == -1) {

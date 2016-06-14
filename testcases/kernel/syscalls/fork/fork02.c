@@ -45,7 +45,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 
 static void setup(void);
 static void cleanup(void);
@@ -58,16 +57,13 @@ int main(int ac, char **av)
 	int pid1, pid2, status;
 
 	int lc;
-	char *msg;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		pid1 = fork();
 		if (pid1 == -1)
@@ -100,5 +96,4 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 }

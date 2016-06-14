@@ -20,14 +20,25 @@
 #include <stdlib.h>
 #include "posixtest.h"
 
-int main()
+int main(void)
 {
 	int result, i;
 	long name_max;
 	char *shm_name;
 
 	name_max = pathconf("/", _PC_NAME_MAX);
+
+	if (name_max == -1) {
+		perror("pathconf() failed");
+		return PTS_UNRESOLVED;
+	}
+
 	shm_name = malloc(name_max + 3);
+
+	if (!shm_name) {
+		perror("malloc() failed");
+		return PTS_UNRESOLVED;
+	}
 
 	shm_name[0] = '/';
 	for (i = 1; i < name_max + 2; i++)
@@ -40,10 +51,15 @@ int main()
 		printf("Test PASSED\n");
 		return PTS_PASS;
 	} else if (result != -1) {
-		printf("shm_unlink() success.\n");
+		printf("FAILED: shm_unlink() succeeded\n");
 		return PTS_FAIL;
 	}
 
-	perror("shm_unlink does not set the right errno");
+	if (sysconf(_SC_VERSION) >= 200800L) {
+		printf("UNTESTED: shm_open() did not fail with ENAMETOLONG\n");
+		return PTS_UNTESTED;
+	}
+
+	perror("FAILED: shm_unlink");
 	return PTS_FAIL;
 }

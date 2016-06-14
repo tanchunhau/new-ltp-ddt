@@ -48,7 +48,6 @@
 #include <wait.h>
 #include <string.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "pipe10";
 int TST_TOTAL = 1;
@@ -56,7 +55,7 @@ int TST_TOTAL = 1;
 void setup(void);
 void cleanup(void);
 
-ssize_t safe_read(int fd, void *buf, size_t count)
+ssize_t do_read(int fd, void *buf, size_t count)
 {
 	ssize_t n;
 
@@ -70,7 +69,6 @@ ssize_t safe_read(int fd, void *buf, size_t count)
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
 	int fd[2];		/* fds for pipe read/write */
 	char wrbuf[BUFSIZ], rebuf[BUFSIZ];
@@ -79,26 +77,20 @@ int main(int ac, char **av)
 	int length, greater, forkstat;
 	int retval = 0, status, e_code;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		TEST(pipe(fd));
 
 		if (TEST_RETURN == -1) {
 			retval = 1;
 			tst_resm(TFAIL, "pipe creation failed");
-			continue;
-		}
-
-		if (!STD_FUNCTIONAL_TEST) {
-			tst_resm(TPASS, "call succeeded");
 			continue;
 		}
 
@@ -119,7 +111,7 @@ int main(int ac, char **av)
 		}
 
 		if (forkstat == 0) {	/* child */
-			red = safe_read(fd[0], rebuf, written);
+			red = do_read(fd[0], rebuf, written);
 
 			/* did read , get at least some chars */
 			if ((red < 0) || (red > written)) {
@@ -155,7 +147,7 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -167,11 +159,6 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }

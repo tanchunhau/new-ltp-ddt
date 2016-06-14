@@ -80,7 +80,6 @@
 #include <signal.h>
 #include <linux/unistd.h>
 #include "test.h"
-#include "usctest.h"
 
 #define EXP_RET_VAL	-1
 
@@ -96,7 +95,6 @@ struct test_case_t {		/* test case structure */
 
 char *TCID = "syslog12";
 static int testno;
-static int exp_enos[] = { EPERM, EINVAL, 0 };
 
 static char buf;
 static struct passwd *ltpuser;
@@ -128,13 +126,10 @@ void timeout(int sig)
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 	struct sigaction sa;
 	int ret;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -144,8 +139,8 @@ int main(int argc, char **argv)
 	sigaction(SIGALRM, &sa, NULL);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 
@@ -160,8 +155,6 @@ int main(int argc, char **argv)
 				    tdat[testno].len));
 
 			alarm(0);
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 			/* syslog returns an int, so we need to turn the long
 			 * TEST_RETURN into an int to test with */
 			ret = TEST_RETURN;
@@ -215,22 +208,14 @@ void cleanup1(void)
  */
 void setup(void)
 {
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Check whether we are root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be root for this test!");
-	}
 
 	/* Check for nobody_uid user id */
 	if ((ltpuser = getpwnam("nobody")) == NULL) {
 		tst_brkm(TBROK, NULL, "nobody user id doesn't exist");
-
 	}
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
 	/* Pause if that option was specified
 	 * TEST_PAUSE contains the code to fork the test with the -c option.
@@ -245,11 +230,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-
-	TEST_CLEANUP;
 
 }

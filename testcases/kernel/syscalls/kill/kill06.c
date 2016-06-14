@@ -57,7 +57,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 
 #include <signal.h>
 #include <errno.h>
@@ -75,13 +74,10 @@ int TST_TOTAL = 1;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	pid_t pid1, pid2;
 	int exno, status, nsig, i;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&do_child, "");
 #endif
@@ -91,8 +87,8 @@ int main(int ac, char **av)
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 		status = 1;
 		exno = 1;
 
@@ -136,33 +132,31 @@ int main(int ac, char **av)
 			}
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Check to see if the process was terminated with the
-			 * expected signal.
-			 */
-			nsig = WTERMSIG(status);
-			if (!nsig) {
-				tst_resm(TFAIL, "Did not receive any signal");
-			} else if (nsig == TEST_SIG) {
-				tst_resm(TPASS, "received expected signal %d",
-					 nsig);
-			} else {
-				tst_resm(TFAIL,
-					 "expected signal %d received %d",
-					 TEST_SIG, nsig);
-			}
+		/*
+		 * Check to see if the process was terminated with the
+		 * expected signal.
+		 */
+		nsig = WTERMSIG(status);
+		if (!nsig) {
+			tst_resm(TFAIL, "Did not receive any signal");
+		} else if (nsig == TEST_SIG) {
+			tst_resm(TPASS, "received expected signal %d",
+				 nsig);
+		} else {
+			tst_resm(TFAIL,
+				 "expected signal %d received %d",
+				 TEST_SIG, nsig);
 		}
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 
 /*
  * do_child()
  */
-void do_child()
+void do_child(void)
 {
 	int exno = 1;
 
@@ -189,10 +183,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing status if that option was specified.
-	 * print errno log if that option was specified
-	 */
-	TEST_CLEANUP;
 
 }

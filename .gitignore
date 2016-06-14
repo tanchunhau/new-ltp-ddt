@@ -1,13 +1,19 @@
 CVS
 *~
 *.o
+*.o.d
 *.obj
 *.gdb
+core
+.gdb_history
+.gdbinit
 lib*.a
 
 /aclocal.m4
 autom4te.cache
+/compile
 /configure
+/config.cache
 /config.guess
 /config.log
 /config.mk
@@ -32,9 +38,8 @@ autom4te.cache
 /pan/ltp-bump
 /pan/ltp-pan
 /pan/ltp-scanner
-/tools/gethost
-/tools/rand_lines
 
+.dep_modules
 .gitattributes
 .pc/
 patches/
@@ -42,8 +47,28 @@ patches/
 *.patch
 *.rej
 *.orig
+*.eml
 
-/testcases/ddt/lmbench/doc/
-/testcases/ddt/lmbench/bin/
-/testcases/ddt/lmbench/results/
-/testcases/ddt/filesystem_test_suite/bin/*
+*.run-test
+*.test
+logfile.*
+
+/utils/benchmark/ebizzy-0.3/ebizzy
+/lib/tests/bytes_by_prefix_test
+/lib/tests/tst_tmpdir_test
+/lib/tests/tst_checkpoint
+/lib/tests/tst_checkpoint_wait_timeout
+/lib/tests/tst_checkpoint_wake_timeout
+/lib/tests/tst_process_state
+/lib/tests/tst_cleanup_once
+/lib/tests/tst_safe_macros
+/lib/tests/tst_strsig
+/lib/tests/tst_strerrno
+/lib/tests/tst_fs_fill_subdirs
+/lib/tests/tst_fs_fill_hardlinks
+/lib/tests/tst_device
+/lib/tests/tst_record_childstatus
+/lib/tests/trerrno
+/lib/tests/tst_dataroot01
+/lib/tests/tst_dataroot02
+/lib/tests/tst_dataroot03

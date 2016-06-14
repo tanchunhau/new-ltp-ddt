@@ -52,7 +52,7 @@
  *	none
  */
 
-#include "ipcshm.h"
+#include "hugetlb.h"
 #include "safe_macros.h"
 #include "mem.h"
 
@@ -81,18 +81,16 @@ static option_t options[] = {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	msg = parse_opts(ac, av, options, &help);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, options, NULL);
+
 	if (sflag)
 		hugepages = SAFE_STRTOL(NULL, nr_opt, 0, LONG_MAX);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(shmget(IPC_PRIVATE, shm_size,
 			    SHM_HUGETLB | IPC_CREAT | IPC_EXCL | SHM_RW));
@@ -113,9 +111,9 @@ int main(int ac, char **av)
 void setup(void)
 {
 	long hpage_size;
-	char buf[BUFSIZ];
 
-	tst_require_root(NULL);
+	tst_require_root();
+	check_hugepage();
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 	tst_tmpdir();
 
@@ -125,10 +123,8 @@ void setup(void)
 
 	shm_size = hpage_size;
 
-	read_file(PATH_SHMMNI, buf);
-	orig_shmmni = SAFE_STRTOL(cleanup, buf, 0, LONG_MAX);
-	snprintf(buf, BUFSIZ, "%ld", hugepages / 2);
-	write_file(PATH_SHMMNI, buf);
+	SAFE_FILE_SCANF(NULL, PATH_SHMMNI, "%ld", &orig_shmmni);
+	SAFE_FILE_PRINTF(NULL, PATH_SHMMNI, "%ld", hugepages / 2);
 
 	/*
 	 * Use a while loop to create the maximum number of memory segments.
@@ -156,15 +152,11 @@ void setup(void)
 void cleanup(void)
 {
 	int i;
-	char buf[BUFSIZ];
-
-	TEST_CLEANUP;
 
 	for (i = 0; i < num_shms; i++)
 		rm_shm(shm_id_arr[i]);
 
-	snprintf(buf, BUFSIZ, "%ld", orig_shmmni);
-	write_file(PATH_SHMMNI, buf);
+	FILE_PRINTF(PATH_SHMMNI, "%ld", orig_shmmni);
 	set_sys_tune("nr_hugepages", orig_hugepages, 0);
 
 	tst_rmdir();

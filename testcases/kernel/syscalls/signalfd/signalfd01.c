@@ -38,7 +38,6 @@
 #include "config.h"
 
 #include "test.h"
-#include "usctest.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -79,8 +78,7 @@ int TST_TOTAL = 1;
 #ifdef USE_STUB
 int main(int argc, char **argv)
 {
-	tst_resm(TCONF, "System doesn't support execution of the test");
-	tst_exit();
+	tst_brkm(TCONF, NULL, "System doesn't support execution of the test");
 }
 
 #else
@@ -89,7 +87,7 @@ int main(int argc, char **argv)
 int signalfd(int fd, const sigset_t * mask, int flags)
 {
 	/* Taken from GLIBC. */
-	return (syscall(__NR_signalfd, fd, mask, SIGSETSIZE));
+	return ltp_syscall(__NR_signalfd, fd, mask, SIGSETSIZE);
 }
 #endif
 
@@ -122,7 +120,7 @@ int do_test1(int ntst, int sig)
 		sfd_for_next = -1;
 		return sfd_for_next;
 
-	} else if (!STD_FUNCTIONAL_TEST) {
+	} else {
 		tst_resm(TPASS, "signalfd is created successfully");
 		sfd_for_next = sfd;
 		goto out;
@@ -220,7 +218,7 @@ void do_test2(int ntst, int fd, int sig)
 		close(sfd);
 		return;
 
-	} else if (!STD_FUNCTIONAL_TEST) {
+	} else {
 		tst_resm(TPASS, "signalfd is successfully reassigned");
 		goto out;
 	}
@@ -273,7 +271,6 @@ out:
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 	int sfd;
 
 	if ((tst_kvercmp(2, 6, 22)) < 0) {
@@ -282,13 +279,11 @@ int main(int argc, char **argv)
 		exit(0);
 	}
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		sfd = do_test1(lc, SIGUSR1);
 		if (sfd < 0)
@@ -318,11 +313,6 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }
 

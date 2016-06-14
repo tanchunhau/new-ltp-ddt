@@ -77,7 +77,6 @@
 #include <pwd.h>
 #include <sys/mman.h>
 #include "test.h"
-#include "usctest.h"
 #include <sys/resource.h>
 
 void setup();
@@ -85,10 +84,8 @@ int setup_test(int);
 void cleanup_test(int);
 void cleanup();
 
-char *TCID = "mlockall02";	/* Test program identifier.    */
-int TST_TOTAL = 3;		/* Total number of test cases. */
-
-int exp_enos[] = { ENOMEM, EPERM, EINVAL, 0 };
+char *TCID = "mlockall02";
+int TST_TOTAL = 3;
 
 struct test_case_t {
 	int flag;		/* flag value                   */
@@ -106,19 +103,15 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	/* check looping state */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -132,7 +125,6 @@ int main(int ac, char **av)
 
 			/* check return code */
 			if (TEST_RETURN == -1) {
-				TEST_ERROR_LOG(TEST_ERRNO);
 				if (TEST_ERRNO != TC[i].error)
 					tst_brkm(TFAIL, cleanup,
 						 "mlock() Failed with wrong "
@@ -169,13 +161,12 @@ int main(int ac, char **av)
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
-	tst_sig(FORK, DEF_HANDLER, cleanup);
+	tst_require_root();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
+	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
 
@@ -271,16 +262,14 @@ void cleanup_test(int i)
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	return;
 }
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();

@@ -41,7 +41,6 @@
 /*                                                                            */
 /******************************************************************************/
 
-/* Standard Include Files */
 #include <unistd.h>
 #include <math.h>
 #include <signal.h>
@@ -55,7 +54,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "../libcontrollers/libcontrollers.h"
 #include "test.h"		/* LTP harness APIs */
@@ -76,7 +74,7 @@ int TST_TOTAL = 1;
 pid_t scriptpid;
 char path[FILENAME_MAX] = "/dev/cpuctl";
 
-extern void cleanup()
+extern void cleanup(void)
 {
 	kill(scriptpid, SIGUSR1);	/* Inform the shell to do cleanup */
 	/* Report exit status */

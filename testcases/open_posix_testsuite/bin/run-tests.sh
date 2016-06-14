@@ -29,7 +29,7 @@ run_test_loop() {
 
 	cat <<EOF
 *******************
-SUMMARY
+Testing $(basename $PWD)
 *******************
 $(printf "PASS\t\t%3d" $NUM_PASS)
 $(printf "FAIL\t\t%3d" $NUM_FAIL)
@@ -113,7 +113,7 @@ if [ ! -f "$T0_VAL" ]; then
 fi
 if TIMEOUT_RET=$(cat "$T0_VAL"); then
 
-	TIMEOUT_VAL=${TIMEOUT_VAL:=240}
+	TIMEOUT_VAL=${TIMEOUT_VAL:=300}
 	if [ -f test_defs ] ; then
 		. ./test_defs || exit $?
 	fi

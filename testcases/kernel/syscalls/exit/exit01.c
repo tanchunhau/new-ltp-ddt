@@ -28,7 +28,6 @@
 #include <signal.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 static void cleanup(void);
 static void setup(void);
@@ -41,17 +40,14 @@ int main(int ac, char **av)
 	int pid, npid, sig, nsig, exno, nexno, status;
 	int rval = 0;
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, cleanup, "OPTION PARSIkNG ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		sig = 0;
 		exno = 1;
@@ -122,5 +118,4 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 }

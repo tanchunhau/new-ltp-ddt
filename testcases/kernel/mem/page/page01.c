@@ -46,7 +46,6 @@ int bd_arg(char *);
 
 /** LTP Port **/
 #include "test.h"
-#include "usctest.h"
 
 void blenter(void);
 void setup(void);
@@ -119,22 +118,21 @@ char *argv[];
 			/*                              */
 			/********************************/
 
-			memory_pointer =
-			    (int *)malloc(memory_size * sizeof(int));
+			memory_pointer = malloc(memory_size * sizeof(int));
 			if (memory_pointer == 0) {
 				tst_resm(TBROK,
 					 "Cannot allocate memory - malloc failed.\n");
 				if (i < 2) {
 					tst_resm(TBROK,
 						 "This should not happen for first two children.\n");
-					tst_resm(TFAIL, "Child %d - fail.\n",
+					tst_brkm(TFAIL, NULL,
+						 "Child %d - fail.\n",
 						 i);
-					tst_exit();
 				} else {
 					tst_resm(TCONF,
 						 "This is ok for all but first two children.\n");
-					tst_resm(TCONF, "Child %d - ok.\n", i);
-					tst_exit();
+					tst_brkm(TCONF, NULL,
+						 "Child %d - ok.\n", i);
 				}
 			}
 			number_pointer = memory_pointer;
@@ -256,9 +254,7 @@ void ok_exit()
  */
 void forkfail()
 {
-	tst_resm(TBROK, "Reason: %s\n", strerror(errno));
-	tst_rmdir();
-	tst_exit();
+	tst_brkm(TBROK, tst_rmdir, "Reason: %s\n", strerror(errno));
 }
 
 /*

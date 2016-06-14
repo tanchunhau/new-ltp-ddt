@@ -117,15 +117,14 @@
 #include <grp.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #include "compat_16.h"
 
 void setup();
 void cleanup();
 
-TCID_DEFINE(setgroups01);	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+TCID_DEFINE(setgroups01);
+int TST_TOTAL = 1;
 
 int len = NGROUPS, ngrps = 0;
 GID_T list[NGROUPS];
@@ -133,15 +132,11 @@ GID_T list[NGROUPS];
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
     /***************************************************************
      * parse standard options
      ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
     /***************************************************************
      * perform global setup for test
@@ -153,56 +148,44 @@ int main(int ac, char **av)
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call setgroups(2)
 		 */
-		TEST(SETGROUPS(ngrps, list));
+		TEST(SETGROUPS(cleanup, ngrps, list));
 
 		/* check return code */
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL,
 				 "setgroups(%d, list) Failed, errno=%d : %s",
 				 len, TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-	    /***************************************************************
-	     * only perform functional verification if flag set (-f not given)
-	     ***************************************************************/
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS,
-					 "setgroups(%d, list) returned %ld",
-					 len, TEST_RETURN);
-			}
+			tst_resm(TPASS,
+				 "setgroups(%d, list) returned %ld",
+				 len, TEST_RETURN);
 		}
 
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
+
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	if (geteuid() != 0)
-		tst_brkm(TBROK, cleanup, "Must be ROOT to run this test.");
-
 	TEST_PAUSE;
 
-	if ((ngrps = GETGROUPS(len, list)) == -1) {
+	ngrps = GETGROUPS(cleanup, len, list);
+	if (ngrps == -1) {
 		tst_brkm(TBROK, cleanup,
 			 "getgroups(%d, list) Failure. errno=%d : %s",
 			 len, errno, strerror(errno));
@@ -213,12 +196,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

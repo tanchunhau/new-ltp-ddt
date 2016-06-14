@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2000 Silicon Graphics, Inc.  All Rights Reserved.
+ *    AUTHOR		: William Roske/Richard Logan
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -30,44 +31,6 @@
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  */
 
-/* $Id: parse_opts.c,v 1.14 2009/08/28 09:59:52 vapier Exp $ */
-
-/**********************************************************
- *
- *    OS Testing - Silicon Graphics, Inc.
- *
- *    FUNCTION NAME 	: parse_opts
- *
- *    FUNCTION TITLE	: parse standard & user options for system call tests
- *
- *    SYNOPSIS:
- *	#include "usctest.h"
- *
- * 	char *parse_opts(ac, av, user_optarr, uhf)
- *	int    ac;
- * 	char **av;
- *	option_t user_optarr[];
- *	void (*uhf)();
- *
- *    AUTHOR		: William Roske/Richard Logan
- *
- *    INITIAL RELEASE	: UNICOS 7.0
- *
- *    DESCRIPTION
- * 	The parse_opts library routine takes that argc and argv parameters
- *	recevied by main() and an array of structures defining user options.
- *	It parses the command line setting flag and argument locations
- *      associated with the options.  It uses getopt to do the actual cmd line
- *      parsing.  uhf() is a function to print user define help
- *
- *      This module contains the functions usc_global_setup_hook and
- *      usc_test_looping, which are called by marcos defined in usctest.h.
- *
- *    RETURN VALUE
- * 	parse_opts returns a pointer to an error message if an error occurs.
- *	This pointer is (char *)NULL if parsing is successful.
- *
- *#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#**/
 #include "config.h"
 #include <errno.h>
 #include <stdlib.h>
@@ -79,49 +42,25 @@
 #include <sys/time.h>
 #include <stdint.h>
 
-#if UNIT_TEST
-#include <time.h>
-#endif /* UNIT_TEST */
-
 #include "test.h"
-#define _USC_LIB_   1		/* indicates we are the library to the usctest.h include */
+#include "ltp_priv.h"
 #include "usctest.h"
-
-#ifndef USC_COPIES
-#define USC_COPIES   "USC_COPIES"
-#endif
 
 #ifndef UNIT_TEST
 #define UNIT_TEST	0
 #endif
 
-#ifndef DEBUG
-#define DEBUG	0
-#endif
-
-/* The timing information block. */
-struct tblock tblock = { 0, ((long)-1) >> 1, 0, 0 };
-
-#ifdef GARRETT_IS_A_PEDANTIC_BASTARD
-extern pid_t spawned_program_pid;
-#endif
-
 /* Define flags and args for standard options */
-int STD_FUNCTIONAL_TEST = 1,	/* flag indicating to do functional testing code */
-    STD_TIMING_ON = 0,		/* flag indicating to print timing stats */
-    STD_PAUSE = 0,		/* flag indicating to pause before actual start, */
+static int STD_PAUSE = 0;	/* flag indicating to pause before actual start, */
     /* for contention mode */
-    STD_INFINITE = 0,		/* flag indciating to loop forever */
-    STD_LOOP_COUNT = 1,		/* number of iterations */
-    STD_COPIES = 1,		/* number of copies */
-    STD_ERRNO_LOG = 0;		/* flag indicating to do errno logging */
+static int STD_INFINITE = 0;	/* flag indciating to loop forever */
+int STD_LOOP_COUNT = 1;		/* number of iterations */
 
-float STD_LOOP_DURATION = 0.0,	/* duration value in fractional seconds */
-    STD_LOOP_DELAY = 0.0;	/* loop delay value in fractional seconds */
+static float STD_LOOP_DURATION = 0.0;	/* duration value in fractional seconds */
+static float STD_LOOP_DELAY = 0.0;	/* loop delay value in fractional seconds */
 
-char **STD_opt_arr = NULL;	/* array of option strings */
-int STD_nopts = 0,		/* number of elements in STD_opt_arr */
-    STD_argind = 1;		/* argv index to next argv element */
+static char **STD_opt_arr = NULL;	/* array of option strings */
+static int STD_argind = 1;	/* argv index to next argv element */
 				/* (first argument) */
 				/* To getopt users, it is like optind */
 
@@ -142,33 +81,24 @@ static int STD_LP_sbrk = 0;	/* do sbrk in TEST_LOOPING */
 static char *STD_start_break = 0;	/* original sbrk size */
 static int Debug = 0;
 
-struct std_option_t {
+static struct std_option_t {
 	char *optstr;
 	char *help;
 	char *flag;
 	char **arg;
 } std_options[] = {
-	{
-	"c:", "  -c n    Run n copies concurrently\n", NULL, NULL}, {
-	"e", "  -e      Turn on errno logging\n", NULL, NULL}, {
-	"f", "  -f      Turn off functional testing\n", NULL, NULL}, {
-	"h", "  -h      Show this help screen\n", NULL, NULL}, {
-	"i:", "  -i n    Execute test n times\n", NULL, NULL}, {
-	"I:", "  -I x    Execute test for x seconds\n", NULL, NULL}, {
-	"p", "  -p      Pause for SIGUSR1 before starting\n", NULL, NULL}, {
-	"P:", "  -P x    Pause for x seconds between iterations\n", NULL, NULL},
-	{
-	"t", "  -t      Turn on syscall timing\n", NULL, NULL},
+	{"h", "  -h      Show this help screen\n", NULL, NULL},
+	{"i:", "  -i n    Execute test n times\n", NULL, NULL},
+	{"I:", "  -I x    Execute test for x seconds\n", NULL, NULL},
+	{"p", "  -p      Pause for SIGUSR1 before starting\n", NULL, NULL},
+	{"P:", "  -P x    Pause for x seconds between iterations\n", NULL, NULL},
 #ifdef UCLINUX
-	{
-	"C:",
-		    "  -C ARG  Run the child process with arguments ARG (for internal use)\n",
+	{"C:",
+	      "  -C ARG  Run the child process with arguments ARG (for internal use)\n",
 		    NULL, NULL},
 #endif
-	{
-NULL, NULL, NULL, NULL}};
-
-void print_help(void (*user_help) ());
+	{NULL, NULL, NULL, NULL}
+};
 
 /*
  * Structure for usc_recressive_func argument
@@ -179,13 +109,6 @@ struct usc_bigstack_t {
 
 static struct usc_bigstack_t *STD_bigstack = NULL;
 
-/*
- * Counter of errnos returned (-e option).  Indexed by errno.
- * Make the array USC_MAX_ERRNO long.  That is the first Fortran
- * Lib errno.  No syscall should return an errno that high.
- */
-int STD_ERRNO_LIST[USC_MAX_ERRNO];
-
 /* define the string length for Mesg and Mesg2 strings */
 #define STRLEN 2048
 
@@ -195,22 +118,33 @@ static void usc_recressive_func();
 /*
  * Define bits for options that might have env variable default
  */
-#define  OPT_iteration 		01
-#define  OPT_nofunccheck	02
-#define  OPT_duration		04
-#define  OPT_delay		010
-#define  OPT_copies		020
+#define OPT_iteration		01
+#define OPT_duration		04
+#define OPT_delay		010
 
 #ifdef UCLINUX
 /* Allocated and used in self_exec.c: */
 extern char *child_args;	/* Arguments to child when -C is used */
 #endif
 
+static void print_help(void (*user_help)(void))
+{
+	int i;
+
+	for (i = 0; std_options[i].optstr; ++i) {
+		if (std_options[i].help)
+			printf("%s", std_options[i].help);
+	}
+
+	if (user_help)
+		user_help();
+}
+
 /**********************************************************************
  * parse_opts:
  **********************************************************************/
-char *parse_opts(int ac, char **av, const option_t * user_optarr,
-		 void (*uhf) ())
+const char *parse_opts(int ac, char **av, const option_t * user_optarr,
+                       void (*uhf)(void))
 {
 	int found;		/* flag to indicate that an option specified was */
 	/* found in the user's list */
@@ -220,17 +154,12 @@ char *parse_opts(int ac, char **av, const option_t * user_optarr,
 	int options = 0;	/* no options specified */
 	int optstrlen, i;
 	char *optionstr;
-	int opt;		/* return of getopt */
+	int opt;
 
 	/*
 	 * If not the first time this function is called, release the old STD_opt_arr
 	 * vector.
 	 */
-
-#ifdef GARRETT_IS_A_PEDANTIC_BASTARD
-	spawned_program_pid = getpid();
-#endif
-
 	if (STD_opt_arr != NULL) {
 		free(STD_opt_arr);
 		STD_opt_arr = NULL;
@@ -264,19 +193,12 @@ char *parse_opts(int ac, char **av, const option_t * user_optarr,
 			if (strchr(optionstr, user_optarr[i].option[0]) == NULL)
 				strcat(optionstr, user_optarr[i].option);
 
-#if DEBUG > 1
-	printf("STD_nopts = %d\n", STD_nopts);
-#endif
-
 	/*
 	 *  Loop through av parsing options.
 	 */
 	while ((opt = getopt(ac, av, optionstr)) > 0) {
 
 		STD_argind = optind;
-#if DEBUG > 0
-		printf("parse_opts: getopt returned '%c'\n", opt);
-#endif
 
 		switch (opt) {
 		case '?':	/* Unknown option */
@@ -301,31 +223,8 @@ char *parse_opts(int ac, char **av, const option_t * user_optarr,
 			if (STD_LOOP_DURATION == 0.0)
 				STD_INFINITE = 1;
 			break;
-		case 'c':	/* Copies */
-			fprintf(stderr,
-				"WARNING * WARNING * WARNING * WARNING * "
-				"WARNING * WARNING * WARNING * WARNING\n\n"
-				"The -c option is broken by desing. See:\n\n"
-				"http://www.mail-archive.com/"
-				"ltp-list@lists.sourceforge.net/msg13418.html\n"
-				"\nIn short don't use it in runtest files "
-				"as the option will be removed.\n\n"
-				"WARNING * WARNING * WARNING * WARNING * "
-				"WARNING * WARNING * WARNING * WARNING\n\n");
-			options |= OPT_copies;
-			STD_COPIES = atoi(optarg);
-			break;
-		case 'f':	/* Functional testing */
-			STD_FUNCTIONAL_TEST = 0;
-			break;
 		case 'p':	/* Pause for SIGUSR1 */
 			STD_PAUSE = 1;
-			break;
-		case 't':	/* syscall timing */
-			STD_TIMING_ON = 1;
-			break;
-		case 'e':	/* errno loggin */
-			STD_ERRNO_LOG = 1;
 			break;
 		case 'h':	/* Help */
 			print_help(uhf);
@@ -367,7 +266,7 @@ char *parse_opts(int ac, char **av, const option_t * user_optarr,
 			}
 		}
 
-	}			/* end of while */
+	}
 	free(optionstr);
 
 	STD_argind = optind;
@@ -375,11 +274,11 @@ char *parse_opts(int ac, char **av, const option_t * user_optarr,
 	/*
 	 * Turn on debug
 	 */
-	if ((ptr = getenv("USC_DEBUG")) != NULL) {
+	if (getenv("USC_DEBUG") != NULL) {
 		Debug = 1;
 		printf("env USC_DEBUG is defined, turning on debug\n");
 	}
-	if ((ptr = getenv("USC_VERBOSE")) != NULL) {
+	if (getenv("USC_VERBOSE") != NULL) {
 		Debug = 1;
 		printf("env USC_VERBOSE is defined, turning on debug\n");
 	}
@@ -406,18 +305,6 @@ char *parse_opts(int ac, char **av, const option_t * user_optarr,
 					     USC_ITERATION_ENV, k);
 			}
 		}
-	}
-
-	/*
-	 * If the USC_NO_FUNC_CHECK environmental variable is set, we'll
-	 * unset the STD_FUNCTIONAL_TEST variable.
-	 */
-	if (!(options & OPT_nofunccheck) &&
-	    (ptr = getenv(USC_NO_FUNC_CHECK)) != NULL) {
-		STD_FUNCTIONAL_TEST = 0;	/* Turn off functional testing */
-		if (Debug)
-			printf("Using env %s, set STD_FUNCTIONAL_TEST to 0\n",
-			       USC_NO_FUNC_CHECK);
 	}
 
 	/*
@@ -470,19 +357,6 @@ char *parse_opts(int ac, char **av, const option_t * user_optarr,
 				printf
 				    ("Using env %s, set STD_LOOP_DELAY = %f\n",
 				     USC_LOOP_DELAY, ftmp);
-		}
-	}
-
-	/*
-	 * If the USC_COPIES environmental variable is set,
-	 * use that number as copies (same as -c option).
-	 * The -c option with arg will be used even if this env var is set.
-	 */
-	if (!(options & OPT_copies) && (ptr = getenv(USC_COPIES)) != NULL) {
-		if (sscanf(ptr, "%d", &STD_COPIES) == 1 && STD_COPIES >= 0) {
-			if (Debug)
-				printf("Using env %s, set STD_COPIES = %d\n",
-				       USC_COPIES, STD_COPIES);
 		}
 	}
 
@@ -590,50 +464,22 @@ char *parse_opts(int ac, char **av, const option_t * user_optarr,
 	}
 #if UNIT_TEST
 	printf("The following variables after option and env parsing:\n");
-	printf("STD_FUNCTIONAL_TEST = %d\n", STD_FUNCTIONAL_TEST);
 	printf("STD_LOOP_DURATION   = %f\n", STD_LOOP_DURATION);
 	printf("STD_LOOP_DELAY      = %f\n", STD_LOOP_DELAY);
-	printf("STD_COPIES          = %d\n", STD_COPIES);
 	printf("STD_LOOP_COUNT      = %d\n", STD_LOOP_COUNT);
 	printf("STD_INFINITE        = %d\n", STD_INFINITE);
-	printf("STD_TIMING_ON       = %d\n", STD_TIMING_ON);
-	printf("STD_ERRNO_LOG       = %d\n", STD_ERRNO_LOG);
 	printf("STD_PAUSE           = %d\n", STD_PAUSE);
 #endif
 
-	return ((char *)NULL);
-
-}				/* end of parse_opts */
-
-/*********************************************************************
- * print_help() - print help message and user help message
- *********************************************************************/
-void print_help(void (*user_help) ())
-{
-	STD_opts_help();
-
-	if (user_help)
-		user_help();
-}
-
-/*********************************************************************
- * STD_opts_help() - return a help string for the STD_OPTIONS.
- *********************************************************************/
-void STD_opts_help()
-{
-	int i;
-
-	for (i = 0; std_options[i].optstr; ++i) {
-		if (std_options[i].help)
-			printf("%s", std_options[i].help);
-	}
+	return NULL;
 }
 
 /*
  * routine to goto when we get the SIGUSR1 for STD_PAUSE
  */
-void STD_go(int sig)
+static void STD_go(int sig)
 {
+	(void)sig;
 	return;
 }
 
@@ -644,30 +490,11 @@ void STD_go(int sig)
  * STD_PAUSE is set.
  *
  ***********************************************************************/
-int usc_global_setup_hook()
+int usc_global_setup_hook(void)
 {
 #ifndef UCLINUX
-	int cnt;
 	/* temp variable to store old signal action to be restored after pause */
 	int (*_TMP_FUNC) (void);
-
-	/*
-	 * Fork STD_COPIES-1 copies.
-	 */
-	for (cnt = 1; cnt < STD_COPIES; cnt++) {
-		switch (fork()) {
-		case -1:
-			fprintf(stderr, "%s: fork failed: %d - %s\n",
-				__FILE__, errno, strerror(errno));
-			break;
-		case 0:	/* child */
-			cnt = STD_COPIES;	/* to stop the forking */
-			break;
-
-		default:	/* parent */
-			break;
-		}
-	}
 
 	/*
 	 * pause waiting for sigusr1.
@@ -677,18 +504,15 @@ int usc_global_setup_hook()
 		pause();
 		signal(SIGUSR1, (void (*)())_TMP_FUNC);
 	}
-#if !defined(UCLINUX)
 
-	if (STD_TP_sbrk || STD_LP_sbrk) {
+	if (STD_TP_sbrk || STD_LP_sbrk)
 		STD_start_break = sbrk(0);	/* get original sbreak size */
-	}
 
 	if (STD_TP_sbrk) {
 		sbrk(STD_TP_sbrk);
 		if (Debug)
 			printf("after sbrk(%d)\n", STD_TP_sbrk);
 	}
-#endif /* if !defined(UCLINUX) */
 #endif
 	return 0;
 }
@@ -814,7 +638,7 @@ int usc_test_looping(int counter)
 	if (keepgoing)
 		return 1;
 	else
-		return 0;	/* done - stop iterating */
+		return 0;
 }
 
 /*
@@ -828,6 +652,8 @@ static void usc_recressive_func(int cnt, int max, struct usc_bigstack_t bstack)
 }
 
 #if UNIT_TEST
+#include <time.h>
+
 /******************************************************************************
  * UNIT TEST CODE
  * UNIT TEST CODE
@@ -839,12 +665,6 @@ static void usc_recressive_func(int cnt, int max, struct usc_bigstack_t bstack)
 int Help = 0;
 int Help2 = 0;
 char *ptr;
-
-/*
- * Code from usctest.h that not part of this file since we are the library.
- */
-
-struct usc_errno_t TEST_VALID_ENO[USC_MAX_ERRNO];
 
 long TEST_RETURN;
 int TEST_ERRNO;

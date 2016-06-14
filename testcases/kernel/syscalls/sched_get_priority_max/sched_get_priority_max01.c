@@ -66,12 +66,11 @@
 #include <errno.h>
 #include <sched.h>
 #include "test.h"
-#include "usctest.h"
 
 static void setup();
 static void cleanup();
 
-char *TCID = "sched_get_priority_max01";	/* Test program identifier.    */
+char *TCID = "sched_get_priority_max01";
 
 static struct test_case_t {
 	char *desc;
@@ -89,17 +88,15 @@ int TST_TOTAL = sizeof(test_cases) / sizeof(test_cases[0]);
 int main(int ac, char **av)
 {
 
-	int lc, ind;		/* loop counter */
-	char *msg;
+	int lc, ind;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; ind < TST_TOTAL; ind++) {
 			/*
@@ -126,7 +123,7 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -139,13 +136,7 @@ void setup()
  *cleanup() -  performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

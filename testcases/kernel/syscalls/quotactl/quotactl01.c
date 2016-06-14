@@ -60,20 +60,15 @@
 #define BROKEN_QUOTACTL 1
 #endif
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "quotactl01";	/* Test program identifier.             */
+char *TCID = "quotactl01";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.  */
+int TST_TOTAL = 1;
 
 #define QUOTACTL(cmd, addr) \
-	syscall(__NR_quotactl, QCMD(cmd, USRQUOTA), block_dev, id, \
+	ltp_syscall(__NR_quotactl, QCMD(cmd, USRQUOTA), block_dev, id, \
 					(caddr_t) addr)
 #ifndef BROKEN_QUOTACTL
 
@@ -105,10 +100,9 @@ struct dqblk dq;
 /*		On success - Exits calling tst_exit(). With '0' return code.  */
 /*									      */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
-	TEST_CLEANUP;
 	tst_rmdir();
 
 	if (block_dev) {
@@ -139,16 +133,14 @@ extern void cleanup()
 /*		On success - returns 0.					      */
 /*									      */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
+
+	tst_require_root();
 
 	/* Capture signals if any */
 	/* Create temporary directories */
 
-	if (geteuid() != 0) {
-		tst_brkm(TCONF, NULL,
-			 "You must be root in order to execute this test");
-	}
 	if ((quota_loc = malloc(FILENAME_MAX)) == NULL) {
 		tst_brkm(TCONF | TERRNO, NULL,
 			 "couldn't allocate memory for the quota loc buffer");
@@ -193,8 +185,7 @@ void setup()
 #ifdef BROKEN_QUOTACTL
 int main(void)
 {
-	tst_resm(TBROK, "This system doesn't support quota v2");
-	tst_exit();
+	tst_brkm(TBROK, NULL, "This system doesn't support quota v2");
 }
 #else
 int cmd[] = {
@@ -221,21 +212,17 @@ int main(int ac, char **av)
 	};
 
 	int newtid = -1;
-	int result;
 	int ret;
 	int i;
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, (option_t *) opts, NULL)) != (char *)NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, (option_t *) opts, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 
@@ -252,7 +239,7 @@ int main(int ac, char **av)
 
 			}
 
-			TEST(result = syscall(__NR_set_tid_address, &newtid));
+			TEST(ltp_syscall(__NR_set_tid_address, &newtid));
 
 			if (TEST_RETURN == getpid()) {
 				cleanup();

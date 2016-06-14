@@ -23,7 +23,6 @@ mem02 mem02
 # -s(seconds) settings, if default not desired
 mmap-corruption01 mmap-corruption01 -h1 -m1 -s1
 
-
 page01 page01
 page02 page02
 
@@ -39,6 +38,9 @@ shmt07 shmt07
 shmt08 shmt08
 shmt09 shmt09
 shmt10 shmt10
+
+cpuset01 cpuset01 -I 3600
+
 fsx-linux export TCbin=$LTPROOT/testcases/bin;fsxtest02 10000
 #fsx-ext2 fsxtest $SCRATCHDEV ext2 10000
 #fsx-ext3 fsxtest $SCRATCHDEV ext3 10000
@@ -174,30 +176,30 @@ ftest06 ftest06
 ftest07 ftest07
 ftest08 ftest08
 
-nfs01 export VERSION=2 SOCKET_TYPE=udp; export TCbin=$LTPROOT/testcases/bin; nfs01
-nfs01 export VERSION=2 SOCKET_TYPE=tcp; export TCbin=$LTPROOT/testcases/bin; nfs01
-nfs01 export VERSION=3 SOCKET_TYPE=udp; export TCbin=$LTPROOT/testcases/bin; nfs01
-nfs01 export VERSION=3 SOCKET_TYPE=tcp; export TCbin=$LTPROOT/testcases/bin; nfs01
+nfs01 export VERSION=2 SOCKET_TYPE=udp; nfs01
+nfs01 export VERSION=2 SOCKET_TYPE=tcp; nfs01
+nfs01 export VERSION=3 SOCKET_TYPE=udp; nfs01
+nfs01 export VERSION=3 SOCKET_TYPE=tcp; nfs01
 
-nfs02 export VERSION=2 SOCKET_TYPE=udp; export TCbin=$LTPROOT/testcases/bin; nfs02
-nfs02 export VERSION=2 SOCKET_TYPE=tcp; export TCbin=$LTPROOT/testcases/bin; nfs02
-nfs02 export VERSION=3 SOCKET_TYPE=udp; export TCbin=$LTPROOT/testcases/bin; nfs02
-nfs02 export VERSION=3 SOCKET_TYPE=tcp; export TCbin=$LTPROOT/testcases/bin; nfs02
+nfs02 export VERSION=2 SOCKET_TYPE=udp; nfs02
+nfs02 export VERSION=2 SOCKET_TYPE=tcp; nfs02
+nfs02 export VERSION=3 SOCKET_TYPE=udp; nfs02
+nfs02 export VERSION=3 SOCKET_TYPE=tcp; nfs02
 
-nfs03 export VERSION=2 SOCKET_TYPE=udp; export TCbin=$LTPROOT/testcases/bin; nfs03
-nfs03 export VERSION=2 SOCKET_TYPE=tcp; export TCbin=$LTPROOT/testcases/bin; nfs03
-nfs03 export VERSION=3 SOCKET_TYPE=udp; export TCbin=$LTPROOT/testcases/bin; nfs03
-nfs03 export VERSION=3 SOCKET_TYPE=tcp; export TCbin=$LTPROOT/testcases/bin; nfs03
+nfs03 export VERSION=2 SOCKET_TYPE=udp; nfs03
+nfs03 export VERSION=2 SOCKET_TYPE=tcp; nfs03
+nfs03 export VERSION=3 SOCKET_TYPE=udp; nfs03
+nfs03 export VERSION=3 SOCKET_TYPE=tcp; nfs03
 
-nfs04 export VERSION=2 SOCKET_TYPE=udp; export TCbin=$LTPROOT/testcases/bin; nfs04
-nfs03 export VERSION=2 SOCKET_TYPE=tcp; export TCbin=$LTPROOT/testcases/bin; nfs04
-nfs03 export VERSION=3 SOCKET_TYPE=udp; export TCbin=$LTPROOT/testcases/bin; nfs04
-nfs03 export VERSION=3 SOCKET_TYPE=tcp; export TCbin=$LTPROOT/testcases/bin; nfs04
+nfs04 export VERSION=2 SOCKET_TYPE=udp; nfs04
+nfs04 export VERSION=2 SOCKET_TYPE=tcp; nfs04
+nfs04 export VERSION=3 SOCKET_TYPE=udp; nfs04
+nfs04 export VERSION=3 SOCKET_TYPE=tcp; nfs04
 
-nfsstress export VERSION=2 SOCKET_TYPE=udp; export TCbin=$LTPROOT/testcases/network/nfs/nfsstress; nfsstress 20 50 1
-nfsstress export VERSION=2 SOCKET_TYPE=tcp; export TCbin=$LTPROOT/testcases/network/nfs/nfsstress; nfsstress 20 50 1
-nfsstress export VERSION=3 SOCKET_TYPE=udp; export TCbin=$LTPROOT/testcases/network/nfs/nfsstress; nfsstress 20 50 1
-nfsstress export VERSION=3 SOCKET_TYPE=tcp; export TCbin=$LTPROOT/testcases/network/nfs/nfsstress; nfsstress 20 50 1
+nfs05 export VERSION=2 SOCKET_TYPE=udp; nfs05
+nfs05 export VERSION=2 SOCKET_TYPE=tcp; nfs05
+nfs05 export VERSION=3 SOCKET_TYPE=udp; nfs05
+nfs05 export VERSION=3 SOCKET_TYPE=tcp; nfs05
 
 nfsx-linux export VERSION=2 SOCKET_TYPE=udp; export TCbin=$LTPROOT/testcases/bin; fsx.sh
 nfsx-linux export VERSION=2 SOCKET_TYPE=tcp; export TCbin=$LTPROOT/testcases/bin; fsx.sh

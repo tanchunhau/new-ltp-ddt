@@ -95,7 +95,6 @@
 #include "ptrace.h"
 
 #include "test.h"
-#include "usctest.h"
 
 static void do_child(void);
 static void setup(void);
@@ -105,7 +104,7 @@ static void parent_handler();
 
 static int got_signal = 0;
 
-char *TCID = "ptrace01";	/* Test program identifier.    */
+char *TCID = "ptrace01";
 static int i;			/* loop test case counter, shared with do_child */
 
 int TST_TOTAL = 2;
@@ -114,13 +113,11 @@ int main(int ac, char **av)
 {
 
 	int lc;
-	char *msg;
 	pid_t child_pid;
 	int status;
 	struct sigaction parent_act;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&do_child, "d", &i);
 #endif
@@ -129,7 +126,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 			got_signal = 0;
@@ -138,6 +135,7 @@ int main(int ac, char **av)
 			if (i == 1) {
 				parent_act.sa_handler = parent_handler;
 				parent_act.sa_flags = SA_RESTART;
+				sigemptyset(&parent_act.sa_mask);
 
 				if ((sigaction(SIGUSR2, &parent_act, NULL))
 				    == -1) {
@@ -217,7 +215,7 @@ int main(int ac, char **av)
 }
 
 /* do_child() */
-void do_child()
+void do_child(void)
 {
 	struct sigaction child_act;
 
@@ -228,6 +226,7 @@ void do_child()
 		child_act.sa_handler = child_handler;
 	}
 	child_act.sa_flags = SA_RESTART;
+	sigemptyset(&child_act.sa_mask);
 
 	if ((sigaction(SIGUSR2, &child_act, NULL)) == -1) {
 		tst_resm(TWARN, "sigaction() failed in child");
@@ -247,7 +246,7 @@ void do_child()
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -260,21 +259,15 @@ void setup()
  *cleanup() -  performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }
 
 /*
  * child_handler() - Signal handler for child
  */
-void child_handler()
+void child_handler(void)
 {
 
 	if ((kill(getppid(), SIGUSR2)) == -1) {
@@ -286,7 +279,7 @@ void child_handler()
 /*
  * parent_handler() - Signal handler for parent
  */
-void parent_handler()
+void parent_handler(void)
 {
 
 	got_signal = 1;

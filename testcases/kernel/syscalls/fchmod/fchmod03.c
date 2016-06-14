@@ -80,15 +80,14 @@
 #include <pwd.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define FILE_MODE       (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 #define PERMS		01777
 #define TESTFILE	"testfile"
 
 int fd;				/* file descriptor for test file */
-char *TCID = "fchmod03";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "fchmod03";
+int TST_TOTAL = 1;
 
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
@@ -100,17 +99,15 @@ int main(int ac, char **av)
 {
 	struct stat stat_buf;	/* stat struct. */
 	int lc;
-	char *msg;
 	mode_t file_mode;	/* mode permissions set on testfile */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(fchmod(fd, PERMS));
 
@@ -119,41 +116,33 @@ int main(int ac, char **av)
 			continue;
 		}
 		/*
-		 * Perform functional verification if test
-		 * executed without (-f) option.
+		 * Get the file information using
+		 * fstat(2).
 		 */
-		if (STD_FUNCTIONAL_TEST) {
-			/*
-			 * Get the file information using
-			 * fstat(2).
-			 */
-			if (fstat(fd, &stat_buf) == -1)
-				tst_brkm(TFAIL | TERRNO, cleanup,
-					 "fstat failed");
-			file_mode = stat_buf.st_mode;
+		if (fstat(fd, &stat_buf) == -1)
+			tst_brkm(TFAIL | TERRNO, cleanup,
+				 "fstat failed");
+		file_mode = stat_buf.st_mode;
 
-			/* Verify STICKY BIT set on testfile */
-			if ((file_mode & PERMS) != PERMS)
-				tst_resm(TFAIL, "%s: Incorrect modes 0%3o, "
-					 "Expected 0777", TESTFILE, file_mode);
-			else
-				tst_resm(TPASS, "Functionality of fchmod(%d, "
-					 "%#o) successful", fd, PERMS);
-		} else
-			tst_resm(TPASS, "call succeeded");
+		/* Verify STICKY BIT set on testfile */
+		if ((file_mode & PERMS) != PERMS)
+			tst_resm(TFAIL, "%s: Incorrect modes 0%3o, "
+				 "Expected 0777", TESTFILE, file_mode);
+		else
+			tst_resm(TPASS, "Functionality of fchmod(%d, "
+				 "%#o) successful", fd, PERMS);
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	ltpuser = getpwnam(nobody_uid);
 	if (ltpuser == NULL)
@@ -174,10 +163,8 @@ void setup()
 		tst_brkm(TBROK | TERRNO, cleanup, "open failed");
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	if (close(fd) == -1)
 		tst_resm(TWARN | TERRNO, "close failed");
 

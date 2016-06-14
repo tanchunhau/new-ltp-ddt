@@ -44,7 +44,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include "test.h"
-#include "usctest.h"
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>
@@ -61,14 +60,14 @@
 static void setup();
 static void cleanup();
 
-char *TCID = "mem03";		/* Test program identifier. */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "mem03";
+int TST_TOTAL = 1;
 
 int f1 = -1, f2 = -1;
 char *mm1 = NULL, *mm2 = NULL;
 
 /*--------------------------------------------------------------------*/
-int main()
+int main(void)
 {
 	char tmp1[] = "./tmp.file.1";
 	char tmp2[] = "./tmp.file.2";

@@ -53,7 +53,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 
 #include "ipcmsg.h"
 
@@ -62,28 +61,23 @@ int TST_TOTAL = 1;
 
 int maxmsgs = 0;
 
-int exp_enos[] = { ENOSPC, 0 };	/* 0 terminated list of expected errnos */
-
 int *msg_q_arr = NULL;		/* hold the id's that we create */
 int num_queue = 0;		/* count the queues created */
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int msg_q;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Use a while loop to create the maximum number of queues.
@@ -128,9 +122,6 @@ void setup(void)
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
-
 	TEST_PAUSE;
 
 	/*
@@ -173,11 +164,5 @@ void cleanup(void)
 	}
 
 	tst_rmdir();
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

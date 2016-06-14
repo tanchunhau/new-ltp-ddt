@@ -56,8 +56,6 @@
 char *TCID = "semget02";
 int TST_TOTAL = 2;
 
-int exp_enos[] = { EACCES, EEXIST, 0 };
-
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
 
@@ -79,20 +77,17 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			/* use the TEST macro to make the call */
@@ -104,8 +99,6 @@ int main(int ac, char **av)
 				tst_resm(TFAIL, "call succeeded");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == TC[i].error) {
 				tst_resm(TPASS, "expected failure - errno "
@@ -128,10 +121,9 @@ int main(int ac, char **av)
  */
 void setup(void)
 {
+	tst_require_root();
+
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	ltpuser = getpwnam(nobody_uid);
 	if (seteuid(ltpuser->pw_uid) == -1) {
 		tst_resm(TINFO, "setreuid failed to "
@@ -140,9 +132,6 @@ void setup(void)
 	}
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -172,11 +161,5 @@ void cleanup(void)
 	rm_sema(sem_id_1);
 
 	tst_rmdir();
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

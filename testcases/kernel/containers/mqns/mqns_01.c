@@ -37,6 +37,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "mqns.h"
+#include "mqns_helper.h"
 
 char *TCID = "posixmq_namespace_01";
 int TST_TOTAL = 1;
@@ -49,6 +50,8 @@ int check_mqueue(void *vtest)
 	char buf[30];
 	mqd_t mqd;
 
+	(void) vtest;
+
 	close(p1[1]);
 	close(p2[0]);
 
@@ -56,7 +59,7 @@ int check_mqueue(void *vtest)
 		printf("read(p1[0], ...) failed: %s\n", strerror(errno));
 		exit(1);
 	}
-	mqd = syscall(__NR_mq_open, NOSLASH_MQ1, O_RDONLY);
+	mqd = ltp_syscall(__NR_mq_open, NOSLASH_MQ1, O_RDONLY);
 	if (mqd == -1) {
 		if (write(p2[1], "notfnd", strlen("notfnd") + 1) < 0) {
 			perror("write(p2[1], ...) failed");
@@ -75,12 +78,20 @@ int check_mqueue(void *vtest)
 	exit(0);
 }
 
+static void setup(void)
+{
+	tst_require_root();
+	check_mqns();
+}
+
 int main(int argc, char *argv[])
 {
 	int r;
 	mqd_t mqd;
 	char buf[30];
 	int use_clone = T_UNSHARE;
+
+	setup();
 
 	if (argc == 2 && strcmp(argv[1], "-clone") == 0) {
 		tst_resm(TINFO,
@@ -94,13 +105,11 @@ int main(int argc, char *argv[])
 		tst_brkm(TBROK | TERRNO, NULL, "pipe failed");
 	}
 
-	mqd =
-	    syscall(__NR_mq_open, NOSLASH_MQ1, O_RDWR | O_CREAT | O_EXCL, 0777,
-		    NULL);
+	mqd = ltp_syscall(__NR_mq_open, NOSLASH_MQ1, O_RDWR | O_CREAT | O_EXCL,
+		0777, NULL);
 	if (mqd == -1) {
 		perror("mq_open");
-		tst_resm(TFAIL, "mq_open failed");
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "mq_open failed");
 	}
 
 	tst_resm(TINFO, "Checking namespaces isolation from parent to child");
@@ -109,7 +118,7 @@ int main(int argc, char *argv[])
 	if (r < 0) {
 		tst_resm(TFAIL, "failed clone/unshare");
 		mq_close(mqd);
-		syscall(__NR_mq_unlink, NOSLASH_MQ1);
+		ltp_syscall(__NR_mq_unlink, NOSLASH_MQ1);
 		tst_exit();
 	}
 
@@ -133,7 +142,7 @@ int main(int argc, char *argv[])
 	if (mq_close(mqd) == -1) {
 		tst_brkm(TBROK | TERRNO, NULL, "mq_close failed");
 	}
-	syscall(__NR_mq_unlink, NOSLASH_MQ1);
+	ltp_syscall(__NR_mq_unlink, NOSLASH_MQ1);
 
 	tst_exit();
 }

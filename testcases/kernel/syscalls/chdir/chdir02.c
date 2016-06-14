@@ -113,33 +113,26 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "chdir02";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0, 0 };
+char *TCID = "chdir02";
+int TST_TOTAL = 1;
 
 char *dirs[2] = { "/", "/tmp" };
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(chdir(dirs[lc % 2]));
 
@@ -147,21 +140,17 @@ int main(int ac, char **av)
 			tst_resm(TFAIL | TTERRNO, "chdir(%s) failed",
 				 dirs[lc % 2]);
 		} else {
-
-			if (STD_FUNCTIONAL_TEST) {
-				tst_resm(TPASS, "chdir(%s) returned %ld",
-					 dirs[lc % 2], TEST_RETURN);
-			}
+			tst_resm(TPASS, "chdir(%s) returned %ld",
+				 dirs[lc % 2], TEST_RETURN);
 		}
 
 	}
 
 	cleanup();
 	tst_exit();
-
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -169,7 +158,6 @@ void setup()
 	TEST_PAUSE;
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
 }

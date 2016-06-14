@@ -117,15 +117,12 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "fcntl10";		/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
-
-int exp_enos[] = { 0, 0 };
+char *TCID = "fcntl10";
+int TST_TOTAL = 2;
 
 char fname[255];
 int fd;
@@ -134,21 +131,16 @@ struct flock flocks;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
     /***************************************************************
      * parse standard options
      ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
     /***************************************************************
      * perform global setup for test
      ***************************************************************/
 	setup();
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
     /***************************************************************
      * check looping state if -c option given
@@ -157,7 +149,7 @@ int main(int ac, char **av)
 		int type;
 		for (type = 0; type < 2; type++) {
 
-			Tst_count = 0;
+			tst_count = 0;
 
 			flocks.l_type = type ? F_RDLCK : F_WRLCK;
 
@@ -168,24 +160,15 @@ int main(int ac, char **av)
 
 			/* check return code */
 			if (TEST_RETURN == -1) {
-				TEST_ERROR_LOG(TEST_ERRNO);
 				tst_resm(TFAIL,
 					 "fcntl(%s, F_SETLKW, &flocks) flocks.l_type = %s Failed, errno=%d : %s",
 					 fname, type ? "F_RDLCK" : "F_WRLCK",
 					 TEST_ERRNO, strerror(TEST_ERRNO));
 			} else {
-
-	    /***************************************************************
-	     * only perform functional verification if flag set (-f not given)
-	     ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "fcntl(%s, F_SETLKW, &flocks) flocks.l_type = %s returned %ld",
-						 fname,
-						 type ? "F_RDLCK" : "F_WRLCK",
-						 TEST_RETURN);
-				}
+				tst_resm(TPASS,
+					 "fcntl(%s, F_SETLKW, &flocks) flocks.l_type = %s returned %ld",
+					 fname, type ? "F_RDLCK" : "F_WRLCK",
+					 TEST_RETURN);
 			}
 
 			flocks.l_type = F_UNLCK;
@@ -196,39 +179,28 @@ int main(int ac, char **av)
 
 			/* check return code */
 			if (TEST_RETURN == -1) {
-				TEST_ERROR_LOG(TEST_ERRNO);
 				tst_resm(TFAIL,
 					 "fcntl(%s, F_SETLKW, &flocks) flocks.l_type = F_UNLCK Failed, errno=%d : %s",
 					 fname, TEST_ERRNO,
 					 strerror(TEST_ERRNO));
 			} else {
 
-	    /***************************************************************
-	     * only perform functional verification if flag set (-f not given)
-	     ***************************************************************/
-				if (STD_FUNCTIONAL_TEST) {
-					/* No Verification test, yet... */
-					tst_resm(TPASS,
-						 "fcntl(%s, F_SETLKW, &flocks) flocks.l_type = F_UNLCK returned %ld",
-						 fname, TEST_RETURN);
-				}
+				tst_resm(TPASS,
+					 "fcntl(%s, F_SETLKW, &flocks) flocks.l_type = F_UNLCK returned %ld",
+					 fname, TEST_RETURN);
 			}
 
 		}
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -262,13 +234,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	if (close(fd) == -1) {
 		tst_resm(TWARN, "close(%s) Failed, errno=%d : %s", fname, errno,

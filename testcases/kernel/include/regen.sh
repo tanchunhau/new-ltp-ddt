@@ -1,9 +1,18 @@
 #!/bin/sh
 
 output="linux_syscall_numbers.h"
+rm -f "${output}".[1-9]*
 output_pid="${output}.$$"
 
+max_jobs=$(getconf _NPROCESSORS_ONLN 2>/dev/null)
+: ${max_jobs:=1}
+
 srcdir=${0%/*}
+
+err() {
+	echo "$*" 1>&2
+	exit 1
+}
 
 cat << EOF > "${output_pid}"
 /************************************************
@@ -23,11 +32,12 @@ cat << EOF > "${output_pid}"
 
 #include <errno.h>
 #include <sys/syscall.h>
+#include <asm/unistd.h>
 #include "cleanup.c"
 
-#define syscall(NR, ...) ({ \\
+#define ltp_syscall(NR, ...) ({ \\
 	int __ret; \\
-	if (NR == 0) { \\
+	if (NR == __LTP__NR_INVALID_SYSCALL) { \\
 		errno = ENOSYS; \\
 		__ret = -1; \\
 	} else { \\
@@ -35,51 +45,84 @@ cat << EOF > "${output_pid}"
 	} \\
 	if (__ret == -1 && errno == ENOSYS) { \\
 		tst_brkm(TCONF, CLEANUP, \\
-			"syscall " #NR " not supported on your arch"); \\
-		errno = ENOSYS; \\
+			"syscall(%d) " #NR " not supported on your arch", \\
+			NR); \\
 	} \\
 	__ret; \\
 })
 
+#define tst_syscall(NR, ...) ({ \\
+	int tst_ret; \\
+	if (NR == __LTP__NR_INVALID_SYSCALL) { \\
+		errno = ENOSYS; \\
+		tst_ret = -1; \\
+	} else { \\
+		tst_ret = syscall(NR, ##__VA_ARGS__); \\
+	} \\
+	if (tst_ret == -1 && errno == ENOSYS) { \\
+		tst_brk(TCONF, "syscall(%d) " #NR "not supported", NR); \\
+	} \\
+	tst_ret; \\
+})
+
 EOF
 
+jobs=0
 for arch in $(cat "${srcdir}/order") ; do
-	echo -n "Generating data for arch $arch ... "
+	(
+	echo "Generating data for arch $arch ... "
 
-	echo "" >> "${output_pid}"
-	echo "#ifdef __${arch}__" >> "${output_pid}"
+	(
+	echo
+	case ${arch} in
+		sparc64) echo "#if defined(__sparc__) && defined(__arch64__)" ;;
+		sparc) echo "#if defined(__sparc__) && !defined(__arch64__)" ;;
+		*) echo "#ifdef __${arch}__" ;;
+	esac
 	while read line ; do
-		set -- $line
+		set -- ${line}
 		nr="__NR_$1"
 		shift
-		if [ -z "$*" ] ; then
-			echo "invalid line found"
-			exit 1
+		if [ $# -eq 0 ] ; then
+			err "invalid line found: $line"
 		fi
-		cat <<-EOF >> "${output_pid}"
-		# ifndef $nr
-		#  define $nr $*
-		# endif
-		EOF
+		echo "# ifndef ${nr}"
+		echo "#  define ${nr} $*"
+		echo "# endif"
 	done < "${srcdir}/${arch}.in"
-	echo "#endif" >> "${output_pid}"
-	echo "" >> "${output_pid}"
+	echo "#endif"
+	echo
+	) >> "${output_pid}.${arch}"
 
-	echo "OK!"
+	) &
+
+	: $(( jobs += 1 ))
+	if [ ${jobs} -ge ${max_jobs} ] ; then
+		wait || exit 1
+		jobs=0
+	fi
 done
 
-echo -n "Generating stub list ... "
-echo "" >> "${output_pid}"
-echo "/* Common stubs */" >> "${output_pid}"
+echo "Generating stub list ... "
+(
+echo
+echo "/* Common stubs */"
+echo "#define __LTP__NR_INVALID_SYSCALL -1" >> "${output_pid}"
 for nr in $(awk '{print $1}' "${srcdir}/"*.in | sort -u) ; do
-	nr="__NR_$nr"
-	cat <<-EOF >> "${output_pid}"
-	# ifndef $nr
-	#  define $nr 0
-	# endif
-	EOF
+	nr="__NR_${nr}"
+	echo "# ifndef ${nr}"
+	echo "#  define ${nr} __LTP__NR_INVALID_SYSCALL"
+	echo "# endif"
 done
-echo "#endif" >> "${output_pid}"
+echo "#endif"
+) >> "${output_pid}._footer"
 
+wait || exit 1
+
+printf "Combining them all ... "
+for arch in $(cat "${srcdir}/order") _footer ; do
+	cat "${output_pid}.${arch}"
+done >> "${output_pid}"
 mv "${output_pid}" "${output}"
+rm -f "${output_pid}"*
 echo "OK!"

@@ -77,13 +77,11 @@
 #include <linux/utsname.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define MAX_NAME_LEN __NEW_UTS_LEN
 
-char *TCID = "setdomainname03";	/* Test program identifier. */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-static int exp_enos[] = { EPERM, 0 };
+char *TCID = "setdomainname03";
+int TST_TOTAL = 1;
 
 static char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
@@ -97,14 +95,8 @@ static void cleanup();		/* cleanup function for the tests */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/*
 	 * Invoke setup function to call individual test setup functions
@@ -114,7 +106,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Call setdomainname(2)
@@ -128,7 +120,6 @@ int main(int ac, char **av)
 				 "Got : %d, %s", EPERM, TEST_ERRNO,
 				 strerror(TEST_ERRNO));
 		}
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 	}
 
@@ -144,19 +135,14 @@ int main(int ac, char **av)
 /*
  * setup(void) - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
+	tst_require_root();
 
 	/* Capture unexpected signals */
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	if ((ltpuser = getpwnam(nobody_uid)) == NULL) {
 		tst_brkm(TBROK, NULL, "\"nobody\" user not present");
 	}
@@ -179,14 +165,8 @@ void setup()
 /*
  * cleanup() - Performs all ONE TIME cleanup for this test at
  */
-void cleanup()
+void cleanup(void)
 {
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Set effective user id back to root */
 	if (seteuid(0) == -1) {

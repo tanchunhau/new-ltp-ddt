@@ -40,7 +40,6 @@
 #include <limits.h>
 
 #include "test.h"
-#include "usctest.h"
 
 /* in KB */
 #define PROGRESS_LEAP 100
@@ -63,8 +62,6 @@ static int v_opt = 0;		/* verbose progress indication */
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 	tst_exit();
 }
@@ -155,14 +152,12 @@ int main(int argc, char *argv[])
 
 	int i;
 	int lc;
-	char *msg;
 	char *p, *bigmalloc;
 	int loop_count;		/* limited to 16Go on 32 bits systems */
 
 	pagesize = sysconf(_SC_PAGESIZE);
 
-	if ((msg = parse_opts(argc, argv, options, help)) != (char *)NULL)
-		tst_brkm(TBROK, cleanup, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, options, help);
 
 	if (m_opt) {
 		memsize = (size_t) atoi(m_copt) * 1024 * 1024;
@@ -180,7 +175,7 @@ int main(int argc, char *argv[])
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		if (!m_opt) {
 			/* find out by ourselves! */

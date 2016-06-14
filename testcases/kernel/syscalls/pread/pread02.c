@@ -72,21 +72,18 @@
 #include <fcntl.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define TEMPFILE	"pread_file"
 #define K1              1024
 #define NBUFS           4
 
-char *TCID = "pread02";		/* Test program identifier.    */
-int TST_TOTAL = 2;		/* Total number of test cases. */
+char *TCID = "pread02";
+int TST_TOTAL = 2;
 
 char *write_buf[NBUFS];		/* buffer to hold data to be written */
 char *read_buf[NBUFS];		/* buffer to hold data read from file */
 int pfd[2];			/* pair of file descriptors */
-int fd1;			/* file descriptor of temporary file */
-
-int exp_enos[] = { ESPIPE, EINVAL, 0 };
+int fd1;
 
 void setup();			/* Main setup function of test */
 void cleanup();			/* cleanup function for the test */
@@ -112,24 +109,19 @@ struct test_case_t {		/* test case struct. to hold ref. test cond's */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 	int fildes;		/* file descriptor of test file */
 	size_t nbytes;		/* no. of bytes to be written */
 	off_t offset;		/* offset position in the specified file */
 	char *test_desc;	/* test specific error message */
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; Test_cases[i].desc != NULL; i++) {
@@ -159,8 +151,6 @@ int main(int ac, char **av)
 					 TEST_RETURN, Test_cases[i].exp_errno);
 			}
 
-			TEST_ERROR_LOG(TEST_ERRNO);
-
 			/*
 			 * Verify whether expected errno is set.
 			 */
@@ -185,7 +175,7 @@ int main(int ac, char **av)
  *           Initialize/allocate write buffer.
  *           Call individual setup function.
  */
-void setup()
+void setup(void)
 {
 	int i;
 
@@ -205,7 +195,7 @@ void setup()
 /*
  * no_setup() - This function simply returns.
  */
-int no_setup()
+int no_setup(void)
 {
 	return 0;
 }
@@ -218,7 +208,7 @@ int no_setup()
  *  Write some known data to the write end of the pipe.
  *  return 0.
  */
-int setup1()
+int setup1(void)
 {
 	/* Create a pair of unnamed pipe */
 	if (pipe(pfd) < 0) {
@@ -242,7 +232,7 @@ int setup1()
  *  Create a temporary directory and a file under it.
  *  return 0.
  */
-int setup2()
+int setup2(void)
 {
 
 	tst_tmpdir();
@@ -264,14 +254,14 @@ int setup2()
  *    write_buf[0] has 0's, write_buf[1] has 1's, write_buf[2] has 2's
  *    write_buf[3] has 3's.
  */
-void init_buffers()
+void init_buffers(void)
 {
 	int count;		/* counter variable for loop */
 
 	/* Allocate and Initialize write buffer with known data */
 	for (count = 0; count < NBUFS; count++) {
-		write_buf[count] = (char *)malloc(K1);
-		read_buf[count] = (char *)malloc(K1);
+		write_buf[count] = malloc(K1);
+		read_buf[count] = malloc(K1);
 
 		if ((write_buf[count] == NULL) || (read_buf[count] == NULL)) {
 			tst_brkm(TBROK, NULL,
@@ -289,15 +279,9 @@ void init_buffers()
  *  Close the temporary file.
  *  Remove the temporary directory created.
  */
-void cleanup()
+void cleanup(void)
 {
-	int count;		/* index for the loop */
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
+	int count;
 
 	/* Free the memory allocated for the read/write buffer */
 	for (count = 0; count < NBUFS; count++) {

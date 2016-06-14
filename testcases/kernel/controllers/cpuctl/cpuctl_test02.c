@@ -44,7 +44,6 @@
 /*                                                                            */
 /******************************************************************************/
 
-/* Standard Include Files */
 #include <unistd.h>
 #include <math.h>
 #include <signal.h>
@@ -66,7 +65,7 @@
 #define TIME_INTERVAL	30	/* Time interval in seconds */
 #define NUM_INTERVALS	3	/* How many iterations of TIME_INTERVAL */
 
-char *TCID = "cpu_controller_test04";
+char *TCID = "cpuctl_test02";
 int TST_TOTAL = 1;
 pid_t scriptpid;
 char path[] = "/dev/cpuctl";

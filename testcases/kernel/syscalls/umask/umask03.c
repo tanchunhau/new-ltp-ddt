@@ -50,7 +50,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include "test.h"
-#include "usctest.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -65,7 +64,6 @@ void cleanup(void);
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
 	struct stat statbuf;
 	int mskval = 0000;
@@ -73,15 +71,14 @@ int main(int argc, char **argv)
 	int fildes, i;
 	unsigned low9mode;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();		/* global setup */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (umask(mskval = 0077), i = 1; mskval < 01000;
 		     i++, umask(++mskval)) {
@@ -119,7 +116,7 @@ int main(int argc, char **argv)
  * setup
  *	performs all ONE TIME setup for this test
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -142,13 +139,8 @@ void setup()
  *	performs all ONE TIME cleanup for this test at completion or
  *	premature exit
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified
-	 * print errno log if that option was specified
-	 */
-	TEST_CLEANUP;
 
 	/*
 	 * cleanup the temporary files and the temporary directory

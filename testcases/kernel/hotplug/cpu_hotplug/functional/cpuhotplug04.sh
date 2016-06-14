@@ -3,15 +3,13 @@
 # Test Case 4
 #
 
-HOTPLUG04_LOOPS=${HOTPLUG04_LOOPS:-${LOOPS}}
 export TCID="cpuhotplug04"
-export TST_COUNT=1
-export TST_TOTAL=${HOTPLUG04_LOOPS:-1}
+export TST_TOTAL=1
 
 # Includes:
-LHCS_PATH=${LHCS_PATH:-${LTPROOT:+$LTPROOT/testcases/bin/cpu_hotplug}}
-. $LHCS_PATH/include/testsuite.fns
-. $LHCS_PATH/include/hotplug.fns
+. test.sh
+. cpuhotplug_testsuite.sh
+. cpuhotplug_hotplug.sh
 
 cat <<EOF
 Name:   $TCID
@@ -20,52 +18,86 @@ Desc:   Does it prevent us from offlining the last CPU?
 
 EOF
 
-cpu=0
-until [ $TST_COUNT -gt $TST_TOTAL ]; do
-	cpustate=1
+usage()
+{
+	cat << EOF
+	usage: $0 -l loop
 
-	# Online all the CPUs' keep track of which were already on
-	for i in $(get_all_cpus); do
-		online_cpu $i
-		RC=$?
-		if [ $RC -ne 0 ]; then
-			: $(( cpu += 1 ))
-			eval "on_${cpu}=$i"
-			echo $i
-		fi
-		if [ $RC -eq 0 -a "$i" = "cpu0" ]; then
-			cpustate=0
-		fi
-	done
+	OPTIONS
+		-l  number of cycle test
 
-	# Now offline all the CPUs
-	for i in $(get_all_cpus); do
-		offline_cpu $i
-		RC=$?
-		if [ $RC -eq 1 ]; then
-			if [ "x$i" != "xcpu0" ]; then
-				tst_resm TFAIL "Did not offline first CPU (offlined $i instead)"
-			else
-				tst_resm TPASS "Successfully offlined first CPU, $i"
+EOF
+	exit 1
+}
+
+do_clean()
+{
+	# Online the ones that were on initially
+	# Restore CPU states
+	set_all_cpu_states "$cpu_states"
+}
+
+while getopts l: OPTION; do
+	case $OPTION in
+	l)
+		HOTPLUG04_LOOPS=$OPTARG;;
+	?)
+		usage;;
+	esac
+done
+
+LOOP_COUNT=1
+
+cpus_num=$(get_present_cpus_num)
+if [ $cpus_num -lt 2 ]; then
+	tst_brkm TCONF "system doesn't have required CPU hotplug support"
+fi
+
+if [ $(get_hotplug_cpus_num) -lt 1 ]; then
+	tst_brkm TCONF "system doesn't have at least one hotpluggable CPU"
+fi
+
+TST_CLEANUP=do_clean
+
+cpu_states=$(get_all_cpu_states)
+
+until [ $LOOP_COUNT -gt $HOTPLUG04_LOOPS ]; do
+
+	# Online all the hotpluggable CPUs
+	for i in $(get_hotplug_cpus); do
+		if ! cpu_is_online $i; then
+			if ! online_cpu $i; then
+				tst_brkm TBROK "$i can not be onlined"
 			fi
 		fi
 	done
 
-	# Online the ones that were on initially
-	until [ $cpu -eq 0 ]; do
-		online_cpu $(eval "echo \$on_${cpu}")
-		: $(( cpu -= 1 ))
+	# Now offline them
+	cpu=0
+	for i in $(get_hotplug_cpus); do
+		cpu=$((cpu + 1))
+
+		# If all the CPUs are hotpluggable, we expect
+		# that the kernel will refuse to offline the last CPU.
+		# If only some of the CPUs are hotpluggable,
+		# they all can be offlined.
+		if [ $cpu -eq $cpus_num ]; then
+			if offline_cpu $i 2> /dev/null; then
+				tst_brkm TFAIL "Have we just offlined the last CPU?"
+			else
+				tst_resm TPASS "System prevented us from offlining the last CPU - $i"
+			fi
+		else
+			if ! offline_cpu $i; then
+				tst_brkm TFAIL "Could not offline $i"
+			fi
+		fi
 	done
 
-	# Return CPU 0 to its initial state
-	if [ $cpustate = 1 ]; then
-		online_cpu 0
-	else
-		offline_cpu 0
-	fi
-
-	: $(( TST_COUNT += 1 ))
+	LOOP_COUNT=$((LOOP_COUNT+1))
 
 done
 
-exit_clean
+tst_resm TPASS "Success"
+
+tst_exit

@@ -17,17 +17,21 @@
  */
 
 #if defined(_GNU_SOURCE)
-#if defined(PTS_DEVELOPER_MODE)
-#error "Contains GNU-isms that need fixing."
-#else
-#warning "Contains GNU-isms that need fixing."
+# if !AFFINITY_NEEDS_GNU_SOURCE
+#  if defined(PTS_DEVELOPER_MODE)
+#   error "Contains GNU-isms that need fixing."
+#  else
+#   warning "Contains GNU-isms that need fixing."
+#  endif
+# endif
 #endif
-#elif defined(_BSD_SOURCE)
-#if defined(PTS_DEVELOPER_MODE)
-#error "Contains BSD-isms that need fixing."
-#else
-#warning "Contains BSD-isms that need fixing."
-#endif
+
+#if defined(_BSD_SOURCE)
+# if defined(PTS_DEVELOPER_MODE)
+#  error "Contains BSD-isms that need fixing."
+# else
+#  warning "Contains BSD-isms that need fixing."
+# endif
 #endif
 
 #define PTS_PASS        0
@@ -36,3 +40,6 @@
 #define PTS_UNSUPPORTED 4
 #define PTS_UNTESTED    5
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+#endif

@@ -104,7 +104,6 @@ int TST_TOTAL = 1;
 #ifdef HAVE_SYS_EPOLL_H
 
 #include <sys/epoll.h>
-#include "usctest.h"
 
 /* Local Defines */
 #if !defined(TRUE) && !defined(FALSE)
@@ -193,8 +192,6 @@ do {					\
 	}									\
 }										\
 kid_status = kid_status;})
-
-/* Extern Global Variables */
 
 /*
  * Given the number of random size requests to test,

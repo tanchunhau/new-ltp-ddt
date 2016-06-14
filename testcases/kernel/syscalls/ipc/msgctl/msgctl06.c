@@ -40,19 +40,13 @@
 #include <sys/msg.h>		/* needed for test              */
 #include <stdio.h>		/* needed by testhead.h         */
 #include "test.h"
-#include "usctest.h"
 #include "ipcmsg.h"
 
 void setup();
 void cleanup();
-/*
- *  *  * These globals must be defined in the test.
- *   *   */
 
-char *TCID = "msgctl06";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0 };		/* List must end with 0 */
+char *TCID = "msgctl06";
+int TST_TOTAL = 1;
 
 /*
  * msgctl3_t -- union of msgctl(2)'s possible argument # 3 types.
@@ -69,7 +63,7 @@ struct msqid_ds buf;
 
 /*--------------------------------------------------------------*/
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	key_t key;
 	setup();
@@ -78,8 +72,7 @@ int main(int argc, char *argv[])
 	TEST(msgget(key, IPC_CREAT | IPC_EXCL));
 	msqid = TEST_RETURN;
 	if (TEST_RETURN == -1) {
-		tst_resm(TFAIL | TTERRNO, "msgget() failed");
-		tst_exit();
+		tst_brkm(TFAIL | TTERRNO, NULL, "msgget() failed");
 	}
 
 	TEST(msgctl(msqid, IPC_STAT, &buf));
@@ -96,25 +89,24 @@ int main(int argc, char *argv[])
 	 */
 
 	if (buf.msg_qnum != 0) {
-		tst_resm(TFAIL, "error: unexpected nbr of messages %ld",
+		tst_brkm(TFAIL, NULL, "error: unexpected nbr of messages %ld",
 			 buf.msg_qnum);
-		tst_exit();
 	}
 	if (buf.msg_perm.uid != getuid()) {
-		tst_resm(TFAIL, "error: unexpected uid %d", buf.msg_perm.uid);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "error: unexpected uid %d",
+			 buf.msg_perm.uid);
 	}
 	if (buf.msg_perm.gid != getgid()) {
-		tst_resm(TFAIL, "error: unexpected gid %d", buf.msg_perm.gid);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "error: unexpected gid %d",
+			 buf.msg_perm.gid);
 	}
 	if (buf.msg_perm.cuid != getuid()) {
-		tst_resm(TFAIL, "error: unexpected cuid %d", buf.msg_perm.cuid);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "error: unexpected cuid %d",
+			 buf.msg_perm.cuid);
 	}
 	if (buf.msg_perm.cgid != getgid()) {
-		tst_resm(TFAIL, "error: unexpected cgid %d", buf.msg_perm.cgid);
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "error: unexpected cgid %d",
+			 buf.msg_perm.cgid);
 	}
 
 	tst_resm(TPASS, "msgctl06 ran successfully!");
@@ -129,8 +121,10 @@ int main(int argc, char *argv[])
 /***************************************************************
  *  * setup() - performs all ONE TIME setup for this test.
  *   ****************************************************************/
-void setup()
+void setup(void)
 {
+	tst_require_root();
+
 	/* You will want to enable some signal handling so you can capture
 	 * unexpected signals like SIGSEGV.
 	 */
@@ -154,15 +148,9 @@ void setup()
  *  *  * cleanup() - performs all ONE TIME cleanup for this test at
  *   *   *              completion or premature exit.
  *    *    ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	int status;
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/*
 	 * Remove the message queue from the system

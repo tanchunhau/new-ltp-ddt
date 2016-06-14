@@ -73,9 +73,8 @@
 #include <netinet/in.h>
 
 #include "test.h"
-#include "usctest.h"
 
-char *TCID = "socketcall01";	/* Test program identifier.    */
+char *TCID = "socketcall01";
 
 #ifdef __NR_socketcall
 
@@ -105,20 +104,16 @@ int TST_TOTAL = sizeof(TC) / sizeof(TC[0]);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;			/* s is socket descriptor */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	/* check looping state */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 
@@ -145,7 +140,7 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test. */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -157,20 +152,17 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 }
 
 #else
 
-int TST_TOTAL = 0;		/* Total number of test cases. */
+int TST_TOTAL = 0;
 
-int main()
+int main(void)
 {
 	tst_resm(TPASS, "socket call test on this architecture disabled.");
-	tst_exit();
 	tst_exit();
 }
 

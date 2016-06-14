@@ -50,7 +50,6 @@
 #include <unistd.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 
 char *TCID = "sched_getaffinity01";
@@ -74,15 +73,12 @@ do { \
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		do_test();
 	}
@@ -96,7 +92,7 @@ static void do_test(void)
 	int i;
 	cpu_set_t *mask;
 	int nrcpus = 1024;
-	pid_t pid;
+	pid_t unused_pid;
 	unsigned len;
 
 #if __GLIBC_PREREQ(2, 7)
@@ -155,28 +151,9 @@ realloc:
 	/* negative tests */
 	QUICK_TEST(sched_getaffinity(0, len, (cpu_set_t *) - 1));
 	QUICK_TEST(sched_getaffinity(0, 0, mask));
-	/*
-	 * pid_t -> int -- the actual kernel limit is lower
-	 * though, but this is a negative test, not a positive
-	 * one.
-	 *
-	 * Push comes to shove, if the user doesn't have the
-	 * ability to kill(3) processes (errno = EPERM), then
-	 * set the pid to the highest possible represented
-	 * value and cross your fingers in the hope that
-	 * a) Linux somehow hasn't started allocating PIDs
-	 * this high and b) the PID = INT_MAX isn't in fact
-	 * running.
-	 */
-	for (pid = 2; pid < INT_MAX; pid++) {
-		if (kill(pid, 0) == -1) {
-			if (errno == ESRCH)
-				break;
-			else if (errno == EPERM)
-				pid = INT_MAX - 1;
-		}
-	}
-	QUICK_TEST(sched_getaffinity(pid, len, mask));
+
+	unused_pid = tst_get_unused_pid(cleanup);
+	QUICK_TEST(sched_getaffinity(unused_pid, len, mask));
 	CPU_FREE(mask);
 }
 
@@ -193,6 +170,5 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }

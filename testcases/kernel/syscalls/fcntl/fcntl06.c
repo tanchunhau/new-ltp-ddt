@@ -52,7 +52,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "test.h"
-#include "usctest.h"
 
 #define F_RGETLK 10		/* kludge code */
 #define F_RSETLK 11		/* kludge code */
@@ -74,10 +73,7 @@ int main(int ac, char **av)
 {
 	int fail = 0;
 
-	char *msg;
-
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
@@ -117,7 +113,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	char *buf = STRING;
 	char template[PATH_MAX];
@@ -150,7 +146,7 @@ int do_lock(int cmd, short type, short whence, int start, int len)
 	return (fcntl(fd, cmd, &fl));
 }
 
-void unlock_file()
+void unlock_file(void)
 {
 	if (do_lock(F_RSETLK, (short)F_UNLCK, (short)0, 0, 0) == -1) {
 		/* Same as FIXME comment above. */
@@ -158,13 +154,11 @@ void unlock_file()
 	}
 }
 
-void cleanup()
+void cleanup(void)
 {
 
 	if (close(fd) == -1)
 		tst_resm(TWARN | TERRNO, "close failed");
-
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

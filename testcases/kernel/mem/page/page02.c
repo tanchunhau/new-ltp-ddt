@@ -50,7 +50,6 @@ CALLS:	malloc(3)
 
 /** LTP Port **/
 #include "test.h"
-#include "usctest.h"
 
 #define FAILED 0
 #define PASSED 1
@@ -117,9 +116,8 @@ char *argv[];
 				 "Fork failed (may be OK if under stress)");
 			tst_resm(TINFO, "System resource may be too low.\n");
 			local_flag = PASSED;
-			tst_resm(TBROK, "Reason: %s\n", strerror(errno));
-			tst_rmdir();
-			tst_exit();
+			tst_brkm(TBROK, tst_rmdir, "Reason: %s\n",
+				 strerror(errno));
 		} else if (pid == 0) {
 			/********************************/
 			/*                              */
@@ -128,8 +126,7 @@ char *argv[];
 			/*                              */
 			/********************************/
 
-			memory_pointer =
-			    (int *)malloc(memory_size * sizeof(int));
+			memory_pointer = malloc(memory_size * sizeof(int));
 			if (memory_pointer == 0) {
 				tst_resm(TBROK, "\tCannot malloc memory.\n");
 				if (i < 2) {
@@ -221,25 +218,19 @@ char *argv[];
 	    : tst_resm(TPASS, "Test passed");
 	tst_rmdir();
 	tst_exit();
-	/**NOT REACHED**/
-	tst_exit();
 
 }
 
 int bd_arg(str)
 char *str;
 {
-	tst_resm(TCONF, "\tCannot parse %s as a number.\n", str);
-	tst_exit();
-	/**NOT REACHED**/
-	return 0;
+	tst_brkm(TCONF, NULL, "\tCannot parse %s as a number.\n", str);
 }
 
 int chld()
 {
 	if (signal(SIGUSR1, (void (*)())chld) == SIG_ERR) {
-		tst_resm(TBROK, "signal failed");
-		tst_exit();
+		tst_brkm(TBROK, NULL, "signal failed");
 	}
 	chld_flag++;
 	return 0;

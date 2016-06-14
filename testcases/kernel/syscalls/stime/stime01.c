@@ -77,17 +77,15 @@
 #include <sys/time.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define INCR_TIME	30	/* increment in the system's current time */
 
 #define BASH_CLOCK
 
-char *TCID = "stime01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "stime01";
+int TST_TOTAL = 1;
 struct timeval real_time_tv, pres_time_tv;
-time_t new_time;		/* system's new time */
-int exp_enos[] = { 0 };
+time_t new_time;
 
 void setup();			/* Main setup function of test */
 void cleanup();			/* cleanup function for the test */
@@ -95,19 +93,10 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
@@ -131,7 +120,7 @@ int main(int ac, char **av)
 		/* Get the system's new time */
 		new_time = real_time_tv.tv_sec + INCR_TIME;
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/*
 		 * Invoke stime(2) to set the system's time to the specified
@@ -142,39 +131,29 @@ int main(int ac, char **av)
 		} else {
 
 			/*
-			 * Perform functional verification if test
-			 * executed without (-f) option.
+			 * Get the system's current time after call
+			 * to stime().
 			 */
-			if (STD_FUNCTIONAL_TEST) {
+			if (gettimeofday(&pres_time_tv, NULL) < 0) {
+				tst_brkm(TFAIL | TERRNO, cleanup,
+					 "time() failed to get "
+					 "system's time after stime");
+			}
 
-				/*
-				 * Get the system's current time after call
-				 * to stime().
-				 */
-				if (gettimeofday(&pres_time_tv, NULL) < 0) {
-					tst_brkm(TFAIL | TERRNO, cleanup,
-						 "time() failed to get "
-						 "system's time after stime");
-				}
-
-				/* Now do the actual verification */
-				switch (pres_time_tv.tv_sec - new_time) {
-				case 0:
-				case 1:
-					tst_resm(TINFO, "pt.tv_sec: %ld",
-						 pres_time_tv.tv_sec);
-					tst_resm(TPASS, "system time was set "
-						 "to %ld", new_time);
-					break;
-				default:
-					tst_resm(TFAIL, "system time was not "
-						 "set to %ld (time is "
-						 "actually: %ld)",
-						 new_time, pres_time_tv.tv_sec);
-				}
-
-			} else {
-				tst_resm(TPASS, "Call succeeded");
+			/* Now do the actual verification */
+			switch (pres_time_tv.tv_sec - new_time) {
+			case 0:
+			case 1:
+				tst_resm(TINFO, "pt.tv_sec: %ld",
+					 pres_time_tv.tv_sec);
+				tst_resm(TPASS, "system time was set "
+					 "to %ld", new_time);
+				break;
+			default:
+				tst_resm(TFAIL, "system time was not "
+					 "set to %ld (time is "
+					 "actually: %ld)",
+					 new_time, pres_time_tv.tv_sec);
 			}
 
 			if (settimeofday(&real_time_tv, NULL) < 0) {
@@ -198,13 +177,9 @@ int main(int ac, char **av)
  * setup() - performs all ONE TIME setup for this test.
  *  Get the current time and system's new time to be set in the test.
  */
-void setup()
+void setup(void)
 {
-
-	/* Check that the test process id is super/root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "you must be root to execute this test!");
-	}
+	tst_require_root();
 
 	TEST_PAUSE;
 
@@ -215,13 +190,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Restore the original system time. */
 	if (settimeofday(&real_time_tv, NULL) != 0) {

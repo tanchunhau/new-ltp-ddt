@@ -41,7 +41,6 @@
 #include <pwd.h>
 #include "config.h"
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 #include "process_vm.h"
 
@@ -83,15 +82,12 @@ static void cma_test_errnos(void);
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
 
-	msg = parse_opts(argc, argv, options, &help);
-	if (msg != NULL)
-		tst_brkm(TBROK, tst_exit, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, options, &help);
 
 	setup(argv);
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		cma_test_errnos();
 	}
 	cleanup();
@@ -100,7 +96,7 @@ int main(int argc, char *argv[])
 
 static void setup(char *argv[])
 {
-	tst_require_root(NULL);
+	tst_require_root();
 
 	if (rflag && wflag)
 		tst_brkm(TBROK, NULL, "Parameters -r -w can not be used"
@@ -128,7 +124,6 @@ static void setup(char *argv[])
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 }
 
 static void help(void)
@@ -183,7 +178,7 @@ static int cma_check_errno(long expected_errno)
 	return 0;
 }
 
-static struct process_vm_params *cma_alloc_sane_params()
+static struct process_vm_params *cma_alloc_sane_params(void)
 {
 	struct process_vm_params *sane_params;
 	int len;
@@ -312,11 +307,8 @@ static void cma_test_iov_invalid(void)
 
 static void cma_test_invalid_pid(void)
 {
-	const char pid_max[] = "/proc/sys/kernel/pid_max";
 	pid_t invalid_pid = -1;
 	struct process_vm_params *params;
-	FILE *fp;
-	char buff[512];
 
 	params = cma_alloc_sane_params();
 	tst_resm(TINFO, "test_invalid_pid");
@@ -326,13 +318,7 @@ static void cma_test_invalid_pid(void)
 	cma_check_errno(ESRCH);
 	cma_free_params(params);
 
-	fp = fopen(pid_max, "r");
-	if (fp == NULL)
-		tst_brkm(TBROK, cleanup, "Could not open %s", pid_max);
-	if (!fgets(buff, sizeof(buff), fp))
-		tst_brkm(TBROK, cleanup, "Could not read %s", pid_max);
-	fclose(fp);
-	invalid_pid = atol(buff) + 1;
+	invalid_pid = tst_get_unused_pid(cleanup);
 
 	params = cma_alloc_sane_params();
 	params->pid = invalid_pid;
@@ -416,7 +402,7 @@ static void cma_test_invalid_protection(void)
 	cma_free_params(sane_params);
 }
 
-static void cma_test_errnos()
+static void cma_test_errnos(void)
 {
 	cma_test_sane_params();
 	cma_test_flags();

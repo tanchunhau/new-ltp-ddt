@@ -56,7 +56,6 @@
 #include <memory.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include <sys/mman.h>
 
 #define	K_1	8192
@@ -73,13 +72,10 @@ char *bad_addr = 0;
 
 struct iovec wr_iovec[MAX_IOVEC] = {
 	{(caddr_t) - 1, CHUNK},
-	{(caddr_t) NULL, 0},
+	{NULL, 0},
 };
 
 char name[K_1], f_name[K_1];
-
-/* 0 terminated list of expected errnos */
-int exp_enos[] = { 14, 0 };
 
 int fd[2], in_sighandler;
 char *buf_list[NBUFS];
@@ -96,18 +92,16 @@ int fail;
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
 	int nbytes;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		buf_list[0] = buf1;
 		buf_list[1] = buf2;
@@ -154,7 +148,6 @@ int main(int argc, char **argv)
 		l_seek(fd[0], 0, 0);
 		TEST(writev(fd[0], wr_iovec, 2));
 		if (TEST_RETURN < 0) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			if (TEST_ERRNO == EFAULT) {
 				tst_resm(TPASS, "Received EFAULT as expected");
 			} else if (TEST_ERRNO != EFAULT) {
@@ -184,8 +177,6 @@ void setup(void)
 {
 	tst_sig(FORK, sighandler, cleanup);
 
-	TEST_EXP_ENOS(exp_enos);
-
 	TEST_PAUSE;
 
 	tst_tmpdir();
@@ -203,8 +194,6 @@ void setup(void)
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	close(fd[0]);
 	close(fd[1]);
 

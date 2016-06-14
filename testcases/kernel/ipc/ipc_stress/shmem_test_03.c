@@ -72,6 +72,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <fcntl.h>
 #include <sys/file.h>
 #include <sys/ipc.h>
 #include <sys/mman.h>
@@ -79,6 +80,7 @@
 #include <sys/signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include "lapi/semun.h"
 
 /* Defines
  *
@@ -140,11 +142,7 @@ int semid;			/* semaphore id */
 int num_children = DEFAULT_NUM_CHILDREN;
 int buffer_size = DEFAULT_SHMEM_SIZE;
 
-union semun {
-	int val;
-	struct semid_ds *buf;
-	unsigned short *array;
-} arg;
+union semun arg;
 
 /*---------------------------------------------------------------------+
 |                               main                                   |
@@ -493,7 +491,7 @@ void setup_signal_handlers()
 	sigemptyset(&invec.sa_mask);
 	invec.sa_flags = 0;
 
-	if (sigaction(SIGINT, &invec, (struct sigaction *)NULL) < 0)
+	if (sigaction(SIGINT, &invec, NULL) < 0)
 		sys_error("sigaction failed", __LINE__);
 
 }

@@ -78,12 +78,11 @@
 #include <linux/unistd.h>
 
 #include "test.h"		/*LTP Specific Include File */
-#include "usctest.h"		/*LTP Specific Include File */
 
 /* Test case defines */
 #define WINDOW_START 0x48000000
 
-size_t page_sz;
+static int page_sz;
 size_t page_words;
 size_t cache_pages;
 size_t cache_sz;
@@ -97,9 +96,8 @@ static int setup03(int test);
 static int setup04(int test);
 static void cleanup();
 
-char *TCID = "remap_file_pages02";	/* Test program identifier.    */
-int TST_TOTAL = 4;		/* Total number of test cases. */
-static int exp_enos[] = { EINVAL, 0 };
+char *TCID = "remap_file_pages02";
+int TST_TOTAL = 4;
 
 static char *cache_contents;
 int fd;				/* File descriptor used at the test */
@@ -133,7 +131,6 @@ static struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
 
 #if defined (__s390__) || (__s390x__) || (__ia64__)
 	/* Disables the test in case the kernel version is lower than 2.6.12 and arch is s390 */
@@ -144,14 +141,13 @@ int main(int ac, char **av)
 	}
 #endif
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			/* do the setup if the test have one */
@@ -193,7 +189,6 @@ int main(int ac, char **av)
 					 testcase[i].exp_errno,
 					 testcase[i].exp_errval, TEST_ERRNO);
 			}
-			TEST_ERROR_LOG(TEST_ERRNO);
 		}		/* end of test loops */
 	}			/* end of  test looping */
 
@@ -266,14 +261,11 @@ int setup04(int test)
  * setup() - performs all ONE TIME setup for this test
  * - creates a defaul mmaped area to be able to run remap_file_pages
  */
-void setup()
+void setup(void)
 {
 	int i, j;
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* set the expected erronos */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -290,7 +282,7 @@ void setup()
 	/* Set the cache size */
 	cache_pages = 32;
 	cache_sz = cache_pages * page_sz;
-	cache_contents = (char *)malloc(cache_sz * sizeof(char));
+	cache_contents = malloc(cache_sz * sizeof(char));
 
 	for (i = 0; i < cache_pages; i++) {
 		char *page = cache_contents + i * page_sz;
@@ -327,7 +319,7 @@ void setup()
 * cleanup() - Performs one time cleanup for this test at
 * completion or premature exit
 */
-void cleanup()
+void cleanup(void)
 {
 	/* Close the file descriptor */
 	close(fd);
@@ -336,12 +328,6 @@ void cleanup()
 		munmap(data, cache_sz);
 	if (data01)
 		munmap(data01, cache_sz);
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 

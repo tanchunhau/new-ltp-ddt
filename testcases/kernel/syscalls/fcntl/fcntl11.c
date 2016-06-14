@@ -45,7 +45,6 @@
 #include <sys/wait.h>
 #include <inttypes.h>
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 
 #define STRINGSIZE	27
@@ -74,15 +73,13 @@ int TST_TOTAL = 1;
 
 int fail;
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 
 }
 
-void setup()
+void setup(void)
 {
 	char *buf = STRING;
 	char template[PATH_MAX];
@@ -114,7 +111,7 @@ void setup()
 			 "sigaction(SIGCLD, ..) failed");
 }
 
-void do_child()
+void do_child(void)
 {
 	struct flock fl;
 
@@ -177,7 +174,7 @@ compare_lock(struct flock *fl, short type, short whence, int start, int len,
 			 pid, fl->l_pid);
 }
 
-void unlock_file()
+void unlock_file(void)
 {
 	struct flock fl;
 
@@ -226,17 +223,17 @@ void child_get(struct flock *l)
 		exit(0);
 }
 
-void stop_child()
+void stop_child(void)
 {
 	struct flock fl;
 
-	(void)signal(SIGCLD, (void (*)())SIG_DFL);
+	signal(SIGCLD, SIG_DFL);
 	fl.l_type = STOP;
 	parent_put(&fl);
 	wait(0);
 }
 
-void catch_child()
+void catch_child(void)
 {
 	tst_brkm(TFAIL, cleanup, "Unexpected death of child process");
 }
@@ -246,10 +243,8 @@ int main(int ac, char **av)
 	struct flock tl;
 
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&do_child, "ddddd", &parent_pipe[0],
 			&parent_pipe[1], &child_pipe[0], &child_pipe[1], &fd);
@@ -259,8 +254,8 @@ int main(int ac, char **av)
 
 	/* Check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		if ((child_pid = FORK_OR_VFORK()) == 0) {	/* parent */
 #ifdef UCLINUX

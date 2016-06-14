@@ -48,26 +48,20 @@
 #include <linux/unistd.h>
 #include <sys/types.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "tkill01";		/* Test program identifier. */
+char *TCID = "tkill01";
 int testno;
-int TST_TOTAL = 2;		/* total number of tests in this file.   */
+int TST_TOTAL = 2;
 
-void cleanup()
+void cleanup(void)
 {
 
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 
-void setup()
+void setup(void)
 {
 	TEST_PAUSE;
 	tst_tmpdir();
@@ -84,24 +78,22 @@ int main(int ac, char **av)
 {
 	int tid;
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 			if (signal(SIGUSR1, &sig_action) == SIG_ERR)
 				tst_brkm(TBROK | TERRNO, cleanup,
 					 "signal(SIGUSR1, ..) failed");
-			TEST(tid = syscall(__NR_gettid));
+			TEST(tid = ltp_syscall(__NR_gettid));
 			if (TEST_RETURN == -1) {
 				tst_resm(TFAIL | TTERRNO, "tkill failed");
 			}
-			TEST(syscall(__NR_tkill, tid, SIGUSR1));
+			TEST(ltp_syscall(__NR_tkill, tid, SIGUSR1));
 			if (TEST_RETURN == 0) {
 				tst_resm(TPASS, "tkill call succeeded");
 			} else {

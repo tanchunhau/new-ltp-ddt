@@ -115,34 +115,27 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "close08";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0, 0 };
+char *TCID = "close08";
+int TST_TOTAL = 1;
 
 char fname[255];
 int fd;
 
 int main(int ac, char **av)
 {
-	char *msg;
 	int lc;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		if ((fd = open(fname, O_RDWR | O_CREAT, 0700)) == -1) {
 			tst_brkm(TBROK | TTERRNO, cleanup,
@@ -151,14 +144,10 @@ int main(int ac, char **av)
 		TEST(close(fd));
 
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL | TTERRNO, "close(%s) failed", fname);
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				/* No Verification test, yet... */
-				tst_resm(TPASS, "close(%s) returned %ld", fname,
-					 TEST_RETURN);
-			}
+			tst_resm(TPASS, "close(%s) returned %ld", fname,
+				 TEST_RETURN);
 		}
 
 		if (unlink(fname) == -1) {
@@ -168,11 +157,10 @@ int main(int ac, char **av)
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -184,10 +172,8 @@ void setup()
 	sprintf(fname, "tfile_%d", getpid());
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 
 }

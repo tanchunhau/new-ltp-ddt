@@ -35,26 +35,24 @@
 #include <errno.h>
 #include <inttypes.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 
-char *TCID = "eventfd2_03";	/* test program identifier */
-int TST_TOTAL = 1;		/* total number of tests in this file */
+char *TCID = "eventfd2_03";
+int TST_TOTAL = 1;
 
 #ifndef EFD_SEMLIKE
 #define EFD_SEMLIKE (1 << 0)
 #endif
 
 /* Dummy function as syscall from linux_syscall_numbers.h uses cleanup(). */
-void cleanup()
+void cleanup(void)
 {
 }
 
 static int eventfd2(int count, int flags)
 {
-	return syscall(__NR_eventfd2, count, flags);
+	return ltp_syscall(__NR_eventfd2, count, flags);
 }
 
 static void xsem_wait(int fd)
@@ -122,9 +120,9 @@ int main(int argc, char **argv)
 		}
 	}
 	if ((tst_kvercmp(2, 6, 27)) < 0) {
-		tst_resm(TCONF,
+		tst_brkm(TCONF,
+			 NULL,
 			 "This test can only run on kernels that are 2.6.27 and higher");
-		tst_exit();
 	}
 	if ((fd1 = eventfd2(0, EFD_SEMLIKE)) == -1 ||
 	    (fd2 = eventfd2(0, EFD_SEMLIKE)) == -1) {

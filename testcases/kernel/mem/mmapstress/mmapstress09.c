@@ -29,7 +29,6 @@
 #include <errno.h>
 /*****  LTP Port        *****/
 #include "test.h"
-#include "usctest.h"
 #define FAILED 0
 #define PASSED 1
 
@@ -198,8 +197,8 @@ int main(int argc, char *argv[])
 		anyfail();
 	}
 
-	if ((buf = (uchar_t *) malloc(pagesize)) == NULL
-	    || (pidarray = (pid_t *) malloc(nprocs * sizeof(pid_t))) == NULL) {
+	if ((buf = malloc(pagesize)) == NULL
+	    || (pidarray = malloc(nprocs * sizeof(pid_t))) == NULL) {
 		perror("malloc error");
 		anyfail();
 	}
@@ -480,24 +479,22 @@ unsigned int initrand(void)
 	 */
 	srand((unsigned int)getpid());
 	seed = rand();
-	srand((unsigned int)time((time_t *) 0));
+	srand((unsigned int)time(NULL));
 	seed = (seed ^ rand()) % 100000;
 	srand48((long int)seed);
 	return (seed);
 }
 
 /*****  LTP Port        *****/
-void ok_exit()
+void ok_exit(void)
 {
 	tst_resm(TPASS, "Test passed\n");
 	tst_exit();
 }
 
-int anyfail()
+int anyfail(void)
 {
-	tst_resm(TFAIL, "Test failed\n");
-	tst_exit();
-	return 0;
+	tst_brkm(TFAIL, NULL, "Test failed\n");
 }
 
 /*****  **      **      *****/

@@ -75,7 +75,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
+#include "compat_16.h"
 
 #define EXP_RET_VAL	0
 
@@ -89,7 +89,7 @@ struct test_case_t {		/* test case structure */
 	char *desc;		/* Test description */
 };
 
-char *TCID = "setresgid01";
+TCID_DEFINE(setresgid01);
 static int testno;
 static struct passwd nobody, root;
 static uid_t nobody_gid, root_gid, neg = -1;
@@ -117,21 +117,18 @@ int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 
-			TEST(setresgid(*tdat[testno].rgid, *tdat[testno].egid,
+			TEST(SETRESGID(cleanup, *tdat[testno].rgid, *tdat[testno].egid,
 				       *tdat[testno].sgid));
 
 			if (TEST_RETURN == EXP_RET_VAL) {
@@ -165,13 +162,6 @@ static int test_functionality(uid_t exp_rgid, uid_t exp_egid, uid_t exp_sgid)
 {
 	uid_t cur_rgid, cur_egid, cur_sgid;
 
-	/*
-	 * Perform functional verification, if STD_FUNCTIONAL_TEST is
-	 * set (-f options is not used)
-	 */
-	if (STD_FUNCTIONAL_TEST == 0) {
-		return 0;
-	}
 	/* Get current real, effective and saved group id's */
 	if (getresgid(&cur_rgid, &cur_egid, &cur_sgid) == -1) {
 		tst_brkm(TBROK, cleanup, "getresgid() failed");
@@ -193,26 +183,23 @@ void setup(void)
 {
 	struct passwd *passwd_p;
 
-	tst_sig(NOFORK, DEF_HANDLER, cleanup);
+	tst_require_root();
 
-	/* Check whether we are root  */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Must be root for this test!");
-	}
+	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	if ((passwd_p = getpwnam("root")) == NULL) {
 		tst_brkm(TBROK, NULL, "getpwnam() failed for root");
 
 	}
 	root = *passwd_p;
-	root_gid = root.pw_gid;
+	GID16_CHECK((root_gid = root.pw_gid), "setresgid", cleanup)
 
 	if ((passwd_p = getpwnam("nobody")) == NULL) {
 		tst_brkm(TBROK, NULL, "nobody user id doesn't exist");
 
 	}
 	nobody = *passwd_p;
-	nobody_gid = nobody.pw_gid;
+	GID16_CHECK((nobody_gid = nobody.pw_gid), "setresgid", cleanup)
 
 	/* Pause if that option was specified
 	 * TEST_PAUSE contains the code to fork the test with the -c option.
@@ -227,11 +214,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-
-	TEST_CLEANUP;
 
 }

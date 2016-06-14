@@ -55,7 +55,6 @@
 #include <memory.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include <sys/mman.h>
 
 #define	K_1	1024
@@ -103,16 +102,13 @@ struct iovec wr_iovec[MAX_IOVEC] = {
 	{(buf1 + CHUNK * 13), 0},
 
 	/* testcase# 7 */
-	{(caddr_t) NULL, 0},
-	{(caddr_t) NULL, 0}
+	{NULL, 0},
+	{NULL, 0}
 };
 
 char name[K_1], f_name[K_1];
 
 char *bad_addr = 0;
-
-/* 0 terminated list of expected errnos */
-int exp_enos[] = { 14, 22, 32, 77, 0 };
 
 int fd[4], in_sighandler;
 int pfd[2];			/* pipe fd's */
@@ -132,16 +128,14 @@ int main(int argc, char **argv)
 	int nbytes, ret;
 
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		buf_list[0] = buf1;
 		buf_list[1] = buf2;
@@ -321,8 +315,6 @@ void setup(void)
 
 	tst_sig(FORK, sighandler, cleanup);
 
-	TEST_EXP_ENOS(exp_enos);
-
 	TEST_PAUSE;
 
 	tst_tmpdir();
@@ -340,8 +332,6 @@ void setup(void)
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	if (munmap(bad_addr, 1) == -1)
 		tst_resm(TBROK | TERRNO, "munmap failed");
 

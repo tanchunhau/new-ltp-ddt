@@ -13,18 +13,15 @@
 
 #define INVALIDCLOCKID 99999
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec res;
 
 	if (clock_getres(INVALIDCLOCKID, &res) == -1) {
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		printf("Test FAILED\n");
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed\n");
-	return PTS_UNRESOLVED;
+	printf("Test FAILED\n");
+	return PTS_FAIL;
 }

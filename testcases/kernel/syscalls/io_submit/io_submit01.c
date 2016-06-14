@@ -23,7 +23,6 @@
 
 #include "config.h"
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "io_submit01";
 
@@ -39,8 +38,6 @@ int TST_TOTAL = 3;
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 }
 
@@ -90,27 +87,23 @@ static void check_result(long exp, long act)
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
 
 	int rval, fd;
 	char buf[256];
 	struct iocb iocb;
 	struct iocb *iocbs[1];
-
 	io_context_t ctx;
 
-	memset(&ctx, 0, sizeof(ctx));
-
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* 1 - EINVAL */
 		/* 1.1 - EINVAL: invalid ctx */
+		memset(&ctx, 0, sizeof(ctx));
 		TEST(io_submit(ctx, 0, NULL));
 		check_result(-EINVAL, TEST_RETURN);
 
@@ -123,6 +116,12 @@ int main(int argc, char *argv[])
 
 		/* 1.3 - EINVAL: uninitialized iocb */
 		iocbs[0] = &iocb;
+
+		/* There are multiple checks we can hit with uninitialized
+		 * iocb, but with "random" data it's not 100%. Make sure we
+		 * fail eventually in opcode check. */
+		iocb.aio_lio_opcode = -1;
+
 		TEST(io_submit(ctx, 1, iocbs));
 		switch (TEST_RETURN) {
 		case -EINVAL:
@@ -197,6 +196,5 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	tst_brkm(TCONF, NULL, "System doesn't support execution of the test");
-	tst_exit();
 }
 #endif

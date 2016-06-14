@@ -73,9 +73,8 @@
 #include <netinet/in.h>
 
 #include "test.h"
-#include "usctest.h"
 
-char *TCID = "socketcall03";	/* Test program identifier.    */
+char *TCID = "socketcall03";
 
 #ifdef __NR_socketcall
 
@@ -85,7 +84,7 @@ void setup();
 void cleanup();
 void setup1(void);
 
-int TST_TOTAL = 1;		/* Total number of test cases. */
+int TST_TOTAL = 1;
 int s;
 unsigned long args[3];
 struct sockaddr_in si;
@@ -103,19 +102,15 @@ AF_INET, SOCK_STREAM, 6, SYS_BIND, setup1, "bind call"};
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	/* check looping state */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TC.setupfunc();
 
@@ -157,7 +152,7 @@ void setup1(void)
 }
 
 /* setup() - performs all ONE TIME setup for this test. */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -169,20 +164,17 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 }
 
 #else
 
-int TST_TOTAL = 0;		/* Total number of test cases. */
+int TST_TOTAL = 0;
 
-int main()
+int main(void)
 {
 	tst_resm(TPASS, "socket call test on this architecture disabled.");
-	tst_exit();
 	tst_exit();
 }
 

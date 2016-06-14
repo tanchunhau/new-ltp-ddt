@@ -60,22 +60,14 @@
 #include <sys/syscall.h>
 #include <errno.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
+#include "lapi/fcntl.h"
 #include "linux_syscall_numbers.h"
-
-#ifndef O_CLOEXEC
-#define O_CLOEXEC 02000000
-#endif
 
 #define EPOLL_CLOEXEC O_CLOEXEC
 
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "epoll_create1_01";	/* test program identifier.              */
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+char *TCID = "epoll_create1_01";
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -95,10 +87,9 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 
@@ -120,7 +111,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -139,7 +130,7 @@ int main(int argc, char *argv[])
 
 	setup();
 
-	fd = syscall(__NR_epoll_create1, 0);
+	fd = ltp_syscall(__NR_epoll_create1, 0);
 	if (fd == -1) {
 		tst_brkm(TFAIL, cleanup, "epoll_create1(0) failed");
 	}
@@ -152,7 +143,7 @@ int main(int argc, char *argv[])
 			 "epoll_create1(0) set close-on-exec flag");
 	}
 	close(fd);
-	fd = syscall(__NR_epoll_create1, EPOLL_CLOEXEC);
+	fd = ltp_syscall(__NR_epoll_create1, EPOLL_CLOEXEC);
 	if (fd == -1) {
 		tst_brkm(TFAIL, cleanup, "epoll_create1(EPOLL_CLOEXEC) failed");
 	}

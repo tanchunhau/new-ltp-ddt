@@ -30,7 +30,6 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 #include "clone_platform.h"
 
 static void cleanup(void);
@@ -38,8 +37,6 @@ static void setup(void);
 static int child_fn();
 
 static void *child_stack;
-
-static int exp_enos[] = { EINVAL, 0 };
 
 static struct test_case_t {
 	int (*child_fn) ();
@@ -56,21 +53,18 @@ int TST_TOTAL = sizeof(test_cases) / sizeof(test_cases[0]);
 int main(int ac, char **av)
 {
 	int lc, ind;
-	char *msg;
 	void *test_stack;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; ind < TST_TOTAL; ind++) {
 			if (test_cases[ind].child_stack == NULL) {
-				test_stack = (void *)NULL;
+				test_stack = NULL;
 			} else if (*test_cases[ind].child_stack == NULL) {
 				tst_resm(TWARN, "Can not allocate stack for"
 					 "child, skipping test case");
@@ -93,7 +87,6 @@ int main(int ac, char **av)
 					 test_cases[ind].exp_errno,
 					 TEST_RETURN);
 			}
-			TEST_ERROR_LOG(TEST_ERRNO);
 		}
 	}
 
@@ -104,8 +97,6 @@ int main(int ac, char **av)
 static void setup(void)
 {
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 	TEST_PAUSE;
 
 	child_stack = malloc(CHILD_STACK_SIZE);
@@ -113,11 +104,10 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	free(child_stack);
 }
 
-static int child_fn()
+static int child_fn(void)
 {
 	exit(1);
 }

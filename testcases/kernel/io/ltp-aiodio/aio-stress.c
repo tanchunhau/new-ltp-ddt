@@ -991,12 +991,9 @@ int setup_ious(struct thread_info *t,
 	return 0;
 
 free_buffers:
-	if (t->ios)
-		free(t->ios);
-	if (t->iocbs)
-		free(t->iocbs);
-	if (t->events)
-		free(t->events);
+	free(t->ios);
+	free(t->iocbs);
+	free(t->events);
 	return -1;
 }
 
@@ -1019,8 +1016,11 @@ int setup_shared_mem(int num_threads, int num_files, int depth,
 	if (verify)
 		total_ram += padded_reclen;
 
+	/* for aligning buffer after the allocation */
+	total_ram += page_size_mask;
+
 	if (use_shm == USE_MALLOC) {
-		p = malloc(total_ram + page_size_mask);
+		p = malloc(total_ram);
 	} else if (use_shm == USE_SHM) {
 		shm_id = shmget(IPC_PRIVATE, total_ram, IPC_CREAT | 0700);
 		if (shm_id < 0) {
@@ -1233,7 +1233,6 @@ typedef void *(*start_routine) (void *);
 int run_workers(struct thread_info *t, int num_threads)
 {
 	int ret;
-	int thread_ret;
 	int i;
 
 	for (i = 0; i < num_threads; i++) {
@@ -1246,7 +1245,7 @@ int run_workers(struct thread_info *t, int num_threads)
 		}
 	}
 	for (i = 0; i < num_threads; i++) {
-		ret = pthread_join(t[i].tid, (void *)&thread_ret);
+		ret = pthread_join(t[i].tid, NULL);
 		if (ret) {
 			perror("pthread_join");
 			exit(1);

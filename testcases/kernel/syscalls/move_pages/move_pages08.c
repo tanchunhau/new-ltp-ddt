@@ -55,7 +55,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include "move_pages_support.h"
 
 #define TEST_PAGES 2
@@ -69,11 +68,8 @@ int TST_TOTAL = 1;
 
 int main(int argc, char **argv)
 {
-	char *msg;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -94,8 +90,8 @@ int main(int argc, char **argv)
 		int nodes[TEST_PAGES];
 		int status[TEST_PAGES];
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		ret = alloc_pages_on_node(pages, TEST_PAGES, from_node);
 		if (ret == -1)
@@ -106,13 +102,12 @@ int main(int argc, char **argv)
 
 		ret = numa_move_pages(0, ULONG_MAX, pages, nodes,
 				      status, MPOL_MF_MOVE);
-		TEST_ERRNO = errno;
 		if (ret == -1 && errno == E2BIG)
 			tst_resm(TPASS, "move_pages failed with "
 				 "E2BIG as expected");
 		else
-			tst_resm(TFAIL, "move pages did not fail "
-				 "with E2BIG");
+			tst_resm(TFAIL|TERRNO, "move pages did not fail "
+				 "with E2BIG ret: %d", ret);
 
 		free_pages(pages, TEST_PAGES);
 	}
@@ -157,10 +152,5 @@ static void setup(void)
  */
 static void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

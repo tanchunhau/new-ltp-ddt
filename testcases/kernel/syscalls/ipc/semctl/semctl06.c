@@ -45,19 +45,18 @@
 #define DEBUG 0
 
 #ifdef UCLINUX
-#define _GNU_SOURCE		/* for asprintf */
+#define _GNU_SOURCE
 #include <stdio.h>
 #endif
 
-#include <sys/types.h>		/* needed for test              */
-#include <sys/ipc.h>		/* needed for test              */
-#include <sys/sem.h>		/* needed for test              */
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 #include <wait.h>
 #include "ipcsem.h"
 
@@ -84,14 +83,8 @@ static int procstat;
 static char *prog;
 static unsigned short semvals[NSEMS];
 
-/*
- *  * These globals must be defined in the test.
- *   * */
-
-char *TCID = "semctl06";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0 };		/* List must end with 0 */
+char *TCID = "semctl06";
+int TST_TOTAL = 1;
 
 static void term(int sig);
 static void dosemas(int id);
@@ -105,17 +98,14 @@ static int id_uclinux;
 static char *maxsemstring;
 #endif
 
-/*--------------------------------------------------------------*/
- /*ARGSUSED*/ int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	register int i, pid;
 	int count, child, status, nwait;
 
 #ifdef UCLINUX
-	char *msg;
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	argv0 = argv[0];
 	maybe_run_child(&do_child, "dS", &id_uclinux, &maxsemstring);
@@ -124,7 +114,7 @@ static char *maxsemstring;
 	prog = argv[0];
 	nwait = 0;
 	setup();
-/*--------------------------------------------------------------*/
+
 	tid = -1;
 
 	for (i = 0; i < NPROCS; i++)
@@ -179,15 +169,10 @@ static char *maxsemstring;
 	else
 		tst_resm(TFAIL, "semctl06 failed");
 
-/*--------------------------------------------------------------*/
-/* Clean up any files created by test before call to anyfail.	*/
 
 	cleanup();
-
-	return (0);		/* shut lint up */
+	tst_exit();
 }
-
-/*--------------------------------------------------------------*/
 
 static void dotest(key_t key)
 {
@@ -205,7 +190,7 @@ static void dotest(key_t key)
 	tid = id;
 	for (i = 0; i < NSEMS; i++) {
 		do {
-			maxsemvals[i] = /*CASTOK*/(short) (rand() % HVAL);
+			maxsemvals[i] = (short) (rand() % HVAL);
 		} while (maxsemvals[i] < LVAL);
 		semops[i].sem_num = i;
 		semops[i].sem_op = maxsemvals[i];
@@ -228,9 +213,8 @@ static void dotest(key_t key)
 				if (asprintf(&maxsemstring, "%s%s%d",
 					     maxsemstring, (j ? ":" : ""),
 					     maxsemvals[j]) < 0) {
-					tst_resm(TBROK, "Could not serialize "
+					tst_brkm(TBROK, NULL, "Could not serialize "
 						 "maxsemvals");
-					tst_exit();
 				}
 			}
 			if (self_exec(argv0, "dS", id, maxsemstring) < 0) {
@@ -302,7 +286,7 @@ static void dotest(key_t key)
 }
 
 #ifdef UCLINUX
-void do_child()
+void do_child(void)
 {
 	int i;
 	char *tok;
@@ -311,14 +295,12 @@ void do_child()
 	tok = strtok(maxsemstring, ":");
 	for (i = 0; i < NSEMS; i++) {
 		if (strlen(tok) == 0) {
-			tst_resm(TBROK, "Invalid argument to -C option");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "Invalid argument to -C option");
 		}
 
 		maxsemvals[i] = strtol(tok, &endptr, 10);
 		if (*endptr != '\0') {
-			tst_resm(TBROK, "Invalid argument to -C option");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "Invalid argument to -C option");
 		}
 		tok = strtok(NULL, ":");
 	}
@@ -339,8 +321,7 @@ static void dosemas(int id)
 
 			do {
 				semops[j].sem_op =
-				    (-
-				     /*CASTOK*/(short) (rand() %
+				    (-(short) (rand() %
 							(maxsemvals[j] / 2)));
 			} while (semops[j].sem_op == 0);
 		}
@@ -359,7 +340,7 @@ static void dosemas(int id)
 	exit(0);
 }
 
- /*ARGSUSED*/ static void term(int sig)
+static void term(int sig)
 {
 	int i;
 
@@ -402,43 +383,16 @@ static void dosemas(int id)
 	}
 }
 
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- *****************************************************************/
-void setup()
+void setup(void)
 {
-	/* You will want to enable some signal handling so you can capture
-	 * unexpected signals like SIGSEGV.
-	 *                   */
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	/* One cavet that hasn't been fixed yet.  TEST_PAUSE contains the code to
-	 * fork the test with the -c option.  You want to make sure you do this
-	 * before you create your temporary directory.
-	 */
 	TEST_PAUSE;
 
-	/*
-	 * Create a temporary directory and cd into it.
-	 * This helps to ensure that a unique msgkey is created.
-	 * See ../lib/libipc.c for more information.
-	 */
 	tst_tmpdir();
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- * completion or premature exit.
- ****************************************************************/
-void cleanup()
+void cleanup(void)
 {
-
 	tst_rmdir();
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
-
 }

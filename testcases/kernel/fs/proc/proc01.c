@@ -44,7 +44,6 @@
 #endif
 
 #include "test.h"
-#include "usctest.h"
 
 #define MAX_BUFF_SIZE 65536
 #define MAX_FUNC_NAME 256
@@ -85,12 +84,14 @@ static const struct mapping known_issues[] = {
 	{"open", "/proc/sal/cmc/data", EBUSY},
 	{"open", "/proc/sal/init/data", EBUSY},
 	{"open", "/proc/sal/mca/data", EBUSY},
+	{"open", "/proc/fs/nfsd/pool_stats", ENODEV},
 	{"read", "/proc/acpi/event", EAGAIN},
 	{"read", "/proc/kmsg", EAGAIN},
 	{"read", "/proc/sal/cpe/event", EAGAIN},
 	{"read", "/proc/sal/cmc/event", EAGAIN},
 	{"read", "/proc/sal/init/event", EAGAIN},
 	{"read", "/proc/sal/mca/event", EAGAIN},
+	{"read", "/proc/xen/privcmd", EIO},
 	{"read", "/proc/xen/privcmd", EINVAL},
 	{"read", "/proc/self/mem", EIO},
 	{"read", "/proc/self/task/[0-9]*/mem", EIO},
@@ -105,6 +106,8 @@ static const struct mapping known_issues[] = {
 	{"read", "/proc/fs/nfsd/filehandle", EINVAL},
 	{"read", "/proc/fs/nfsd/.getfs", EINVAL},
 	{"read", "/proc/fs/nfsd/.getfd", EINVAL},
+	{"read", "/proc/self/net/rpc/use-gss-proxy", EAGAIN},
+	{"read", "/proc/sys/net/ipv6/conf/*/stable_secret", EIO},
 	{"", "", 0}
 };
 
@@ -178,7 +181,6 @@ static int found_errno(const char *syscall, const char *obj, int tmperr)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 
@@ -363,7 +365,7 @@ static long readproc(const char *obj)
 		/* Skip files does not honor O_NONBLOCK. */
 		for (i = 0; error_nonblock[i][0] != '\0'; i++) {
 			if (!strcmp(obj, error_nonblock[i])) {
-				tst_resm(TWARN, "%s: does not honor "
+				tst_resm(TINFO, "%s: does not honor "
 					 "O_NONBLOCK", obj);
 				return 0;
 			}
@@ -428,12 +430,9 @@ static long readproc(const char *obj)
 
 int main(int argc, char *argv[])
 {
-	char *msg;
 	int lc;
 
-	msg = parse_opts(argc, argv, options, help);
-	if (msg != NULL)
-		tst_brkm(TBROK, cleanup, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, options, help);
 
 	if (opt_buffsize) {
 		size_t bs;
@@ -454,7 +453,7 @@ int main(int argc, char *argv[])
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(readproc(procpath));
 

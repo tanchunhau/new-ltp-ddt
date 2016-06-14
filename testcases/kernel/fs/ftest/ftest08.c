@@ -55,7 +55,6 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include "test.h"
-#include "usctest.h"
 #include "libftest.h"
 
 char *TCID = "ftest08";
@@ -91,15 +90,8 @@ static int local_flag;
 int main(int ac, char *av[])
 {
 	int lc;
-	char *msg;
 
-	/*
-	 * parse standard options
-	 */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_resm(TBROK, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
@@ -135,8 +127,8 @@ static void init(void)
 	fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0666);
 
 	if (fd < 0) {
-		tst_resm(TBROK, "Error %d creating file %s", errno, filename);
-		tst_exit();
+		tst_brkm(TBROK, NULL, "Error %d creating file %s", errno,
+			 filename);
 	}
 
 	close(fd);
@@ -167,10 +159,11 @@ static void runtest(void)
 		if ((child = fork()) == 0) {
 			fd = open(filename, O_RDWR);
 			if (fd < 0) {
-				tst_resm(TFAIL,
-					 "\tTest[%d]: error %d openning %s.", i,
+				tst_brkm(TFAIL,
+					 NULL,
+					 "\tTest[%d]: error %d openning %s.",
+					 i,
 					 errno, filename);
-				tst_exit();
 			}
 			dotest(nchild, i, fd);
 			close(fd);
@@ -234,7 +227,7 @@ int nchunks;
 
 static void dotest(int testers, int me, int fd)
 {
-	char *bits, *buf;
+	char *bits;
 	char val, val0;
 	int count, collide, chunk, whenmisc, xfr, i;
 
@@ -246,18 +239,13 @@ static void dotest(int testers, int me, int fd)
 	struct iovec val0_iovec[MAXIOVCNT];
 	struct iovec val_iovec[MAXIOVCNT];
 	int w_ioveclen;
+	struct stat stat;
 
 	nchunks = max_size / (testers * csize);
 	whenmisc = 0;
 
 	if ((bits = malloc((nchunks + 7) / 8)) == NULL) {
-		tst_resm(TBROK, "\tmalloc failed(bits)");
-		tst_exit();
-	}
-
-	if ((buf = (malloc(csize))) == NULL) {
-		tst_resm(TBROK, "\tmalloc failed(buf)");
-		tst_exit();
+		tst_brkm(TBROK, NULL, "\tmalloc failed(bits)");
 	}
 
 	/* Allocate memory for the iovec buffers and init the iovec arrays */
@@ -268,8 +256,7 @@ static void dotest(int testers, int me, int fd)
 	 */
 	for (i = 0; i < MAXIOVCNT; i++) {
 		if ((r_iovec[i].iov_base = malloc(r_ioveclen)) == NULL) {
-			tst_resm(TBROK, "\tmalloc failed(iov_base)");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "\tmalloc failed(iov_base)");
 		}
 		r_iovec[i].iov_len = r_ioveclen;
 
@@ -277,31 +264,26 @@ static void dotest(int testers, int me, int fd)
 		 * make things more diffult for the OS.
 		 */
 		if (malloc((i + 1) * 8) == NULL) {
-			tst_resm(TBROK, "\tmalloc failed((i+1)*8)");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "\tmalloc failed((i+1)*8)");
 		}
 
 		if ((val0_iovec[i].iov_base = malloc(w_ioveclen)) == NULL) {
-			tst_resm(TBROK, "\tmalloc failed(val0_iovec)");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "\tmalloc failed(val0_iovec)");
 		}
 
 		val0_iovec[i].iov_len = w_ioveclen;
 
 		if (malloc((i + 1) * 8) == NULL) {
-			tst_resm(TBROK, "\tmalloc failed((i+1)*8)");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "\tmalloc failed((i+1)*8)");
 		}
 
 		if ((val_iovec[i].iov_base = malloc(w_ioveclen)) == NULL) {
-			tst_resm(TBROK, "\tmalloc failed(iov_base)");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "\tmalloc failed(iov_base)");
 		}
 		val_iovec[i].iov_len = w_ioveclen;
 
 		if (malloc((i + 1) * 8) == NULL) {
-			tst_resm(TBROK, "\tmalloc failed(((i+1)*8)");
-			tst_exit();
+			tst_brkm(TBROK, NULL, "\tmalloc failed(((i+1)*8)");
 		}
 	}
 
@@ -353,18 +335,16 @@ static void dotest(int testers, int me, int fd)
 			 * Read it.
 			 */
 			if (lseek64(fd, CHUNK(chunk), 0) < 0) {
-				tst_resm(TFAIL,
-					 "\tTest[%d]: lseek64(0) fail at %"
+				tst_brkm(TFAIL,
+					 NULL, "\tTest[%d]: lseek64(0) fail at %"
 					 PRIx64 "x, errno = %d.", me,
 					 CHUNK(chunk), errno);
-				tst_exit();
 			}
 			if ((xfr = readv(fd, &r_iovec[0], MAXIOVCNT)) < 0) {
-				tst_resm(TFAIL,
-					 "\tTest[%d]: readv fail at %" PRIx64
+				tst_brkm(TFAIL,
+					 NULL, "\tTest[%d]: readv fail at %" PRIx64
 					 "x, errno = %d.", me, CHUNK(chunk),
 					 errno);
-				tst_exit();
 			}
 			/*
 			 * If chunk beyond EOF just write on it.
@@ -375,10 +355,10 @@ static void dotest(int testers, int me, int fd)
 				bits[chunk / 8] |= (1 << (chunk % 8));
 			} else if ((bits[chunk / 8] & (1 << (chunk % 8))) == 0) {
 				if (xfr != csize) {
-					tst_resm(TFAIL,
+					tst_brkm(TFAIL,
+						 NULL,
 						 "\tTest[%d]: xfr=%d != %d, zero read.",
 						 me, xfr, csize);
-					tst_exit();
 				}
 				for (i = 0; i < MAXIOVCNT; i++) {
 					if (memcmp
@@ -391,6 +371,10 @@ static void dotest(int testers, int me, int fd)
 							 " for val %d count %d xfr %d.",
 							 me, CHUNK(chunk), val0,
 							 count, xfr);
+						fstat(fd, &stat);
+						tst_resm(TINFO,
+							 "\tStat: size=%llx, ino=%x",
+							 stat.st_size, (unsigned)stat.st_ino);
 						ft_dumpiov(&r_iovec[i]);
 						ft_dumpbits(bits,
 							    (nchunks + 7) / 8);
@@ -401,10 +385,10 @@ static void dotest(int testers, int me, int fd)
 				++count;
 			} else {
 				if (xfr != csize) {
-					tst_resm(TFAIL,
+					tst_brkm(TFAIL,
+						 NULL,
 						 "\tTest[%d]: xfr=%d != %d, val read.",
 						 me, xfr, csize);
-					tst_exit();
 				}
 				++collide;
 				for (i = 0; i < MAXIOVCNT; i++) {
@@ -418,6 +402,10 @@ static void dotest(int testers, int me, int fd)
 							 " for val %d count %d xfr %d.",
 							 me, CHUNK(chunk), val,
 							 count, xfr);
+						fstat(fd, &stat);
+						tst_resm(TINFO,
+							 "\tStat: size=%llx, ino=%x",
+							 stat.st_size, (unsigned)stat.st_ino);
 						ft_dumpiov(&r_iovec[i]);
 						ft_dumpbits(bits,
 							    (nchunks + 7) / 8);
@@ -429,11 +417,10 @@ static void dotest(int testers, int me, int fd)
 			 * Write it.
 			 */
 			if (lseek64(fd, -xfr, 1) < 0) {
-				tst_resm(TFAIL,
-					 "\tTest[%d]: lseek64(1) fail at %"
+				tst_brkm(TFAIL,
+					 NULL, "\tTest[%d]: lseek64(1) fail at %"
 					 PRIx64 ", errno = %d.", me,
 					 CHUNK(chunk), errno);
-				tst_exit();
 			}
 			if ((xfr =
 			     writev(fd, &val_iovec[0], MAXIOVCNT)) < csize) {
@@ -444,11 +431,10 @@ static void dotest(int testers, int me, int fd)
 					fsync(fd);
 					tst_exit();
 				}
-				tst_resm(TFAIL,
-					 "\tTest[%d]: writev fail at %" PRIx64
+				tst_brkm(TFAIL,
+					 NULL, "\tTest[%d]: writev fail at %" PRIx64
 					 "x xfr %d, errno = %d.", me,
 					 CHUNK(chunk), xfr, errno);
-				tst_exit();
 			}
 			/*
 			 * If hit "misc" interval, do it.
@@ -472,21 +458,19 @@ static void dotest(int testers, int me, int fd)
 				if ((bits[i / 8] & (1 << (i % 8))) == 0) {
 					if (lseek64(fd, CHUNK(i), 0) <
 					    (off64_t) 0) {
-						tst_resm(TFAIL,
-							 "\tTest[%d]: lseek64 fail at %"
+						tst_brkm(TFAIL,
+							 NULL, "\tTest[%d]: lseek64 fail at %"
 							 PRIx64
 							 "x, errno = %d.", me,
 							 CHUNK(i), errno);
-						tst_exit();
 					}
 					if (writev(fd, &val_iovec[0], MAXIOVCNT)
 					    != csize) {
-						tst_resm(TFAIL,
-							 "\tTest[%d]: writev fail at %"
+						tst_brkm(TFAIL,
+							 NULL, "\tTest[%d]: writev fail at %"
 							 PRIx64
 							 "x, errno = %d.", me,
 							 CHUNK(i), errno);
-						tst_exit();
 					}
 				}
 			}
@@ -521,9 +505,9 @@ static void domisc(int me, int fd)
 	switch (type) {
 	case m_fsync:
 		if (fsync(fd) < 0) {
-			tst_resm(TFAIL, "\tTest[%d]: fsync error %d.", me,
+			tst_brkm(TFAIL, NULL, "\tTest[%d]: fsync error %d.",
+				 me,
 				 errno);
-			tst_exit();
 		}
 		break;
 	case m_sync:
@@ -552,11 +536,6 @@ static void term(int sig LTP_ATTRIBUTE_UNUSED)
 
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 }

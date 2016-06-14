@@ -66,50 +66,41 @@
  *Kernel should be compiled with proc filesystem support
  ******************************************************************************/
 
-#include "test.h"
-#include "usctest.h"
 #include <errno.h>
 #include <unistd.h>
 #include <syscall.h>
+#include "test.h"
+#include "linux_syscall_numbers.h"
 
 static void setup();
 static void cleanup();
 
-char *TCID = "sysfs01";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "sysfs01";
+int TST_TOTAL = 1;
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-#ifdef __NR_sysfs
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* option 1, buf holds fs name */
-		TEST(syscall(__NR_sysfs, 1, "proc"));
+		TEST(ltp_syscall(__NR_sysfs, 1, "proc"));
 
 		/* check return code */
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL, "sysfs(2) Failed for "
 				 "option 1 and set errno to %d", TEST_ERRNO);
 		} else {
 			tst_resm(TPASS, "sysfs(2) Passed for " "option 1");
 		}
 	}			/*End of TEST_LOOPING */
-#else
-	tst_resm(TWARN,
-		 "This test can only run on kernels that support the sysfs system call");
-#endif
 
 	/*Clean up and exit */
 	cleanup();
@@ -118,7 +109,7 @@ int main(int ac, char **av)
 }
 
 /* setup() - performs all ONE TIME setup for this test */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -132,12 +123,7 @@ void setup()
  * completion or premature exit
  */
 
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

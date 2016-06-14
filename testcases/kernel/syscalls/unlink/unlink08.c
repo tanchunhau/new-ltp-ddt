@@ -117,25 +117,22 @@
 #include <unistd.h>
 #include <string.h>
 #include "test.h"
-#include "usctest.h"
 
-void setup();
-void cleanup();
+void setup(void);
+void cleanup(void);
 
-char *TCID = "unlink08";	/* Test program identifier.    */
-int TST_TOTAL = 3;		/* Total number of test cases. */
+char *TCID = "unlink08";
+int TST_TOTAL = 3;
 
-int exp_enos[] = { 0, 0 };
-
-int unwrite_dir_setup();
-int unsearch_dir_setup();
-int dir_setup();
-int no_setup();
+int unwrite_dir_setup(int flag);
+int unsearch_dir_setup(int flag);
+int dir_setup(int flag);
+int no_setup(int flag);
 
 struct test_case_t {
 	char *pathname;
 	char *desc;
-	int (*setupfunc) ();
+	int (*setupfunc) (int flag);
 	int exp_ret;		/* -1 means error, 0 means != -1 */
 	int exp_errno;
 } Test_cases[] = {
@@ -161,7 +158,6 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	char *fname;
 	char *desc;
 	int ind;
@@ -169,25 +165,19 @@ int main(int ac, char **av)
     /***************************************************************
      * parse standard options
      ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
     /***************************************************************
      * perform global setup for test
      ***************************************************************/
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
     /***************************************************************
      * check looping state if -c option given
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (ind = 0; Test_cases[ind].desc != NULL; ind++) {
 
@@ -202,22 +192,19 @@ int main(int ac, char **av)
 			/* check return code */
 			if (TEST_RETURN == -1) {
 				if (Test_cases[ind].exp_ret == -1) {	/* neg test */
-					if (STD_FUNCTIONAL_TEST) {
-						if (TEST_ERRNO ==
-						    Test_cases[ind].exp_errno)
-							tst_resm(TPASS,
-								 "unlink(<%s>) Failed, errno=%d",
-								 desc,
-								 TEST_ERRNO);
-						else
-							tst_resm(TFAIL,
-								 "unlink(<%s>) Failed, errno=%d, expected errno:%d",
-								 desc,
-								 TEST_ERRNO,
-								 Test_cases
-								 [ind].exp_errno);
-					} else
-						Tst_count++;
+					if (TEST_ERRNO ==
+					    Test_cases[ind].exp_errno)
+						tst_resm(TPASS,
+							 "unlink(<%s>) Failed, errno=%d",
+							 desc,
+							 TEST_ERRNO);
+					else
+						tst_resm(TFAIL,
+							 "unlink(<%s>) Failed, errno=%d, expected errno:%d",
+							 desc,
+							 TEST_ERRNO,
+							 Test_cases
+							 [ind].exp_errno);
 				} else {
 					tst_resm(TFAIL,
 						 "unlink(<%s>) Failed, errno=%d",
@@ -229,30 +216,25 @@ int main(int ac, char **av)
 						 "unlink(<%s>) returned %ld, expected -1, errno:%d",
 						 desc, TEST_RETURN,
 						 Test_cases[ind].exp_errno);
-				} else if (STD_FUNCTIONAL_TEST) {
+				} else {
 					tst_resm(TPASS,
 						 "unlink(<%s>) returned %ld",
 						 desc, TEST_RETURN);
-				} else
-					Tst_count++;
+				}
 				Test_cases[ind].setupfunc(1);
 			}
 		}
 
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
-
 	tst_exit();
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 	int ind;
 	int postest = 0;
@@ -279,16 +261,10 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
 	chmod("unwrite_dir", 0777);
 	chmod("unsearch_dir", 0777);
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 
@@ -297,8 +273,7 @@ void cleanup()
 /******************************************************************
  *
  ******************************************************************/
-int unwrite_dir_setup(flag)
-int flag;
+int unwrite_dir_setup(int flag)
 {
 	int fd;
 
@@ -347,8 +322,7 @@ int flag;
 /******************************************************************
  *
  ******************************************************************/
-int unsearch_dir_setup(flag)
-int flag;
+int unsearch_dir_setup(int flag)
 {
 	int fd;
 
@@ -397,8 +371,7 @@ int flag;
 /******************************************************************
  *
  ******************************************************************/
-int dir_setup(flag)
-int flag;
+int dir_setup(int flag)
 {
 	if (mkdir("regdir", 0777) == -1) {
 		tst_brkm(TBROK, cleanup,
@@ -411,8 +384,7 @@ int flag;
 /******************************************************************
  *
  ******************************************************************/
-int no_setup(flag)
-int flag;
+int no_setup(int flag)
 {
 	return 0;
 }

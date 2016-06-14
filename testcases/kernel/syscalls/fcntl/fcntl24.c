@@ -93,15 +93,12 @@
 #include <string.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "fcntl24";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0, 0 };
+char *TCID = "fcntl24";
+int TST_TOTAL = 1;
 
 char fname[255];
 int fd;
@@ -109,52 +106,34 @@ int fd;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
+	long type;
 
     /***************************************************************
      * parse standard options
      ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
     /***************************************************************
      * perform global setup for test
      ***************************************************************/
 	setup();
 
-	/*
-	 * check if the current filesystem is nfs
-	 */
-	if (tst_is_cwd_nfs()) {
+	switch ((type = tst_fs_type(cleanup, "."))) {
+	case TST_NFS_MAGIC:
+	case TST_RAMFS_MAGIC:
+	case TST_TMPFS_MAGIC:
 		tst_brkm(TCONF, cleanup,
-			 "Cannot do fcntl on a file located on an NFS filesystem");
+			 "Cannot do fcntl on a file on %s filesystem",
+			 tst_fs_type_name(type));
+	break;
 	}
-
-	/*
-	 * check if the current filesystem is tmpfs
-	 */
-	if (tst_is_cwd_tmpfs()) {
-		tst_brkm(TCONF, cleanup,
-			 "Cannot do fcntl on a file located on an TMPFS filesystem");
-	}
-
-	/*
-	 * check if the current filesystem is ramfs
-	 */
-	if (tst_is_cwd_ramfs()) {
-		tst_brkm(TCONF, cleanup,
-			 "Cannot do fcntl on a file located on an RAMFS filesystem");
-	}
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
     /***************************************************************
      * check looping state if -c option given
      ***************************************************************/
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 #ifdef F_SETLEASE
 		/*
@@ -164,28 +143,25 @@ int main(int ac, char **av)
 
 		/* check return code */
 		if (TEST_RETURN == -1) {
-			TEST_ERROR_LOG(TEST_ERRNO);
 			tst_resm(TFAIL,
 				 "fcntl(%s, F_SETLEASE, F_WRLCK) Failed, errno=%d : %s",
 				 fname, TEST_ERRNO, strerror(TEST_ERRNO));
 		} else {
-			if (STD_FUNCTIONAL_TEST) {
-				TEST(fcntl(fd, F_GETLEASE));
-				if (TEST_RETURN != F_WRLCK)
-					tst_resm(TFAIL,
-						 "fcntl(%s, F_GETLEASE) did not return F_WRLCK, returned %ld",
-						 fname, TEST_RETURN);
-				else {
-					TEST(fcntl(fd, F_SETLEASE, F_UNLCK));
-					if (TEST_RETURN != 0)
+			TEST(fcntl(fd, F_GETLEASE));
+			if (TEST_RETURN != F_WRLCK)
+				tst_resm(TFAIL,
+					 "fcntl(%s, F_GETLEASE) did not return F_WRLCK, returned %ld",
+					 fname, TEST_RETURN);
+			else {
+				TEST(fcntl(fd, F_SETLEASE, F_UNLCK));
+				if (TEST_RETURN != 0)
 						tst_resm(TFAIL,
-							 "fcntl(%s, F_SETLEASE, F_UNLCK) did not return 0, returned %ld",
-							 fname, TEST_RETURN);
-					else
-						tst_resm(TPASS,
-							 "fcntl(%s, F_SETLEASE, F_WRLCK)",
-							 fname);
-				}
+						 "fcntl(%s, F_SETLEASE, F_UNLCK) did not return 0, returned %ld",
+						 fname, TEST_RETURN);
+				else
+					tst_resm(TPASS,
+						 "fcntl(%s, F_SETLEASE, F_WRLCK)",
+						 fname);
 			}
 		}
 #else
@@ -193,18 +169,14 @@ int main(int ac, char **av)
 #endif
 	}
 
-    /***************************************************************
-     * cleanup and exit
-     ***************************************************************/
 	cleanup();
 	tst_exit();
-
 }
 
 /***************************************************************
  * setup() - performs all ONE TIME setup for this test.
  ***************************************************************/
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -225,13 +197,8 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  ***************************************************************/
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* close the file we've had open */
 	if (close(fd) == -1) {

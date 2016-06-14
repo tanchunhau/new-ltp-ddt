@@ -81,7 +81,6 @@
 #include <string.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 #include "linux_syscall_numbers.h"
 
 /**************************************************************************/
@@ -97,15 +96,14 @@
 
 #define INVALID_VERSION 0
 
-static void setup();
-static void cleanup();
+static void setup(void);
+static void cleanup(void);
 static void test_setup(int, char *);
-static void child_func();
+static void child_func(void);
 
 static pid_t child_pid = -1;
 
-char *TCID = "capset02";	/* Test program identifier.    */
-static int exp_enos[] = { EFAULT, EINVAL, EPERM, 0 };
+char *TCID = "capset02";
 
 static struct __user_cap_header_struct header;
 static struct __user_cap_data_struct data;
@@ -132,10 +130,8 @@ int main(int ac, char **av)
 {
 
 	int lc, i;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&child_func, "");
 #endif
@@ -144,7 +140,7 @@ int main(int ac, char **av)
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 #ifdef UCLINUX
 		i = 2;
@@ -155,7 +151,7 @@ int main(int ac, char **av)
 		for (; i < TST_TOTAL; i++) {
 
 			test_setup(i, av[0]);
-			TEST(syscall(__NR_capset, test_cases[i].headerp,
+			TEST(ltp_syscall(__NR_capset, test_cases[i].headerp,
 				     test_cases[i].datap));
 
 			if (TEST_RETURN == -1 &&
@@ -176,10 +172,9 @@ int main(int ac, char **av)
 
 }
 
-void setup()
+void setup(void)
 {
-
-	TEST_EXP_ENOS(exp_enos);
+	tst_require_root();
 
 	TEST_PAUSE;
 
@@ -188,22 +183,19 @@ void setup()
 	 * header.version must be _LINUX_CAPABILITY_VERSION
 	 */
 	header.version = _LINUX_CAPABILITY_VERSION;
-	if (syscall(__NR_capget, &header, &data) == -1) {
+	if (ltp_syscall(__NR_capget, &header, &data) == -1)
 		tst_brkm(TBROK | TERRNO, NULL, "capget failed");
-	}
-
 }
 
-void cleanup()
+void cleanup(void)
 {
 	if (0 < child_pid) {
 		kill(child_pid, SIGTERM);
 		wait(NULL);
 	}
-	TEST_CLEANUP;
 }
 
-void child_func()
+void child_func(void)
 {
 	for (;;) {
 		sleep(10);

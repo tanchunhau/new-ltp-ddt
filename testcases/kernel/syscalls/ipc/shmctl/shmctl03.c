@@ -62,10 +62,6 @@
 #include <sys/wait.h>
 
 char *TCID = "shmctl03";
-
-int exp_enos[] = { EACCES, EPERM, 0 };	/* 0 terminated list of */
-
-					/* expected errnos      */
 int shm_id_1 = -1;
 
 uid_t ltp_uid;
@@ -89,17 +85,14 @@ struct test_case_t {
 	{
 &shm_id_1, IPC_RMID, &buf, EPERM},};
 
-int TST_TOTAL = (sizeof(TC) / sizeof(*TC));
+int TST_TOTAL = ARRAY_SIZE(TC);
 
 int main(int ac, char **av)
 {
-	char *msg;
 	int pid;
 	void do_child(void);
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
@@ -134,15 +127,15 @@ int main(int ac, char **av)
 /*
  * do_child - make the call as the child process
  */
-void do_child()
+void do_child(void)
 {
 	int i, lc;
 
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -156,8 +149,6 @@ void do_child()
 				tst_resm(TFAIL, "call succeeded unexpectedly");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == TC[i].error) {
 				tst_resm(TPASS, "expected failure - errno = "
@@ -177,13 +168,9 @@ void do_child()
  */
 void setup(void)
 {
-	/* check for root as process owner */
-	check_root();
+	tst_require_root();
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -214,10 +201,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

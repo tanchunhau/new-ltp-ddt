@@ -53,20 +53,18 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 
-void setup();
-void cleanup();
+static void setup(void);
+static void cleanup(void);
 
 char *TCID = "setpgid02";
 int TST_TOTAL = 3;
 
-pid_t pgid, pid;
-pid_t bad_pid = -1;
-pid_t zero_pid = 0;
-pid_t inval_pid = 99999;
-
-int exp_enos[] = { EINVAL, ESRCH, EPERM, 0 };
+static pid_t pgid, pid;
+static pid_t bad_pid = -1;
+static pid_t zero_pid;
+static pid_t unused_pid;
+static pid_t inval_pid = 99999;
 
 struct test_case_t {
 	pid_t *pid;
@@ -78,7 +76,7 @@ struct test_case_t {
 	&pid, &bad_pid, EINVAL},
 	    /* pid doesn't match any process - ESRCH */
 	{
-	&bad_pid, &pgid, ESRCH},
+	&unused_pid, &pgid, ESRCH},
 	    /* pgid doesn't exist - EPERM */
 	{
 	&zero_pid, &inval_pid, EPERM}
@@ -87,22 +85,16 @@ struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set up the expected errnos */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
@@ -113,8 +105,6 @@ int main(int ac, char **av)
 				tst_resm(TFAIL, "call succeeded unexpectedly");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == TC[i].error) {
 				tst_resm(TPASS, "expected failure - "
@@ -135,7 +125,7 @@ int main(int ac, char **av)
 /*
  * setup - performs all ONE TIME setup for this test
  */
-void setup()
+static void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -144,18 +134,15 @@ void setup()
 
 	pgid = getpgrp();
 	pid = getpid();
+
+	unused_pid = tst_get_unused_pid(cleanup);
 }
 
 /*
  * cleanup - Performs all ONE TIME cleanup for this test at completion or
  * 	     premature exit
  */
-void cleanup()
+static void cleanup(void)
 {
-	/*
-	 * print timing status if that option was specified
-	 * print errno log if that option was specified
-	 */
-	TEST_CLEANUP;
 
 }

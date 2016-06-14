@@ -58,21 +58,13 @@
 #include <sys/syscall.h>
 #include <errno.h>
 
-/* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
+#include "lapi/fcntl.h"
 #include "linux_syscall_numbers.h"
 
-#ifndef O_CLOEXEC
-#define O_CLOEXEC 02000000
-#endif
-
-/* Extern Global Variables */
-
-/* Global Variables */
-char *TCID = "pipe2_02";	/* test program identifier.              */
+char *TCID = "pipe2_02";
 int testno;
-int TST_TOTAL = 1;		/* total number of tests in this file.   */
+int TST_TOTAL = 1;
 
 /* Extern Global Functions */
 /******************************************************************************/
@@ -92,10 +84,9 @@ int TST_TOTAL = 1;		/* total number of tests in this file.   */
 /*              On success - Exits calling tst_exit(). With '0' return code.  */
 /*                                                                            */
 /******************************************************************************/
-extern void cleanup()
+void cleanup(void)
 {
 
-	TEST_CLEANUP;
 	tst_rmdir();
 
 }
@@ -118,7 +109,7 @@ extern void cleanup()
 /*              On success - returns 0.                                       */
 /*                                                                            */
 /******************************************************************************/
-void setup()
+void setup(void)
 {
 	/* Capture signals if any */
 	/* Create temporary directories */
@@ -130,64 +121,49 @@ int main(int argc, char *argv[])
 {
 	int fds[2], fl, i;
 	int lc;
-	char *msg;
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 	if ((tst_kvercmp(2, 6, 27)) < 0) {
-		tst_resm(TCONF,
+		tst_brkm(TCONF,
+			 NULL,
 			 "This test can only run on kernels that are 2.6.27 and higher");
-		tst_exit();
 	}
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
-			if (syscall(__NR_pipe2, fds, 0) == -1) {
-				tst_resm(TFAIL, "pipe2(0) failed");
-				cleanup();
-				tst_exit();
+			if (ltp_syscall(__NR_pipe2, fds, 0) == -1) {
+				tst_brkm(TFAIL, cleanup, "pipe2(0) failed");
 			}
 			for (i = 0; i < 2; ++i) {
 				fl = fcntl(fds[i], F_GETFL);
 				if (fl == -1) {
 					tst_brkm(TBROK, cleanup,
 						 "fcntl failed");
-					tst_exit();
 				}
 				if (fl & O_NONBLOCK) {
-					tst_resm(TFAIL,
-						 "pipe2(0) set non-blocking mode for fds[%d]",
+					tst_brkm(TFAIL,
+						 cleanup, "pipe2(0) set non-blocking mode for fds[%d]",
 						 i);
-					cleanup();
-					tst_exit();
 				}
 				close(fds[i]);
 			}
 
-			if (syscall(__NR_pipe2, fds, O_NONBLOCK) == -1) {
-				tst_resm(TFAIL, "pipe2(O_NONBLOCK) failed");
-				cleanup();
-				tst_exit();
+			if (ltp_syscall(__NR_pipe2, fds, O_NONBLOCK) == -1) {
+				tst_brkm(TFAIL, cleanup,
+					 "pipe2(O_NONBLOCK) failed");
 			}
 			for (i = 0; i < 2; ++i) {
 				fl = fcntl(fds[i], F_GETFL);
 				if (fl == -1) {
 					tst_brkm(TBROK, cleanup,
 						 "fcntl failed");
-					tst_exit();
 				}
 				if ((fl & O_NONBLOCK) == 0) {
-					tst_resm(TFAIL,
-						 "pipe2(O_NONBLOCK) does not set non-blocking mode for fds[%d]\n",
+					tst_brkm(TFAIL,
+						 cleanup, "pipe2(O_NONBLOCK) does not set non-blocking mode for fds[%d]\n",
 						 i);
-					cleanup();
-					tst_exit();
 				}
 				close(fds[i]);
 			}

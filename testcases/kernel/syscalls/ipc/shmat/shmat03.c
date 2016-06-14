@@ -61,8 +61,6 @@
 char *TCID = "shmat03";
 int TST_TOTAL = 1;
 
-int exp_enos[] = { EACCES, 0 };	/* 0 terminated list of expected errnos */
-
 int shm_id_1 = -1;
 
 void *addr;			/* for result of shmat-call */
@@ -74,12 +72,9 @@ static void do_child(void);
 
 int main(int ac, char **av)
 {
-	char *msg;
 	int pid;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();		/* global setup */
 
@@ -121,22 +116,20 @@ static void do_child(void)
 	/* The following loop checks looping state if -i option given */
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * use TEST macro to make the call
 		 */
 		errno = 0;
-		addr = shmat(shm_id_1, (const void *)0, 0);
+		addr = shmat(shm_id_1, NULL, 0);
 		TEST_ERRNO = errno;
 
 		if (addr != (char *)-1) {
 			tst_resm(TFAIL, "call succeeded unexpectedly");
 			continue;
 		}
-
-		TEST_ERROR_LOG(TEST_ERRNO);
 
 		switch (TEST_ERRNO) {
 		case EACCES:
@@ -155,13 +148,9 @@ static void do_child(void)
  */
 void setup(void)
 {
-	/* check for root as process owner */
-	check_root();
+	tst_require_root();
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -191,10 +180,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

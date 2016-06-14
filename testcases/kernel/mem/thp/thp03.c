@@ -44,10 +44,10 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "mem.h"
 #include "safe_macros.h"
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "thp03";
 int TST_TOTAL = 1;
@@ -63,16 +63,13 @@ static long page_size;
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		thp_test();
 	}
@@ -93,8 +90,15 @@ static void thp_test(void)
 	memset(p, 0x00, unaligned_size);
 	if (mprotect(p, unaligned_size, PROT_NONE) == -1)
 		tst_brkm(TBROK | TERRNO, cleanup, "mprotect");
-	if (madvise(p + hugepage_size, page_size, MADV_MERGEABLE) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "madvise");
+
+	if (madvise(p + hugepage_size, page_size, MADV_MERGEABLE) == -1) {
+		if (errno == EINVAL) {
+			tst_brkm(TCONF, cleanup,
+			         "MADV_MERGEABLE is not enabled/supported");
+		} else {
+			tst_brkm(TBROK | TERRNO, cleanup, "madvise");
+		}
+	}
 
 	switch (fork()) {
 	case -1:
@@ -109,6 +113,9 @@ static void thp_test(void)
 
 void setup(void)
 {
+	if (access(PATH_THP, F_OK) == -1)
+		tst_brkm(TCONF, NULL, "THP not enabled in kernel?");
+
 	hugepage_size = read_meminfo("Hugepagesize:") * KB;
 	unaligned_size = hugepage_size * 4 - 1;
 	page_size = SAFE_SYSCONF(NULL, _SC_PAGESIZE);
@@ -119,7 +126,6 @@ void setup(void)
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
 }
 
 #else

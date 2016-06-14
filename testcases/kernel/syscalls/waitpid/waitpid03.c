@@ -54,7 +54,6 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 
 static void do_child(int);
 static void setup(void);
@@ -65,6 +64,8 @@ int TST_TOTAL = 1;
 
 #define	MAXUPRC	25
 
+static int ikids;
+static int pid[MAXUPRC];
 static int condition_number;
 
 #ifdef UCLINUX
@@ -75,13 +76,10 @@ static int ikids_uclinux;
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
-	int status, pid[25], ret;
+	int status, ret;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&do_child, "d", &ikids_uclinux);
 #endif
@@ -90,9 +88,8 @@ int main(int argc, char **argv)
 
 	/* check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		int ikids = 0;
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		/*
 		 * Set SIGTERM to SIG_DFL as test driver sets up to ignore
@@ -110,7 +107,9 @@ int main(int argc, char **argv)
 				if (DEBUG)
 					tst_resm(TINFO, "child # %d", ikids);
 			} else if (pid[ikids] == -1) {
-				tst_resm(TFAIL, "cannot open fork #%d", ikids);
+				tst_brkm(TBROK|TERRNO, cleanup, "cannot open "
+					"fork #%d", ikids);
+
 			} else {
 #ifdef UCLINUX
 				if (self_exec(argv[0], "d", ikids) < 0) {
@@ -126,9 +125,10 @@ int main(int argc, char **argv)
 		for (ikids = 1; ikids < MAXUPRC; ikids++) {
 			if (DEBUG)
 				tst_resm(TINFO, "Killing #%d", ikids);
-			kill(pid[ikids], 15);
+			kill(pid[ikids], SIGTERM);
 		}
 
+		ikids = 0;
 		condition_number = 1;
 
 		/* Wait on one specific child */
@@ -189,5 +189,6 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
+	while (ikids-- > 1)
+		kill(pid[ikids], SIGKILL);
 }

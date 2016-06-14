@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Cyril Hrubis chrubis@suse.cz
+ * Copyright (C) 2012-2014 Cyril Hrubis chrubis@suse.cz
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -22,21 +22,21 @@
  */
 
  /*
-  
+
    These functions helps you wait till a process with given pid changes state.
    This is for example useful when you need to wait in parent until child
    blocks.
 
   */
 
-#ifndef TST_PROCESS_STATE
-#define TST_PROCESS_STATE
+#ifndef TST_PROCESS_STATE__
+#define TST_PROCESS_STATE__
 
-#include "test.h"
+#include <unistd.h>
 
 /*
  * Waits for process state change.
- * 
+ *
  * The state is one of the following:
  *
  * R - process is running
@@ -45,12 +45,28 @@
  * Z - zombie process
  * T - process is traced
  */
-#define TST_PROCESS_STATE_WAIT(cleanup_fn, pid, state) \
-	tst_process_state_wait(__FILE__, __LINE__, (cleanup_fn), \
+#ifdef TST_TEST_H__
+
+#define TST_PROCESS_STATE_WAIT(pid, state) \
+	tst_process_state_wait(__FILE__, __LINE__, NULL, \
 	                       (pid), (state))
+#else
+/*
+ * The same as above but does not use tst_brkm() interface.
+ *
+ * This function is intended to be used from child processes.
+ *
+ * Returns zero on success, non-zero on failure.
+ */
+int tst_process_state_wait2(pid_t pid, const char state);
+
+# define TST_PROCESS_STATE_WAIT(cleanup_fn, pid, state) \
+	 tst_process_state_wait(__FILE__, __LINE__, (cleanup_fn), \
+	                        (pid), (state))
+#endif
 
 void tst_process_state_wait(const char *file, const int lineno,
                             void (*cleanup_fn)(void),
                             pid_t pid, const char state);
 
-#endif /* TST_PROCESS_STATE */
+#endif /* TST_PROCESS_STATE__ */

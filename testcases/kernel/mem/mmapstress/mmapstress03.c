@@ -45,7 +45,6 @@
 
 /*****  LTP Port        *****/
 #include "test.h"
-#include "usctest.h"
 #define FAILED 0
 #define PASSED 1
 
@@ -216,17 +215,15 @@ void do_test(caddr_t brk_max, long pagesize)
 }
 
 /*****  LTP Port        *****/
-void ok_exit()
+void ok_exit(void)
 {
 	tst_resm(TPASS, "Test passed");
 	tst_exit();
 }
 
-int anyfail()
+int anyfail(void)
 {
-	tst_resm(TFAIL, "Test failed");
-	tst_exit();
-	return 0;
+	tst_brkm(TFAIL, NULL, "Test failed");
 }
 
 /*****  **      **      *****/

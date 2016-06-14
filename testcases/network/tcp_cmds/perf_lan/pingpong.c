@@ -47,7 +47,6 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include "test.h"
-#include "usctest.h"
 #include "netdefs.h"
 
 #define	MAXPACKET	4096	/* max packet size */
@@ -133,9 +132,8 @@ int main(int argc, char *argv[])
 #endif
 			hostname = hp->h_name;
 		} else {
-			tst_resm(TBROK, "%s: unknown host, couldn't get "
+			tst_brkm(TBROK, NULL, "%s: unknown host, couldn't get "
 				 "address", argv[0]);
-			tst_exit();
 		}
 
 	}
@@ -146,16 +144,14 @@ int main(int argc, char *argv[])
 	if (argc >= 3)
 		datalen = atoi(argv[2]);
 	if (datalen < 0) {
-		tst_resm(TBROK, "datalen must be an integer.");
-		tst_exit();
+		tst_brkm(TBROK, NULL, "datalen must be an integer.");
 	} else
 		datalen = 64;
 
 	datalen -= 8;
 
 	if (datalen > MAXPACKET) {
-		tst_resm(TBROK, "packet size too large");
-		tst_exit();
+		tst_brkm(TBROK, NULL, "packet size too large");
 	}
 	if (datalen >= sizeof(struct timeval))
 		timing = 1;
@@ -210,7 +206,7 @@ int main(int argc, char *argv[])
 		while (1) {
 
 			len = sizeof(packet);
-			size_t cc;
+			ssize_t cc;
 			socklen_t fromlen;
 
 			/* Receive packet from socket */
@@ -242,7 +238,7 @@ int echopkt(int datalen, int npackets)
 	static uint8_t outpack[MAXPACKET];
 	register icmp_t *icp = (icmp_t *) outpack;
 	int i;
-	size_t cc;
+	ssize_t cc;
 
 	register u_char *datap = &outpack[8];
 
@@ -285,7 +281,7 @@ int echopkt(int datalen, int npackets)
 		if (i < 0 || i != cc) {
 			if (i < 0)
 				perror("sendto");
-			tst_resm(TINFO, "wrote %s %d chars, ret=%d",
+			tst_resm(TINFO, "wrote %s %zd chars, ret=%d",
 				 hostname, cc, i);
 			fflush(stdout);
 		}

@@ -52,11 +52,9 @@
 #include <netinet/in.h>
 
 #include "test.h"
-#include "usctest.h"
 
-char *TCID = "socket01";	/* Test program identifier.    */
+char *TCID = "socket01";
 int testno;
-int exp_enos[] = { EINVAL, EPERM, EPROTONOSUPPORT, 0 };
 
 void setup(void), cleanup(void);
 
@@ -80,32 +78,25 @@ struct test_case_t {		/* test case structure */
 	PF_INET, SOCK_STREAM, 6, 0, 0, "TCP socket"}, {
 PF_INET, SOCK_STREAM, 1, -1, ESOCKTNOSUPPORT, "ICMP stream"},};
 
-int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);	/* Total number of test cases. */
+int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);
 
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
 	int s;
 
-	/* Parse standard options given to run the test. */
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
-		Tst_count = 0;
+		tst_count = 0;
 		for (testno = 0; testno < TST_TOTAL; ++testno) {
 			TEST((s = socket(tdat[testno].domain, tdat[testno].type,
 					 tdat[testno].proto)));
 			if (TEST_RETURN >= 0) {
 				TEST_RETURN = 0;	/* > 0 equivalent */
 			} else {
-				TEST_ERROR_LOG(TEST_ERRNO);
 			}
 			if (TEST_RETURN != tdat[testno].retval || (TEST_RETURN < 0 && (TEST_ERRNO != tdat[testno].experrno && TEST_ERRNO != EPROTONOSUPPORT))) {	/* Change for defect 21065 for kernel change */
 				tst_resm(TFAIL, "%s ; returned"	/* of return code for this test but don't want */
@@ -127,14 +118,10 @@ int main(int argc, char *argv[])
 
 void setup(void)
 {
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
-	TEST_PAUSE;		/* if -P option specified */
+	TEST_PAUSE;
 }
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 }

@@ -68,15 +68,12 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 
-char *TCID = "nice04";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "nice04";
+int TST_TOTAL = 1;
 
 char nobody_uid[] = "nobody";
 struct passwd *ltpuser;
-
-int exp_enos[] = { EPERM, 0 };
 
 struct test_case_t {		/* test case struct. to hold ref. test cond's */
 	int nice_val;
@@ -93,22 +90,17 @@ void cleanup();			/* cleanup function for the test */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 	int incr_val;		/* nice value for the process */
 	char *test_desc;	/* test specific error message */
 
-	/* Parse standard options given to run the test. */
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; i++) {
 			incr_val = Test_cases[i].nice_val;
@@ -122,7 +114,6 @@ int main(int ac, char **av)
 
 			/* check return code from nice(2) */
 			if (TEST_RETURN == -1) {
-				TEST_ERROR_LOG(TEST_ERRNO);
 				tst_resm(TPASS, "nice(2) returned %ld for %s",
 					 TEST_RETURN, test_desc);
 			} else {
@@ -142,15 +133,13 @@ int main(int ac, char **av)
  * setup() - performs all ONE TIME setup for this test.
  *  Make sure the test process uid is non-root only.
  */
-void setup()
+void setup(void)
 {
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	ltpuser = getpwnam(nobody_uid);
 	if (setuid(ltpuser->pw_uid) == -1) {
 		tst_resm(TINFO, "setuid failed to "
@@ -165,12 +154,7 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *             completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

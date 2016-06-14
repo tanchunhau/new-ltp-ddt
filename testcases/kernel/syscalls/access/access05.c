@@ -18,8 +18,6 @@
  */
 
 /*
- * Test Name: access05
- *
  * Test Description:
  *  Verify that,
  *   1. access() fails with -1 return value and sets errno to EACCES
@@ -34,46 +32,12 @@
  *	if the specified file doesn't exist (or pathname is NULL).
  *   5. access() fails with -1 return value and sets errno to ENAMETOOLONG
  *      if the pathname size is > PATH_MAX characters.
+ *   6. access() fails with -1 return value and sets errno to ENOTDIR
+ *      if a component used as a directory in pathname is not a directory.
+ *   7. access() fails with -1 return value and sets errno to ELOOP
+ *      if too many symbolic links were encountered in resolving pathname.
  *
- * Expected Result:
- *  access() should fail with return value -1 and set expected errno.
- *
- * Algorithm:
- *  Setup:
- *   Setup signal handling.
- *   Create temporary directory.
- *   Pause for SIGUSR1 if option specified.
- *
- *  Test:
- *   Loop if the proper options are given.
- *   Execute system call
- *   Check return code, if system call failed (return=-1)
- *	if errno set == expected errno
- *		Issue sys call fails with expected return value and errno.
- *	Otherwise,
- *		Issue sys call fails with unexpected errno.
- *   Otherwise,
- *	Issue sys call returns unexpected value.
- *
- *  Cleanup:
- *   Print errno log and/or timing stats if options given
- *   Delete the temporary directory(s)/file(s) created.
- *
- * Usage:  <for command-line>
- *  access05 [-c n] [-e] [-i n] [-I x] [-P x] [-t]
- *     where,  -c n : Run n copies concurrently.
- *             -e   : Turn on errno logging.
- *	       -i n : Execute test n times.
- *	       -I x : Execute test for x seconds.
- *	       -P x : Pause for x seconds between iterations.
- *	       -t   : Turn on syscall timing.
- *
- * HISTORY
- *	07/2001 Ported by Wayne Boyer
- *
- * RESTRICTIONS:
- *  This test should be run by 'non-super-user' only.
- *
+ *   07/2001 Ported by Wayne Boyer
  */
 
 #include <stdio.h>
@@ -88,134 +52,83 @@
 #include <pwd.h>
 
 #include "test.h"
-#include "usctest.h"
+#include "safe_macros.h"
 
 #define INV_OK		-1
 #define TEST_FILE1	"test_file1"
 #define TEST_FILE2	"test_file2"
 #define TEST_FILE3	"test_file3"
 #define TEST_FILE4	"test_file4"
+#define TEST_FILE5	"test_file5/test_file5"
+#define TEST_FILE6	"test_file6"
 
-#define FILE_MODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
-
-void setup1();			/* setup() to test access() for EACCES */
-void setup2();			/* setup() to test access() for EACCES */
-void setup3();			/* setup() to test access() for EACCES */
-void setup4();			/* setup() to test access() for EINVAL */
-void longpath_setup();		/* setup function to test access() for ENAMETOOLONG */
 
 #if !defined(UCLINUX)
-char high_address_node[64];
+static char high_address_node[64];
 #endif
 
-char Longpathname[PATH_MAX + 2];
+static char longpathname[PATH_MAX + 2];
 
-struct test_case_t {		/* test case structure */
+static struct test_case_t {
 	char *pathname;
 	int a_mode;
 	int exp_errno;
-	void (*setupfunc) (void);
 } test_cases[] = {
-	{
-	TEST_FILE1, R_OK, EACCES, setup1}, {
-	TEST_FILE2, W_OK, EACCES, setup2}, {
-	TEST_FILE3, X_OK, EACCES, setup3}, {
-	TEST_FILE4, INV_OK, EINVAL, setup4},
+	{TEST_FILE1, R_OK, EACCES},
+	{TEST_FILE2, W_OK, EACCES},
+	{TEST_FILE3, X_OK, EACCES},
+	{TEST_FILE4, INV_OK, EINVAL},
 #if !defined(UCLINUX)
-	{
-	(char *)-1, R_OK, EFAULT, NULL}, {
-	high_address_node, R_OK, EFAULT, NULL},
+	{(char *)-1, R_OK, EFAULT},
+	{high_address_node, R_OK, EFAULT},
 #endif
-	{
-	"", W_OK, ENOENT, NULL}, {
-Longpathname, R_OK, ENAMETOOLONG, longpath_setup},};
+	{"", W_OK, ENOENT},
+	{longpathname, R_OK, ENAMETOOLONG},
+	{TEST_FILE5, R_OK, ENOTDIR},
+	{TEST_FILE6, R_OK, ELOOP},
+};
 
-char *TCID = "access05";	/* Test program identifier.    */
-int TST_TOTAL = sizeof(test_cases) / sizeof(*test_cases);
-int exp_enos[] = { EACCES, EFAULT, EINVAL, ENOENT, ENAMETOOLONG, 0 };
+char *TCID = "access05";
+int TST_TOTAL = ARRAY_SIZE(test_cases);
 
-char nobody_uid[] = "nobody";
-struct passwd *ltpuser;
+static const char nobody_uid[] = "nobody";
+static struct passwd *ltpuser;
 
-void setup();			/* Main setup function of test */
-void cleanup();			/* cleanup function for the test */
+static void setup(void);
+static void access_verify(int i);
+static void cleanup(void);
 
-char *bad_addr = 0;
+static char *bad_addr;
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
-	char *file_name;	/* name of the testfile */
-	int access_mode;	/* specified access mode for testfile */
 	int i;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
+		tst_count = 0;
 
-		Tst_count = 0;
-
-		for (i = 0; i < TST_TOTAL; i++) {
-			file_name = test_cases[i].pathname;
-			access_mode = test_cases[i].a_mode;
-
-#if !defined(UCLINUX)
-			if (file_name == high_address_node)
-				file_name = get_high_address();
-#endif
-
-			/*
-			 * Call access(2) to test different test conditions.
-			 * verify that it fails with -1 return value and
-			 * sets appropriate errno.
-			 */
-			TEST(access(file_name, access_mode));
-
-			if (TEST_RETURN != -1) {
-				tst_resm(TFAIL,
-					 "access(%s, %#o) succeeded unexpectedly",
-					 file_name, access_mode);
-				continue;
-			}
-
-			if (TEST_ERRNO == test_cases[i].exp_errno)
-				tst_resm(TPASS | TTERRNO,
-					 "access failed as expected");
-			else
-				tst_resm(TFAIL | TTERRNO,
-					 "access failed unexpectedly; expected: "
-					 "%d - %s",
-					 test_cases[i].exp_errno,
-					 strerror(test_cases[i].exp_errno));
-		}
+		for (i = 0; i < TST_TOTAL; i++)
+			access_verify(i);
 	}
 
 	cleanup();
-
 	tst_exit();
-
 }
 
-void setup()
+static void setup(void)
 {
-	int i;
+	int fd;
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
+	tst_require_root();
 
-	tst_require_root(NULL);
-
-	ltpuser = getpwnam(nobody_uid);
-	if (ltpuser == NULL)
-		tst_brkm(TBROK | TERRNO, NULL, "getpwnam failed");
-	if (setuid(ltpuser->pw_uid) == -1)
-		tst_brkm(TBROK | TERRNO, NULL, "setuid failed");
-
+	ltpuser = SAFE_GETPWNAM(cleanup, nobody_uid);
+	SAFE_SETUID(cleanup, ltpuser->pw_uid);
 	TEST_PAUSE;
 
 #if !defined(UCLINUX)
@@ -223,115 +136,81 @@ void setup()
 			MAP_PRIVATE_EXCEPT_UCLINUX | MAP_ANONYMOUS, 0, 0);
 	if (bad_addr == MAP_FAILED)
 		tst_brkm(TBROK | TERRNO, NULL, "mmap failed");
-	test_cases[5].pathname = bad_addr;
+	test_cases[4].pathname = bad_addr;
+
+	test_cases[5].pathname = get_high_address();
 #endif
 
 	tst_tmpdir();
 
-	for (i = 0; i < TST_TOTAL; i++)
-		if (test_cases[i].setupfunc != NULL)
-			test_cases[i].setupfunc();
-}
-
-void setup_file(const char *file, mode_t perms)
-{
-	int fd;			/* file handle for testfile */
-
-	if ((fd = open(file, O_RDWR | O_CREAT, FILE_MODE)) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup,
-			 "open(%s, O_RDWR|O_CREAT, %#o) failed",
-			 file, FILE_MODE);
-
-	if (fchmod(fd, perms) < 0)
-		tst_brkm(TBROK | TERRNO, cleanup, "chmod(%s, %#o) failed",
-			 file, perms);
-	if (close(fd) == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "close(%s) failed", file);
-}
-
-/*
- * setup1() - Setup function to test access() for return value -1
- *	      and errno EACCES when read access denied for specified
- *	      testfile.
- *
- *   Creat/open a testfile and close it.
- *   Deny read access permissions on testfile.
- *   This function returns 0.
- */
-void setup1()
-{
-	setup_file(TEST_FILE1, 0333);
-}
-
-/*
- * setup2() - Setup function to test access() for return value -1 and
- *	      errno EACCES when write access denied on testfile.
- *
- *   Creat/open a testfile and close it.
- *   Deny write access permissions on testfile.
- *   This function returns 0.
- */
-void setup2()
-{
-	setup_file(TEST_FILE2, 0555);
-}
-
-/*
- * setup3() - Setup function to test access() for return value -1 and
- *	      errno EACCES when execute access denied on testfile.
- *
- *   Creat/open a testfile and close it.
- *   Deny search access permissions on testfile.
- *   This function returns 0.
- */
-void setup3()
-{
-	setup_file(TEST_FILE3, 0666);
-}
-
-/*
- * setup4() - Setup function to test access() for return value -1
- *	      and errno EINVAL when specified access mode argument is
- *	      invalid.
- *
- *   Creat/open a testfile and close it.
- *   This function returns 0.
- */
-void setup4()
-{
-	setup_file(TEST_FILE4, FILE_MODE);
-}
-
-/*
- * longpath_setup() - setup to create a node with a name length exceeding
- *		      the MAX. length of PATH_MAX.
- */
-void longpath_setup()
-{
-	int i;
-
-	for (i = 0; i <= (PATH_MAX + 1); i++)
-		Longpathname[i] = 'a';
-}
-
-/*
- * cleanup() - performs all ONE TIME cleanup for this test at
- *             completion or premature exit.
- *
- *  Remove the test directory and testfile created in the setup.
- */
-void cleanup()
-{
 	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
+	 * create TEST_FILE1 to test R_OK EACCESS
 	 */
-	TEST_CLEANUP;
+	fd = SAFE_CREAT(cleanup, TEST_FILE1, 0333);
+	SAFE_CLOSE(cleanup, fd);
 
 	/*
-	 * Delete the test directory/file and temporary directory
-	 * created in the setup.
+	 * create TEST_FILE2 to test W_OK EACCESS
 	 */
+	fd = SAFE_CREAT(cleanup, TEST_FILE2, 0555);
+	SAFE_CLOSE(cleanup, fd);
+
+	/*
+	 * create TEST_FILE3 to test X_OK EACCESS
+	 */
+	fd = SAFE_CREAT(cleanup, TEST_FILE3, 0666);
+	SAFE_CLOSE(cleanup, fd);
+
+	/*
+	 * create TEST_FILE4 to test EINVAL
+	 */
+	fd = SAFE_CREAT(cleanup, TEST_FILE4, 0333);
+	SAFE_CLOSE(cleanup, fd);
+
+	/*
+	 *setup to create a node with a name length exceeding
+	 *the MAX length of PATH_MAX.
+	 */
+	memset(longpathname, 'a', sizeof(longpathname) - 1);
+
+	/* create test_file5 for test ENOTDIR. */
+	SAFE_TOUCH(cleanup, "test_file5", 0644, NULL);
+
+	/*
+	 * create two symbolic links who point to each other for
+	 * test ELOOP.
+	 */
+	SAFE_SYMLINK(cleanup, "test_file6", "test_file7");
+	SAFE_SYMLINK(cleanup, "test_file7", "test_file6");
+}
+
+static void access_verify(int i)
+{
+	char *file_name;
+	int access_mode;
+
+	file_name = test_cases[i].pathname;
+	access_mode = test_cases[i].a_mode;
+
+	TEST(access(file_name, access_mode));
+
+	if (TEST_RETURN != -1) {
+		tst_resm(TFAIL, "access(%s, %#o) succeeded unexpectedly",
+			 file_name, access_mode);
+		return;
+	}
+
+	if (TEST_ERRNO == test_cases[i].exp_errno) {
+		tst_resm(TPASS | TTERRNO, "access failed as expected");
+	} else {
+		tst_resm(TFAIL | TTERRNO,
+			 "access failed unexpectedly; expected: "
+			 "%d - %s", test_cases[i].exp_errno,
+			 strerror(test_cases[i].exp_errno));
+	}
+}
+
+static void cleanup(void)
+{
 	tst_rmdir();
-
 }

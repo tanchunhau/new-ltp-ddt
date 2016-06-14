@@ -67,11 +67,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "test.h"
-#include "usctest.h"
 #include "mem.h"
 
 char *TCID = "ksm04";
 int TST_TOTAL = 1;
+
+static int merge_across_nodes;
 
 #if HAVE_NUMA_H && HAVE_LINUX_MEMPOLICY_H && HAVE_NUMAIF_H \
 	&& HAVE_MPOL_CONSTANTS
@@ -85,27 +86,24 @@ option_t ksm_options[] = {
 int main(int argc, char *argv[])
 {
 	int lc;
-	char *msg;
 	int size = 128, num = 3, unit = 1;
-	unsigned long nmask = 0;
+	unsigned long nmask[MAXNODES / BITS_PER_LONG] = { 0 };
 	unsigned int node;
 
-	msg = parse_opts(argc, argv, ksm_options, ksm_usage);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, ksm_options, ksm_usage);
 
 	node = get_a_numa_node(tst_exit);
-	nmask = 1 << node;
+	set_node(nmask, node);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 		check_ksm_options(&size, &num, &unit);
 
 		write_memcg();
 
-		if (set_mempolicy(MPOL_BIND, &nmask, MAXNODES) == -1) {
+		if (set_mempolicy(MPOL_BIND, nmask, MAXNODES) == -1) {
 			if (errno != ENOSYS)
 				tst_brkm(TBROK | TERRNO, cleanup,
 					 "set_mempolicy");
@@ -125,19 +123,32 @@ int main(int argc, char *argv[])
 
 void cleanup(void)
 {
+	if (access(PATH_KSM "merge_across_nodes", F_OK) == 0)
+		FILE_PRINTF(PATH_KSM "merge_across_nodes",
+				 "%d", merge_across_nodes);
+
+	restore_max_page_sharing();
+
 	umount_mem(CPATH, CPATH_NEW);
 	umount_mem(MEMCG_PATH, MEMCG_PATH_NEW);
-	TEST_CLEANUP;
 }
 
 void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 
 	if (tst_kvercmp(2, 6, 32) < 0)
 		tst_brkm(TCONF, NULL, "2.6.32 or greater kernel required");
 	if (access(PATH_KSM, F_OK) == -1)
 		tst_brkm(TCONF, NULL, "KSM configuration is not enabled");
+
+	if (access(PATH_KSM "merge_across_nodes", F_OK) == 0) {
+		SAFE_FILE_SCANF(NULL, PATH_KSM "merge_across_nodes",
+				"%d", &merge_across_nodes);
+		SAFE_FILE_PRINTF(NULL, PATH_KSM "merge_across_nodes", "1");
+	}
+
+	save_max_page_sharing();
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	TEST_PAUSE;

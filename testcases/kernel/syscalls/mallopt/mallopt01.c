@@ -47,19 +47,19 @@
 #include <stdio.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 
 #define FAILED 0
 #define PASSED 1
+#define MAX_FAST_SIZE	(80 * sizeof(size_t) / 4)
 
 int local_flag = PASSED;
 
 char *TCID = "mallopt01";
 int block_number;
 FILE *temp;
-int TST_TOTAL = 1;
-extern int Tst_COUNT;		/* Test Case counter for tst_routines */
+int TST_TOTAL = 6;
+extern int tst_COUNT;		/* Test Case counter for tst_routines */
 
 void printinfo();
 
@@ -87,23 +87,49 @@ int main(int argc, char *argv[])
 		printinfo();
 		tst_resm(TFAIL, "mallinfo failed: smblks != 0");
 	}
+	if (info.uordblks >= 20480 && info.smblks == 0)
+		tst_resm(TPASS, "mallinfo() succeeded");
 	free(buf);
 
 	/*
 	 * Test mallopt's M_MXFAST and M_NLBLKS cmds.
 	 */
-	mallopt(M_MXFAST, 2048);
-	mallopt(M_NLBLKS, 50);
-	buf = SAFE_MALLOC(NULL, 1024);
 
-	free(buf);
+	if (mallopt(M_MXFAST, MAX_FAST_SIZE) == 0)
+		tst_resm(TFAIL, "mallopt(M_MXFAST, %d) failed", (int)MAX_FAST_SIZE);
+	else
+		tst_resm(TPASS, "mallopt(M_MXFAST, %d) succeeded", (int)MAX_FAST_SIZE);
+
+	if (mallopt(M_NLBLKS, 50) == 0)
+		tst_resm(TFAIL, "mallopt(M_NLBLKS, 50) failed");
+	else
+		tst_resm(TPASS, "mallopt(M_NLBLKS, 50) succeeded");
+
+	if ((buf = malloc(1024)) == NULL) {
+		tst_resm(TFAIL, "malloc(1024) failed");
+	} else {
+		tst_resm(TPASS, "malloc(1024) succeeded");
+		free(buf);
+	}
+
+	if (mallopt(M_MXFAST, 0) == 0)
+		tst_resm(TFAIL, "mallopt(M_MXFAST, 0) failed");
+	else
+		tst_resm(TPASS, "mallopt(M_MXFAST, 0) succeeded");
+
+	if ((buf = malloc(1024)) == NULL) {
+		tst_resm(TFAIL, "malloc(1024) failed");
+	} else {
+		tst_resm(TPASS, "malloc(1024) succeeded");
+		free(buf);
+	}
 
 	unlink("core");
 	tst_rmdir();
 	tst_exit();
 }
 
-void printinfo()
+void printinfo(void)
 {
 
 	fprintf(stderr, "mallinfo structure:\n");
@@ -120,7 +146,7 @@ void printinfo()
 }
 
 #else
-int main()
+int main(void)
 {
 	tst_brkm(TCONF, NULL, "test is not available on uClinux");
 }

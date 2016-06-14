@@ -49,9 +49,6 @@
  *
  *    CPU TYPES		: ALL
  *
- *    AUTHOR		: Richard Logan
- *
- *    CO-PILOT		: William Roske
  *
  *    DATE STARTED	: 06/94
  *
@@ -115,13 +112,12 @@
 #include <signal.h>
 #include <stdlib.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "dup03";		/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "dup03";
+int TST_TOTAL = 1;
 
 char filename[255];
 int *fd = NULL;
@@ -130,29 +126,25 @@ int nfds = 0;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(dup(fd[0]));
 
 		if (TEST_RETURN == -1) {
-			if (STD_FUNCTIONAL_TEST) {
-				if (TEST_ERRNO == EMFILE)
-					tst_resm(TPASS,
-						 "dup failed as expected with "
-						 "EMFILE");
-				else
-					tst_resm(TFAIL | TTERRNO,
-						 "dup failed unexpectedly");
-			}
+			if (TEST_ERRNO == EMFILE)
+				tst_resm(TPASS,
+					 "dup failed as expected with "
+					 "EMFILE");
+			else
+				tst_resm(TFAIL | TTERRNO,
+					 "dup failed unexpectedly");
 		} else {
 			tst_resm(TFAIL, "dup succeeded unexpectedly");
 
@@ -164,11 +156,10 @@ int main(int ac, char **av)
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 	long maxfds;
 
@@ -211,11 +202,9 @@ void setup()
 			 "tried %ld", maxfds);
 }
 
-void cleanup()
+void cleanup(void)
 {
 	int i;
-
-	TEST_CLEANUP;
 
 	for (i = 0; i <= nfds; i++)
 		close(fd[i]);

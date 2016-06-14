@@ -47,7 +47,6 @@
  */
 
 #include "test.h"
-#include "usctest.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <linux/unistd.h>
@@ -56,6 +55,10 @@
 #include <errno.h>
 
 char *TCID = "sysctl05";
+
+/* This is an older/deprecated syscall that newer arches are omitting */
+#ifdef __NR_sysctl
+
 int TST_TOTAL = 2;
 
 int sysctl(int *name, int nlen, void *oldval, size_t * oldlenp,
@@ -66,12 +69,8 @@ int sysctl(int *name, int nlen, void *oldval, size_t * oldlenp,
 	return syscall(__NR__sysctl, &args);
 }
 
-#define SIZE(x) sizeof(x)/sizeof(x[0])
-
 char osname[BUFSIZ];
 size_t osnamelth;
-
-int exp_enos[] = { EFAULT, 0 };
 
 void setup(void);
 void cleanup(void);
@@ -102,26 +101,21 @@ struct testcases {
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 	int ret = 0;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		for (i = 0; i < TST_TOTAL; ++i) {
 
-			osnamelth = SIZE(osname);
+			osnamelth = sizeof(osname);
 
 			TEST(sysctl(testcases[i].name, testcases[i].size,
 				    testcases[i].oldval, testcases[i].oldlen,
@@ -133,8 +127,6 @@ int main(int ac, char **av)
 					 testcases[i].exp_retval, ret);
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == ENOSYS) {
 				tst_resm(TCONF,
@@ -161,7 +153,7 @@ int main(int ac, char **av)
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -172,7 +164,7 @@ int main()
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -184,12 +176,18 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }
+
+#else
+int TST_TOTAL = 0;
+
+int main(void)
+{
+
+	tst_brkm(TCONF, NULL,
+		 "This test needs a kernel that has sysctl syscall.");
+}
+#endif

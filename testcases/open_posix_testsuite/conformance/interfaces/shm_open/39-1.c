@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include "posixtest.h"
 
-int main()
+int main(void)
 {
 	int fd, i;
 	long name_max;
@@ -45,11 +45,16 @@ int main()
 		printf("Test PASSED\n");
 		return PTS_PASS;
 	} else if (fd != -1) {
-		printf("shm_open() success.\n");
+		printf("FAILED: shm_open() succeeded\n");
 		shm_unlink(shm_name);
 		return PTS_FAIL;
 	}
 
-	perror("shm_open");
+	if (sysconf(_SC_VERSION) >= 200800L) {
+		printf("UNTESTED: shm_open() did not fail with ENAMETOLONG\n");
+		return PTS_UNTESTED;
+	}
+
+	perror("FAILED: shm_open");
 	return PTS_FAIL;
 }

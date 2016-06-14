@@ -51,7 +51,6 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 
 static void inthandlr();
 static void do_exit(void);
@@ -75,14 +74,11 @@ static void do_child_2_uclinux(void);
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
 	int status;
 	int pid;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 #ifdef UCLINUX
 	argv0 = argv[0];
@@ -95,8 +91,8 @@ int main(int argc, char **argv)
 
 	/* check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 		fail = 0;
 
 		pid = FORK_OR_VFORK();
@@ -208,9 +204,8 @@ static void do_child_1(void)
 	 */
 	for (i = 0; i < MAXKIDS; i++) {
 		if (kill(fork_kid_pid[i], SIGINT) < 0) {
-			tst_resm(TFAIL, "Kill of child %d "
+			tst_brkm(TFAIL, NULL, "Kill of child %d "
 				 "failed, errno = %d", i, errno);
-			tst_exit();
 		}
 	}
 
@@ -324,10 +319,9 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 }
 
-static void inthandlr()
+static void inthandlr(void)
 {
 	intintr++;
 }

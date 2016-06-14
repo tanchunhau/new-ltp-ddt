@@ -41,36 +41,28 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "getpagesize01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { 0 };		/* must be a 0 terminated list */
+char *TCID = "getpagesize01";
+int TST_TOTAL = 1;
 
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
 	int size, ret_sysconf;
 	/***************************************************************
 	 * parse standard options
 	 ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		TEST(getpagesize());
 
@@ -79,31 +71,28 @@ int main(int ac, char **av)
 			continue;	/* next loop for MTKERNEL */
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
-			size = getpagesize();
-			tst_resm(TINFO, "Page Size is %d", size);
-			ret_sysconf = sysconf(_SC_PAGESIZE);
+		size = getpagesize();
+		tst_resm(TINFO, "Page Size is %d", size);
+		ret_sysconf = sysconf(_SC_PAGESIZE);
 #ifdef DEBUG
-			tst_resm(TINFO,
-				 "Checking whether getpagesize returned same as sysconf");
+		tst_resm(TINFO,
+			 "Checking whether getpagesize returned same as sysconf");
 #endif
-			if (size == ret_sysconf)
-				tst_resm(TPASS,
-					 "getpagesize - Page size returned %d",
-					 ret_sysconf);
-			else
-				tst_resm(TFAIL,
-					 "getpagesize - Page size returned %d",
-					 ret_sysconf);
-		}
+		if (size == ret_sysconf)
+			tst_resm(TPASS,
+				 "getpagesize - Page size returned %d",
+				 ret_sysconf);
+		else
+			tst_resm(TFAIL,
+				 "getpagesize - Page size returned %d",
+				 ret_sysconf);
 	}
 
 	cleanup();
-
 	tst_exit();
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -111,7 +100,6 @@ void setup()
 	TEST_PAUSE;
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
 }

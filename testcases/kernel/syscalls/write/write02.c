@@ -52,7 +52,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "write02";
 int TST_TOTAL = 1;
@@ -65,7 +64,6 @@ char pfiln[40] = "";
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
 	int cwrite;
 	int fild;
@@ -73,17 +71,15 @@ int main(int argc, char **argv)
 	int badcount = 0;
 	char pwbuf[BUFSIZ + 1];
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL))) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();		/* global setup for test */
 
 	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 //block1:
 		tst_resm(TINFO, "Block 1: test to see write() returns proper "
@@ -99,7 +95,6 @@ int main(int argc, char **argv)
 		}
 		for (iws = BUFSIZ; iws > 0; iws--) {
 			if ((cwrite = write(fild, pwbuf, iws)) != iws) {
-				TEST_ERROR_LOG(errno);
 				badcount++;
 				tst_resm(TINFO, "bad write count");
 			}
@@ -135,8 +130,6 @@ void setup(void)
 
 	tst_tmpdir();
 
-// Changed by prashant yendigeri, because the temp file was not being created in//  the $TDIRECTORY
-//      sprintf(pfiln, "./write1.%d", getpid());
 	sprintf(pfiln, "write1.%d", getpid());
 }
 
@@ -146,14 +139,8 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	unlink(pfiln);
 
 	tst_rmdir();
-
 }

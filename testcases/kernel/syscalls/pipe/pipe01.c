@@ -47,7 +47,6 @@
 #include <errno.h>
 #include <string.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "pipe01";
 int TST_TOTAL = 1;
@@ -55,7 +54,7 @@ int TST_TOTAL = 1;
 void setup(void);
 void cleanup(void);
 
-ssize_t safe_read(int fd, void *buf, size_t count)
+ssize_t do_read(int fd, void *buf, size_t count)
 {
 	ssize_t n;
 
@@ -69,22 +68,20 @@ ssize_t safe_read(int fd, void *buf, size_t count)
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
 	int fildes[2];		/* fds for pipe read and write */
 	char wrbuf[BUFSIZ], rebuf[BUFSIZ];
 	int red, written;	/* no. of chars read/written to pipe */
 	int greater, length;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		TEST(pipe(fildes));
 
@@ -94,49 +91,44 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		if (STD_FUNCTIONAL_TEST) {
+		strcpy(wrbuf, "abcdefghijklmnopqrstuvwxyz");
+		length = strlen(wrbuf);
 
-			strcpy(wrbuf, "abcdefghijklmnopqrstuvwxyz");
-			length = strlen(wrbuf);
-
-			if ((written = write(fildes[1], wrbuf, length)) == -1) {
-				tst_brkm(TBROK, cleanup, "write() failed");
-			}
-
-			if (written < 0 || written > 26) {
-				tst_resm(TFAIL, "Condition #1 test failed");
-				continue;
-			}
-
-			if ((red = safe_read(fildes[0], rebuf, written)) == -1) {
-				tst_brkm(TBROK | TERRNO, cleanup,
-					 "read() failed");
-			}
-
-			if (red < 0 || red > written) {
-				tst_resm(TFAIL, "Condition #2 test failed");
-				continue;
-			}
-
-			/* are the strings written and read equal */
-			if ((greater = strncmp(rebuf, wrbuf, red)) != 0) {
-				tst_resm(TFAIL, "Condition #3 test failed");
-				continue;
-			}
-			tst_resm(TPASS, "pipe() functionality is correct");
-		} else {
-			tst_resm(TPASS, "call succeeded");
+		if ((written = write(fildes[1], wrbuf, length)) == -1) {
+			tst_brkm(TBROK, cleanup, "write() failed");
 		}
-	}
-	cleanup();
 
+		if (written < 0 || written > 26) {
+			tst_resm(TFAIL, "Condition #1 test failed");
+			continue;
+		}
+
+		if ((red = do_read(fildes[0], rebuf, written)) == -1) {
+			tst_brkm(TBROK | TERRNO, cleanup,
+				 "read() failed");
+		}
+
+		if (red < 0 || red > written) {
+			tst_resm(TFAIL, "Condition #2 test failed");
+			continue;
+		}
+
+		/* are the strings written and read equal */
+		if ((greater = strncmp(rebuf, wrbuf, red)) != 0) {
+			tst_resm(TFAIL, "Condition #3 test failed");
+			continue;
+		}
+		tst_resm(TPASS, "pipe() functionality is correct");
+	}
+
+	cleanup();
 	tst_exit();
 }
 
 /*
  * setup() - performs all ONE TIME setup for this test.
  */
-void setup()
+void setup(void)
 {
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
@@ -148,11 +140,6 @@ void setup()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *	       completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }

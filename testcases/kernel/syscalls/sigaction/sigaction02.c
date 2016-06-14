@@ -55,7 +55,6 @@
 #include <signal.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 #define SIGBAD 9999
 
@@ -111,13 +110,9 @@ int set_handler(int sig, int sig_to_mask, int flag)
 
 int main(int ac, char **av)
 {
-	char *msg;		/* message got from parse_opts */
-
 	int ret;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 //test1:
 	testcase_no = 1;
 
@@ -197,8 +192,6 @@ int main(int ac, char **av)
 		tst_resm(TPASS, "call failed with expected EFAULT error");
 	}
 #endif /* GLIBC_SIGACTION_BUG */
-
-	tst_exit();
 
 	tst_exit();
 

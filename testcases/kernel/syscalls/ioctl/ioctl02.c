@@ -67,7 +67,6 @@
 #include <sys/ioctl.h>
 #include <sys/termios.h>
 #include "test.h"
-#include "usctest.h"
 
 #define	CNUL	0
 
@@ -97,7 +96,6 @@ static void sigterm_handler(void);
 static int Devflag;
 static char *devname;
 
-/* for test specific parse_opts options - in this case "-D" */
 static option_t options[] = {
 	{"D:", &Devflag, &devname},
 	{NULL, NULL, NULL}
@@ -107,11 +105,9 @@ int main(int ac, char **av)
 {
 	int lc;
 	int rval;
-	char *msg;
 
-	msg = parse_opts(ac, av, options, &help);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, options, &help);
+
 #ifdef UCLINUX
 	maybe_run_child(&do_child_uclinux, "dS", &parentpid, &childtty);
 #endif
@@ -120,13 +116,13 @@ int main(int ac, char **av)
 		tst_brkm(TBROK, NULL, "You must specify a tty device with "
 			 "the -D option.");
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		parenttty = devname;
 		childtty = devname;
@@ -213,6 +209,7 @@ void do_child_uclinux(void)
 	/* Set up the signal handlers again */
 	act.sa_handler = (void *)sigterm_handler;
 	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
 	(void)sigaction(SIGTERM, &act, 0);
 
 	/* Run the normal child */
@@ -260,19 +257,14 @@ static int run_ptest(void)
 		return -1;
 	}
 
-	if (STD_FUNCTIONAL_TEST) {
-		/* Get termio and see if all parameters actually got set */
-		rval = ioctl(parentfd, TCGETA, &termio);
-		if (rval < 0) {
-			tst_resm(TFAIL, "ioctl TCGETA failed.  Ending test.");
-			return -1;
-		}
-
-		return chk_tty_parms();
-	} else {
-		tst_resm(TINFO, "call succeeded");
-		return 0;
+	/* Get termio and see if all parameters actually got set */
+	rval = ioctl(parentfd, TCGETA, &termio);
+	if (rval < 0) {
+		tst_resm(TFAIL, "ioctl TCGETA failed.  Ending test.");
+		return -1;
 	}
+
+	return chk_tty_parms();
 }
 
 static int run_ctest(void)
@@ -457,6 +449,7 @@ static void setup(void)
 	/* Set up the signal handlers */
 	act.sa_handler = (void *)sigterm_handler;
 	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
 	(void)sigaction(SIGTERM, &act, 0);
 
 	act.sa_handler = (void *)sigusr1_handler;
@@ -478,9 +471,6 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
-	/* Restore the device information that was saved in setup() */
 	if (!closed) {
 		if (ioctl(parentfd, TCSETA, &save_io) == -1)
 			tst_resm(TINFO, "ioctl restore failed in cleanup()");

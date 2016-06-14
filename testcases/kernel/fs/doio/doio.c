@@ -609,7 +609,7 @@ int main(int argc, char **argv)
 	 * to -1.
 	 */
 
-	Children = (int *)malloc(sizeof(int) * Nprocs);
+	Children = malloc(sizeof(int) * Nprocs);
 	for (i = 0; i < Nprocs; i++) {
 		Children[i] = -1;
 	}
@@ -650,9 +650,7 @@ int main(int argc, char **argv)
 					char *exec_path;
 
 					exec_path = argv[0];
-					argv[0] =
-					    (char *)
-					    malloc(strlen(exec_path + 1));
+					argv[0] = malloc(strlen(exec_path) + 2);
 					sprintf(argv[0], "-%s", exec_path);
 
 					execvp(exec_path, argv);
@@ -1291,7 +1289,7 @@ char *format_rw(struct io_req *ioreq, int fd, void *buffer, int signo,
 	struct write_req *writeap = &ioreq->r_data.write;
 
 	if (errbuf == NULL)
-		errbuf = (char *)malloc(32768);
+		errbuf = malloc(32768);
 
 	cp = errbuf;
 	cp += sprintf(cp, "Request number %d\n", Reqno);
@@ -1377,7 +1375,7 @@ char *format_sds(struct io_req *ioreq, void *buffer, int sds, char *pattern)
 	struct sswrite_req *sswritep = &ioreq->r_data.sswrite;
 
 	if (errbuf == NULL)
-		errbuf = (char *)malloc(32768);
+		errbuf = malloc(32768);
 
 	cp = errbuf;
 	cp += sprintf(cp, "Request number %d\n", Reqno);
@@ -2006,7 +2004,7 @@ char *format_listio(struct io_req *ioreq, int lcmd, struct listreq *list,
 	}
 
 	if (errbuf == NULL)
-		errbuf = (char *)malloc(32768);
+		errbuf = malloc(32768);
 
 	cp = errbuf;
 	cp += sprintf(cp, "Request number %d\n", Reqno);
@@ -2434,7 +2432,7 @@ char *fmt_ioreq(struct io_req *ioreq, struct syscall_info *sy, int fd)
 #endif
 
 	if (errbuf == NULL)
-		errbuf = (char *)malloc(32768);
+		errbuf = malloc(32768);
 
 	io = &ioreq->r_data.io;
 
@@ -2552,13 +2550,13 @@ struct status *sy_listio(struct io_req *req, struct syscall_info *sysc, int fd,
 
 	lc = (sysc->sy_flags & SY_ASYNC) ? LC_START : LC_WAIT;
 
-	status = (struct status *)malloc(sizeof(struct status));
+	status = malloc(sizeof(struct status));
 	if (status == NULL) {
 		doio_fprintf(stderr, "malloc failed, %s/%d\n",
 			     __FILE__, __LINE__);
 		return NULL;
 	}
-	status->aioid = (int *)malloc((nents + 1) * sizeof(int));
+	status->aioid = malloc((nents + 1) * sizeof(int));
 	if (status->aioid == NULL) {
 		doio_fprintf(stderr, "malloc failed, %s/%d\n",
 			     __FILE__, __LINE__);
@@ -2567,7 +2565,7 @@ struct status *sy_listio(struct io_req *req, struct syscall_info *sysc, int fd,
 
 	signo = (aio_strat == A_SIGNAL) ? SIGUSR1 : 0;
 
-	lio_req = (struct listreq *)malloc(nents * sizeof(struct listreq));
+	lio_req = malloc(nents * sizeof(struct listreq));
 	if (lio_req == NULL) {
 		doio_fprintf(stderr, "malloc failed, %s/%d\n",
 			     __FILE__, __LINE__);
@@ -2628,7 +2626,7 @@ char *fmt_listio(struct io_req *req, struct syscall_info *sy, int fd,
 	int i;
 
 	if (errbuf == NULL) {
-		errbuf = (char *)malloc(32768);
+		errbuf = malloc(32768);
 		if (errbuf == NULL) {
 			doio_fprintf(stderr, "malloc failed, %s/%d\n",
 				     __FILE__, __LINE__);
@@ -2657,7 +2655,7 @@ struct status *sy_pread(struct io_req *req, struct syscall_info *sysc, int fd,
 
 	rc = pread(fd, addr, req->r_data.io.r_nbytes, req->r_data.io.r_offset);
 
-	status = (struct status *)malloc(sizeof(struct status));
+	status = malloc(sizeof(struct status));
 	if (status == NULL) {
 		doio_fprintf(stderr, "malloc failed, %s/%d\n",
 			     __FILE__, __LINE__);
@@ -2678,7 +2676,7 @@ struct status *sy_pwrite(struct io_req *req, struct syscall_info *sysc, int fd,
 
 	rc = pwrite(fd, addr, req->r_data.io.r_nbytes, req->r_data.io.r_offset);
 
-	status = (struct status *)malloc(sizeof(struct status));
+	status = malloc(sizeof(struct status));
 	if (status == NULL) {
 		doio_fprintf(stderr, "malloc failed, %s/%d\n",
 			     __FILE__, __LINE__);
@@ -2697,7 +2695,7 @@ char *fmt_pread(struct io_req *req, struct syscall_info *sy, int fd, char *addr)
 	char *cp;
 
 	if (errbuf == NULL) {
-		errbuf = (char *)malloc(32768);
+		errbuf = malloc(32768);
 		if (errbuf == NULL) {
 			doio_fprintf(stderr, "malloc failed, %s/%d\n",
 				     __FILE__, __LINE__);
@@ -2734,7 +2732,7 @@ struct status *sy_rwv(struct io_req *req, struct syscall_info *sysc, int fd,
 	struct status *status;
 	struct iovec iov[2];
 
-	status = (struct status *)malloc(sizeof(struct status));
+	status = malloc(sizeof(struct status));
 	if (status == NULL) {
 		doio_fprintf(stderr, "malloc failed, %s/%d\n",
 			     __FILE__, __LINE__);
@@ -2803,7 +2801,7 @@ struct status *sy_arw(struct io_req *req, struct syscall_info *sysc, int fd,
 	int aio_id, aio_strat, signo;
 	struct aio_info *aiop;
 
-	status = (struct status *)malloc(sizeof(struct status));
+	status = malloc(sizeof(struct status));
 	if (status == NULL) {
 		doio_fprintf(stderr, "malloc failed, %s/%d\n",
 			     __FILE__, __LINE__);
@@ -2842,7 +2840,7 @@ struct status *sy_arw(struct io_req *req, struct syscall_info *sysc, int fd,
 	else
 		rc = aio_read(&aiop->aiocb);
 
-	status->aioid = (int *)malloc(2 * sizeof(int));
+	status->aioid = malloc(2 * sizeof(int));
 	if (status->aioid == NULL) {
 		doio_fprintf(stderr, "malloc failed, %s/%d\n",
 			     __FILE__, __LINE__);
@@ -2896,7 +2894,7 @@ struct status *sy_mmrw(struct io_req *req, struct syscall_info *sysc, int fd,
 	struct stat sbuf;
 	int rc;
 
-	status = (struct status *)malloc(sizeof(struct status));
+	status = malloc(sizeof(struct status));
 	if (status == NULL) {
 		doio_fprintf(stderr, "malloc failed, %s/%d\n",
 			     __FILE__, __LINE__);

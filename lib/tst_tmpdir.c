@@ -52,16 +52,12 @@
  *		tst_rmdir() is used to remove the directory created by
  *		tst_tmpdir().
  *
- *		Setting the env variable "TDIRECTORY" will override the creation
- *		of a new temp dir.  The directory specified by TDIRECTORY will
- *		be used as the temporary directory, and no removal will be done
- *		in tst_rmdir().
- *
  *	 RETURN VALUE
  *		Neither tst_tmpdir() or tst_rmdir() has a return value.
  *
  *********************************************************/
 
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
@@ -74,6 +70,8 @@
 
 #include "test.h"
 #include "rmobj.h"
+#include "ltp_priv.h"
+#include "lapi/futex.h"
 
 /*
  * Define some useful macros.
@@ -101,13 +99,15 @@ static char *TESTDIR = NULL;	/* the directory created */
 
 static char test_start_work_dir[PATH_MAX];
 
+/* lib/tst_checkpoint.c */
+extern futex_t *tst_futexes;
 
 int tst_tmpdir_created(void)
 {
 	return TESTDIR != NULL;
 }
 
-char *get_tst_tmpdir(void)
+char *tst_get_tmpdir(void)
 {
 	/* Smack the user for calling things out of order. */
 	if (TESTDIR == NULL)
@@ -123,18 +123,31 @@ const char *tst_get_startwd(void)
 void tst_tmpdir(void)
 {
 	char template[PATH_MAX];
-	char *env_tmpdir;	/* temporary storage for TMPDIR env var */
-	char *errmsg;
+	char *env_tmpdir;
+	char *errmsg, *c;
 
 	/*
 	 * Create a template for the temporary directory.  Use the
 	 * environment variable TMPDIR if it is available, otherwise
 	 * use our default TEMPDIR.
 	 */
-	if ((env_tmpdir = getenv("TMPDIR")))
+	env_tmpdir = getenv("TMPDIR");
+	if (env_tmpdir) {
+		c = strchr(env_tmpdir, '/');
+		/*
+		 * Now we force environment variable TMPDIR to be an absolute
+		 * pathname, which dose not make much sense, but it will
+		 * greatly simplify code in tst_rmdir().
+		 */
+		if (c != env_tmpdir) {
+			tst_brkm(TBROK, tmpdir_cleanup, "You must specify "
+				 "an absolute pathname for environment "
+				 "variable TMPDIR");
+		}
 		snprintf(template, PATH_MAX, "%s/%.3sXXXXXX", env_tmpdir, TCID);
-	else
+	} else {
 		snprintf(template, PATH_MAX, "%s/%.3sXXXXXX", TEMPDIR, TCID);
+	}
 
 	/* Make the temporary directory in one shot using mkdtemp. */
 	if (mkdtemp(template) == NULL)
@@ -163,24 +176,21 @@ void tst_tmpdir(void)
 	 * fails, also issue a TWARN message.
 	 */
 	if (chdir(TESTDIR) == -1) {
-		tst_brkm(TBROK | TERRNO, NULL, "%s: chdir(%s) failed",
-			 __func__, TESTDIR);
+		tst_resm(TERRNO, "%s: chdir(%s) failed", __func__, TESTDIR);
 
 		/* Try to remove the directory */
-		if (rmobj(TESTDIR, &errmsg) == -1)
+		if (rmobj(TESTDIR, &errmsg) == -1) {
 			tst_resm(TWARN, "%s: rmobj(%s) failed: %s",
 				 __func__, TESTDIR, errmsg);
+		}
 
-		tmpdir_cleanup();
+		tst_exit();
 	}
-
 }
 
 void tst_rmdir(void)
 {
-	char current_dir[PATH_MAX];
 	char *errmsg;
-	char *parent_dir;
 
 	/*
 	 * Check that TESTDIR is not NULL.
@@ -192,45 +202,22 @@ void tst_rmdir(void)
 		return;
 	}
 
-	if ((parent_dir = malloc(PATH_MAX)) == NULL) {
-		/* Make sure that we exit quickly and noisily. */
-		tst_brkm(TBROK | TERRNO, NULL,
-			 "%s: malloc(%d) failed", __func__, PATH_MAX);
-	}
-
 	/*
-	 * Get the directory name of TESTDIR.  If TESTDIR is a relative path,
-	 * get full path.
+	 * Unmap the backend file.
+	 * This is needed to overcome the NFS "silly rename" feature.
 	 */
-	if (TESTDIR[0] != '/') {
-		if (getcwd(current_dir, PATH_MAX) == NULL)
-			strncpy(parent_dir, TESTDIR, sizeof(parent_dir));
-		else
-			sprintf(parent_dir, "%s/%s", current_dir, TESTDIR);
-	} else {
-		strcpy(parent_dir, TESTDIR);
-	}
-
-	if ((parent_dir = dirname(parent_dir)) == NULL) {
-		tst_resm(TWARN | TERRNO, "%s: dirname failed", __func__);
-		return;
-	}
-
-	/*
-	 * Change directory to parent_dir (The dir above TESTDIR).
-	 */
-	if (chdir(parent_dir) != 0) {
-		tst_resm(TWARN | TERRNO,
-			 "%s: chdir(%s) failed\nAttempting to remove temp dir "
-			 "anyway", __func__, parent_dir);
+	if (tst_futexes) {
+		msync((void *)tst_futexes, getpagesize(), MS_SYNC);
+		munmap((void *)tst_futexes, getpagesize());
 	}
 
 	/*
 	 * Attempt to remove the "TESTDIR" directory, using rmobj().
 	 */
-	if (rmobj(TESTDIR, &errmsg) == -1)
+	if (rmobj(TESTDIR, &errmsg) == -1) {
 		tst_resm(TWARN, "%s: rmobj(%s) failed: %s",
 			 __func__, TESTDIR, errmsg);
+	}
 }
 
 /*
@@ -241,7 +228,7 @@ void tst_rmdir(void)
  */
 static void tmpdir_cleanup(void)
 {
-	tst_brkm(TWARN, NULL,
+	tst_resm(TWARN,
 		 "%s: no user cleanup function called before exiting",
 		 __func__);
 }

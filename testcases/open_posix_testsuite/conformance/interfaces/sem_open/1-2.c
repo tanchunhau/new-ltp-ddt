@@ -22,9 +22,8 @@
 
 #define TEST "1-2"
 #define FUNCTION "sem_open"
-#define ERROR_PREFIX "unexpected error: " FUNCTION " " TEST ": "
 
-int main()
+int main(void)
 {
 	sem_t *mysemp;
 	char semname[50];
@@ -35,7 +34,7 @@ int main()
 
 	/* Checking if mysemp has a value returned. From sem_open */
 
-	if (&mysemp != NULL) {
+	if (mysemp != NULL) {
 		puts("TEST PASSED");
 		sem_close(mysemp);
 		sem_unlink(semname);

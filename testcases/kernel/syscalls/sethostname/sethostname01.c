@@ -70,7 +70,6 @@
 #include <linux/utsname.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define MAX_LENGTH __NEW_UTS_LEN
 
@@ -84,14 +83,10 @@ static char hname[MAX_LENGTH];	/* host name */
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 
 	char ltphost[] = "ltphost";	/* temporary host name to set */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	/* Do initial setup. */
 	setup();
@@ -99,7 +94,7 @@ int main(int ac, char **av)
 	/* check -c option for looping. */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 
 		/* Call sethostname(2) */
 		TEST(sethostname(ltphost, sizeof(ltphost)));
@@ -125,16 +120,13 @@ int main(int ac, char **av)
 /*
  * setup() - performs all one time setup for this test.
  */
-void setup()
+void setup(void)
 {
 	int ret;
 
-	tst_sig(NOFORK, DEF_HANDLER, cleanup);
+	tst_require_root();
 
-	/* Test should be executed as root user */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
+	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	/* Store the existing hostname to retain it before exiting */
 	if ((ret = gethostname(hname, sizeof(hname))) < 0) {
@@ -150,15 +142,9 @@ void setup()
  * cleanup() -	performs all one time cleanup for this test
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
 	int ret;
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	/* Set the host name back to original name */
 	if ((ret = sethostname(hname, strlen(hname))) < 0) {

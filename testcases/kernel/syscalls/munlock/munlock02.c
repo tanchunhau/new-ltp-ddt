@@ -73,15 +73,12 @@
 #include <sys/mman.h>
 #include <pwd.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup();
 void cleanup();
 
-char *TCID = "munlock02";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
-
-int exp_enos[] = { ENOMEM, 0 };
+char *TCID = "munlock02";
+int TST_TOTAL = 1;
 
 #define LEN	1024
 
@@ -101,19 +98,15 @@ NULL, 0, ENOMEM, "address range out of address space"},};
 int main(int ac, char **av)
 {
 	int lc, i;
-	char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-		tst_exit();
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	/* check looping state */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
-		Tst_count = 0;
+		tst_count = 0;
 		for (i = 0; i < TST_TOTAL; i++) {
 #ifdef __ia64__
 			TC[0].len = 8 * getpagesize();
@@ -122,7 +115,6 @@ int main(int ac, char **av)
 
 			/* check return code */
 			if (TEST_RETURN == -1) {
-				TEST_ERROR_LOG(TEST_ERRNO);
 				if (TEST_ERRNO != TC[i].error)
 					tst_brkm(TFAIL, cleanup,
 						 "munlock() Failed with wrong "
@@ -153,15 +145,12 @@ int main(int ac, char **av)
 
 /* setup() - performs all ONE TIME setup for this test. */
 
-void setup()
+void setup(void)
 {
 
 	char *address;
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
 	TC[0].len = 8 * getpagesize();
 	address = mmap(0, TC[0].len, PROT_READ | PROT_WRITE,
@@ -191,7 +180,7 @@ void setup()
 
 #else
 
-int main()
+int main(void)
 {
 	tst_resm(TINFO, "test is not available on uClinux");
 	tst_exit();
@@ -203,9 +192,7 @@ int main()
  * cleanup() - performs all ONE TIME cleanup for this test at
  *		completion or premature exit.
  */
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	return;
 }

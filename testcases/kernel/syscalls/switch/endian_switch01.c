@@ -44,7 +44,6 @@
 #include <signal.h>
 #include <setjmp.h>
 #include "test.h"
-#include "usctest.h"
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -60,11 +59,11 @@ static void setup();
 
 static void cleanup();
 
-char *TCID = "endian_switch01";	/* Test program identifier.    */
-int TST_TOTAL = 1;		/* Total number of test cases. */
+char *TCID = "endian_switch01";
+int TST_TOTAL = 1;
 
 #if defined (__powerpc64__) || (__powerpc__)
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -77,13 +76,8 @@ extern int main4(int ac, char **av, char **envp, unsigned long *auxv)
 __asm("main");
 #endif
 
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }
 
@@ -116,23 +110,21 @@ int main4(int ac, char **av, char **envp, unsigned long *auxv)
 {
 
 	if ((tst_kvercmp(2, 6, 26)) < 0) {
-		tst_resm(TCONF,
+		tst_brkm(TCONF,
+			 NULL,
 			 "This test can only run on kernels that are 2.6.26 and higher");
-		tst_exit();
 	}
 	setup();
 	for (; *auxv != AT_NULL && *auxv != AT_HWCAP; auxv += 2) ;
 	if (!(auxv[0] == AT_HWCAP && (auxv[1] & PPC_FEATURE_TRUE_LE))) {
 		tst_brkm(TCONF, cleanup,
 			 "Processor does not support little-endian mode");
-		tst_exit();
 	}
 	signal(SIGILL, sigill);
 	if (sigsetjmp(jb, 1) == 0)
 		do_le_switch();
 	if (got_sigill) {
-		tst_resm(TFAIL, "Got SIGILL - test failed");
-		tst_exit();
+		tst_brkm(TFAIL, NULL, "Got SIGILL - test failed");
 	}
 	tst_resm(TPASS, "endian_switch() syscall tests passed");
 	tst_exit();
@@ -140,12 +132,11 @@ int main4(int ac, char **av, char **envp, unsigned long *auxv)
 
 #else
 
-int main()
+int main(void)
 {
 
 	tst_brkm(TCONF, cleanup,
 		 "This system does not support running of switch() syscall");
-	tst_exit();
 }
 
 #endif

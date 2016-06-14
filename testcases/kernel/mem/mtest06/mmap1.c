@@ -53,8 +53,8 @@
 #include <signal.h>
 #include <string.h>
 #include "test.h"
-#include "usctest.h"
 
+#define DISTANT_MMAP_SIZE (64*1024*1024)
 #define OPT_MISSING(prog, opt) do { \
 	fprintf(stderr, "%s: option -%c ", prog, opt); \
         fprintf(stderr, "requires an argument\n"); \
@@ -62,9 +62,10 @@
 } while (0)
 
 static int verbose_print = 0;
-static char *map_address;
+static char *volatile map_address;
 static jmp_buf jmpbuf;
 static volatile char read_lock = 0;
+static void *distant_area;
 
 char *TCID = "mmap1";
 int TST_TOTAL = 1;
@@ -146,9 +147,8 @@ void *map_write_unmap(void *ptr)
 			 args[0], args[1], args[2]);
 
 	for (i = 0; i < args[2]; i++) {
-
-		map_address = mmap(0, (size_t) args[1], PROT_WRITE | PROT_READ,
-				   MAP_SHARED, (int)args[0], 0);
+		map_address = mmap(distant_area, (size_t) args[1],
+			PROT_WRITE | PROT_READ, MAP_SHARED, (int)args[0], 0);
 
 		if (map_address == (void *)-1) {
 			perror("map_write_unmap(): mmap()");
@@ -199,7 +199,7 @@ void *map_write_unmap(void *ptr)
 		}
 	}
 
-	pthread_exit((void *)0);
+	pthread_exit(NULL);
 }
 
 void *read_mem(void *ptr)
@@ -228,11 +228,13 @@ void *read_mem(void *ptr)
 				tst_resm(TINFO, "page fault occurred due to "
 					 "a read after an unmap");
 		} else {
-			if (verbose_print)
+			if (verbose_print) {
+				read_lock = 1;
 				tst_resm(TINFO,
 					 "read_mem(): content of memory: %s",
 					 (char *)map_address);
-
+				read_lock = 0;
+			}
 			for (j = 0; j < args[1]; j++) {
 				read_lock = 1;
 				if (map_address[j] != 'a')
@@ -244,7 +246,7 @@ void *read_mem(void *ptr)
 		}
 	}
 
-	pthread_exit((void *)0);
+	pthread_exit(NULL);
 }
 
 static void usage(char *progname)
@@ -285,7 +287,7 @@ int main(int argc, char **argv)
 	int num_iter;
 	double exec_time;
 	int fd;
-	int status[2];
+	void *status;
 	pthread_t thid[2];
 	long chld_args[3];
 	extern char *optarg;
@@ -335,6 +337,19 @@ int main(int argc, char **argv)
 			break;
 		}
 	}
+
+	/* We don't want other mmap calls to map into same area as is
+	 * used for test (mmap_address). The test expects read to return
+	 * test pattern or read must fail with SIGSEGV. Find an area
+	 * that we can use, which is unlikely to be chosen for other
+	 * mmap calls. */
+	distant_area = mmap(0, DISTANT_MMAP_SIZE, PROT_WRITE | PROT_READ,
+		MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+	if (distant_area == (void *)-1)
+		tst_brkm(TBROK | TERRNO, NULL, "distant_area: mmap()");
+	if (munmap(distant_area, (size_t) DISTANT_MMAP_SIZE) == -1)
+		tst_brkm(TBROK | TERRNO, NULL, "distant_area: munmap()");
+	distant_area += DISTANT_MMAP_SIZE / 2;
 
 	if (verbose_print)
 		tst_resm(TINFO, "Input parameters are: File size:  %d; "
@@ -387,15 +402,15 @@ int main(int argc, char **argv)
 		tst_resm(TINFO, "created reading thread[%lu]", thid[1]);
 
 		for (i = 0; i < 2; i++) {
-			if ((ret = pthread_join(thid[i], (void *)&status[i])))
+			if ((ret = pthread_join(thid[i], &status)))
 				tst_brkm(TBROK, NULL,
 					 "main(): pthread_join(): %s",
 					 strerror(ret));
 
-			if (status[i])
+			if (status)
 				tst_brkm(TFAIL, NULL,
 					 "thread [%lu] - process exited "
-					 "with %d", thid[i], status[i]);
+					 "with %ld", thid[i], (long)status);
 		}
 
 		close(fd);

@@ -45,7 +45,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "fork10";
 int TST_TOTAL = 1;
@@ -63,18 +62,15 @@ int main(int ac, char **av)
 	char chilchar[2];
 
 	int lc;
-	char *msg;
 
 	fildes = -1;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		fildes = creat(fnamebuf, 0600);
 		if (fildes < 0)
@@ -151,7 +147,7 @@ int main(int ac, char **av)
 	tst_exit();
 }
 
-static void setup()
+static void setup(void)
 {
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 	umask(0);
@@ -163,8 +159,7 @@ static void setup()
 	strcat(fnamebuf, pidbuf);
 }
 
-static void cleanup()
+static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }

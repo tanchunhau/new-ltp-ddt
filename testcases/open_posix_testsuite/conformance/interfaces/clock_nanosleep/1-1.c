@@ -15,7 +15,7 @@
 
 #define SLEEPNSEC 3000000
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct timespec tssleep, tsbefore, tsafter;
 	int slepts = 0, sleptns = 0;
@@ -50,11 +50,8 @@ int main(int argc, char *argv[])
 	if ((slepts > 0) || (sleptns > SLEEPNSEC)) {
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else {
-		printf("clock_nanosleep() did not sleep long enough\n");
-		return PTS_FAIL;
 	}
 
-	printf("This code should not be executed.\n");
-	return PTS_UNRESOLVED;
+	printf("clock_nanosleep() did not sleep long enough\n");
+	return PTS_FAIL;
 }

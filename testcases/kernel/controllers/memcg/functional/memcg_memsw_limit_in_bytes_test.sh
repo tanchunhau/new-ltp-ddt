@@ -30,7 +30,7 @@ export TCID="memcg_memsw_limit_in_bytes_test"
 export TST_TOTAL=12
 export TST_COUNT=0
 
-. ./memcg_lib.sh || exit 1
+. memcg_lib.sh || exit 1
 
 MEM_SWAP_FLAG=0
 
@@ -61,17 +61,17 @@ testcase_5()
 
 testcase_6()
 {
-	test_limit_in_bytes $((PAGESIZE-1)) $PAGESIZE 1
+	test_limit_in_bytes $((PAGESIZE-1)) 1
 }
 
 testcase_7()
 {
-	test_limit_in_bytes $((PAGESIZE+1)) $((PAGESIZE*2)) 1
+	test_limit_in_bytes $((PAGESIZE+1)) 1
 }
 
 testcase_8()
 {
-	test_limit_in_bytes 1 $PAGESIZE 1
+	test_limit_in_bytes 1 1
 }
 
 testcase_9()

@@ -49,7 +49,6 @@
 #include <wait.h>
 #include <sys/types.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup(void);
 void cleanup(void);
@@ -60,19 +59,17 @@ int TST_TOTAL = 1;
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;		/* message returned by parse_opts */
 
 	register int pgid_0, pgid_1;
 	register int my_pid, my_ppid;
 	int ex_stat, fail = 0;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		Tst_count = 0;
+		tst_count = 0;
 
 		if ((pgid_0 = FORK_OR_VFORK()) == -1)
 			tst_brkm(TBROK, cleanup, "fork failed");
@@ -183,7 +180,7 @@ int main(int ac, char **av)
 
 }
 
-void setup()
+void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
@@ -191,8 +188,6 @@ void setup()
 	TEST_PAUSE;
 }
 
-void cleanup()
+void cleanup(void)
 {
-	TEST_CLEANUP;
-
 }

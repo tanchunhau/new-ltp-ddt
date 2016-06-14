@@ -1,7 +1,22 @@
 /*
- * NAME
- *	open08.c
+ *   Copyright (c) 2013 Wanlong Gao <gaowanlong@cn.fujitsu.com>
  *
+ *   This program is free software;  you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ *   the GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program;  if not, write to the Free Software
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ */
+
+/*
  * DESCRIPTION
  *	Check for the following errors:
  *	1.	EEXIST
@@ -30,22 +45,8 @@
  *	6. Attempt to pass an invalid pathname with an address pointing outside
  *	   the address space of the process, as the argument to open(), and
  *	   expect to get EFAULT.
- *
- * USAGE:  <for command-line>
- *  open08 [-c n] [-e] [-i n] [-I x] [-P x] [-t]
- *     where,  -c n : Run n copies concurrently.
- *             -e   : Turn on errno logging.
- *             -i n : Execute test n times.
- *             -I x : Execute test for x seconds.
- *             -P x : Pause for x seconds between iterations.
- *             -t   : Turn on syscall timing.
- *
- * HISTORY
- *	07/2001 Ported by Wayne Boyer
- *
- * RESTRICTIONS
- *	None
  */
+
 #define _GNU_SOURCE		/* for O_DIRECTORY */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -56,39 +57,33 @@
 #include <signal.h>
 #include <pwd.h>
 #include "test.h"
-#include "usctest.h"
 
-void setup(void);
-void cleanup(void);
+static void setup(void);
+static void cleanup(void);
 
 char *TCID = "open08";
 
-char nobody_uid[] = "nobody";
-struct passwd *ltpuser;
+static char nobody_uid[] = "nobody";
+static struct passwd *ltpuser;
 
-int exp_enos[] = { EEXIST, EISDIR, ENOTDIR, ENAMETOOLONG, EACCES, EFAULT, 0 };
+static char *bad_addr;
 
-char *bad_addr = 0;
+static char filename[40] = "";
+static char fname[] = "/bin/cat";
+static char bad_file[] = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyz";
 
-char filename[40] = "";
-char fname[] = "/bin/cat";	/* test executable to open */
-char bad_file[] =
-    "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyzabcdefghijklmnopqrstmnopqrstuvwxyz";
-
-struct test_case_t {
+static struct test_case_t {
 	char *fname;
 	int flags;
 	int error;
 } TC[] = {
-	{
-	filename, O_CREAT | O_EXCL, EEXIST}, {
-	"/tmp", O_RDWR, EISDIR}, {
-	filename, O_DIRECTORY, ENOTDIR}, {
-	bad_file, O_RDWR, ENAMETOOLONG}, {
-	fname, O_WRONLY, EACCES},
+	{filename, O_CREAT | O_EXCL, EEXIST},
+	{"/tmp", O_RDWR, EISDIR},
+	{filename, O_DIRECTORY, ENOTDIR},
+	{bad_file, O_RDWR, ENAMETOOLONG},
+	{fname, O_WRONLY, EACCES},
 #if !defined(UCLINUX)
-	{
-	(char *)-1, O_CREAT, EFAULT}
+	{(char *)-1, O_CREAT, EFAULT}
 #endif
 };
 
@@ -97,27 +92,16 @@ int TST_TOTAL = sizeof(TC) / sizeof(TC[0]);
 int main(int ac, char **av)
 {
 	int lc;
-	char *msg;
 	int i;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	/* set up the expected errnos */
-	TEST_EXP_ENOS(exp_enos);
-
-	/* The following loop checks looping state if -i option given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
+		tst_count = 0;
 
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
-
-		/* loop through the test cases */
 		for (i = 0; i < TST_TOTAL; i++) {
-
 			TEST(open(TC[i].fname, TC[i].flags,
 				  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
 
@@ -125,8 +109,6 @@ int main(int ac, char **av)
 				tst_resm(TFAIL, "call succeeded unexpectedly");
 				continue;
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 
 			if (TEST_ERRNO == TC[i].error) {
 				tst_resm(TPASS, "expected failure - "
@@ -139,17 +121,16 @@ int main(int ac, char **av)
 			}
 		}
 	}
-	cleanup();
 
+	cleanup();
 	tst_exit();
 }
 
-/*
- * setup() - performs all ONE TIME setup for this test
- */
-void setup(void)
+static void setup(void)
 {
 	int fildes;
+
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -158,9 +139,6 @@ void setup(void)
 	TEST_PAUSE;
 
 	/* Switch to nobody user for correct error code collection */
-	if (geteuid() != 0) {
-		tst_brkm(TBROK, NULL, "Test must be run as root");
-	}
 	ltpuser = getpwnam(nobody_uid);
 	if (setgid(ltpuser->pw_gid) == -1) {
 		tst_brkm(TBROK | TERRNO, NULL, "setgid(%d) failed",
@@ -174,33 +152,23 @@ void setup(void)
 
 	sprintf(filename, "open3.%d", getpid());
 
-	if ((fildes = creat(filename, 0600)) == -1) {
+	fildes = creat(filename, 0600);
+	if (fildes == -1)
 		tst_brkm(TBROK, cleanup, "Can't creat %s", filename);
-	}
+
 	close(fildes);
 
 #if !defined(UCLINUX)
 	bad_addr = mmap(0, 1, PROT_NONE,
 			MAP_PRIVATE_EXCEPT_UCLINUX | MAP_ANONYMOUS, 0, 0);
-	if (bad_addr == MAP_FAILED) {
+	if (bad_addr == MAP_FAILED)
 		tst_brkm(TBROK, cleanup, "mmap failed");
-	}
+
 	TC[5].fname = bad_addr;
 #endif
 }
 
-/*
- * cleanup() - performs all the ONE TIME cleanup for this test at completion
- *	       or premature exit.
- */
-void cleanup(void)
+static void cleanup(void)
 {
-	/*
-	 * print timing status if that option was specified.
-	 * print errno log if that option was specified
-	 */
-	TEST_CLEANUP;
-
 	tst_rmdir();
-
 }

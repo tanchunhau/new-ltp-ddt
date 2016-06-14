@@ -37,6 +37,8 @@ void *t1_func(void *arg)
 	struct timeval curtime;
 	struct timespec timeout;
 
+	(void) arg;
+
 	if (pthread_mutex_lock(&td.mutex) != 0) {
 		fprintf(stderr, "Thread1 failed to acquire the mutex\n");
 		exit(PTS_UNRESOLVED);
@@ -64,10 +66,11 @@ void *t1_func(void *arg)
 	}
 }
 
-int main()
+int main(void)
 {
 	pthread_t thread1;
-	int rc, th_ret;
+	int rc;
+	void *th_ret;
 
 	if (pthread_mutex_init(&td.mutex, NULL) != 0) {
 		fprintf(stderr, "Fail to initialize mutex\n");
@@ -107,12 +110,14 @@ int main()
 		return PTS_UNRESOLVED;
 	}
 
-	if (th_ret == PTS_PASS) {
+	switch ((long)th_ret) {
+	case PTS_PASS:
 		printf("Test PASSED\n");
 		return PTS_PASS;
-	} else if (th_ret == PTS_FAIL) {
+	case PTS_FAIL:
 		printf("Test FAILED\n");
 		return PTS_FAIL;
-	} else
+	default:
 		return PTS_UNRESOLVED;
+	}
 }

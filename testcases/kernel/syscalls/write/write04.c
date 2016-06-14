@@ -52,7 +52,6 @@
 #include <errno.h>
 #include <string.h>
 #include "test.h"
-#include "usctest.h"
 
 #define PIPE_SIZE_TEST getpagesize()
 
@@ -63,9 +62,6 @@ void cleanup();
 char *TCID = "write04";
 int TST_TOTAL = 1;
 
-/* 0 terminated list of expected errnos */
-int exp_enos[] = { 11, 0 };
-
 char fifo[100] = "fifo";
 static sigjmp_buf jmp;
 int rfd, wfd;
@@ -73,7 +69,6 @@ int rfd, wfd;
 int main(int argc, char **argv)
 {
 	int lc;
-	char *msg;
 
 	struct stat buf;
 	int fail;
@@ -81,9 +76,7 @@ int main(int argc, char **argv)
 	char wbuf[17 * PIPE_SIZE_TEST];
 	struct sigaction sigptr;	/* set up signal handler */
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	/* global setup */
 	setup();
@@ -92,8 +85,8 @@ int main(int argc, char **argv)
 	 * The following loop checks looping state if -i option given
 	 */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		/* reset Tst_count in case we are looping */
-		Tst_count = 0;
+		/* reset tst_count in case we are looping */
+		tst_count = 0;
 
 		if (mknod(fifo, S_IFIFO | 0777, 0) < 0) {
 			tst_resm(TBROK, "mknod() failed, errno: %d", errno);
@@ -184,7 +177,6 @@ int main(int argc, char **argv)
 				 "is full");
 			fail = 1;
 		} else {
-			TEST_ERROR_LOG(errno);
 			if (errno != EAGAIN) {
 				tst_resm(TBROK, "write set bad errno, expected "
 					 "EAGAIN, got %d", errno);
@@ -207,7 +199,7 @@ int main(int argc, char **argv)
 	tst_exit();
 }
 
-void alarm_handler()
+void alarm_handler(void)
 {
 	siglongjmp(jmp, 1);
 }
@@ -220,9 +212,6 @@ void setup(void)
 {
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	/* Set up the expected error numbers for -e option */
-	TEST_EXP_ENOS(exp_enos);
 
 	/* Pause if that option was specified
 	 * TEST_PAUSE contains the code to fork the test with the -i option.
@@ -239,12 +228,8 @@ void setup(void)
 
 }
 
-void cleanup()
+void cleanup(void)
 {
-	/*
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	close(rfd);
 	close(wfd);

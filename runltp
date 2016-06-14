@@ -80,6 +80,8 @@ setup()
     export TMPBASE="/tmp"
     export PATH="${PATH}:${LTPROOT}/testcases/bin"
 
+    export LTP_DEV_FS_TYPE="ext2"
+
     [ -d "$LTPROOT/testcases/bin" ] ||
     {
         echo "FATAL: LTP not installed correctly"
@@ -105,18 +107,19 @@ usage()
 {
     cat <<-EOF >&2
 
-    usage: ${0##*/} [ -a EMAIL_TO ] [ -c NUM_PROCS ] [ -C FAILCMDFILE ] [ -d TMPDIR ]
-    [ -D NUM_PROCS,NUM_FILES,NUM_BYTES,CLEAN_FLAG ] -e [ -f CMDFILES(,...) ] [ -g HTMLFILE]
-    [ -i NUM_PROCS ] [ -l LOGFILE ] [ -m NUM_PROCS,CHUNKS,BYTES,HANGUP_FLAG ]
+    usage: ${0##*/} [ -a EMAIL_TO ] [ -c NUM_PROCS ] [ -C FAILCMDFILE ] [ -T TCONFCMDFILE ]
+    [ -d TMPDIR ] [ -D NUM_PROCS,NUM_FILES,NUM_BYTES,CLEAN_FLAG ] -e [ -f CMDFILES(,...) ]
+    [ -g HTMLFILE] [ -i NUM_PROCS ] [ -l LOGFILE ] [ -m NUM_PROCS,CHUNKS,BYTES,HANGUP_FLAG ]
     -N -n [ -o OUTPUTFILE ] -p -q [ -r LTPROOT ] [ -s PATTERN ] [ -t DURATION ]
-    -v [ -w CMDFILEADDR ] [ -x INSTANCES ] [ -b DEVICE ] [-B DEVICE_FS_TYPE]
-	[ -F LOOPS,PERCENTAGE ]
+    -v [ -w CMDFILEADDR ] [ -x INSTANCES ] [ -b DEVICE ] [-B LTP_DEV_FS_TYPE]
+	[ -F LOOPS,PERCENTAGE ] [ -z BIG_DEVICE ] [-Z  LTP_BIG_DEV_FS_TYPE]
 
     -a EMAIL_TO     EMAIL all your Reports to this E-mail Address
     -c NUM_PROCS    Run LTP under additional background CPU load
                     [NUM_PROCS = no. of processes creating the CPU Load by spinning over sqrt()
                                  (Defaults to 1 when value)]
     -C FAILCMDFILE  Command file with all failed test cases.
+    -T TCONFCMDFILE Command file with all test cases that are not fully tested.
     -d TMPDIR       Directory where temporary files will be created.
     -D NUM_PROCS,NUM_FILES,NUM_BYTES,CLEAN_FLAG
                     Run LTP under additional background Load on Secondary Storage (Seperate by comma)
@@ -157,12 +160,16 @@ usage()
                       -t 45m = 45 minutes
                       -t 24h = 24 hours
                       -t 2d  = 2 days
-    -T REPETITION   Execute the testsuite for REPETITION no. of times
+    -I ITERATIONS   Execute the testsuite ITERATIONS times.
     -w CMDFILEADDR  Uses wget to get the user's list of testcases.
     -x INSTANCES    Run multiple instances of this testsuite.
     -b DEVICE       Some tests require an unmounted block device
                     to run correctly.
-    -B DEVICE_FS_TYPE The file system of test block devices.
+    -B LTP_DEV_FS_TYPE The file system of test block devices.
+    -z BIG_DEVICE   Some tests require a big unmounted block device
+                    to run correctly.
+    -Z  LTP_BIG_DEV_FS_TYPE The file system of the big device
+
 
 
     example: ${0##*/} -c 2 -i 2 -m 2,4,10240,1 -D 2,10,10240,1 -p -q  -l /tmp/result-log.$$ -o /tmp/result-output.$$ -C /tmp/result-failed.$$ -d ${PWD}
@@ -190,6 +197,7 @@ main()
     local DURATION=""
     local CMDFILEADDR=""
     local FAILCMDFILE=""
+    local TCONFCMDFILE=""
     local INJECT_KERNEL_FAULT=""
     local INJECT_KERNEL_FAULT_PERCENTAGE=""
     local INJECT_FAULT_LOOPS_PER_TEST=""
@@ -205,13 +213,12 @@ main()
     local EMAIL_TO=""
     local TAG_RESTRICT_STRING=""
     local PAN_COMMAND=""
-    local DEFAULT_FILE_NAME_GENERATION_TIME=`date +"%Y_%b_%d-%Hh_%Mm_%Ss"`
-
+    local DEFAULT_FILE_NAME_GENERATION_TIME=`date +"%Y_%m_%d-%Hh_%Mm_%Ss"`
     local scenfile=
 
     version_date=$(cat "$LTPROOT/Version")
 
-    while getopts a:c:C:d:D:f:F:ehi:K:g:l:m:M:Nno:pqr:s:S:t:T:w:x:b:B: arg
+    while getopts a:c:C:T:d:D:f:F:ehi:I:K:g:l:m:M:Nno:pqr:s:S:t:T:w:x:b:B:z:Z: arg
     do  case $arg in
         a)  EMAIL_TO=$OPTARG
             ALT_EMAIL_OUT=1;;
@@ -231,6 +238,15 @@ main()
                 FAILCMDFILE="-C $OPTARG" ;;
             *)
                 FAILCMDFILE="-C $LTPROOT/output/$OPTARG"
+                ALT_DIR_OUT=1 ;;
+            esac ;;
+
+        T)
+            case $OPTARG in
+            /*)
+                TCONFCMDFILE="-T $OPTARG" ;;
+            *)
+                TCONFCMDFILE="-T $LTPROOT/output/$OPTARG"
                 ALT_DIR_OUT=1 ;;
             esac ;;
 
@@ -317,9 +333,9 @@ main()
         K)
 	    case $OPTARG in
         	   /*)
-                	DMESG_DIR="$OPTARG-dmesg-output-`echo $$-``date +%X | tr -d ' '`";;
+			DMESG_DIR="$OPTARG-dmesg-output-`echo $$-``date +%X | tr -d ' '`";;
 	            *)
-        	        DMESG_DIR="$LTPROOT/output/$OPTARG-dmesg-output-`echo $$-``date +%X | tr -d ' '`";;
+		        DMESG_DIR="$LTPROOT/output/$OPTARG-dmesg-output-`echo $$-``date +%X | tr -d ' '`";;
 	    esac
             mkdir -p $DMESG_DIR
             ALT_DMESG_OUT=1;;
@@ -408,7 +424,7 @@ main()
             # (2m = two minutes, 2h = two hours, etc)
             DURATION="-t $OPTARG" ;;
 
-        T)  # In case you want the testcases to runsequentially RUN_REPEATED times
+        I)  # In case you want the testcases to runsequentially RUN_REPEATED times
             RUN_REPEATED=$OPTARG;;
 
         w)  CMDFILEADDR=$OPTARG;;
@@ -423,14 +439,16 @@ main()
             sleep 10
             INSTANCES="-x $OPTARG";;
         b) DEVICE=$OPTARG;;
-        B) DEVICE_FS_TYPE=$OPTARG;;
+        B) LTP_DEV_FS_TYPE=$OPTARG;;
+        z) BIG_DEVICE=$OPTARG;;
+        Z) BIG_DEVICE_FS_TYPE=$OPTARG;;
         \?) usage;;
         esac
     done
 
     ## It would be nice to create a default log file even if the user has not mentioned
     if [ ! "$LOGFILE" ]; then                                ## User has not mentioned about Log File name
-       LOGFILE_NAME=$DEFAULT_FILE_NAME_GENERATION_TIME
+       LOGFILE_NAME="$DEFAULT_FILE_NAME_GENERATION_TIME"
        LOGFILE="-l $LTPROOT/results/LTP_RUN_ON-$LOGFILE_NAME.log"
        ALT_DIR_RES=1
        PRETTY_PRT=" -p "
@@ -442,7 +460,7 @@ main()
          ALT_DIR_OUT=1
          if [ ! "$OUTPUTFILE" ]; then		             ## User has not mentioned about Output File name either
             if [ ! "$LOGFILE" ]; then                        ## User has not mentioned about Log File name either
-               FAILED_FILE_NAME=$DEFAULT_FILE_NAME_GENERATION_TIME
+               FAILED_FILE_NAME="$DEFAULT_FILE_NAME_GENERATION_TIME"
                FAILCMDFILE="-C $LTPROOT/output/LTP_RUN_ON-$FAILED_FILE_NAME.failed"
             else					     ## User Fortunately wanted a log file,
                FAILED_FILE_NAME=`basename $LOGFILE_NAME`     ## Extract log file name and use it to construct Failed file name
@@ -454,11 +472,27 @@ main()
          fi
     fi
 
+    if [ ! "$TCONFCMDFILE" ]; then
+         ALT_DIR_OUT=1
+         if [ ! "$OUTPUTFILE" ]; then
+            if [ ! "$LOGFILE" ]; then
+               TCONF_FILE_NAME="$DEFAULT_FILE_NAME_GENERATION_TIME"
+               TCONFCMDFILE="-T $LTPROOT/output/LTP_RUN_ON-${TCONF_FILE_NAME}.tconf"
+            else
+               TCONF_FILE_NAME=`basename $LOGFILE_NAME`
+               TCONFCMDFILE="-T $LTPROOT/output/LTP_RUN_ON-${TCONF_FILE_NAME}.tconf"
+            fi
+         else
+               TCONF_FILE_NAME=`basename $OUTPUTFILE_NAME`
+               TCONFCMDFILE="-T $LTPROOT/output/LTP_RUN_ON-${TCONF_FILE_NAME}.tconf"
+         fi
+    fi
+
     if [ "$ALT_HTML_OUT" -eq 1 ] ; then                      ## User wants the HTML version of the output
        QUIET_MODE=""                                         ## Suppressing this guy as it will prevent generation of proper output
                                                              ## which the HTML parser will require
        if [ ! "$OUTPUTFILE" ]; then                          ## User has not mentioned about the Outputfile name, then we need to definitely generate one
-          OUTPUTFILE_NAME=$DEFAULT_FILE_NAME_GENERATION_TIME
+          OUTPUTFILE_NAME="$DEFAULT_FILE_NAME_GENERATION_TIME"
           OUTPUTFILE="-o $LTPROOT/output/LTP_RUN_ON-$OUTPUTFILE_NAME.output"
           ALT_DIR_OUT=1
           if [ ! "$HTMLFILE" ] ; then                        ## User has not mentioned HTML File name, We need to create one
@@ -537,18 +571,16 @@ main()
         {
             [ -z "$RHOST" ] && \
             {
-                echo \
-                "INFO: Enter RHOST = 'name of the remote host machine'"
-                echo -n "-> "
+                printf "INFO: Enter RHOST = 'name of the remote host machine'"
+                printf "\n-> "
                 read RHOST
             }
 
             [ -z "$PASSWD" ] && \
             {
-                echo " "
-                echo \
-                "INFO: Enter PASSWD = 'root passwd of the remote host machine'"
-                echo -n "-> "
+                printf "\nINFO: "
+                printf "Enter PASSWD = 'root passwd of the remote host machine'"
+                printf "\n-> "
                 read PASSWD
             }
             export RHOST=$RHOST
@@ -663,7 +695,7 @@ main()
     fi
 
     # check for required users and groups
-    ${LTPROOT}/IDcheck.sh &>/dev/null || \
+    ${LTPROOT}/IDcheck.sh || \
     {
         echo "WARNING: required users and groups not present"
         echo "WARNING: some test cases may fail"
@@ -679,52 +711,21 @@ main()
     }
     }
 
-    if [ -n "$DEVICE" ]; then
-        sed -i "s|DEVICE|$DEVICE|"  ${TMP}/alltests
+    set_block_device
+
+    # here even if the user don't specify a big block device, we
+    # also don't create the big block device.
+    if [ -z "$BIG_DEVICE" ]; then
+        echo "no big block device was specified on commandline."
+        echo "Tests which require a big block device are disabled."
+        echo "You can specify it with option -z"
     else
-        echo "remove test cases which require the block device."
-        echo "You can specify it with option -b"
-        sed -i "/DEVICE/d"  ${TMP}/alltests
-    fi
-
-    if [ $? -ne 0 ]; then
-            echo "FATAL: error during prcessing alltests file by sed"
-            exit 1
-    fi
-
-    if [ -n "$DEVICE" ]; then
-        mnt_pnt=`mktemp -d "${TMP}/mnt_pnt.XXXXXX"`
-        if [ -n "$DEVICE_FS_TYPE" ]; then
-            mount -t $DEVICE_FS_TYPE $DEVICE $mnt_pnt
+        export LTP_BIG_DEV=$BIG_DEVICE
+        if [ -z "$BIG_DEVICE_FS_TYPE" ]; then
+            export LTP_BIG_DEV_FS_TYPE="ext2"
         else
-            mount $DEVICE $mnt_pnt
+            export LTP_BIG_DEV_FS_TYPE=$BIG_DEVICE_FS_TYPE
         fi
-
-        if [ $? -ne 0 ]; then
-            echo "FATAL: can't mount block device $DEVICE."
-            exit 1
-        fi
-
-        if [ -z "$DEVICE_FS_TYPE" ]; then
-            DEVICE_FS_TYPE=`cat /proc/mounts | awk "{if (\\\$1 == \"$DEVICE\") print \\\$3; }"`
-            echo "determine file system $DEVICE_FS_TYPE on block device $DEVICE"
-        fi
-
-        umount $DEVICE
-        if [ $? -ne 0 ]; then
-            echo "FATAL: can't umount $DEVICE"
-            exit 1
-        fi
-        rm -rf $mnt_pnt
-    fi
-
-    if [ -n "$DEVICE" ]; then
-        sed -i "s|DEVICE_FS_TYPE|$DEVICE_FS_TYPE|"  ${TMP}/alltests
-    fi
-
-    if [ $? -ne 0 ]; then
-        echo "FATAL: error during processing alltests file by sed"
-        exit 1
     fi
 
     if [ $RUN_REPEATED -gt 1 ]; then # You need to specify at least more than 1 sequential run, else it runs default
@@ -741,7 +742,7 @@ main()
 
     [ ! -z "$QUIET_MODE" ] && { echo "INFO: Test start time: $(date)" ; }
     PAN_COMMAND="${LTPROOT}/bin/ltp-pan $QUIET_MODE -e -S $INSTANCES $DURATION -a $$ \
-    -n $$ $PRETTY_PRT -f ${TMP}/alltests $LOGFILE $OUTPUTFILE $FAILCMDFILE"
+    -n $$ $PRETTY_PRT -f ${TMP}/alltests $LOGFILE $OUTPUTFILE $FAILCMDFILE $TCONFCMDFILE"
     echo "COMMAND:    $PAN_COMMAND"
     if [ ! -z "$TAG_RESTRICT_STRING" ] ; then
       echo "INFO: Restricted to $TAG_RESTRICT_STRING"
@@ -749,16 +750,19 @@ main()
     #$PAN_COMMAND #Duplicated code here, because otherwise if we fail, only "PAN_COMMAND" gets output
 
     ## Display the Output/Log/Failed/HTML file names here
-    echo -e "LOG File: \c"
+    printf "LOG File: "
     echo $LOGFILE | cut -b4-
 
     if [ "$OUTPUTFILE" ]; then
-       echo -e "OUTPUT File: \c"
+       printf "OUTPUT File: "
        echo $OUTPUTFILE | cut -b4-
     fi
 
-    echo -e "FAILED COMMAND File: \c"
+    printf "FAILED COMMAND File: "
     echo $FAILCMDFILE | cut -b4-
+
+   printf "TCONF COMMAND File: "
+   echo $TCONFCMDFILE | cut -b4-
 
     if [ "$HTMLFILE" ]; then
        echo "HTML File: $HTMLFILE"
@@ -833,7 +837,7 @@ main()
 	fi
     # Some tests need to run inside the "bin" directory.
     cd "${LTPROOT}/testcases/bin"
-    "${LTPROOT}/bin/ltp-pan" $QUIET_MODE -e -S $INSTANCES $DURATION -a $$ -n $$ $PRETTY_PRT -f ${TMP}/alltests $LOGFILE $OUTPUTFILE $FAILCMDFILE
+    "${LTPROOT}/bin/ltp-pan" $QUIET_MODE -e -S $INSTANCES $DURATION -a $$ -n $$ $PRETTY_PRT -f ${TMP}/alltests $LOGFILE $OUTPUTFILE $FAILCMDFILE $TCONFCMDFILE
 
     if [ $? -eq 0 ]; then
       echo "INFO: ltp-pan reported all tests PASS"
@@ -971,13 +975,60 @@ main()
     exit $VALUE
 }
 
+create_block()
+{
+    #create a block device
+    dd if=/dev/zero of=${TMP}/test.img bs=1kB count=102400 >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "Failed to create loopback device image, please check disk space and re-run"
+        return 1
+    else
+        ##search for an unused loop dev
+        LOOP_DEV=$(losetup -f)
+        if [ $? -ne 0 ]; then
+            echo "no unused loop device is found"
+            return 1
+        else
+            ##attach the created file to loop dev.
+            losetup $LOOP_DEV ${TMP}/test.img
+            if [ $? -ne 0 ]; then
+                echo "losetup failed to create block device"
+                return 1
+            fi
+            DEVICE=$LOOP_DEV
+            return 0
+        fi
+    fi
+}
+
+set_block_device()
+{
+    if [ -z "$DEVICE" ]; then
+        create_block
+        if [ $? -ne 0 ]; then
+            echo "no block device was specified on commandline."
+            echo "Block device could not be created using loopback device"
+            echo "Tests which require block device are disabled."
+            echo "You can specify it with option -b"
+	else
+            export LTP_DEV=$DEVICE
+        fi
+    else
+        export LTP_DEV=$DEVICE
+    fi
+}
+
 cleanup()
 {
+    [ "$LOOP_DEV" ] && losetup -d $LOOP_DEV
     rm -rf ${TMP}
 }
 
-trap "cleanup" 0
-setup
-main "$@"
 
-#vim: syntax=sh
+LTP_SCRIPT="$(basename $0)"
+
+if [ "$LTP_SCRIPT" = "runltp" ]; then
+    trap "cleanup" 0
+    setup
+    main "$@"
+fi

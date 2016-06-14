@@ -29,7 +29,7 @@ void handler(int signo)
 
 	printf("Caught SIGTTOU\n");
 
-	if (sigaltstack((stack_t *) 0, &oss) == -1) {
+	if (sigaltstack(NULL, &oss) == -1) {
 		perror("Unexpected error while attempting to setup test "
 		       "pre-conditions");
 		exit(-1);
@@ -41,7 +41,7 @@ void handler(int signo)
 	}
 }
 
-int main()
+int main(void)
 {
 	struct sigaction act;
 
@@ -54,7 +54,7 @@ int main()
 		return PTS_UNRESOLVED;
 	}
 
-	if (sigaltstack((stack_t *) 0, &current) == -1) {
+	if (sigaltstack(NULL, &current) == -1) {
 		perror("Unexpected error while attempting to setup test "
 		       "pre-conditions");
 		return PTS_UNRESOLVED;

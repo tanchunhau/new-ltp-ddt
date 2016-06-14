@@ -17,21 +17,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <stdio.h>
 #include <unistd.h>
-
-#include "test.h"
-
-char *TCID = "creat07_child";
-
-static struct tst_checkpoint checkpoint = {.timeout = 5, .retval = 1};
+#define TST_NO_DEFAULT_MAIN
+#include "tst_test.h"
 
 int main(void)
 {
-	TST_CHECKPOINT_SIGNAL_PARENT(&checkpoint);
+	tst_reinit();
 
-	for (;;) {
-		sleep(1);
-	}
+	TST_CHECKPOINT_WAKE(0);
+
+	pause();
+
 	return 0;
 }
