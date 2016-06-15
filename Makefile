@@ -230,7 +230,6 @@ KERNEL_CC ?= $(CC)
 
 MODULES_TO_BUILD :=
 export PLATFORMSwIPC   :=  omap5-evm|dra7xx-evm|dra72x-evm|am57xx-evm
-export PLATFORMSwDEVFREQ :=
 export PLATFORMSwDMTIMER := am335x-evm|am437x-evm|am57xx-evm|dra7xx-evm|dra72x-evm
 MODULES_CLEAN :=
 
@@ -242,10 +241,6 @@ ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwIPC)))
 	MODULES_TO_BUILD += modules_ipc
 endif
 
-ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwDEVFREQ)))
-	MODULES_TO_BUILD += modules_devfreq
-endif
-
 
 modules_dmtimer:
 	@echo "Going to compile dmtimer test kernel modules for $(PLATFORM)"
@@ -255,10 +250,6 @@ modules_dmtimer:
 modules_ipc:
 	@echo "Going to compile IPC test kernel modules for $(PLATFORM)"
 	cd testcases/ddt/ipc_test_suite/src/kernel; $(MAKE) CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
-
-modules_devfreq:
-	@echo "Going to compile devfreq test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/devfreq_drivers/src/kernel; $(MAKE) CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
 
 modules: $(MODULES_TO_BUILD)
 
