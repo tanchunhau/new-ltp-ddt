@@ -203,13 +203,10 @@
     for installation)
     NOTE: Alternatively instead of updating the Makefile user can supply 
           ALSA_INCPATH and  ALSA_LIBPATH as arguements to make 
- * cd to kernel diretory and compile kernel if kernel is not compiled yet.
-   Then, do headers_install in kernel install directory
+ * cd to kernel diretory and then do headers_install in kernel install directory
        e.g.
         $cd linux-xx.xx.xx.xx
         $make CROSS_COMPILE=arm-none-linux-gnueabi- distclean
-        $make CROSS_COMPILE=arm-none-linux-gnueabi- <defconfig>
-        $make CROSS_COMPILE=arm-none-linux-gnueabi- uImage modules
         $make CROSS_COMPILE=arm-none-linux-gnueabi- headers_install
 
  == Builds steps ==
@@ -224,11 +221,9 @@ export RANLIB=${CROSS_COMPILER}ranlib
 
 ./configure --host=arm-linux-gnueabihf
 
-make SKIP_IDCHECK=1 KERNEL_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/include KERNEL_USR_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/usr/include CROSS_COMPILE=arm-linux-gnueabihf- PLATFORM=am335x-evm clean 
+make SKIP_IDCHECK=1 KERNEL_USR_INC=/opt/lcpd/git_repos/ti-linux-kernel/usr/include CROSS_COMPILE=arm-linux-gnueabihf- clean
 
-make SKIP_IDCHECK=1 KERNEL_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/include KERNEL_USR_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/usr/include CROSS_COMPILE=arm-linux-gnueabihf- PLATFORM=am335x-evm  
-
-make SKIP_IDCHECK=1 KERNEL_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/include KERNEL_USR_INC=/opt/lcpd/git_repos/ti-linux-kernel-2/usr/include CROSS_COMPILE=arm-linux-gnueabihf- PLATFORM=am335x-evm modules 
+make SKIP_IDCHECK=1 KERNEL_USR_INC=/opt/lcpd/git_repos/ti-linux-kernel/usr/include CROSS_COMPILE=arm-linux-gnueabihf-
 
  == Install Step ==
    $ sudo make DESTDIR=<destination directory> SKIP_IDCHECK=1 PLATFORM=<Platform name> install

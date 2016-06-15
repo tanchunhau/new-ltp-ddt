@@ -99,7 +99,6 @@ BOOTSTRAP_TARGETS	:= $(sort $(COMMON_TARGETS) $(CLEAN_TARGETS) $(INSTALL_TARGETS
 CLEAN_TARGETS		:= $(addsuffix -clean,$(CLEAN_TARGETS))
 INSTALL_TARGETS		:= $(addsuffix -install,$(INSTALL_TARGETS))
 MAKE_TARGETS		:= $(addsuffix -all,$(filter-out lib,$(COMMON_TARGETS)))
-PLATFORM		:= $(PLATFORM)
 
 # There's no reason why we should run `all' twice. Otherwise we're just wasting
 # 3+ mins of useful CPU cycles on a modern machine, and even more time on an
@@ -174,7 +173,7 @@ CLEAN_TARGETS	+= clean_install_dir
 endif
 endif
 
-clean:: $(CLEAN_TARGETS)  modules_clean
+clean:: $(CLEAN_TARGETS)
 	$(RM) -f Version
 
 $(foreach tgt,$(MAKE_TARGETS) include-all lib-all $(filter-out clean_install_dir,$(CLEAN_TARGETS)) $(INSTALL_TARGETS) include-install lib-install,$(eval $(call target_to_dir_dep_mapping,$(tgt))))
@@ -223,38 +222,6 @@ else
 	@echo "** Will not run IDcheck.sh (SKIP_IDCHECK set to 1).  **"
 	@echo "*******************************************************"
 endif
-
-## Compile Modules
-KERNEL_PATH ?= $(KERNEL_INC)/..
-KERNEL_CC ?= $(CC)
-
-MODULES_TO_BUILD :=
-export PLATFORMSwIPC   :=  omap5-evm|dra7xx-evm|dra72x-evm|am57xx-evm
-export PLATFORMSwDMTIMER := am335x-evm|am437x-evm|am57xx-evm|dra7xx-evm|dra72x-evm
-MODULES_CLEAN :=
-
-ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwDMTIMER)))
-	MODULES_TO_BUILD += modules_dmtimer
-endif
-
-ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwIPC)))
-	MODULES_TO_BUILD += modules_ipc
-endif
-
-
-modules_dmtimer:
-	@echo "Going to compile dmtimer test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/dmtimer_test_suite/src/kernel; $(MAKE) CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
-
-
-modules_ipc:
-	@echo "Going to compile IPC test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/ipc_test_suite/src/kernel; $(MAKE) CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
-
-modules: $(MODULES_TO_BUILD)
-
-modules_clean: MODULES_CLEAN = clean
-modules_clean: $(MODULES_TO_BUILD)
 
 ## Misc targets.
 
