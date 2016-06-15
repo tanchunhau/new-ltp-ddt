@@ -14,14 +14,12 @@ INSTALL_MODE            := 00755
 
 CFLAGS		= -g -Wall -D__EXPORTED_HEADERS__
 LDFLAGS         += -g
-INCLUDES        = -I $(KERNEL_INC) -I src/interface/common -I ../utils/user
+INCLUDES        = -I $(KERNEL_USR_INC) -I src/interface/common -I ../utils/user
 
 #Path of header files to be included
 INCLUDES        = -I src/parser \
                   -I src/interface/common \
-                  -I ../utils/user \
-                  -I $(KERNEL_INC)/include/generated \
-                  -I $(KERNEL_INC)/arch/arm/include/generated
+                  -I ../utils/user
 
 #List of source files- Update this on adding a new C file
 SOURCES := \
