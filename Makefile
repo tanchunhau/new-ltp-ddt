@@ -229,7 +229,6 @@ KERNEL_PATH ?= $(KERNEL_INC)/..
 KERNEL_CC ?= $(CC)
 
 MODULES_TO_BUILD :=
-export PLATFORMSwGPIO   := am335x-evm|omap5-evm|beaglebone|am437x-evm|dra7xx-evm|dra72x-evm|am57xx-evm|am437x-sk
 export PLATFORMSwIPC   :=  omap5-evm|dra7xx-evm|dra72x-evm|am57xx-evm
 export PLATFORMSwDEVFREQ :=
 export PLATFORMSwDMTIMER := am335x-evm|am437x-evm|am57xx-evm|dra7xx-evm|dra72x-evm
@@ -237,10 +236,6 @@ MODULES_CLEAN :=
 
 ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwDMTIMER)))
 	MODULES_TO_BUILD += modules_dmtimer
-endif
-
-ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwGPIO)))
-	MODULES_TO_BUILD += modules_gpio
 endif
 
 ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwIPC)))
@@ -256,9 +251,6 @@ modules_dmtimer:
 	@echo "Going to compile dmtimer test kernel modules for $(PLATFORM)"
 	cd testcases/ddt/dmtimer_test_suite/src/kernel; $(MAKE) CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
 
-modules_gpio:
-	@echo "Going to compile gpio test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/gpio_test_suite/src/kernel; $(MAKE) CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
 
 modules_ipc:
 	@echo "Going to compile IPC test kernel modules for $(PLATFORM)"
