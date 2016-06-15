@@ -229,17 +229,11 @@ KERNEL_PATH ?= $(KERNEL_INC)/..
 KERNEL_CC ?= $(CC)
 
 MODULES_TO_BUILD :=
-export PLATFORMSwEDMA   := am180x-evm|am181x-evm|am389x-evm|am387x-evm|dm385-evm|dm813x-evm|da830-omapl137-evm|am170x-evm
 export PLATFORMSwGPIO   := am335x-evm|omap5-evm|beaglebone|am437x-evm|dra7xx-evm|dra72x-evm|am57xx-evm|am437x-sk
 export PLATFORMSwIPC   :=  omap5-evm|dra7xx-evm|dra72x-evm|am57xx-evm
 export PLATFORMSwDEVFREQ :=
 export PLATFORMSwDMTIMER := am335x-evm|am437x-evm|am57xx-evm|dra7xx-evm|dra72x-evm
 MODULES_CLEAN :=
-
-ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwEDMA)))
-# Disable edma modules install until appropriate tests are available
-#MODULES_TO_BUILD += modules_edma
-endif
 
 ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwDMTIMER)))
 	MODULES_TO_BUILD += modules_dmtimer
@@ -257,9 +251,6 @@ ifneq (,$(findstring $(PLATFORM),$(PLATFORMSwDEVFREQ)))
 	MODULES_TO_BUILD += modules_devfreq
 endif
 
-modules_edma:
-	@echo "Going to compile edma test kernel modules for $(PLATFORM)"
-	cd testcases/ddt/edma_test_suite/src/kernel; $(MAKE) CROSS_COMPILE=$(CROSS_COMPILE) CC='$(KERNEL_CC)' KERNEL_DIR=$(KERNEL_PATH) PLATFORM=$(PLATFORM) $(MODULES_CLEAN)
 
 modules_dmtimer:
 	@echo "Going to compile dmtimer test kernel modules for $(PLATFORM)"
