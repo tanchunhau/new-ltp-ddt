@@ -11,6 +11,11 @@ lib*.a
 *.cmd
 *.ko
 *.mod.c
+*.symvers
+*.order
+*.tmp_versions
+*.idea
+cscope.out
 
 /aclocal.m4
 autom4te.cache
