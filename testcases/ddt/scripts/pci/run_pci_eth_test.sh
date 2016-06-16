@@ -57,7 +57,7 @@ fi
 iface_config="iface ${ETH_IFACE} inet dhcp"; 
 grep "$iface_config" /etc/network/interfaces || ( echo "$iface_config" >> /etc/network/interfaces ); 
 for interface in ${iface_list[@]}; do 
-  do_cmd "ifdown $interface"; 
+  do_cmd "ifconfig $interface down"; 
 done; 
 do_cmd "ifup ${ETH_IFACE}"; 
 host=`get_eth_gateway.sh "-i ${ETH_IFACE}"` || host=`get_eth_gateway.sh "-i eth0"` || die "error getting eth gateway address";
@@ -73,7 +73,7 @@ do_cmd "ifdown $ETH_IFACE";
 for interface in ${iface_list[@]}; do 
   status=`cat /sys/class/net/"${interface}"/operstate`
   if [ $status == 'down' ]; then
-    ifup $interface; 
+    ifconfig $interface up; 
   fi
 done
 
