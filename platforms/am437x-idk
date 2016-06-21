@@ -36,6 +36,8 @@ power_mgr/dynamic_ticks
 power_mgr/smartreflex
 pwm/ehrpwm
 pwm/ecap
+pru/eth1
+pru/eth2
 rtc/omap_rtc
 sound/capture/alsa
 sound/playback/alsa

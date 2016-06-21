@@ -16,7 +16,6 @@ mmc_host/sd/mmci-omap-hs
 mmc_host/sdhc/mmci-omap-hs
 mmc_host/sdxc/mmci-omap-hs
 nand/omap2-nand
-pru
 ubifs
 jffs2
 net/eth10M/ti_cpsw
@@ -29,6 +28,8 @@ power_mgr/cpufreq/ondemand
 power_mgr/cpuidle
 power_mgr/dynamic_ticks
 power_mgr/smartreflex
+pru/eth0
+pru/eth1
 rtc/omap_rtc
 spi_master/mtd/spi-omap2-mcspi
 watchdog/omap_wdt
