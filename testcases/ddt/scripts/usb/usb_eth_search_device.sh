@@ -28,26 +28,18 @@ devices=`ls /sys/class/net|grep eth`
 for device in $devices
   do
     usb_interface=`udevadm info --attribute-walk --path=/sys/class/net/$device|grep -m 1 -i "$usb_cnt_interface"`
-    usb_eth_adapter=`udevadm info --attribute-walk --path=/sys/class/net/$device|grep -m 1 -i "adapter"`
-    if [ -n "$usb_eth_adapter" ];
-    then 
-      if [ -n "$usb_interface" ];
-      then
+#    usb_eth_adapter=`udevadm info --attribute-walk --path=/sys/class/net/$device|grep -m 1 -i "adapter"`
+    if [ -n "$usb_interface" ];
+    then
         echo $device
         ethdev=$device
-      fi
-    else 
-      `ifdown $device`
     fi
 done
+
 if test "$ethdev" = "none";
 then
   test_print_trc " ::"
-  if [ -n "$usb_eth_adapter" ]; then
-    test_print_trc " :: No USB Ethernet Adapter connected to interface $1 found. Exiting USB Ethernet tests..."
-  else
-    test_print_trc " :: No USB Ethernet Adapter found. Exiting USB Ethernet tests..."
-  fi
-test_print_trc " ::"
-exit 2	
+  test_print_trc " :: No USB Ethernet Adapter found. Exiting USB Ethernet tests..."
+  test_print_trc " ::"
+  exit 2	
 fi
