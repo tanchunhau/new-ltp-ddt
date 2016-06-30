@@ -39,6 +39,8 @@ power_mgr/dynamic_ticks
 power_mgr/smartreflex
 pru/eth2
 pru/eth3
+pru/eth4
+pru/eth5
 qspi_master/mtd/spi-ti-qspi
 rtc/omap_rtc
 rtc/rtc-palmas

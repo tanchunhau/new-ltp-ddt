@@ -1,0 +1,13 @@
+# @name PRU Ethernet ping test 
+# @desc Brings net iface up and pings default gw. 
+# @requires pru/eth4
+
+PRUETH_XS_FUNC_ETH4_PING source 'common.sh'; INTERFACE_NAME=eth4; iface=`get_eth_iface_by_module_name.sh -m pru -i $INTERFACE_NAME` || die "error getting eth interface name"; do_cmd "del_default_gateway.sh"; do_cmd "do_eth_up_down.sh -d down"; do_cmd "do_eth_up_down.sh -i $iface -d up"; host=`get_eth_gateway.sh "-i ${iface}"` || die "error getting eth gateway address"; do_cmd "ping ${host} -c 3"
+
+PRUETH_S_FUNC_ETH4_PING_300S source 'common.sh'; INTERFACE_NAME=eth4; iface=`get_eth_iface_by_module_name.sh -m pru -i $INTERFACE_NAME` || die "error getting eth interface name"; do_cmd "del_default_gateway.sh"; do_cmd "do_eth_up_down.sh -d down"; do_cmd "do_eth_up_down.sh -i $iface -d up"; host=`get_eth_gateway.sh "-i ${iface}"` || die "error getting eth gateway address"; do_cmd "ping ${host} -w 300"
+
+PRUETH_M_STRESS_ETH4_PING_1800S source 'common.sh'; INTERFACE_NAME=eth4; iface=`get_eth_iface_by_module_name.sh -m pru -i $INTERFACE_NAME` || die "error getting eth interface name"; do_cmd "del_default_gateway.sh"; do_cmd "do_eth_up_down.sh -d down"; do_cmd "do_eth_up_down.sh -i $iface -d up"; host=`get_eth_gateway.sh "-i ${iface}"` || die "error getting eth gateway address"; do_cmd "ping ${host} -w 1800"
+
+
+PRUETH_S_STRESS_ETH4_PING_MULTI-PKT-SIZES source 'common.sh';  INTERFACE_NAME=eth4; iface=`get_eth_iface_by_module_name.sh -m pru -i $INTERFACE_NAME` || die "error getting eth interface name"; do_cmd "del_default_gateway.sh"; do_cmd "do_eth_up_down.sh -d down"; do_cmd "do_eth_up_down.sh -i $iface -d up"; host=`get_eth_gateway.sh "-i ${iface}"` || die "error getting eth gateway address"; for size in 128 512 1024 4096 8192 16384; do do_cmd "ping ${host} -c 3 -s ${size}";done
+
