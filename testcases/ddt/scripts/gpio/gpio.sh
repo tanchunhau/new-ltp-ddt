@@ -60,6 +60,15 @@ gpio_sysentry_set_item() {
   fi
 }
 
+set_gpio_pinmux(){
+  reg=$1
+  mux_val=$2
+  do_cmd devmem2 "$reg"
+  reg_val_orig=`devmem2 "$reg" | grep "Read at address" |cut -d ":" -f2 `
+  new_val=`echo $(( $(($reg_val_orig)) | $(($mux_val)) )) `
+  new_val_hex=`echo "obase=16; $new_val" |bc `
+  do_cmd devmem2 "$reg" w "$new_val_hex"
+}
 
 
 ############################### CLI Params ###################################
@@ -114,6 +123,12 @@ case $MACHINE in
   ;;
   k2*-evm)
     GPIO_NUM_IN_BANKS="6,8"
+    if [[ "$MACHINE" == "k2g-evm" ]]; then
+      # gpio0_6
+      set_gpio_pinmux "0x02621018" "0x3"
+      # gpio1_8
+      set_gpio_pinmux "0x026212dc" "0x3"
+    fi
   ;;
   dra7xx-evm|am572x-idk|am571x-idk) 
     # bank number starts from 1 and total 8 banks
