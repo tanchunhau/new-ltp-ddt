@@ -24,5 +24,9 @@ usage()
 	exit 1
 }
 
-GATEWAY=`ip route show | grep default | awk '{print $3}'`
-`route del default gw $GATEWAY`
+: ${GATEWAY:=`ip route show | grep default | awk '{print $3}'`}
+gw_array=($GATEWAY)
+for i in "${gw_array[@]}"
+do
+	`route del default gw $i`
+done
