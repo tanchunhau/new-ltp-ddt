@@ -3,5 +3,5 @@
 # @requires emmc
 # @setup_requires emmc
 
-EMMC_S_FUNC_CHECK_SPEED source "common.sh"; do_cmd check_emmc_speed.sh
+EMMC_S_FUNC_CHECK_SPEED source "common.sh"; do_cmd check_mmc_speed.sh
 
