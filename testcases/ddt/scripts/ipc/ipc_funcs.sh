@@ -583,7 +583,7 @@ kill_lad()
           killall lad_tci6630
         ;;
         *Edison*)
-          killall lad_66AK2E
+          killall lad_66ak2e
         ;;
         *K2G*)
           killall lad_66ak2g
@@ -616,7 +616,7 @@ start_lad()
           lad_tci6630
         ;;
         *Edison*)
-          lad_66AK2E
+          lad_66ak2e
         ;;
         *K2G*)
           lad_66ak2g
