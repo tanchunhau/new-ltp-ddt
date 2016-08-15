@@ -21,25 +21,38 @@ source "blk_device_common.sh"
 ############################# Functions #######################################
 
 ############# Do the work ###########################################
-expected_mode=$1
+device_type=$1
+expected_mode=$2
 
 if [[ "$expected_mode" = "" ]]; then
-
-  # Get emmc expected speed based on platform
-  case $MACHINE in
-    am57xx-evm)
-      expected_mode="DDR52";;
-    dra7xx-evm | dra72x-evm )
-      expected_mode="HS200";;
-    *)
-      die "No expected eMMC mode is specified for this platform";;
-  esac
+  if [[ "$device_type" = "emmc" ]]; then
+    # Get emmc expected speed based on platform
+    case $MACHINE in
+      am57xx-evm)
+        expected_mode="DDR52";;
+      dra7xx-evm | dra72x-evm )
+        expected_mode="HS200";;
+      *)
+        die "No expected eMMC mode is specified for this platform";;
+    esac
+  fi
 
 fi
 
-expected_timespec="(mmc ${expected_mode}"
+if [[ "$expected_mode" = "" ]]; then
+  die "There is no expected speed mode is specified for $device_type"
+fi
+
+if [[ "$device_type" = "emmc" ]]; then
+  expected_timespec="(mmc ${expected_mode}"
+elif [[ "$device_type" = "mmc" ]]; then
+  expected_timespec="(sd uhs ${expected_mode}"
+else
+  die "Not support this device_type"
+fi
+
 mmcios=`printout_mmc_ios` 
-echo "$mmcios" |grep "$expected_timespec" && echo "The test pass and mmc ios shows it is running at ${expected_mode} mode" || die "eMMC is not running at expected mode: ${expected_mode}"
+echo "$mmcios" |grep -i "$expected_timespec" && echo "The test pass and mmc ios shows it is running at ${expected_mode} mode" || die "MMC is not running at expected mode: ${expected_mode}"
 
 
 
