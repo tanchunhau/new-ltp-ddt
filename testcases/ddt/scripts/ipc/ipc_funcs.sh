@@ -42,7 +42,7 @@ setup_firmware()
   echo "Found $__fw_files fw files..."
   case $MACHINE in
     dra7xx-evm|am57*)
-      save_firmware dra7-dsp1-fw.xe66 dra7-dsp2-fw.xe66 dra7-ipu2-fw.xem4 dra7-ipu1-fw.xem4 am57xx-pru1_0-fw am57xx-pru1_1-fw am57xx-pru2_0-fw am57xx-pru2_1-fw
+      save_firmware dra7-dsp1-fw.xe66 dra7-dsp2-fw.xe66 dra7-ipu2-fw.xem4 dra7-ipu1-fw.xem4
       for __fw in $__fw_files
       do
         echo "Setting up $__fw ..."
@@ -58,14 +58,6 @@ setup_firmware()
             ;;
           *ipu2*)
             ln -sf $__fw dra7-ipu2-fw.xem4
-            ;;
-          *pru0*)
-            ln -sf $__fw am57xx-pru1_0-fw
-            ln -sf $__fw am57xx-pru2_0-fw
-            ;;
-          *pru1*)
-            ln -sf $__fw am57xx-pru1_1-fw
-            ln -sf $__fw am57xx-pru2_1-fw
             ;;
           *)
             echo "File $__fw did not contain processor tag"
@@ -112,6 +104,108 @@ setup_firmware()
   popd
 }
 
+setup_pru_firmware()
+{
+  local __fw_pattern=$1
+  local __fw_dir='/lib/firmware'
+  pushd ${__fw_dir}
+  local __fw_files=$(find $__fw_dir -type f -name "${__fw_pattern}")
+  echo "Found $__fw_files fw files..."
+  case $MACHINE in
+    am57*)
+      save_firmware am57xx-pru1_0-fw am57xx-pru1_1-fw am57xx-pru2_0-fw am57xx-pru2_1-fw
+      for __fw in $__fw_files
+      do
+        echo "Setting up $__fw ..."
+        case $__fw in
+          *1_0*)
+            ln -sf $__fw am57xx-pru1_0-fw
+            ;;
+          *2_0*)
+            ln -sf $__fw am57xx-pru2_0-fw
+            ;;
+          *1_1*)
+            ln -sf $__fw am57xx-pru1_1-fw
+            ;;
+          *2_1*)
+            ln -sf $__fw am57xx-pru2_1-fw
+            ;;
+          *)
+            echo "File $__fw did not contain processor tag"
+            ;;
+        esac
+      done
+    ;;
+    am43xx*)
+      save_firmware am437x-pru1_0-fw am437x-pru1_1-fw
+      echo "Setting up $__fw_files ..."
+      for __fw in $__fw_files
+      do
+        case $__fw in
+          *1_0*)
+            ln -sf $__fw am437x-pru1_0-fw
+            ;;
+          *1_1*)
+            ln -sf $__fw am437x-pru1_1-fw
+            ;;
+          *)
+            echo "File $__fw did not contain processor tag"
+            ;;
+        esac
+      done
+    ;;
+    am335x*)
+      save_firmware rproc-pru0-fw rproc-pru1-fw
+      for __fw in $__fw_files
+      do
+        echo "Setting up $__fw ..."
+        case $__fw in
+          *0*)
+            ln -sf $__fw rproc-pru0-fw
+            ;;
+          *1*)
+            ln -sf $__fw rproc-pru1-fw
+            ;;
+          *)
+            echo "File $__fw did not contain processor tag"
+            ;;
+        esac
+      done
+    ;;
+    k2g*)
+      save_firmware k2g-pru0_0-fw k2g-pru0_1-fw k2g-pru1_0-fw k2g-pru1_1-fw
+      echo "Setting up $__fw_files ..."
+      for __fw in $__fw_files
+      do
+        case $__fw in
+          *0_0*)
+            ln -sf $__fw k2g-pru0_0-fw
+            ;;
+          *0_1*)
+            ln -sf $__fw k2g-pru0_1-fw
+            ;;
+          *1_0*)
+            ln -sf $__fw k2g-pru1_0-fw
+            ;;
+          *1_1*)
+            ln -sf $__fw k2g-pru1_1-fw
+            ;;
+          *)
+            echo "File $__fw did not contain processor tag"
+            ;;
+        esac
+      done
+    ;;
+    *)
+      echo "Machine ${MACHINE} not supported"
+      popd
+      return 1
+      ;;           
+  esac
+  sync
+  popd
+}
+
 # Function to rmod the rpmsg loadable modules so that new firmware can 
 # be loaded in the remote processors
 rm_ipc_mods()
@@ -119,6 +213,7 @@ rm_ipc_mods()
 
   local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus )
 
+  reset_rproc_mpm
   kill_lad
   kill_mpm_daemon
 
@@ -216,13 +311,33 @@ load_rproc_mpm()
   sleep 3
 }
 
+#Function to reset the remote procs via mpm for IPC related test
+# Inputs:
+#    None
+reset_rproc_mpm()
+{
+  case $MACHINE in
+    k2*)
+      local __procs=$(get_num_remote_procs)
+      for i in `seq 0 $((__procs - 1))`
+      do
+        echo "Resetting ${__fw_files} on dsp${i} ..."
+        mpmcl reset dsp${i}
+      done
+    ;;
+    *)
+      "MPM reset not supported for $MACHINE"
+    ;;
+  esac
+}
+
 
 ins_pru_mods()
 {
   local __modules=(pruss pru_rproc)
 
   case $MACHINE in
-    am57*|am43xx*|am335x*)
+    am57*|am43xx*|am335x*|k2g*)
       for __mod in ${__modules[@]}
       do
         modprobe ${__mod}
@@ -237,7 +352,7 @@ rm_pru_mods()
   local __modules=(pru_rproc pruss)
 
   case $MACHINE in
-    am57*|am43xx*|am335x*)
+    am57*|am43xx*|am335x*|k2g*)
       __prus=( $(list_prus) )                                           
       toggle_prus unbind ${__prus[@]}
       for __mod in ${__modules[@]}
@@ -252,7 +367,7 @@ kill_mpm_daemon()
 {
   case $MACHINE in
     k2*)
-      /etc/init.d/mpmsrv-daemon.sh stop && killall -9 mpmsrv
+      mpmcl reset; /etc/init.d/mpmsrv-daemon.sh stop
     ;;
   esac
 }
@@ -935,6 +1050,9 @@ list_prus()
     ;;
     am57*)
       echo "4b234000.pru0 4b238000.pru1 4b2b4000.pru0 4b2b8000.pru1"
+    ;;
+    k2g*)
+      echo "20ab4000.pru0 20ab8000.pru1 20af4000.pru0 20af8000.pru1"
     ;;
     *)
       echo "Machine ${MACHINE} not supported"
