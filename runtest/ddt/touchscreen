@@ -1,0 +1,6 @@
+# @name Touchscreen detection test 
+# @desc Tests if touchscreen exists as an input device
+# @requires touchscreen
+
+TOUCHSCREEN_S_FUNC_DETECTION source 'common.sh'; `touchscreen_search_device.sh` || die "error getting touchscreen input device name"
+
