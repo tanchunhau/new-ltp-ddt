@@ -5,4 +5,6 @@
 
 POWERMGR_S_FUNC_ETH_SUSPEND source "common.sh"; run_processes.sh -c " /opt/ltp/runltp -f ddt/eth_ping -P $PLATFORM -s 'ETH_XS_FUNC_PING '  # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_suspend -s 'POWERMGR_S_FUNC_SIMPLE_SUSPEND ' "
 
+POWERMGR_S_FUNC_ETH_SUSPEND_DUALMAC source "common.sh"; run_processes.sh -c " /opt/ltp/runltp -f ddt/eth_ping -P $PLATFORM -s 'ETH_S_FUNC_MULTI_INTERFACE_PING_ONE_AT_A_TIME '  # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_suspend -s 'POWERMGR_S_FUNC_SIMPLE_SUSPEND ' "
+
 POWERMGR_M_FUNC_ETH_SUSPEND source "common.sh"; run_processes.sh -c " /opt/ltp/runltp -f ddt/eth_ping -P $PLATFORM -s 'ETH_S_FUNC_PING_300S '  # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_suspend -s 'POWERMGR_L_STRESS_SIMPLE_SUSPEND ' "
