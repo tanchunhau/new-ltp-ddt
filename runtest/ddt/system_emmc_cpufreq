@@ -1,6 +1,7 @@
 # @name Test emmc driver while changing cpu frequency
 # @desc Test emmc driver while the OPP is changed to cover all possible vallues
 # @requires emmc 
+# @setup_requires emmc
 
 SYSTEM_S_FUNC_OPP_EMMC source 'common.sh'; run_processes.sh -c " /opt/ltp/runltp -f ddt/emmc_dd_rw -P $PLATFORM -s 'EMMC_S_FUNC_DD_RW_QUICK '  # /opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_cpufreq -s POWERMGR_S_FUNC_CPUFREQ_BASIC "
 
