@@ -17,6 +17,7 @@ MTD_CHAR="mtd"
 MTD_BLK_DEV="/dev/$MTD_BLK"
 MTD_CHAR_DEV="/dev/$MTD_CHAR"
 
+source "common.sh"
 ############################# Functions #######################################
 # Assume the type is always nand for nand device
 # this function is to check if the device /dev/mtd$partition is nand based on /sys entry
@@ -179,5 +180,12 @@ get_partnum_from_name() {
 find_ubi_device() {
   ubi_dev=`ubinfo | grep -i 'present ubi devices:' |cut -d ":" -f2 |xargs |awk -F, '{print $NF}' |xargs `
   echo $ubi_dev
+}
+
+# DEV_NODE: ex: /dev/mtdblock9
+printout_mtdinfo(){
+  DEV_NODE=$1
+  CHAR_NODE=`echo "$DEV_NODE" |sed "s/block//" `
+  do_cmd mtdinfo "$CHAR_NODE"
 }
 

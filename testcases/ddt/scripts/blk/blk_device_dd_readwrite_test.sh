@@ -100,6 +100,11 @@ do_cmd printout_model "$DEV_NODE" "$DEVICE_TYPE"
 if [[ "$DEV_NODE" =~ "mmc" ]]; then
   do_cmd printout_mmc_ios
 fi
+
+# printout mtdinfo for mtd device 
+if [[ "$DEV_NODE" =~ "mtd" ]]; then
+  do_cmd printout_mtdinfo "$DEV_NODE"
+fi
  
 if [ $SKIP_FORMAT -ne 1 ]; then 
   if [ -n "$FS_TYPE" ]; then
