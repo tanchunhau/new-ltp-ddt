@@ -57,13 +57,23 @@ get_video_connector_info()
   local __c_mode
   local __c_id
   local __conn_type=$1
+  local __format
+
   if [ ${#} -gt 1 ]; then
     __mode_regex="$2"
   fi
   get_sections "^[A-Za-z]*:" "$__info" "~" __dss_info
   local connectors=$(get_section_val "Connectors:" __dss_info[@] "~")
   get_sections "^[0-9].*" "$connectors" "~" __conn_inf
-  get_sections_keys __conn_inf[@] "~" __conn_ids  
+  get_sections_keys __conn_inf[@] "~" __conn_ids
+  case $MACHINE in
+    beaglebone)
+      __format="@XB24"
+    ;;
+    *)
+      __format=""
+    ;;
+  esac
   for conn in "${__conn_ids[@]}"
   do
     __info=$(echo -e "$conn" | grep -i $'\t'connected$'\t'$__conn_type)
@@ -79,7 +89,7 @@ get_video_connector_info()
         __c_mode=$(echo $mode | cut -d ' ' -f 3,4)
         __c_mode=${__c_mode/ /-}
         if [[ "$__c_mode" =~ $__mode_regex ]]; then
-          __result[${#__result[@]}]="$__c_id:$__c_mode"
+          __result[${#__result[@]}]="$__c_id:$__c_mode$__format"
         fi
       done
       IFS=$__old_ifs
@@ -128,8 +138,8 @@ disp_audio_test()
   for mode in "${__modes[@]}"; do
     __expected_fr=( $(echo "$mode" | grep -o '\-[0-9]\+' | cut -d '-' -f 2 | sort | uniq) )
     echo "Expected frame rates: ${__expected_fr[@]}"
-    echo "modetest -t -v -s $mode &>mode_test_log.txt & mt_pid=\$! ; $__alsa_test_cmd ; __alsa_rc=\$? ; kill -9 \$mt_pid"
-    __test_log=$(modetest -t -v -s $mode 2>&1 & mt_pid=$! ; $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid; echo alsa_rc=$__alsa_rc)
+    echo "modetest -t -v -s $mode &>mode_test_log.txt & mt_pid=\$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=\$? ; kill -9 \$mt_pid"
+    __test_log=$(modetest -t -v -s $mode 2>&1 & mt_pid=$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid; echo alsa_rc=$__alsa_rc)
     echo "$__test_log"
     __alsa_rc=$(echo "$__test_log" | grep alsa_rc= | cut -d '=' -f 2) 
     __freqs=( $(echo -e "$__test_log" | grep freq: | cut -d ' ' -f 2) )
