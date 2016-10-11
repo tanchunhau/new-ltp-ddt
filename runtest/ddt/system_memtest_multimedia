@@ -3,6 +3,8 @@
 # @requires graphics && sound
 # @setup_requires
 
-SYSTEM_L_FUNC_MEMTEST_DISPLAY_ALSA source 'common.sh'; run_processes.sh -c "/opt/ltp/runltp -P $PLATFORM -f ddt/memtest -s 'MEMORY_L_FUNC_MEMTESTER_66pct_1time' # /opt/ltp/runltp -f ddt/multi_display -P $PLATFORM -s 'MULTIDISP_S_FUNC_PLAYBACK_ANY ' # /opt/ltp/runltp -P $PLATFORM -f ddt/alsa_opmode -s 'ALSA_S_FUNC_LOOPBK_OPMODE_BLK_02 '"
+SYSTEM_L_FUNC_MEMTEST_DISPLAY_ALSALOOPBK source 'common.sh'; run_processes.sh -c "/opt/ltp/runltp -P $PLATFORM -f ddt/memtest -s 'MEMORY_L_FUNC_MEMTESTER_66pct_1time' # /opt/ltp/runltp -f ddt/multi_display -P $PLATFORM -s 'MULTIDISP_S_FUNC_PLAYBACK_ANY ' # /opt/ltp/runltp -P $PLATFORM -f ddt/alsa_opmode -s 'ALSA_S_FUNC_LOOPBK_OPMODE_BLK_02 '"
+
+SYSTEM_L_FUNC_MEMTEST_DISPLAY_ALSAPLAYBK source 'common.sh'; run_processes.sh -c "/opt/ltp/runltp -P $PLATFORM -f ddt/memtest -s 'MEMORY_L_FUNC_MEMTESTER_66pct_1time' # /opt/ltp/runltp -f ddt/multi_display -P $PLATFORM -s 'MULTIDISP_S_FUNC_PLAYBACK_ANY ' # /opt/ltp/runltp -P $PLATFORM -f ddt/alsa_opmode -s 'ALSA_S_FUNC_PLAYBK_OPMODE_BLK '"
 
 SYSTEM_L_FUNC_MEMTEST_1080ENCDEC source 'common.sh'; run_processes.sh -c "/opt/ltp/runltp -P $PLATFORM -f ddt/memtest -s 'MEMORY_L_FUNC_MEMTESTER_66pct_1time' # /opt/ltp/runltp -P $PLATFORM -f ddt/gst_video -s 'VIDEO_M_FUNC_GST_H264_1080_ENCDEC '"
