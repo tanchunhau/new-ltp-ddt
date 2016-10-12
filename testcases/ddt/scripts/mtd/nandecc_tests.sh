@@ -198,17 +198,19 @@ if [ $? -ne 0 ] || [ $result -eq 1 ]; then
     #check if dut is still stable
     do_cmd "cat /proc/mtd"
     do_cmd "time dd if=/dev/urandom of=$dev_node bs=1M count=10"  
+    do_cmd flash_erase -q "$dev_node" 0 0
     exit 0
   else
     test_print_trc "Nand dump from uncorrected page ..."
     uncorrected_nanddump="$TMPDIR/testfile_nanddump.uncorrected"
     do_cmd "nanddump -n -o -l "$pagesize" -f "$uncorrected_nanddump" "$dev_node" "
     do_cmd "hexdump -C "$uncorrected_nanddump" "
-
+    do_cmd flash_erase -q "$dev_node" 0 0
     die "Nand ECC Test failed. Not all errors are corrected"
   fi
 else
   test_print_trc "Nand ECC Test Pass"
+  do_cmd flash_erase -q "$dev_node" 0 0
   exit 0
 fi
 
