@@ -641,7 +641,7 @@ rpmsg_rpc_recovery_test()
   #single rproc recovery
   for __cmd in "${m_cmds[@]}"
   do
-    __command="${__cmd}; sleep 5; ${__rec_events[$((i % num_procs))]}"
+    __command="${__cmd} & sleep 5; ${__rec_events[$((i % num_procs))]}"
     __test_log=$(eval ${__command})
     __num_match=$(echo -e "$__test_log" | grep -i -c "TEST STATUS: PASSED")
     echo -e "$__num_match processors passed..."
@@ -665,7 +665,7 @@ rpmsg_rpc_recovery_test()
   #Multiple rproc recovery
   for __cmd in "${m_cmds[@]}"
   do
-    __command="${__cmd}; sleep 5; ${__mr_events[@]}"
+    __command="${__cmd} & sleep 5; ${__mr_events[@]}"
     __test_log=$(eval ${__command})
     __num_match=$(echo -e "$__test_log" | grep -i -c "TEST STATUS: PASSED")
     echo -e "$__num_match processors passed..."
