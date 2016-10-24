@@ -188,7 +188,7 @@ if [ $? -eq 0 ]
 then
 	echo "-)8"
 else
-     	echo "nm -s: FAIL"
+	echo "nm -s: FAIL"
 	do_cleanup
 	exit 1
 fi
@@ -205,5 +205,3 @@ exit 0
 #MAIN
 do_setup
 do_test
-
-

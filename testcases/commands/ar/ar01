@@ -521,7 +521,7 @@ do
 	then
 		echo "-)21"
 	else
-	    	TCRESULT=21
+		TCRESULT=21
 		echo "FAIL - ar with -v flag failed to print a line for each file"
 	fi
 
