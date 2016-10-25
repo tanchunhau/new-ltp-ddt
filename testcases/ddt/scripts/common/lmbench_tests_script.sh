@@ -54,137 +54,31 @@ test_print_trc " ***** STARTING LMBENCH SCRIPT ***** "
 	initalize
 	RESULT=0
 	
-	test_print_trc " CREATING THE FILE OF 10MB SIZE FOR BENCHMARKING"
-	dd if=/dev/zero of=test1.txt bs=1M count=10
+	test_print_trc " CREATING THE FILE OF 16MB SIZE FOR BENCHMARKING"
+	dd if=/dev/urandom of=test1.txt bs=1M count=16
 
 	test_print_trc " ***** STARTING BANDWIDTH BENCHMARKS ***** "
 	test_print_trc " MEMORY BANDWIDTH BENCHMARKS "
 
-	test_print_start bw_mem
-	test_print_trc " Parameters      : "
-	test_print_trc " Operation       - rd"
-	test_print_trc " Memory Blk Size - 1 MB"
-	bw_mem 1M rd
-	RESULT=$(( $RESULT + $? ));
-	if [ $RESULT -eq 0 ] ; then
-		test_print_result PASS bw_mem
-	else
-		test_print_result FAIL bw_mem
-	fi	
-	test_print_end bw_mem
-	update_result $RESULT 
-	
-	test_print_start bw_mem
-	test_print_trc " Parameters      : "
-	test_print_trc " Operation       - wr"
-	test_print_trc " Memory Blk Size - 1 MB"
-	bw_mem 1M wr
-	RESULT=$(( $RESULT + $? ));
-	if [ $RESULT -eq 0 ] ; then
-		test_print_result PASS bw_mem
-	else
-		test_print_result FAIL bw_mem
-	fi	
-	test_print_end bw_mem
-	update_result $RESULT 	
-	
-	test_print_start bw_mem
-	test_print_trc " Parameters      : "
-	test_print_trc " Operation       - rdwr"
-	test_print_trc " Memory Blk Size - 1 MB"
-	bw_mem 1M rdwr
-	RESULT=$(( $RESULT + $? ));
-	if [ $RESULT -eq 0 ] ; then
-		test_print_result PASS bw_mem
-	else
-		test_print_result FAIL bw_mem
-	fi	
-	test_print_end bw_mem
-	update_result $RESULT 	
-
-	test_print_start bw_mem
-	test_print_trc " Parameters      : "
-	test_print_trc " Operation       - cp"
-	test_print_trc " Memory Blk Size - 1 MB"
-	bw_mem 1M cp
-	RESULT=$(( $RESULT + $? ));
-	if [ $RESULT -eq 0 ] ; then
-		test_print_result PASS bw_mem
-	else
-		test_print_result FAIL bw_mem
-	fi	
-	test_print_end bw_mem
-	update_result $RESULT 		
-
-	test_print_start bw_mem
-	test_print_trc " Parameters      : "
-	test_print_trc " Operation       - fwr"
-	test_print_trc " Memory Blk Size - 1 MB"
-	bw_mem 1M fwr
-	RESULT=$(( $RESULT + $? ));
-	if [ $RESULT -eq 0 ] ; then
-		test_print_result PASS bw_mem
-	else
-		test_print_result FAIL bw_mem
-	fi	
-	test_print_end bw_mem
-	update_result $RESULT 	
-
-	test_print_start bw_mem
-	test_print_trc " Parameters      : "
-	test_print_trc " Operation       - frd"
-	test_print_trc " Memory Blk Size - 1 MB"
-	bw_mem 1M frd
-	RESULT=$(( $RESULT + $? ));
-	if [ $RESULT -eq 0 ] ; then
-		test_print_result PASS bw_mem
-	else
-		test_print_result FAIL bw_mem
-	fi	
-	test_print_end bw_mem
-	update_result $RESULT 	
-
-	test_print_start bw_mem
-	test_print_trc " Parameters      : "
-	test_print_trc " Operation       - fcp"
-	test_print_trc " Memory Blk Size - 1 MB"
-	bw_mem 1M fcp
-	RESULT=$(( $RESULT + $? ));
-	if [ $RESULT -eq 0 ] ; then
-		test_print_result PASS bw_mem
-	else
-		test_print_result FAIL bw_mem
-	fi	
-	test_print_end bw_mem
-	update_result $RESULT 	
-
-	test_print_start bw_mem
-	test_print_trc " Parameters      : "
-	test_print_trc " Operation       - bzero"
-	test_print_trc " Memory Blk Size - 1 MB"
-	bw_mem 1M bzero
-	RESULT=$(( $RESULT + $? ));
-	if [ $RESULT -eq 0 ] ; then
-		test_print_result PASS bw_mem
-	else
-		test_print_result FAIL bw_mem
-	fi	
-	test_print_end bw_mem
-	update_result $RESULT 	
-
-	test_print_start bw_mem
-	test_print_trc " Parameters      : "
-	test_print_trc " Operation       - bcopy"
-	test_print_trc " Memory Blk Size - 1 MB"
-	bw_mem 1M bcopy
-	RESULT=$(( $RESULT + $? ));
-	if [ $RESULT -eq 0 ] ; then
-		test_print_result PASS bw_mem
-	else
-		test_print_result FAIL bw_mem
-	fi	
-	test_print_end bw_mem
-	update_result $RESULT 	
+	for op in 'rd' 'wr' 'rdwr' 'cp' 'fwr' 'frd' 'fcp' 'bzero' 'bcopy'
+	do
+		for i in 1M 2M 4M 8M 16M
+		do
+			test_print_start bw_mem
+			test_print_trc " Parameters      : "
+			test_print_trc " Operation       - ${op}"
+			test_print_trc " Memory Blk Size - ${i}"
+			bw_mem $i $op
+			RESULT=$(( $RESULT + $? ));
+			if [ $RESULT -eq 0 ] ; then
+				test_print_result PASS bw_mem
+			else
+				test_print_result FAIL bw_mem
+			fi
+			test_print_end bw_mem
+			update_result $RESULT
+		done
+	done
 
 	test_print_trc " BANDWIDTH OF PIPE COMMUNICATION BETWEEN PARENT AND CHILD "
 	test_print_start bw_unix
