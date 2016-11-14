@@ -367,7 +367,7 @@ kill_mpm_daemon()
 {
   case $MACHINE in
     k2*)
-      mpmcl reset; /etc/init.d/mpmsrv-daemon.sh stop
+      systemctl stop mpmsrv-daemon
     ;;
   esac
 }
@@ -376,7 +376,7 @@ start_mpm_daemon()
 {
   case $MACHINE in
     k2*)
-      /etc/init.d/mpmsrv-daemon.sh start; sleep 2
+      systemctl start mpmsrv-daemon; sleep 2
     ;;
   esac
 }
