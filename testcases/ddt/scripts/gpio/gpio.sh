@@ -122,12 +122,31 @@ case $MACHINE in
     GPIO_NUM_IN_BANKS="26,6,6,19,0,1"
   ;;
   k2*-evm)
-    GPIO_NUM_IN_BANKS="6,8"
+    GPIO_NUM_IN_BANKS="6,8,1,0"
     if [[ "$MACHINE" == "k2g-evm" ]]; then
+      # Based on k2g datasheet
       # gpio0_6
       set_gpio_pinmux "0x02621018" "0x3"
-      # gpio1_8
-      set_gpio_pinmux "0x026212dc" "0x3"
+      # gpio0_24
+      set_gpio_pinmux "0x02621060" "0x3"
+      # gpio0_33
+      set_gpio_pinmux "0x02621084" "0x3"
+      # gpio0_48
+      set_gpio_pinmux "0x026210c0" "0x3"
+      # gpio0_73
+      #set_gpio_pinmux "0x02621124" "0x3"
+      # gpio0_86
+      #set_gpio_pinmux "0x02621158" "0x3"
+      # gpio0_97
+      #set_gpio_pinmux "0x02621188" "0x3"
+      # gpio0_121
+      #set_gpio_pinmux "0x02621260" "0x3"
+      # gpio0_135
+      #set_gpio_pinmux "0x02621298" "0x3"
+      # gpio1_57
+      #set_gpio_pinmux "0x02621200" "0x3"
+      # gpio1_65
+      #set_gpio_pinmux "0x02621220" "0x3"
     fi
   ;;
   dra7xx-evm|am572x-idk|am571x-idk) 
