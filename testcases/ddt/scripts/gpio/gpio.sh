@@ -121,7 +121,10 @@ case $MACHINE in
   beagleboard)
     GPIO_NUM_IN_BANKS="26,6,6,19,0,1"
   ;;
-  k2*-evm)
+  k2hk-evm|k2e-evm|k2l-evm)
+    GPIO_NUM_IN_BANKS="6,8"
+  ;;
+  k2g-evm)
     GPIO_NUM_IN_BANKS="6,8,1,0"
     if [[ "$MACHINE" == "k2g-evm" ]]; then
       # Based on k2g datasheet
