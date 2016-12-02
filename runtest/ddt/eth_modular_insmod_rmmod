@@ -2,5 +2,5 @@
 # @desc Insert/Remove ethernet modules
 # @requires net
 
-ETH_S_FUNC_INSMOD_RMMOD source 'common.sh'; do_cmd install_modules.sh 'net'; do_cmd do_modular_common.sh -l "10" -d "net" 
-ETH_M_STRESS_INSMOD_RMMOD source 'common.sh'; do_cmd install_modules.sh 'net'; do_cmd do_modular_common.sh -l "100" -d "net" 
+ETH_S_FUNC_INSMOD_RMMOD source 'common.sh'; do_cmd install_modules.sh 'net'; do_cmd do_modular_common.sh -l "10" -d "net"; net_mod_name=`get_modular_name.sh "net"`;do_cmd "modprobe $net_mod_name"; do_cmd "sleep 10";  iface=`get_eth_iface_name.sh` || die "error getting eth interface name";  do_cmd "ifconfig ${iface} up"; host=`get_eth_gateway.sh "-i ${iface}"`|| die "error getting eth gateway address"; do_cmd "ping ${host} -c 3"
+ETH_M_STRESS_INSMOD_RMMOD source 'common.sh'; do_cmd install_modules.sh 'net'; do_cmd do_modular_common.sh -l "100" -d "net"; net_mod_name=`get_modular_name.sh "net"`;do_cmd "modprobe $net_mod_name"; do_cmd "sleep 10";  iface=`get_eth_iface_name.sh` || die "error getting eth interface name";  do_cmd "ifconfig ${iface} up"; host=`get_eth_gateway.sh "-i ${iface}"`|| die "error getting eth gateway address"; do_cmd "ping ${host} -c 3"
