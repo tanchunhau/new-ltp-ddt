@@ -125,13 +125,15 @@ case $MACHINE in
     GPIO_NUM_IN_BANKS="6,8"
   ;;
   k2g-evm)
-    GPIO_NUM_IN_BANKS="6,8,1,0"
+    GPIO_NUM_IN_BANKS="6,9,1,0"
     if [[ "$MACHINE" == "k2g-evm" ]]; then
       # Based on k2g datasheet
       # gpio0_6
       set_gpio_pinmux "0x02621018" "0x3"
       # gpio0_24
-      set_gpio_pinmux "0x02621060" "0x3"
+      #set_gpio_pinmux "0x02621060" "0x3"
+      # gpio0_25
+      set_gpio_pinmux "0x02621064" "0x3"
       # gpio0_33
       set_gpio_pinmux "0x02621084" "0x3"
       # gpio0_48
