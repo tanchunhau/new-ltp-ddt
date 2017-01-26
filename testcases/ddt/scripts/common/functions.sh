@@ -533,7 +533,7 @@ suspend()
           suspend_time=$((suspend_time+10))
           # sending twice in case a late interrupt aborted the suspend path.
           # since this is not common, it is expected that 2 tries should be enough
-          do_cmd rtcwake -d /dev/rtc0 -m ${power_state} -s ${suspend_time} || do_cmd rtcwake -d /dev/rtc0 -m ${power_state} -s $(expr ${suspend_time} + 10)
+          rtcwake -d /dev/rtc0 -m ${power_state} -s ${suspend_time} || rtcwake -d /dev/rtc0 -m ${power_state} -s $(expr ${suspend_time} + 10) || die "rtcwake failed 2 consecutive times"
       elif [ -e $DEBUGFS_LOCATION/pm_debug/wakeup_timer_seconds ]; then
           report "Use wakeup_timer"
           report "suspend(sec=$sec msec=$msec off=$off bug=$bug)"
