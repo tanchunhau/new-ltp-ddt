@@ -45,7 +45,7 @@ source "common.sh"  # Import do_cmd(), die() and other functions
 usage()
 {
 	cat <<-EOF >&2
-	usage: ./${0##*/} [-t TEST_TYPE] [-D DEVICE] [-R REC_DEVICE] [-P PLAY_DEVICE] [-r SAMPLE_RATE] [-f SAMPLE_FORMAT] [-p PERIOD_SIZE] [-b BUFFER_SIZE] [-c CHANNEL] [-o OpMODE] [-a ACCESS_TYPE] [-d DURATION]
+	usage: ./${0##*/} [-t TEST_TYPE] [-D DEVICE] [-R REC_DEVICE] [-P PLAY_DEVICE] [-r SAMPLE_RATE] [-f SAMPLE_FORMAT] [-p PERIOD_SIZE] [-b BUFFER_SIZE] [-c CHANNEL] [-o OpMODE] [-a ACCESS_TYPE] [-d DURATION] [-s BLK_DEVICE]
 	-t TEST_TYPE		Test Type. Possible Values are capture,playback,loopback.
 	-D DEVICE           Device Name like hw:0,0.
 	-R REC_DEVICE           Device Name like hw:0,0.
@@ -61,6 +61,7 @@ usage()
 	-d DURATION         Dutaion In Secs like 5,10 etc. 
 	-l CAPTURELOG_FLAG  Whether to retain captured file or delete.( 1 -> To retain, 0 -> delete )
 	-u URL				URL of sound file to be played back
+    -s BLK_DEVICE       save file audio src file to block device of type BLK_DEVICE
 	EOF
 	exit 0
 	
@@ -85,7 +86,7 @@ get_default_val()
 
 ################################ CLI Params ####################################
 # Please use getopts
-while getopts  :t:r:f:F:p:b:l:d:c:o:a:D:R:P:u:h arg
+while getopts  :t:r:f:F:p:b:l:d:c:o:a:D:R:P:u:s:h arg
 do case $arg in
         t)      TYPE="$OPTARG";;
         r)      SAMPLERATE="$OPTARG";;        
@@ -101,7 +102,8 @@ do case $arg in
         R)      REC_DEVICE="$OPTARG";;        
         P)      PLAY_DEVICE="$OPTARG";;        
         l)      CAPTURELOGFLAG="$OPTARG";;                
-	      u)      URL="$OPTARG";; 
+        u)      URL="$OPTARG";;
+        s)      BLK_DEVICE="$OPTARG";;
         h)      usage;;
         :)      die "$0: Must supply an argument to -$OPTARG.";; 
         \?)     die "Invalid Option -$OPTARG ";;
@@ -243,7 +245,12 @@ case "$TYPE" in
 		do_cmd arecord -D "$DEVICE" -f "$SAMPLEFORMAT" $FILE -d "$DURATION" -r "$SAMPLERATE" -c "$CHANNEL" "$ACCESSTYPEARG" "$OPMODEARG" --buffer-size=$BUFFERSIZE --period-size $PERIODSIZE
 		;;		
 	playback)
-		Wget $URL -O $FILE
+        if [ -n "$BLK_DEVICE" ]
+        then
+            FILE=$(download_to_blk_dev.sh -u $URL -o $FILE -d $BLK_DEVICE) || FILE='test.snd'
+        else
+		    Wget $URL -O $FILE
+        fi
 
 		if [ ! -s $FILE ]
 		then

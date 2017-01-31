@@ -130,7 +130,7 @@ disp_audio_test()
   assert [ ${#__modes[@]} -gt 0 ]
   ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3
   if [ ${#} -gt 3 ]; then
-    __alsa_test_cmd="alsa_tests.sh -d $3 -t playback -r $4"
+    __alsa_test_cmd="alsa_tests.sh -s mmc -d $3 -t playback -r $4"
   fi
   if [ ${#} -gt 4 ]; then
     __alsa_test_cmd="$__alsa_test_cmd -D $5"
