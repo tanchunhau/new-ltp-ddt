@@ -53,3 +53,4 @@ pwm/ecap
 pwm/backlight
 gpio
 ipc
+kms

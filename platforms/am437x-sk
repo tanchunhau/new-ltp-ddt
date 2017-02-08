@@ -59,3 +59,4 @@ usb/slave/usbslave_cdc
 watchdog/omap_wdt
 wlan/wl18xx
 wlan/wlcore_sdio
+kms

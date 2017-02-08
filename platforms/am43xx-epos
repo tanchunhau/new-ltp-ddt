@@ -55,3 +55,4 @@ usb/slave/usbslave_multi
 usb/slave/usbslave_cdc  
 watchdog/omap_wdt
 hdmi/audio/playback
+kms

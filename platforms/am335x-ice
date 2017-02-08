@@ -37,3 +37,4 @@ pwm/ehrpwm
 pwm/ecap
 gpio
 ipc
+kms

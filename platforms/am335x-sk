@@ -50,3 +50,4 @@ usb/slave/usbslave_cdc
 watchdog/omap_wdt
 pwm/ecap
 pwm/backlight
+kms
