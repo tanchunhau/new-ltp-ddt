@@ -9,8 +9,11 @@ INSTALL_DIR             := testcases/bin/ddt
 FILTER_OUT_DIRS         :=
 
 #List of source files- Update this on adding a new C file
-SOURCES := \
+RPC_SOURCES := \
         tests_rpc_stress.c
+
+PRU_SOURCES := \
+        rpmsg_pru_user_space_echo.c
 
 # We don't want to copy over the Makefile
 UNWANTED_FILES          := Makefile \
@@ -20,13 +23,17 @@ UNWANTED_FILES          := Makefile \
 INSTALL_MODE            := 00755
 
 CFLAGS          += -g -Wall -O1 -fomit-frame-pointer
-LDFLAGS         += -g 
+LDFLAGS         += -g
 LDLIBS          += -lpthread
 INCLUDES        = -I $(KERNEL_USR_INC)
 
-MAKE_TARGETS            := test_rpmsg_rpc
+MAKE_TARGETS            := test_rpmsg_rpc \
+                           test_rpmsg_pru
 
 test_rpmsg_rpc:
-	$(CC) -o test_rpmsg_rpc ${INCLUDES} ${SOURCES} ${CFLAGS} ${LDFLAGS} $(LDLIBS)
+	$(CC) -o test_rpmsg_rpc ${INCLUDES} ${RPC_SOURCES} ${CFLAGS} ${LDFLAGS} $(LDLIBS)
+
+test_rpmsg_pru:
+	$(CC) -o test_rpmsg_pru ${INCLUDES} ${PRU_SOURCES} ${CFLAGS} ${LDFLAGS} $(LDLIBS)
 
 include $(top_srcdir)/include/mk/generic_leaf_target.mk

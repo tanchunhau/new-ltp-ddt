@@ -211,7 +211,7 @@ setup_pru_firmware()
 rm_ipc_mods()
 {
 
-  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus )
+  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus rpmsg_core)
 
   reset_rproc_mpm
   kill_lad
@@ -242,7 +242,7 @@ ins_ipc_mods()
       done
     ;;
     *)
-      __modules=(remoteproc omap_remoteproc keystone_remoteproc virtio_rpmsg_bus)
+      __modules=(remoteproc omap_remoteproc keystone_remoteproc virtio_rpmsg_bus rpmsg_core)
   
       if [ $# -gt 0 ];
       then
@@ -334,7 +334,7 @@ reset_rproc_mpm()
 
 ins_pru_mods()
 {
-  local __modules=(pruss pru_rproc)
+  local __modules=(pruss pru_rproc pruss_soc_bus)
 
   case $MACHINE in
     am57*|am43xx*|am335x*|k2g*)
@@ -349,7 +349,7 @@ ins_pru_mods()
 
 rm_pru_mods()
 {
-  local __modules=(pru_rproc pruss)
+  local __modules=(pru_rproc pruss pruss_soc_bus)
 
   case $MACHINE in
     am57*|am43xx*|am335x*|k2g*)
@@ -1062,6 +1062,29 @@ list_prus()
 
 # Funtion to obtain the list of pru devices
 # Returns the list of PRU devices based on the MACHINE var value
+list_pru_devs()
+{
+  case $MACHINE in
+    am335x*)
+      for i in `seq 0 1`
+      do
+        echo "/dev/rpmsg_pru3${i}"
+      done
+    ;;
+    am57*|am43xx*|k2g*)
+      for i in `seq 0 3`
+      do
+        echo "/dev/rpmsg_pru3${i}"
+      done
+    ;;
+    *)
+      echo "Machine ${MACHINE} not supported"
+    ;;
+  esac
+}
+
+# Funtion to obtain the list of pru devices
+# Returns the list of PRU devices based on the MACHINE var value
 list_rprocs()
 {
   case $SOC in
@@ -1112,4 +1135,31 @@ toggle_rprocs()
     echo "${1}ing $__pru ..."
     echo "$__pru" > ${__driver_sysfs}/$1
   done
+}
+
+rpmsg_pru_test()
+{
+  local __test_cmd='test_rpmsg_pru'
+  local __pru_list=( $(list_pru_devs) )
+  local __num_msg=1000
+  local __result=0
+
+  for dev in ${__pru_list[@]}
+  do
+    echo -e "$(test_rpmsg_pru ${dev} ${__num_msg})"  | grep -i "Received ${__num_msg} messages, closing ${dev}" || \
+    (echo "Test failed for ${dev}" && return 1)
+  done
+
+  if [ ${#__pru_list[@]} -gt 1 ]
+  then
+    local __multi_test_cmd="${__test_cmd} ${__pru_list[0]} ${__num_msg}"
+    for i in `seq 1 $((${#__pru_list[@]}-1))`
+    do
+      __multi_test_cmd="${__multi_test_cmd} & ${__test_cmd} ${__pru_list[${i}]} ${__num_msg}"
+    done
+     echo -e "$(eval ${__multi_test_cmd})"  | grep -i "Received ${__num_msg} messages, closing" | wc -l | grep ${#__pru_list[@]} || \
+    (echo "Test failed for ${__multi_test_cmd}" && return 1)
+  fi
+
+  return 0
 }

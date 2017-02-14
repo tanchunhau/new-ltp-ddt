@@ -93,7 +93,7 @@ int get_nodes(void)
     int i;
     int count=0;
     char node_name[NODES_MAX_LENGTH];
-    
+
     for (i=0; i< NODES_CT; i++) {
         sprintf(node_name, "%s%s%d", DEV_NODE_BASE, NODE_BASE, i + 1);
         fd = open(node_name, O_RDWR);
@@ -103,7 +103,7 @@ int get_nodes(void)
             count++;
         }
     }
-    
+
     return count;
 }
 
@@ -122,13 +122,13 @@ int get_functions_info(int core_id, function_info** func_arr)
     function_info *func_inf = NULL;
     function_info *c_func;
     int idx;
-    
+
     errno = 0;
-    
+
     sprintf(sysfs_path, "%s%s", SYSFS_PATH, nodes[core_id]);
     sprintf(file_path, "%s%s", sysfs_path, NUM_FILE);
     sprintf(func_base, "%s%s", sysfs_path, FUNC_BASE);
-    
+
     fd = open(file_path, O_RDONLY);
     if (fd > 0) {
         fsize = lseek(fd, 0L, SEEK_END);
@@ -167,7 +167,7 @@ int get_functions_info(int core_id, function_info** func_arr)
 
     func_problem:
         close(fd);
-      
+
       return errno;
 }
 
@@ -178,20 +178,20 @@ int get_function(int core_id, char *f_name, function_info* result)
     char func_name[PATH_MAX];
     char *cf_name;
     char *f_iter;
-    
+
     errno = 0;
-    
+
     sprintf(func_name, "%s", f_name);
     f_iter = func_name;
     for (; *f_iter; ++f_iter) {
         *f_iter = tolower(*f_iter);
     }
-    
+
     if (get_functions_info(core_id, &f_list)) {
         printf("Unable to get function information from %d for %s\n", core_id, f_name);
         return errno;
     }
-    
+
     result->idx = -1;
     iter=f_list;
     while (iter) {
@@ -211,7 +211,7 @@ int get_function(int core_id, char *f_name, function_info* result)
         free(cf_name);
         free(f_list);
     }
-    
+
     return errno;
 }
 
@@ -219,9 +219,9 @@ int connect_to_proc(int core_id, char *name)
 {
     char node_name[PATH_MAX];
     int fd;
-    
+
     sprintf(node_name, "%s%s", DEV_NODE_BASE, nodes[core_id]);
-    
+
     fd = open(node_name, O_RDWR);
     if (fd < 0) {
         perror("Can't open rpc_example device");
@@ -229,7 +229,7 @@ int connect_to_proc(int core_id, char *name)
     else {
         sprintf(name, "%s", nodes[core_id]);
     }
-    
+
     return fd;
 }
 
@@ -381,7 +381,7 @@ void * test_select_thread (void * arg)
     int max_fd = -1;
     int ret;
     int sem_val;
-    
+
     while (runTest) {
         FD_ZERO(&rfd);
         for (i = 0; i < (int)arg; i++) {
@@ -402,17 +402,17 @@ void * test_select_thread (void * arg)
                 }
                 break;
         }
-        
+
         ret = recv_cmd(fd, sizeof(*rtn_packet), (char *)rtn_packet, &reply_len);
-        
+
         if(!ret && !rtn_packet->status) {
             for (i = 0; i < (int)arg; i++) {
-                sem_getvalue(&clientSems[i], &sem_val); 
+                sem_getvalue(&clientSems[i], &sem_val);
                 if(sem_val < 1)sem_post(&clientSems[i]);
             }
             continue;
         }
-        
+
         if(ret == ENXIO)
         {
           for (i = 0; i < (int)arg; i++) {
@@ -452,18 +452,18 @@ void * test_read_thread (void * arg)
     int               packet_id;
     int ret;
     int sem_val;
-    
+
     while (runTest) {
         ret = recv_cmd(fd, sizeof(*rtn_packet), (char *)rtn_packet, &reply_len);
-        
+
         if(!ret && !rtn_packet->status) {
             for (i = 0; i< read_info->num_threads; i++) {
-                sem_getvalue(&clientSems[i], &sem_val); 
+                sem_getvalue(&clientSems[i], &sem_val);
                 if(sem_val < 1)sem_post(&clientSems[i]);
             }
             continue;
         }
-        
+
         if (ret == ENXIO) {
             for (i = 0; i< read_info->num_threads; i++) {
                 sem_post(&clientSems[i]);
@@ -501,7 +501,7 @@ int test_rpc_stress_select(int core_id, int num_comps)
     int               packet_len;
     char              packet_buf[512] = {0};
     test_exec_args args[num_comps];
-    
+
     fds = malloc (sizeof(int) * num_comps);
     if (!fds) {
         return -1;
@@ -514,7 +514,7 @@ int test_rpc_stress_select(int core_id, int num_comps)
             ret = -1;
             break;
         }
-        
+
         /* Create an rpc_example server instance, and rebind its address to this
         * file descriptor.
         */
@@ -694,7 +694,7 @@ int test_rpc_stress_multi_threads(int core_id, int num_threads)
     struct rppc_function *function;
     test_exec_args args[num_threads];
     test_read_args read_args;
-    
+
     /* Connect to the rpc_example ServiceMgr on the specified core: */
     fd = connect_to_proc(core_id, connreq.name);
     if (fd < 0) {
@@ -841,7 +841,7 @@ int test_rpc_stress_multi_srvmgr(int core_id, int num_comps)
     int fd[num_comps];
     struct rppc_create_instance connreq;
     test_exec_args args[num_comps];
-    
+
     for (i = 0; i < num_comps; i++) {
         /* Connect to the rpc_example ServiceMgr on the specified core: */
         fd[i] = connect_to_proc(core_id, connreq.name);
@@ -978,29 +978,29 @@ int main(int argc, char *argv[])
         printf("Invalid test id\n");
         return 1;
     }
-    
+
     if (get_nodes() < 1) {
         printf("No rpmsg nodes found\n");
         return 1;
     }
-    
-    if (get_function(core_id, f_name, &func_inf) || 
+
+    if (get_function(core_id, f_name, &func_inf) ||
         func_inf.idx == -1){
         printf("Function matching %s not found for core %d\n", f_name, core_id);
         return 1;
     }
-    
-    if (flt_msg_num > -1 && (get_function(core_id, "fault", &fault_func_inf) || 
+
+    if (flt_msg_num > -1 && (get_function(core_id, "fault", &fault_func_inf) ||
         fault_func_inf.idx == -1)){
         printf("Unable to get MMU fault function information for core %d\n", core_id);
         return 1;
     }
-    
+
     printf("Using function:\n%s\n for the test\n", func_inf.name);
-    
+
     n_iter = func_inf.name;
     for ( ; *n_iter; ++n_iter)*n_iter = tolower(*n_iter);
-    
+
     switch (test_id) {
         case 1:
             /* multiple threads each with an RPMSG-RPC ServiceMgr instance */
