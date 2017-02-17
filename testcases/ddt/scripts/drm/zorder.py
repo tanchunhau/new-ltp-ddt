@@ -8,7 +8,7 @@ import random
 card = pykms.Card()
 card = 0
 
-card = pykms.OmapCard()
+card = pykms.Card()
 res = pykms.ResourceManager(card)
 conn = res.reserve_connector()
 crtc = res.reserve_crtc(conn)
@@ -31,7 +31,7 @@ offset = int(h/4)
 fbs=[]
 
 for i in range(len(planes)):
-    fbs.append(pykms.OmapFramebuffer(card, w, h, pykms.PixelFormat.RGB888))
+    fbs.append(pykms.DumbFramebuffer(card, w, h, pykms.PixelFormat.RGB888))
     pykms.draw_rect(fbs[i], 0, 0, w/2, h/2, pykms.RGB(255*(1 & 2**i), 255*((2 & 2**i) >> i), 255*((4 & 2**i) >> i)))
 
 crtc.set_props({
