@@ -10,4 +10,5 @@ KMS_XS_FUNC_DST_TRANSPARENCY source common.sh; systemctl stop weston; transparen
 KMS_XS_FUNC_ALPHA_SRC_TRANSPARENCY source common.sh; systemctl stop weston; transparency.py ${MACHINE} alpha_src  2>&1 | grep -i -e fail -e error -e invalid -e 'not found' -e 'no such' && die "Aplha src transparency test failed"; echo "Test Passed"
 KMS_XS_FUNC_ALPHABLEND source common.sh; systemctl stop weston; alpha-blending.py  2>&1 | grep -i -e fail -e error -e invalid  -e 'not found' -e 'no such' && die "Alpha blending test failed"; echo "Test Passed"
 KMS_XS_FUNC_GAMMA source common.sh; systemctl stop weston; gamma.py  2>&1 | grep -i -e fail -e error -e invalid -e 'not found' -e 'no such' && die "Gamma correction test failed"; echo "Test Passed"
+KMS_XS_FUNC_GLOBAL_ALPHABLEND source common.sh; systemctl stop weston; global-alpha-blending.py  2>&1 | grep -i -e fail -e error -e invalid  -e 'not found' -e 'no such' && die "Alpha blending test failed"; echo "Test Passed"
 
