@@ -16,7 +16,12 @@ case $MACHINE in
 esac
 case $ip_type in                                                              
 des|3des)
-	CRYPTO_IP='omap-dma-engine';;
+	if [ $SOC = "am43xx" ]
+	then
+		CRYPTO_IP='edma'
+	else
+		CRYPTO_IP='omap-dma-engine'
+	fi;;
 *)
 	CRYPTO_IP='edma';;
 esac                                                                          
