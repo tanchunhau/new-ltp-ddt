@@ -17,6 +17,7 @@ do
                     *"cfb"*) echo "CFB failure";;
                     *"ofb"*) echo "OFB failure";;
                     *"rfc3686"*) echo "RFC3686 failure";;
+                    *"cts"*) echo "CTS failure";;
                     *"request size is not exact amount"*) echo "Input padding failure";;
                     *) echo "TRUE failure"
                        echo $LINE
