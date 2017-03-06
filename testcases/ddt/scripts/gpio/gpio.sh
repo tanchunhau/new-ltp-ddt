@@ -100,6 +100,8 @@ test_print_trc "STARTING GPIO Test... "
 test_print_trc "TEST_LOOP:${TEST_LOOP}"
 test_print_trc "SYSFS_TESTCASE:${SYSFS_TESTCASE}"
 
+do_cmd "cat /sys/kernel/debug/gpio"
+
 # GPIO_NUM_IN_BANKS is gpio_num_in_bank collection. The numbers corresponds to 
 # bank number. Ex, GPIO_NUM_IN_BANKS="0,15,10,8" means gpio pins to be tested 
 # are pin0 for bank 0; pin 15 for bank 1; pin 10 for bank 2 and so on.
