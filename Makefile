@@ -82,6 +82,7 @@ COMMON_TARGETS    += testcases/kernel/ipc
 COMMON_TARGETS    += testcases/kernel/mem
 COMMON_TARGETS    += testcases/kernel/lib
 COMMON_TARGETS    += testcases/kernel/syscalls
+COMMON_TARGETS    += testcases/kernel/security
 COMMON_TARGETS    += testcases/kernel/sched
 COMMON_TARGETS    += testcases/kernel/hotplug
 COMMON_TARGETS    += testcases/misc/math
