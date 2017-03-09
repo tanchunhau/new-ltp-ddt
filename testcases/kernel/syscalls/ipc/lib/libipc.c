@@ -179,16 +179,15 @@ void rm_shm(int shm_id)
 int get_used_msgqueues(void)
 {
 	FILE *f;
-	int used_queues;
+	int used_queues=-1;
 	char buff[BUFSIZE];
 
-	f = popen("ipcs -q", "r");
+	f = fopen("/proc/sysvipc/msg", "r");
 	if (!f) {
 		tst_brkm(TBROK | TERRNO, NULL, "pipe failed");
 	}
-	/* FIXME: Start at -4 because ipcs prints four lines of header */
-	for (used_queues = -4; fgets(buff, BUFSIZE, f); used_queues++) ;
-	pclose(f);
+	for (; fgets(buff, BUFSIZE, f); used_queues++) ;
+	fclose(f);
 	if (used_queues < 0) {
 		tst_brkm(TBROK, NULL, "Could not read output of 'ipcs' to "
 			 "calculate used message queues");
