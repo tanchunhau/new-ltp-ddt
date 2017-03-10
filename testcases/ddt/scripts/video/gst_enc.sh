@@ -28,7 +28,8 @@ cat <<-EOF >&2
         -r capture resolution <width>x<height>, i. e, 1920x1080, 1280x720, etc
         -c codec type h264, mpeg4, etc
         -s gstreamer sink type
-        -f number of frames to capture
+        -t number of frames to capture
+        -f frame rate, defaults to 30
         -h Help         print this usage
 EOF
 exit 0
@@ -43,19 +44,23 @@ OPTIND=1
 RESOLUTION=""
 SINK="fakesink"
 FRAMES=60
-while getopts :s:r:c:n:f: arg
+FRAMEINFO=""
+RATE=", framerate=30/1"
+while getopts :s:r:c:n:f:t: arg
 do case $arg in
         n)
                 NODE=$OPTARG ;;
         r)
                 RES=( $(echo ${OPTARG} | grep -o '[0-9]*') )
-                RESOLUTION="! video/x-raw, width=${RES[0]}, height=${RES[1]}" ;;
+                RESOLUTION=", width=${RES[0]}, height=${RES[1]}" ;;
         c)
                 C_TYPE=$(echo ${OPTARG} | tr '[:upper:]' '[:lower:]') ;;
         s)
                 SINK=$OPTARG ;;
-        f)
+        t)
                 FRAMES=$OPTARG ;;
+        f)
+                RATE=", framerate=${OPTARG}/1" ;;
         \?)
 		            echo "Invalid Option -$OPTARG ignored." >&2
                 usage
@@ -63,6 +68,8 @@ do case $arg in
                 ;;
 esac
 done
+
+RESOLUTION="! video/x-raw${RATE}${RESOLUTION}"
 
 case $MACHINE in
 	 dra7xx*|am57xx*)
