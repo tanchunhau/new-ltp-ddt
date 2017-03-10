@@ -594,7 +594,7 @@ check_suspend_errors()
 check_suspend_stats()
 {
     local failures=`get_value_for_key_from_file /sys/kernel/debug/suspend_stats fail :`
-    [ $failures -eq $1 ] || die "/sys/kernel/debug/suspend_stats reports failures"
+    [ $((failures - $1)) -le 1 ] || die "/sys/kernel/debug/suspend_stats reports failures"
 }
 
 check_cpufreq_files() {
