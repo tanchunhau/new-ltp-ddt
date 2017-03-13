@@ -29,7 +29,7 @@ check_requirements() {
 
 create_test_file() {
     temp_test_file=`mktemp`
-    dd if=/dev/urandom of=$temp_test_file count=1 bs=4096
+    dd if=/dev/urandom of=$temp_test_file count=1 bs=$((UART_RATE / 2))
 }
 
 get_uart_ports() {
@@ -49,8 +49,11 @@ filter_out_used_ports() {
 run_serial_check() {
     for i in ${PORTS_TO_TEST[@]}; do    
         echo ''; echo "Testing $i at $UART_RATE $UART_LOOPS times" 
-        serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m d -k || die "TEST FAILED"
+        serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m r -k &
+        sleep 1
+        serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m t -k || die "TEST FAILED"
     done
+    rm $temp_test_file
 }
 
 
