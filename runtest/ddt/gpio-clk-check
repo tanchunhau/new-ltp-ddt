@@ -1,0 +1,6 @@
+# @name Check if the clk is disabled if the gpio bank is not being used
+# @desc Check if gpio module clock is disabled if all pins in gpio module are inactive
+# @requires gpio 
+
+GPIO_S_FUNC_CLKCTRL_MODULEMODE source "common.sh"; check_gpio_clkctrl.sh
+
