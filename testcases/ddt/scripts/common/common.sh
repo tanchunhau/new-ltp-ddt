@@ -425,4 +425,7 @@ notify_and_wait() {
     sleep $2
 }
 
+stop_weston() {
+  ps -ef | grep -i weston | grep -v grep && systemctl stop weston && sleep 3
+}
 
