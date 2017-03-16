@@ -1,0 +1,6 @@
+# @name GC320 sanity test
+# @desc runs GC320 sanity test 
+# @requires  graphics/gc320
+
+GC320_XS_FUNC_SANITY gc320.sh 
+
