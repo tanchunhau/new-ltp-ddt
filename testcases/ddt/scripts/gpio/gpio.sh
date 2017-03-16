@@ -158,7 +158,7 @@ case $MACHINE in
   ;;
   dra7xx-evm|am572x-idk|am571x-idk) 
     # bank number starts from 1 and total 8 banks
-    GPIO_NUM_IN_BANKS="22,29,0,1,0,14,0,0"
+    GPIO_NUM_IN_BANKS="22,29,0,1,0,15,0,0"
   ;;
   am57xx-evm)
     # bank number starts from 1 and total 8 banks
