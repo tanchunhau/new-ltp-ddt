@@ -32,7 +32,7 @@ fbs=[]
 
 for i in range(len(planes)):
     fbs.append(pykms.DumbFramebuffer(card, w, h, pykms.PixelFormat.RGB888))
-    pykms.draw_rect(fbs[i], 0, 0, w/2, h/2, pykms.RGB(255*(1 & 2**i), 255*((2 & 2**i) >> i), 255*((4 & 2**i) >> i)))
+    pykms.draw_rect(fbs[i], 0, 0, int(w/2), int(h/2), pykms.RGB(255*(1 & 2**i), 255*((2 & 2**i) >> i), 255*((4 & 2**i) >> i)))
 
 crtc.set_props({
     "trans-key-mode": 0,
@@ -52,12 +52,12 @@ for i in range(len(planes)):
         "CRTC_ID": crtc.id,
         "SRC_X": 0,
         "SRC_Y": 0,
-        "SRC_W":  w/2 << 16,
-        "SRC_H":  h/2 << 16,
+        "SRC_W":  int(w/2) << 16,
+        "SRC_H":  int(h/2) << 16,
         "CRTC_X": i*offset,
         "CRTC_Y": i*offset,
-        "CRTC_W": w/2,
-        "CRTC_H": h/2,
+        "CRTC_W": int(w/2),
+        "CRTC_H": int(h/2),
         "zorder": i,
     })
 
