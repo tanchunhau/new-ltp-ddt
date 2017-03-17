@@ -18,21 +18,23 @@
 usage()
 {
 cat <<-EOF >&2
-        usage: ./${0##*/} [-d DEVICE_TYPE] [-t FUNC_TYPE]
+        usage: ./${0##*/} [-d DEVICE_TYPE] [-t FUNC_TYPE] [-e EXCLUDE]
         -d DEVICE_TYPE  audio device type like 'hdmi', 'am335x', etc. If
         this parameter is specified only the audio devices that include
         that string in their description will be returned if any
         -t FUNC_TYPE audio device function type 'play' or 'record'. If
         this parameter is not specified 'play' is used
+        -e exclude devices that match EXCLUDE pattern
 EOF
 exit 0
 }
 
 ############################### CLI Params ###################################
-while getopts  :d:t:h arg
+while getopts  :d:t:e:h arg
 do case $arg in
         d)  DEVICE_TYPE="$OPTARG";;
         t)  FUNC_TYPE="$OPTARG";;
+        e)  EXCLUDE="$OPTARG";;
         h)  usage;;
         :)  die "$0: Must supply an argument to -$OPTARG.";; 
         \?) die "Invalid Option -$OPTARG ";;
@@ -41,13 +43,18 @@ done
 
 : ${DEVICE_TYPE:=".*"}
 : ${FUNC_TYPE:='play'}
+: ${EXCLUDE:=''}
 
 if [ "$FUNC_TYPE" != 'play' -a "$FUNC_TYPE" != 'record' ]; then
   usage
 fi
 
-# Get $DEVICE_TYPE matching devices 
-SOUND_CARDS=( `a${FUNC_TYPE} -l | grep -i card | grep -i "${DEVICE_TYPE}" | grep -o '[0-9]\+:' | cut -c 1` ) 
+if [ -n "$EXCLUDE" ]; then
+  EXCLUDE=" | grep -i -v \"$EXCLUDE\""
+fi
+
+# Get $DEVICE_TYPE matching devices
+SOUND_CARDS=( $(eval "a${FUNC_TYPE} -l | grep -i card | grep -i \"${DEVICE_TYPE}\" ${EXCLUDE} | grep -o '[0-9]\+:' | cut -c 1") )
 
 if [ ${#SOUND_CARDS[@]} -lt 2 ]
 then
