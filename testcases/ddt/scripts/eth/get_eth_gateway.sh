@@ -56,13 +56,12 @@ esac
 # Try to use /sys and /proc information to determine values dynamically.
 # Alternatively you should check if there is an existing script to get the
 # value you want
-GATEWAY=`route -n | awk -v pat="UH.+${IFACE}" '$0 ~ pat {print $2}' | head -n 1`
-if [ -n "GATEWAY" ]
-then
-	GATEWAY=`ip route show | grep default | awk '{print $3}'`
+GATEWAY=`route -n | grep UH | grep ${IFACE} | awk '{print $1}'` 
+if [ -z "$GATEWAY" ];then
+  GATEWAY=`ip route show |grep default|awk '{print $3}'` 
 fi
 
-[ -n "$GATEWAY" ] || die "Ethernet interface ${IFACE} has no Gateway"
+[ ! -z "$GATEWAY" ] || die "Ethernet interface ${IFACE} has no Gateway"
 ########################### REUSABLE TEST LOGIC ###############################
 # DO NOT HARDCODE any value. If you need to use a specific value for your setup
 # use USER-DEFINED Params section above.
