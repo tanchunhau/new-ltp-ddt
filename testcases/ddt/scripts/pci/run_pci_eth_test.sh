@@ -47,6 +47,9 @@ done
 test_print_trc "ACTION: $ACTION"
 test_print_trc "ETH_IFACE: $ETH_IFACE"
 
+do_cmd "lspci -nn"
+do_cmd "lspci -vv"
+
 # prepare pci eth test
 iface_list=`get_active_eth_interfaces.sh`; 
 echo "${iface_list[@]}"; 

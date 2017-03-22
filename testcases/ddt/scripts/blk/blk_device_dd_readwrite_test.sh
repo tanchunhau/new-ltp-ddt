@@ -85,6 +85,11 @@ done
 : ${TEST_LOOP:='1'}
 
 ############# Do the work ###########################################
+if [[ "$DEVICE_TYPE" = "pci" ]]; then
+  do_cmd "lspci -nn"
+  do_cmd "lspci -vv"
+fi
+
 if [ -z $DEV_NODE ]; then
   DEV_NODE=`get_blk_device_node.sh "$DEVICE_TYPE"` || die "error getting device node for $DEVICE_TYPE: $DEV_NODE"
   test_print_trc "DEV_NODE returned from get_blk_device_node is: $DEV_NODE"
