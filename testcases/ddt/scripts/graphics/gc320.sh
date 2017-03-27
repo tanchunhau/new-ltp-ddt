@@ -42,7 +42,7 @@ while getopts :b: arg
     esac
 done
 
-mem_kb=$(cat /proc/meminfo | grep -i memtotal | grep -o [0-9]*); mem_bits=$(echo "obase=2; print($mem_kb*1024)" | bc -l);
+mem_kb=$(cat /proc/meminfo | grep -i memtotal | grep -o '[0-9]*'); mem_bits=$(echo "obase=2; print($mem_kb*1024)" | bc -l);
 phy_size=$(printf '%x' $((2**${#mem_bits})))
 
 GC_TEST_ROOT=/usr/bin/GC320/tests/unit_test
