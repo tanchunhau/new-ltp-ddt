@@ -23,13 +23,15 @@ source "common.sh"
 usage()
 {
 cat <<-EOF >&2
-        usage: ./${0##*/} [-f FILE] [-s] [-p] [-x] [-c v_id] [-a a_id] [-z audiosink]  
+        usage: ./${0##*/} [-f FILE] [-s] [-p] [-x] [-c v_id] [-a a_id] [-z audiosink] [-v videosink]
         -f absolute path of the stream to be played
         -s Enable video and audio sync property
         -x Enable video scaling (Not available on all platforms or with -p)
         -c Video connector id
         -a audio device, i.e hw:0,0
         -z gstreamer audio sink, i.e alsasink, fakesink, etc
+        -v gstreamer video sink, i.e waylandsink, fbdevsink. Defaults to
+           kmssink/fbdevsink
         -h Help         print this usage
 EOF
 exit 0
@@ -54,7 +56,7 @@ esac
 
 ############################ CLI Params ###########################################
 OPTIND=1
-while getopts :spxc:a:f:z: arg
+while getopts :spxc:a:f:z:v: arg
 do case $arg in
         f)
                 FILE=$OPTARG ;;
@@ -68,6 +70,8 @@ do case $arg in
                 A_DEV="device=$OPTARG" ;;
         z)
                 A_SINK=$OPTARG ;;
+        v)
+                VSINK=$OPTARG ;;
         \?)
 		            echo "Invalid Option -$OPTARG ignored." >&2
                 usage
@@ -89,6 +93,16 @@ case $MACHINE in
       ;;
 esac
 
-ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3
+if [ "$VSINK" == "waylandsink" ]
+then
+    ps -ef | grep -i weston | grep -v grep || systemctl start weston
+    systemctl stop matrix-gui-2.0
+    V_CONN="use-drm=true"
+    SCALING=""
+else
+    ps -ef | grep -i weston | grep -v grep && systemctl stop weston
+fi
+sleep 3
+
 echo "gst-launch-1.0 playbin uri=file://${TESTFILE} video-sink=\"${VSINK} ${SCALING} ${SYNC} ${V_CONN}\" audio-sink=\"${A_SINK} ${SYNC} ${A_DEV}\""
 gst-launch-1.0 playbin uri=file://${FILE} video-sink=\"${VSINK} ${SCALING} ${SYNC} ${V_CONN}\" audio-sink=\"${A_SINK} ${SYNC} ${A_DEV}\" || die "Problem occurred while trying to play stream"
