@@ -85,11 +85,10 @@ GSTCMD="gst-launch-1.0 playbin uri=file://${FILE} video-sink=\"${VSINK}\" audio-
 if [ -e "$FILE" ];then
    echo "Demo file $FILE exists"
 else
-   FILE="/usr/share/ti/video/$DOWNLOAD"
    echo "Running $FILE"
    if [ ! -s "$FILE" ];then
       echo "Downloading stream $DOWNLOAD from gtopentest-server"
-      do_cmd 'Wget http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Video/$DOWNLOAD"'\
+      do_cmd 'Wget http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Video/$DOWNLOAD -O $FILE'\
  || die "Stream not available!"
    fi
 fi
