@@ -108,7 +108,7 @@ do_cmd "cat /sys/kernel/debug/gpio"
 # You may also skip gpio banks. Ex, you may specify GPIO_NUM_IN_BANKS="0,,10,8"
 # to skip testing gpio bank 1.
 case $MACHINE in
-  am180x-evm) 
+  am180x-evm|omapl138-lcdk) 
     GPIO_NUM_IN_BANKS="0,15,10,8,8,8,8,4,12"
   ;;
   am335x-*|beaglebone|beaglebone-black)
@@ -182,7 +182,7 @@ for GPIO_NUM_IN_BANK in $GPIO_NUM_IN_BANKS; do
     GPIO_NUM=$((${BANK_NUM}*32+${GPIO_NUM_IN_BANK}))
     EXTRA_PARAMS=""
     case $MACHINE in
-      am180x-evm)  
+      am180x-evm|omapl138-lcdk)  
         GPIO_NUM=$((${BANK_NUM}*16+${GPIO_NUM_IN_BANK}))
         GPIO_PIN_STRING="DA850_GPIO${BANK_NUM}_${GPIO_NUM_IN_BANK}"
         EXTRA_PARAMS="gpio_pin_string=${GPIO_PIN_STRING}"
