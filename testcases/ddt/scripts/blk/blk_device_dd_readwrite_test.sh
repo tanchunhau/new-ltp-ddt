@@ -109,6 +109,9 @@ fi
 # printout mtdinfo for mtd device 
 if [[ "$DEV_NODE" =~ "mtd" ]]; then
   do_cmd printout_mtdinfo "$DEV_NODE"
+  do_cmd modprobe mtdblock
+  do_cmd modprobe ubi
+  do_cmd modprobe ubifs
 fi
  
 if [ $SKIP_FORMAT -ne 1 ]; then 
