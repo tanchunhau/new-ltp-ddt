@@ -26,8 +26,8 @@ source "common.sh"
 find_part_type() {
   PART=$1
   MTD_DEV="mtdblock$PART"
-  if [[ -e /sys/block/$MTD_DEV/device/type ]]; then
-    TYPE=`cat /sys/block/$MTD_DEV/device/type`
+  if [[ -e /sys/class/mtd/mtd$PART/type ]]; then
+    TYPE=`cat /sys/class/mtd/mtd$PART/type`
     if [[ $TYPE == 'nand' ]]; then
       PART_TYPE='nand'
     else
@@ -46,7 +46,7 @@ find_part_type() {
       fi
     fi
   else
-    die "/sys/block/$MTD_DEV/device/type doesn't exist"
+    die "/sys/class/mtd/mtd$PART/type doesn't exist"
   fi
   echo $PART_TYPE
 }
@@ -104,15 +104,15 @@ get_fs_part() {
   local MAX=0
   local PART=$LO
   while [ $PART -le $HI ]; do
-    if [ -e /sys/block/mtdblock$PART/device/name ]; then
-      PART_NAME=`cat /sys/block/mtdblock$PART/device/name`
+    if [ -e /sys/class/mtd/mtd$PART/name ]; then
+      PART_NAME=`cat /sys/class/mtd/mtd$PART/name`
       MTD_FS_NAME=`get_mtd_fs_name.sh $DEVICE_TYPE` || die "error get_mtd_fs_name"
       if [ "$PART_NAME" == "$MTD_FS_NAME" ]; then
         FS_PART=$PART
         break
       fi
     else
-      die "/sys/block/mtdblock$PART/device/name doesn't exist"
+      die "/sys/class/mtd/mtd$PART/name doesn't exist"
     fi
     PART=`expr $PART + 1`
   done
