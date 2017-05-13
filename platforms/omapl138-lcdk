@@ -22,9 +22,9 @@ jffs2
 ubifs
 nor/physmap-flash
 spi_master/mtd/spi_davinci
-usb/host/msc/musb_da8xx
-usb/host/hid/musb_da8xx
-usb/host/iso/musb_da8xx
+usb/host/msc/musb_ti81xx
+usb/host/hid/musb_ti81xx
+usb/host/iso/musb_ti81xx
 watchdog
 graphics/fb0/DA8xx_FB_Drv
 clcd/DA8xx_lcdc
