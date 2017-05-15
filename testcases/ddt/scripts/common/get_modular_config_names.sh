@@ -109,8 +109,7 @@ do
     *ehci-omap)
       usb="CONFIG_USB_EHCI_HCD_OMAP:ehci-omap";;
     *xhci-hcd)
-      usb="CONFIG_USB_XHCI_HCD:xhci-hcd";;
-
+      usb="CONFIG_USB_XHCI_PLAT_HCD:xhci_plat_hcd";;
     *crypto-omap)
       crypto="CONFIG_CRYPTO_DEV_OMAP_AES:omap-aes CONFIG_CRYPTO_DEV_OMAP_SHAM:omap-sham";;
 
