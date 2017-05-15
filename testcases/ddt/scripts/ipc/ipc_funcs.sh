@@ -334,7 +334,7 @@ reset_rproc_mpm()
 
 ins_pru_mods()
 {
-  local __modules=(pruss pru_rproc pruss_soc_bus)
+  local __modules=(pruss pru_rproc pruss_soc_bus prueth)
 
   case $MACHINE in
     am57*|am43xx*|am335x*|k2g*)
@@ -349,7 +349,12 @@ ins_pru_mods()
 
 rm_pru_mods()
 {
-  local __modules=(pru_rproc pruss pruss_soc_bus)
+  local __modules=(prueth rpmsg_pru pru_rproc pruss pruss_soc_bus)
+
+  for p in `ifconfig | grep 'HWaddr' | grep -o '^[a-z0-9]\+'`
+  do
+    ifconfig $p | grep -e 'inet addr' -e 'inet6 addr' || ifconfig $p down
+  done
 
   case $MACHINE in
     am57*|am43xx*|am335x*|k2g*)
