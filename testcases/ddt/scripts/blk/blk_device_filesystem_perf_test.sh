@@ -93,6 +93,10 @@ DEV_TYPE=`get_device_type_map.sh $DEVICE_TYPE` || die "error while translating d
 if [ $DEV_TYPE = 'mtd' ]; then
   mtd_part=`get_mtd_partnum_from_devnode.sh $DEV_NODE` || die "error getting mtd part number"
   do_cmd flash_eraseall -q "/dev/mtd${mtd_part}"
+  do_cmd modprobe mtdblock
+  do_cmd modprobe ubi
+  do_cmd modprobe ubifs
+
 fi
 
 ########################### REUSABLE TEST LOGIC ###############################
