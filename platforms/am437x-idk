@@ -1,6 +1,7 @@
 armv7l
 am43xx
 am437x-idk
+adc/tscadc
 crypto/crypto-omap
 crypto/crypto-omap/aes
 crypto/crypto-omap/des

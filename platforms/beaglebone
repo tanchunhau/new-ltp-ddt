@@ -1,6 +1,7 @@
 armv7l
 am335x
 beaglebone
+adc/tscadc
 crypto/crypto-omap
 crypto/crypto-omap/aes
 crypto/crypto-omap/md5

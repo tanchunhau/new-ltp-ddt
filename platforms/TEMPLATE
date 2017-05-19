@@ -1,6 +1,7 @@
 armv5
 omapl138
 am180x-evm
+adc/<drivername>
 can/<drivername>
 clcd/<drivername>
 crypto/<drivername>

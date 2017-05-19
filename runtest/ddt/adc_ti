@@ -1,0 +1,8 @@
+# @name TI Analog to Digital converter (ADC) tests
+# @desc Test various modes of operation of TI's ADC driver
+# @requires adc/tscadc
+# @setup_requires
+
+
+ADC_S_FUNC_TSCADC_ONESHOT_0001 source 'tscadc.sh'; test_one_shot_mode
+ADC_S_FUNC_TSCADC_CONTINUOUS_0001 source 'tscadc.sh'; test_continous_mode 100
