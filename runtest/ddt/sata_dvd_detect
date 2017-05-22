@@ -1,0 +1,8 @@
+# @name SATA-I DVD detection
+# @desc Check if SATA-DVD can be detected and nodes can be enumerated 
+# @requires sata 
+# @setup_requires satadvd
+
+SATA_S_FUNC_DVD_DETECT source 'common.sh'; node=`ls /dev/sr*` && echo "Pass" || die "SATA DVD was not detected and enumerated"
+
+
