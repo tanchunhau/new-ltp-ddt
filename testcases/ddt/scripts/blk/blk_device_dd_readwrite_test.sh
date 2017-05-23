@@ -106,14 +106,6 @@ if [[ "$DEV_NODE" =~ "mmc" ]]; then
   do_cmd printout_mmc_ios
 fi
 
-# printout mtdinfo for mtd device 
-if [[ "$DEV_NODE" =~ "mtd" ]]; then
-  do_cmd printout_mtdinfo "$DEV_NODE"
-  do_cmd modprobe mtdblock
-  do_cmd modprobe ubi
-  do_cmd modprobe ubifs
-fi
- 
 if [ $SKIP_FORMAT -ne 1 ]; then 
   if [ -n "$FS_TYPE" ]; then
     do_cmd blk_device_prepare_format.sh -d "$DEVICE_TYPE" -n "$DEV_NODE" -f "$FS_TYPE" -m "$MNT_POINT"

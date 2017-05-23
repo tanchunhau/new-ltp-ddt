@@ -68,6 +68,13 @@ test_print_trc "FS_TYPE: $FS_TYPE"
 test_print_trc "MNT_MODE: $MNT_MODE"
 
 ############# Do the work ###########################################
+if [[ "$DEV_NODE" =~ "mtd" ]]; then
+  do_cmd printout_mtdinfo "$DEV_NODE"
+  do_cmd modprobe mtdblock
+  do_cmd modprobe ubi
+  do_cmd modprobe ubifs
+fi
+
 if [ -n "$FS_TYPE" ]; then
 	test_print_trc "Erasing/Formatting this partition and then mount it"
 	do_cmd blk_device_erase_format_part.sh -d "$DEVICE_TYPE" -n "$DEV_NODE" -f "$FS_TYPE" -m "$MNT_POINT"
