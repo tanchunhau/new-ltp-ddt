@@ -45,9 +45,15 @@ done
 mem_kb=$(cat /proc/meminfo | grep -i memtotal | grep -o '[0-9]*'); mem_bits=$(echo "obase=2; print($mem_kb*1024)" | bc -l);
 phy_size=$(printf '%x' $((2**${#mem_bits})))
 
+if [ $((0x${phy_size})) -gt $((0x80000000)) ]
+then
+  echo "Memory size ${phy_size} is greater than 0x80000000, limiting to 0x80000000"
+  phy_size='80000000'
+fi
+
 GC_TEST_ROOT=/usr/bin/GC320/tests/unit_test
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${GC_TEST_ROOT}
-echo "Memory size is: 0x$phy_size"
+echo "Memory size used: 0x$phy_size"
 
 modprobe galcore baseAddress=${BASE_ADDRESS} physSize=0x${phy_size} || exit 1
 
