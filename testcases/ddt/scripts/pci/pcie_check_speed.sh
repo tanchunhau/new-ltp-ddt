@@ -21,7 +21,7 @@ lanes_supported=$1    # number of lanes should be supported by host
 get_rc_id()
 {
   rc_id=`lspci -n |grep -E "^00:" |cut -d" " -f3`
-  if [ -z $rc_id ]; then
+  if [[ -z $rc_id ]]; then
     die "Could not get RC ID"
   fi
   echo "$rc_id"
@@ -30,7 +30,7 @@ get_rc_id()
 get_ep_id()
 {
   ep_id=`lspci -n |grep -E "^01:" |head -1 |cut -d" " -f3`
-  if [ -z $ep_id ]; then
+  if [[ -z $ep_id ]]; then
     die "Could not get EP ID"
   fi
   echo "$ep_id"
@@ -41,8 +41,8 @@ get_pcie_speed()
   pci_id=$1
   item2check=$2 # 'lnkcap:' or 'lnksta:'
 
-  lnk_speed=`lspci -d "$pci_id" -vv |grep -i "$item2check" |grep -Eoi "Speed [0-9\.]+GT/s" |cut -d' ' -f2 |cut -d'G' -f1 `
-  if [ -z $lnk_speed ]; then
+  lnk_speed=`lspci -d "$pci_id" -vv |grep -i "$item2check"|head -1 |grep -Eoi "Speed [0-9\.]+GT/s" |cut -d' ' -f2 |cut -d'G' -f1 `
+  if [[ -z $lnk_speed ]]; then
     die "Could not get pcie speed capability or status"
   fi
   echo $lnk_speed
@@ -53,8 +53,8 @@ get_pcie_width()
   pci_id=$1
   item2check=$2 # 'lnkcap:' or 'lnksta:'
 
-  lnk_width=`lspci -d "$pci_id" -vv |grep -i "$item2check" |grep -Eoi "Width x[0-9]+" |grep -Eo "[0-9]+" `
-  if [ -z $lnk_width ]; then
+  lnk_width=`lspci -d "$pci_id" -vv |grep -i "$item2check" |head -1 |grep -Eoi "Width x[0-9]+" |grep -Eo "[0-9]+" `
+  if [[ -z $lnk_width ]]; then
     die "Could not get pcie width capability or status"
   fi
   echo $lnk_width
@@ -69,28 +69,28 @@ is_lnksta_expected()
   item=$4   # speed or width
 
   unit=''
-  if [ $item = 'speed' ]; then
+  if [[ $item = 'speed' ]]; then
     unit="GT/S"
-  elif [ $item = 'width' ]; then
+  elif [[ $item = 'width' ]]; then
     unit=""
   else
     die "Wrong item passed to is_lnksta_expected function"
   fi
 
-  if [ $(echo "$rc_cap < $ep_cap" |bc -l) -ne 0 ]; then
+  if [[ $(echo "$rc_cap < $ep_cap" |bc -l) -ne 0 ]]; then
     expected=$rc_cap
   else
     expected=$ep_cap
   fi
 
-  if [ -z $expected ]; then
+  if [[ -z $expected ]]; then
     die "Could not find the expected lnksta"
   fi
   echo "expected lnksta:$expected"
 
-  if [ $(echo "$lnksta == $expected" |bc -l) -eq 1 ]; then
+  if [[ $(echo "$lnksta == $expected" |bc -l) -eq 1 ]]; then
     echo "The PCIe LnkSta is at expected ${item}: ${expected}$unit "
-  elif [ $(echo "$lnksta > $expected" |bc -l) -eq 1 ]; then
+  elif [[ $(echo "$lnksta > $expected" |bc -l) -eq 1 ]]; then
     die "The PCIe LnkSta $item is greater than the $item capability. Maybe the reporting is wrong!"
   else
     die "The PCIe LnkSta ${item} is lower than the expected $item:${expected}$unit " 
@@ -112,9 +112,9 @@ ep_id=`get_ep_id` || die "error getting ep_id: $ep_id"
 rc_speed_cap=`get_pcie_speed "$rc_id" "lnkcap:" ` || die "error when getting speed cap for RC:${rc_speed_cap}"
 rc_width_cap=`get_pcie_width "$rc_id" "lnkcap:" ` || die "error when getting width cap for RC:${rc_width_cap}"
 # if test case pass lanes_supported, check if its cap showed in lspci matches this to check if the support is in
-if [ -n $lanes_supported ]; then 
+if [[ -n $lanes_supported ]]; then 
   # check if rc width cap matches the supported_lane
-  if [ $rc_width_cap -lt $lanes_supported ]; then
+  if [[ $rc_width_cap -lt $lanes_supported ]]; then
     die "Host as RC should support $lanes_supported lanes; but lspci shows it only support $rc_width_cap "
   fi
 fi
