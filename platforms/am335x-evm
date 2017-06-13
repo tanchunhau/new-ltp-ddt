@@ -2,6 +2,7 @@ armv7l
 am335x
 am335x-evm
 adc/tscadc
+can
 crypto/crypto-omap
 crypto/crypto-omap/aes
 crypto/crypto-omap/md5

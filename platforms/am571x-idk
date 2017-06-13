@@ -1,6 +1,7 @@
 armv7l
 j6eco
 am571x-idk
+can
 crypto/crypto-omap
 crypto/crypto-omap/aes
 crypto/crypto-omap/des

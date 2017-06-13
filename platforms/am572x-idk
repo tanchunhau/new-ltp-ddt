@@ -1,6 +1,7 @@
 armv7l
 dra7xx
 am572x-idk
+can
 crypto/crypto-omap
 crypto/crypto-omap/aes
 crypto/crypto-omap/des

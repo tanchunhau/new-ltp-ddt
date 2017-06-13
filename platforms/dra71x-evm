@@ -1,6 +1,7 @@
 armv7l
 j6entry
 dra7xx-evm
+can
 crypto/crypto-omap
 crypto/crypto-omap/aes
 crypto/crypto-omap/des

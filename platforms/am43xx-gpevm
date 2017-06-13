@@ -2,6 +2,7 @@ armv7l
 am43xx
 am43xx-gpevm
 adc/tscadc
+can
 crypto/crypto-omap
 crypto/crypto-omap/aes
 crypto/crypto-omap/des
