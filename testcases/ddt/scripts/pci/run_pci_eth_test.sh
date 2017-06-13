@@ -54,25 +54,32 @@ do_cmd "lspci -vv"
 iface_list=`get_active_eth_interfaces.sh`; 
 echo "${iface_list[@]}"; 
 if [ -z "${ETH_IFACE}" ];then
-  ETH_IFACE=`pci_eth_search_device.sh 'eth'` || die "error getting pcie eth interface name";  
-  echo "PCI eth iface: $ETH_IFACE"; 
-fi
-iface_config="iface ${ETH_IFACE} inet dhcp"; 
-grep "$iface_config" /etc/network/interfaces || ( echo "$iface_config" >> /etc/network/interfaces ); 
-for interface in ${iface_list[@]}; do 
-  do_cmd "ifconfig $interface down"; 
-done; 
-do_cmd "ifup ${ETH_IFACE}"; 
-host=`get_eth_gateway.sh "-i ${ETH_IFACE}"` || host=`get_eth_gateway.sh "-i eth0"` || die "error getting eth gateway address";
-echo "host:${host}"
-
-#run eth tests
-if [ -n "$ACTION" ]; then
-  eval "$ACTION"
+  eth_ifaces=`pci_eth_search_device.sh 'eth'` || die "error getting pcie eth interface name";  
+  echo "pci ifaces:"
+  echo "${eth_ifaces[@]}"
 fi
 
-# clean up after pci eth test
-do_cmd "ifdown $ETH_IFACE"; 
+for eth_iface in ${eth_ifaces[@]}; do
+
+  iface_config="iface ${eth_iface} inet dhcp"; 
+  grep "$iface_config" /etc/network/interfaces || ( echo "$iface_config" >> /etc/network/interfaces ); 
+  for interface in ${iface_list[@]}; do 
+    do_cmd "ifconfig $interface down"; 
+  done; 
+  do_cmd "ifup ${eth_iface}"; 
+  host=`get_eth_gateway.sh "-i ${eth_iface}"` || host=`get_eth_gateway.sh "-i eth0"` || die "error getting eth gateway address";
+  echo "host:${host}"
+
+  #run eth tests
+  if [ -n "$ACTION" ]; then
+    eval "$ACTION"
+  fi
+
+  # clean up after pci eth test
+  do_cmd "ifdown $eth_iface"; 
+
+done
+
 for interface in ${iface_list[@]}; do 
   status=`cat /sys/class/net/"${interface}"/operstate`
   if [ $status == 'down' ]; then

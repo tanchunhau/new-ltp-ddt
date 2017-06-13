@@ -23,13 +23,15 @@ if [ -z "$net_type" ]; then
   net_type='eth'
 fi
 
+j=0
 devices=`ls /sys/class/net|grep -iE "${net_type}|enp"`
 for device in $devices
   do
     pci_interface=`udevadm info --attribute-walk --path=/sys/class/net/$device|grep -m 1 -i "pci"`
-    if [ -n "$pci_interface" ];
+    if [[ -n "$pci_interface" ]];
     then
-      echo $device
+      pci_ints[j]=$device
+      j+=1
       ethdev=$device
     fi
 done
@@ -40,3 +42,4 @@ then
   test_print_trc " ::"
   exit 2	
 fi
+echo "${pci_ints[@]}"
