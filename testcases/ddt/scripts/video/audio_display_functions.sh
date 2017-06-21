@@ -138,7 +138,7 @@ disp_audio_test()
   for mode in "${__modes[@]}"; do
     __expected_fr=( $(echo "$mode" | grep -o '\-[0-9]\+' | cut -d '-' -f 2 | sort | uniq) )
     echo "Expected frame rates: ${__expected_fr[@]}"
-    echo "modetest -t -v -s $mode &>mode_test_log.txt & mt_pid=\$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=\$? ; kill -9 \$mt_pid"
+    echo "modetest -t -d -v -s $mode &>mode_test_log.txt & mt_pid=\$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=\$? ; kill -9 \$mt_pid"
     __test_log=$(modetest -t -v -s $mode 2>&1 & mt_pid=$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid; echo alsa_rc=$__alsa_rc)
     echo "$__test_log"
     __alsa_rc=$(echo "$__test_log" | grep alsa_rc= | cut -d '=' -f 2) 
@@ -228,7 +228,7 @@ get_multidisplay_modes()
         continue
       fi
       __c_modes=( $(echo $__modes | grep -o ${con}[0-9]*x[0-9i]*-[0-9]*) )
-      __result[$i]="${__result[$i]} -s ${__c_modes[$(($i % ${#__c_modes[@]}))]}"
+      __result[$i]="${__result[$i]} -d -s ${__c_modes[$(($i % ${#__c_modes[@]}))]}"
     done
     if [[ "${__result[$i]}" =~ $__mode_regex ]]; then
       eval "$1+=(\"${__result[$i]}\")"
