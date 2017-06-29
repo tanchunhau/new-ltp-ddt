@@ -89,7 +89,7 @@ done
 
 case $MACHINE in
     dra7*|am57*)
-      source ipc_funcs.sh; rm_ipc_mods; setup_firmware 'dra7-ipu2-fw.xem4.ipumm-fw'; ins_ipc_mods rpmsg_rpc;
+      source ipc_funcs.sh; rm_ipc_mods; ins_ipc_mods rpmsg_rpc; toggle_rprocs stop ; setup_firmware 'dra7-ipu2-fw.xem4.ipumm-fw'; toggle_rprocs start;
       ;;
 esac
 
