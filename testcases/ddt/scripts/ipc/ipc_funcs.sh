@@ -14,20 +14,6 @@
 
 source "common.sh"  # Import do_cmd(), die() and other functions
 
-# This function saves the existing firmware (if any) to <fw name>.orig
-# Inputs:
-#    $*: names of all the firmware files to be saved
-save_firmware()
-{
-  for __fw in $*
-  do
-    if [ -f ${__fw} -a ! -h ${__fw} ]
-    then
-      mv $__fw ${__fw}.orig
-    fi
-  done
-}
-
 # This fucntion sets up the appropriate firmware that will be loaded on the
 # remote processor for IPC related test
 # Inputs:
@@ -37,173 +23,51 @@ setup_firmware()
 {
   local __fw_pattern=$1
   local __fw_dir='/lib/firmware'
-  pushd ${__fw_dir}
-  local __fw_files=$(find $__fw_dir -type f -name "${__fw_pattern}")
-  echo "Found $__fw_files fw files..."
-  case $MACHINE in
-    dra7xx-evm|am57*)
-      save_firmware dra7-dsp1-fw.xe66 dra7-dsp2-fw.xe66 dra7-ipu2-fw.xem4 dra7-ipu1-fw.xem4
-      for __fw in $__fw_files
-      do
-        echo "Setting up $__fw ..."
-        case $__fw in
-          *dsp1*)
-            ln -sf $__fw dra7-dsp1-fw.xe66
-            ;;
-          *dsp2*)
-            ln -sf $__fw dra7-dsp2-fw.xe66
-            ;;
-          *ipu1*)
-            ln -sf $__fw dra7-ipu1-fw.xem4
-            ;;
-          *ipu2*)
-            ln -sf $__fw dra7-ipu2-fw.xem4
-            ;;
-          *)
-            echo "File $__fw did not contain processor tag"
-            ;;
-        esac
-      done
-    ;;
-    am43xx*|am335x*)
-      save_firmware rproc-pru0-fw rproc-pru1-fw
-      for __fw in $__fw_files
-      do
-        echo "Setting up $__fw ..."
-        case $__fw in
-          *pru0*)
-            ln -sf $__fw rproc-pru0-fw
-            ;;
-          *pru1*)
-            ln -sf $__fw rproc-pru1-fw
-            ;;
-          *)
-            echo "File $__fw did not contain processor tag"
-            ;;
-        esac
-      done
-    ;;
-    k2*)
-      for i in `seq 0 7`;
-      do
-        save_firmware keystone-dsp${i}-fw
-      done
-      echo "Setting up $__fw_files ..."
-      for i in `seq 0 7`
-      do
-        ln -sf ${__fw_files} keystone-dsp${i}-fw
-      done
-    ;;
-    *)
-      echo "Machine ${MACHINE} not supported"
-      popd
-      return 1
-      ;;           
-  esac
-  sync
-  popd
+  local __fw_file
+  local __fw_files=$(ls /sys/class/remoteproc/remoteproc*/firmware)
+  local __fw
+  local __new_pattern
+  local __fw_type
+  for __fw_dst in $__fw_files
+  do
+    __fw=$(cat ${__fw_dst})
+    case $__fw in
+      *dsp*)
+        __fw_type=dsp
+        __new_pattern=$(find_firmware_id "$__fw" dsp)
+        ;;
+      *ipu*)
+        __fw_type=ipu
+        __new_pattern=$(find_firmware_id "$__fw" ipu)
+        ;;
+      *pru*)
+        __fw_type=pru
+        __new_pattern=$(find_firmware_id "$__fw" pru)
+        ;;
+      *)
+        __fw_type=.*
+        __new_pattern=.*
+        ;;
+    esac
+
+    __fw_file=$(find ${__fw_dir} -type f -name "${__fw_pattern}" | grep "${__fw_type}" | grep "${__new_pattern}")
+    if [[ -z $__fw_file ]]
+    then
+      __fw_file=$(find ${__fw_dir} -type f -name "${__fw_pattern}")
+    fi
+    if [[ !  -z  $__fw_file  ]]
+    then
+      echo "Setting ${__fw_file:14} on $__fw_dst ..."
+      echo "${__fw_file:14}" > $__fw_dst
+    else
+      echo "Could not find fw matching $__fw_pattern for $__fw_dst"
+    fi
+  done
 }
 
-setup_pru_firmware()
+find_firmware_id()
 {
-  local __fw_pattern=$1
-  local __fw_dir='/lib/firmware'
-  pushd ${__fw_dir}
-  local __fw_files=$(find $__fw_dir -type f -name "${__fw_pattern}")
-  echo "Found $__fw_files fw files..."
-  case $MACHINE in
-    am57*)
-      save_firmware am57xx-pru1_0-fw am57xx-pru1_1-fw am57xx-pru2_0-fw am57xx-pru2_1-fw
-      for __fw in $__fw_files
-      do
-        echo "Setting up $__fw ..."
-        case $__fw in
-          *1_0*)
-            ln -sf $__fw am57xx-pru1_0-fw
-            ;;
-          *2_0*)
-            ln -sf $__fw am57xx-pru2_0-fw
-            ;;
-          *1_1*)
-            ln -sf $__fw am57xx-pru1_1-fw
-            ;;
-          *2_1*)
-            ln -sf $__fw am57xx-pru2_1-fw
-            ;;
-          *)
-            echo "File $__fw did not contain processor tag"
-            ;;
-        esac
-      done
-    ;;
-    am43xx*)
-      save_firmware am437x-pru1_0-fw am437x-pru1_1-fw
-      echo "Setting up $__fw_files ..."
-      for __fw in $__fw_files
-      do
-        case $__fw in
-          *1_0*)
-            ln -sf $__fw am437x-pru1_0-fw
-            ;;
-          *1_1*)
-            ln -sf $__fw am437x-pru1_1-fw
-            ;;
-          *)
-            echo "File $__fw did not contain processor tag"
-            ;;
-        esac
-      done
-    ;;
-    am335x*)
-      save_firmware rproc-pru0-fw rproc-pru1-fw
-      for __fw in $__fw_files
-      do
-        echo "Setting up $__fw ..."
-        case $__fw in
-          *0*)
-            ln -sf $__fw rproc-pru0-fw
-            ;;
-          *1*)
-            ln -sf $__fw rproc-pru1-fw
-            ;;
-          *)
-            echo "File $__fw did not contain processor tag"
-            ;;
-        esac
-      done
-    ;;
-    k2g*)
-      save_firmware k2g-pru0_0-fw k2g-pru0_1-fw k2g-pru1_0-fw k2g-pru1_1-fw
-      echo "Setting up $__fw_files ..."
-      for __fw in $__fw_files
-      do
-        case $__fw in
-          *0_0*)
-            ln -sf $__fw k2g-pru0_0-fw
-            ;;
-          *0_1*)
-            ln -sf $__fw k2g-pru0_1-fw
-            ;;
-          *1_0*)
-            ln -sf $__fw k2g-pru1_0-fw
-            ;;
-          *1_1*)
-            ln -sf $__fw k2g-pru1_1-fw
-            ;;
-          *)
-            echo "File $__fw did not contain processor tag"
-            ;;
-        esac
-      done
-    ;;
-    *)
-      echo "Machine ${MACHINE} not supported"
-      popd
-      return 1
-      ;;           
-  esac
-  sync
-  popd
+  echo "$1" | grep -o "$2[^-]*" | grep -o '[0-9].*'
 }
 
 # Function to rmod the rpmsg loadable modules so that new firmware can 
@@ -217,9 +81,9 @@ rm_ipc_mods()
   kill_lad
   kill_mpm_daemon
 
+  toggle_rprocs stop
+
   rm_pru_mods
-  local __rprocs=( $(list_rprocs) )                                           
-  toggle_rprocs unbind ${__rprocs[@]}
 
   for __mod in ${__modules[@]}
   do
@@ -255,13 +119,8 @@ ins_ipc_mods()
       done
     ;;
   esac
-  sleep 3
-  local __rprocs=( $(list_rprocs) )   
-  toggle_rprocs unbind ${__rprocs[@]}
-  sleep 3                                        
-  toggle_rprocs bind ${__rprocs[@]}
-  sleep 3
   ins_pru_mods
+  sleep 10
 }
 
 # Function to insmod the modules require to run RPMSG test with mpm
@@ -356,16 +215,10 @@ rm_pru_mods()
     ifconfig $p | grep -e 'inet addr' -e 'inet6 addr' || ifconfig $p down
   done
 
-  case $MACHINE in
-    am57*|am43xx*|am335x*|k2g*)
-      __prus=( $(list_prus) )                                           
-      toggle_prus unbind ${__prus[@]}
-      for __mod in ${__modules[@]}
-      do
-        modprobe -r ${__mod}
-      done
-  ;;
-  esac
+  for __mod in ${__modules[@]}
+  do
+    modprobe -r ${__mod}
+  done
 }
 
 kill_mpm_daemon()
@@ -1011,7 +864,7 @@ rpmsg_recovery_event()
   
   eval "$1=()"
   case $MACHINE in
-    *dra7xx-evm|*am57*)
+    *dra7*|*am57*)
       __mbox_q_addr=('0x48840044' '0x48840050' '0x48842044' '0x48842050')
       ;;
     *)
@@ -1029,16 +882,15 @@ rpmsg_recovery_event()
 
 # Function to bind/unbind the prus
 # Inputs:
-#   $1: action to perform, either "bind" or "unbind"
-#   $2:* devices to bind/unbind
-toggle_prus()
+#   $1: action to perform, either "stop" or "start"
+toggle_rprocs()
 {
-  local __driver_sysfs='/sys/bus/platform/drivers/pru-rproc'
+  local __driver_sysfs='/sys/class/remoteproc'
 
-  for __pru in ${@:2}
+  for __pru in `ls ${__driver_sysfs}/`
   do
     echo "${1}ing $__pru ..."
-    echo "$__pru" > ${__driver_sysfs}/$1
+    echo $1 > ${__driver_sysfs}/${__pru}/state
   done
 }
 
@@ -1118,30 +970,6 @@ list_rprocs()
   esac
 }
 
-# Function to bind/unbind the prus
-# Inputs:
-#   $1: action to perform, either "bind" or "unbind"
-#   $2:* devices to bind/unbind
-toggle_rprocs()
-{
-  local __driver_sysfs
-  
-  case $SOC in
-    keystone)
-      __driver_sysfs='/sys/bus/platform/drivers/keystone-rproc'
-    ;;
-    *)
-      __driver_sysfs='/sys/bus/platform/drivers/omap-rproc'
-    ;;
-  esac
-
-  for __pru in ${@:2}
-  do
-    echo "${1}ing $__pru ..."
-    echo "$__pru" > ${__driver_sysfs}/$1
-  done
-}
-
 rpmsg_pru_test()
 {
   local __test_cmd='test_rpmsg_pru'
@@ -1151,8 +979,12 @@ rpmsg_pru_test()
 
   for dev in ${__pru_list[@]}
   do
-    echo -e "$(test_rpmsg_pru ${dev} ${__num_msg})"  | grep -i "Received ${__num_msg} messages, closing ${dev}" || \
-    (echo "Test failed for ${dev}" && return 1)
+     echo -e "$(test_rpmsg_pru ${dev} ${__num_msg})"  | grep -i "Received ${__num_msg} messages, closing ${dev}" ;
+     if [ $? -ne 0 ]
+     then
+       __result=1
+       echo "Test failed for ${dev}"
+     fi
   done
 
   if [ ${#__pru_list[@]} -gt 1 ]
@@ -1162,9 +994,13 @@ rpmsg_pru_test()
     do
       __multi_test_cmd="${__multi_test_cmd} & ${__test_cmd} ${__pru_list[${i}]} ${__num_msg}"
     done
-     echo -e "$(eval ${__multi_test_cmd})"  | grep -i "Received ${__num_msg} messages, closing" | wc -l | grep ${#__pru_list[@]} || \
-    (echo "Test failed for ${__multi_test_cmd}" && return 1)
+     echo -e "$(eval ${__multi_test_cmd})"  | grep -i "Received ${__num_msg} messages, closing" | wc -l | grep ${#__pru_list[@]}
+     if [ $? -ne 0 ]
+     then
+       __result=1
+       echo "Test failed for ${__multi_test_cmd}"
+     fi
   fi
 
-  return 0
+  return $__result
 }
