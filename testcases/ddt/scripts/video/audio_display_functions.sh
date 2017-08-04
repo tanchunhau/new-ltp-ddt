@@ -127,6 +127,10 @@ disp_audio_test()
   local __freqs_detected
   local __freqs_result
   local __test_log
+  local __diff=0
+  local __min_delta
+  local __failed_fr=0
+
   assert [ ${#__modes[@]} -gt 0 ]
   ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3
   if [ ${#} -gt 3 ]; then
@@ -155,10 +159,17 @@ disp_audio_test()
     __freqs_detected=()
     for fr in ${__fmt_freqs[@]:1:$__fr_length}
     do
+      __min_delta=$fr
       for i in `seq 0 $((${#__expected_fr[@]} - 1))`
       do
         __fr_delta=$((${__expected_fr[$i]}-fr))
-        if [ $((__fr_delta*__fr_delta)) -gt 1 ]; then
+        if [ $__fr_delta -lt 0 ]; then
+          __fr_delta=$((__fr_delta*-1))
+        fi
+        if [ $__fr_delta -lt $__min_delta ]; then
+          __min_delta=$__fr_delta
+        fi
+        if [ $__fr_delta -gt 1 ]; then
           __freqs_result=1
         else 
           __freqs_result=0
@@ -166,11 +177,19 @@ disp_audio_test()
           break
         fi
       done
+      __diff=$((__diff + $__min_delta))
       if [ $__freqs_result -ne 0 ]; then
+      __failed_fr=$((__failed_fr+1))
         echo "Display test failed for mode $mode expected ${__expected_fr[@]} got $fr"
       fi
       let "__result|=$__freqs_result"
     done
+    if [ $__result -ne 0 -a $__failed_fr -lt 5 ]; then
+      if [ $((__diff/__fr_length)) -lt 1 ]; then
+        echo "${__failed_fr} fps values were not in spec but overall fps is good error~${__diff}/${__fr_length}"
+        __result=0
+      fi
+    fi
     if [ ${#__freqs_detected[@]} -ne ${#__expected_fr[@]} ]; then
       echo "Display test failed for mode $mode expected ${__expected_fr[@]} detected freqs ${__freqs_detected[@]}"
       __result=1
