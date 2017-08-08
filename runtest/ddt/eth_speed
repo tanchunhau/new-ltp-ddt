@@ -1,0 +1,7 @@
+# @name Ethtool speed set and verify 
+# @desc Uses ethtool to change and verify speed of interface
+# @requires net
+
+ETH_XS_FUNC_ETH0_SPEED_10Mbps source 'common.sh'; interface="eth0"; speed=10; speed_string="10Mb/s"; do_cmd "ethtool -s $interface autoneg off"; do_cmd "ethtool -s $interface speed $speed"; final_speed=`get_eth_link_speed.sh $interface`; do_cmd "ethtool -s $interface autoneg on"; if [ "$final_speed" == "$speed_string" ]; then echo "Test Passed"; else die "Observed and expected ethernet link speeds do not match"; fi
+ETH_XS_FUNC_ETH0_SPEED_100Mbps source 'common.sh'; interface="eth0"; speed=100; speed_string="100Mb/s"; do_cmd "ethtool -s $interface autoneg off"; do_cmd "ethtool -s $interface speed $speed"; final_speed=`get_eth_link_speed.sh $interface`; do_cmd "ethtool -s $interface autoneg on"; if [ "$final_speed" == "$speed_string" ]; then echo "Test Passed"; else die "Observed and expected ethernet link speeds do not match"; fi
+ETH_XS_FUNC_ETH0_SPEED_1000Mbps source 'common.sh'; interface="eth0"; speed=1000; speed_string="1000Mb/s"; do_cmd "ethtool -s $interface autoneg off"; do_cmd "ethtool -s $interface speed $speed"; final_speed=`get_eth_link_speed.sh $interface`; do_cmd "ethtool -s $interface autoneg on"; if [ "$final_speed" == "$speed_string" ]; then echo "Test Passed"; else die "Observed and expected ethernet link speeds do not match"; fi

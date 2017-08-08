@@ -1,0 +1,6 @@
+# @name Ethtool duplexity set and verify 
+# @desc Uses ethtool to change and verify duplexity of interface
+# @requires net
+
+ETH_XS_FUNC_ETH0_DUPLEX_FULL source 'common.sh'; interface="eth0"; duplex="full"; do_cmd "ethtool -s $interface autoneg off"; do_cmd "ethtool -s $interface duplex $duplex"; final_duplex=`get_eth_link_duplexity.sh $interface`; do_cmd "ethtool -s $interface autoneg on"; echo "DUPLEX is $duplex and FINAL_DUPLEX is $final_duplex"; if [ `echo $duplex | tr [:upper:] [:lower:]` = `echo $final_duplex | tr [:upper:] [:lower:]` ]; then echo "Test Passed"; else die "Observed and expected ethernet link duplex settings do not match"; fi
+ETH_XS_FUNC_ETH0_DUPLEX_HALF source 'common.sh'; interface="eth0"; duplex="half"; do_cmd "ethtool -s $interface autoneg off"; do_cmd "ethtool -s $interface duplex $duplex"; final_duplex=`get_eth_link_duplexity.sh $interface`; do_cmd "ethtool -s $interface autoneg on"; echo "DUPLEX is $duplex and FINAL_DUPLEX is $final_duplex"; if [ `echo $duplex | tr [:upper:] [:lower:]` = `echo $final_duplex | tr [:upper:] [:lower:]` ]; then echo "Test Passed"; else die "Observed and expected ethernet link duplex settings do not match"; fi
