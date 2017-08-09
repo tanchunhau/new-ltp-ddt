@@ -265,6 +265,9 @@ get_num_remote_procs()
         ;;
       esac
       ;;
+    *omapl138)
+      echo 1
+      ;;
     *)
       echo "SOC ${SOC} not supported"
       return 1
@@ -299,6 +302,9 @@ get_rpmsg_proto_rproc_ids()
           rids=( 1 )
         ;;
       esac
+      ;;
+    *omapl138)
+      rids=( 1 )
       ;;
     *)
       echo "SOC ${SOC} not supported"
@@ -563,6 +569,9 @@ kill_lad()
         ;;
       esac
       ;;
+    omapl138*)
+      killall lad_omapl138
+      ;;
     *)
       echo "Machine ${MACHINE} not supported"
       return 1
@@ -595,6 +604,9 @@ start_lad()
           lad_66ak2g
         ;;
       esac
+      ;;
+    omapl138*)
+      lad_omapl138
       ;;
     *)
       echo "Machine ${MACHINE} not supported"
