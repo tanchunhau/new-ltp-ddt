@@ -52,6 +52,7 @@ check_clkctrl_reg() {
 # use user-defined Params section above.
 
 do_cmd "cat /sys/kernel/debug/gpio"
+do_cmd "cat /proc/interrupts |grep -i gpio"
 
 # gpio bank counts from 0 here. Ex, '0' is corresponding 'GPIO1' on dra7.
 # table for gpio_bank:gpio_bank_clkctrl register address
@@ -60,10 +61,12 @@ case $MACHINE in
     gpio_banks="2:0x44E000B0 3:0x44E000B8"
   ;;
   dra7xx-evm|dra72x-evm) 
-    gpio_banks="0:0x4AE07838 1:0x4A009760" # 0=>CM_WKUPAON_GPIO1_CLKCTRL; 1=>CM_L4PER_GPIO2_CLKCTRL
+    #gpio_banks="0:0x4AE07838 1:0x4A009760" # 0=>CM_WKUPAON_GPIO1_CLKCTRL; 1=>CM_L4PER_GPIO2_CLKCTRL
+    gpio_banks="1:0x4A009760" # 0=>CM_WKUPAON_GPIO1_CLKCTRL; 1=>CM_L4PER_GPIO2_CLKCTRL
   ;;
   am57xx-evm)
-    gpio_banks="0:0x4AE07838 2:0x4A009768"
+    #gpio_banks="0:0x4AE07838 2:0x4A009768"
+    gpio_banks="2:0x4A009768"
   ;;
   am43xx-epos|am43xx-gpevm|am437x-idk)
     gpio_banks="" #No free gpio bank for testing
