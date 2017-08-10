@@ -127,9 +127,9 @@ disp_audio_test()
   local __freqs_detected
   local __freqs_result
   local __test_log
-  local __diff=0
+  local __diff
   local __min_delta
-  local __failed_fr=0
+  local __failed_fr
 
   assert [ ${#__modes[@]} -gt 0 ]
   ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3
@@ -140,6 +140,8 @@ disp_audio_test()
     __alsa_test_cmd="$__alsa_test_cmd -D $5"
   fi
   for mode in "${__modes[@]}"; do
+    __diff=0
+    __failed_fr=0
     __expected_fr=( $(echo "$mode" | grep -o '\-[0-9]\+' | cut -d '-' -f 2 | sort | uniq) )
     echo "Expected frame rates: ${__expected_fr[@]}"
     echo "modetest -t -d -v -s $mode &>mode_test_log.txt & mt_pid=\$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=\$? ; kill -9 \$mt_pid"
@@ -184,7 +186,7 @@ disp_audio_test()
       fi
       let "__result|=$__freqs_result"
     done
-    if [ $__result -ne 0 -a $__failed_fr -lt 5 ]; then
+    if [ $__result -ne 0 -a $__failed_fr -gt 0 -a $__failed_fr -lt 5 ]; then
       if [ $((__diff/__fr_length)) -lt 1 ]; then
         echo "${__failed_fr} fps values were not in spec but overall fps is good error~${__diff}/${__fr_length}"
         __result=0
