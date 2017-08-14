@@ -58,7 +58,8 @@ do_cmd "cat /proc/interrupts |grep -i gpio"
 # table for gpio_bank:gpio_bank_clkctrl register address
 case $MACHINE in
   am335x-evm)
-    gpio_banks="2:0x44E000B0 3:0x44E000B8"
+    #gpio_banks="2:0x44E000B0 3:0x44E000B8"
+    gpio_banks="2:0x44E000B0"
   ;;
   dra7xx-evm|dra72x-evm) 
     #gpio_banks="0:0x4AE07838 1:0x4A009760" # 0=>CM_WKUPAON_GPIO1_CLKCTRL; 1=>CM_L4PER_GPIO2_CLKCTRL
