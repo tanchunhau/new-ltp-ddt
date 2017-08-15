@@ -44,6 +44,9 @@ setup_firmware()
         __fw_type=pru
         __new_pattern=$(find_firmware_id "$__fw" pru)
         ;;
+      am335x-pm-firmware*)
+        continue
+        ;;
       *)
         __fw_type=.*
         __new_pattern=.*
@@ -901,6 +904,7 @@ toggle_rprocs()
 
   for __pru in `ls ${__driver_sysfs}/`
   do
+    cat ${__driver_sysfs}/${__pru}/device/of_node/name | grep wkup_m3 && continue
     echo "${1}ing $__pru ..."
     echo $1 > ${__driver_sysfs}/${__pru}/state
   done
