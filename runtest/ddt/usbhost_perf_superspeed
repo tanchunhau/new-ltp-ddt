@@ -1,0 +1,10 @@
+# @name USB Host Write/Read Performance test
+# @desc format usb device first and then mount it and do read write perf test
+# @requires usb/host/superspeed
+# @setup_requires usbhostssmsc
+
+
+USBHOST_L_PERF_SUPERSPEED_VFAT_0001 source 'common.sh' ; do_cmd install_modules.sh 'usb' ; blk_device_filesystem_perf_test.sh -f vfat -s 100 -B "102400 262144" -d "usb" -t "60" -e "superspeed"
+USBHOST_L_PERF_SUPERSPEED_EXT2_0001 source 'common.sh' ; do_cmd install_modules.sh 'usb' ; blk_device_filesystem_perf_test.sh -f ext2 -s 100 -B "102400 1048576 5242880" -d "usb" -t "60" -e "superspeed"
+USBHOST_L_PERF_SUPERSPEED_EXT4_0001 source 'common.sh' ; do_cmd install_modules.sh 'usb' ; blk_device_filesystem_perf_test.sh -f ext4 -s 100 -B "102400 1048576 5242880" -d "usb" -t "60" -e "superspeed"
+

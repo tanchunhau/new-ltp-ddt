@@ -51,6 +51,7 @@ touchscreen
 usb/host/msc/xhci-hcd
 usb/host/hid/xhci-hcd
 usb/host/iso/xhci-hcd
+usb/host/superspeed
 usb/slave/usbslave_ether
 usb/slave/usbslave_zero 
 usb/slave/usbslave_ncm  
