@@ -13,4 +13,4 @@ PRUETH_S_FUNC_ETH2_PING_300S source 'common.sh'; INTERFACE_NAME=eth2; host=$eth2
 
 PRUETH_M_STRESS_ETH2_PING_1800S source 'common.sh'; INTERFACE_NAME=eth2; host=$eth2_SERVER; iface=`get_eth_iface_by_module_name.sh -m pru -i $INTERFACE_NAME` || die "error getting eth interface name"; do_cmd "do_eth_up_down.sh -i $iface -d up"; do_cmd "ping ${host} -w 1800"
 
-PRUETH_S_STRESS_ETH2_PING_MULTI-PKT-SIZES source 'common.sh';  INTERFACE_NAME=eth2; host=@eth2_SERVER; iface=`get_eth_iface_by_module_name.sh -m pru -i $INTERFACE_NAME` || die "error getting eth interface name"; do_cmd "do_eth_up_down.sh -i $iface -d up"; for size in 128 512 1024 4096 8192 16384; do do_cmd "ping ${host} -c 3 -s ${size}";done
+PRUETH_S_STRESS_ETH2_PING_MULTI-PKT-SIZES source 'common.sh';  INTERFACE_NAME=eth2; host=$eth2_SERVER; iface=`get_eth_iface_by_module_name.sh -m pru -i $INTERFACE_NAME` || die "error getting eth interface name"; do_cmd "do_eth_up_down.sh -i $iface -d up"; for size in 128 512 1024 4096 8192 16384; do do_cmd "ping ${host} -c 3 -s ${size}";done

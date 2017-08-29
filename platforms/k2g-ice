@@ -14,7 +14,6 @@ nand/davinci_nand
 net/eth1G
 net/dual_mac
 pcie
-pru/eth0
 pru/eth1
 pru/eth2
 pru/eth3
