@@ -426,6 +426,6 @@ notify_and_wait() {
 }
 
 stop_weston() {
-  ps -ef | grep -i weston | grep -v grep && systemctl stop weston && sleep 3
+  ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3
 }
 
