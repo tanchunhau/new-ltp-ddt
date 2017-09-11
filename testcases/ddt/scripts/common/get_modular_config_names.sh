@@ -47,6 +47,8 @@ do
     
     *ti_cpsw)                                 
       net="CONFIG_TI_CPSW:ti_cpsw";;
+    *ti_netcp)                                 
+      net="CONFIG_TI_KEYSTONE_NETCP_ETHSS:keystone_netcp_ethss";;
 
     *omap2-nand)
       nand="CONFIG_MTD_NAND_OMAP2:omap2_nand";; 

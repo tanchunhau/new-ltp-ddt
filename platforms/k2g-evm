@@ -12,7 +12,7 @@ mmc_host/sd/mmci-omap-hs
 mmc_host/sdhc/mmci-omap-hs
 mmc_host/sdxc/mmci-omap-hs
 nand/davinci_nand
-net/eth1G
+net/eth1G/ti_netcp
 net/dual_mac
 pcie
 qspi_master/mtd/cadence-quadspi
