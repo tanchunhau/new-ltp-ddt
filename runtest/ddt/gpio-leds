@@ -1,0 +1,6 @@
+# @name Check if the tricolor leds are showing up in sys/class
+# @desc Check if the tricolor leds are showing up in sys/class
+# @requires gpio 
+
+GPIO_S_FUNC_LEDS source "common.sh"; gpio_leds.sh
+
