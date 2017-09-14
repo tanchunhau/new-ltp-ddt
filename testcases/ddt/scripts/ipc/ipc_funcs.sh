@@ -251,7 +251,7 @@ get_num_remote_procs()
     *dra7xx)
       echo 4
       ;;
-    *j6eco)
+    *j6eco|*j6entry)
       echo 3
       ;;
     *keystone)
@@ -289,7 +289,7 @@ get_rpmsg_proto_rproc_ids()
     *dra7xx)
       rids=( `seq 1 4` )
       ;;
-    *j6eco)
+    *j6eco|*j6entry)
       rids=( 1 2 4 )
       ;;
     *keystone)
