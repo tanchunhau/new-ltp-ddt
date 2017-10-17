@@ -13,6 +13,7 @@ NAND_S_FUNC_ECC_2K_BCH8_8ERRS_W_OOB_ERR source "common.sh"; nandecc_tests.sh -r 
 NAND_S_FUNC_ECC_2K_BCH8_8ERRS_ALL_OOB_ERR source "common.sh"; nandecc_tests.sh -r "oob:3:0xFF"~"oob:17:0xFF"~"oob:31:0xFF"~"oob:45:0xFF"
 
 NAND_S_FUNC_ECC_2K_BCH8_EMPTY_SECTOR_8ERRS_NO_OOB_ERR source "common.sh"; nandecc_tests.sh -r "0:0:0xFF"~"1:1:0xFF"~"2:2:0xFF"~"3:3:0xFF" -e
+NAND_S_FUNC_ECC_2K_BCH8_EMPTY_SECTOR_4ERRS_NO_OOB_ERR source "common.sh"; nandecc_tests.sh -r "0:0:0x0F"~"1:1:0x0F"~"2:2:0x0F"~"3:3:0x0F" -e
 
 # 4k BCH16
 NAND_S_FUNC_ECC_4K_BCH16_16ERRS_NO_OOB_ERR source "common.sh"; nandecc_tests.sh -r "0:0:0xFF"~"0:10:0xFF"~"1:1:0xFF"~"1:10:0xFF"~"2:2:0xFF"~"2:10:0xFF"~"3:3:0xFF"~"3:10:0xFF"~"4:0:0xFF"~"4:10:0xFF"~"5:1:0xFF"~"5:10:0xFF"~"6:2:0xFF"~"6:10:0xFF"~"7:3:0xFF"~"7:10:0xFF"
