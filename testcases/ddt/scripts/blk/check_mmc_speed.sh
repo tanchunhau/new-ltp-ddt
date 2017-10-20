@@ -52,6 +52,7 @@ else
 fi
 
 mmcios=`printout_mmc_ios` 
+echo "$mmcios"
 echo "$mmcios" |grep -i "$expected_timespec" && echo "The test pass and mmc ios shows it is running at ${expected_mode} mode" || die "MMC is not running at expected mode: ${expected_mode}"
 
 
