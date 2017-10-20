@@ -248,7 +248,7 @@ start_mpm_daemon()
 get_num_remote_procs()
 {
   case $SOC in
-    *dra7xx)
+    *dra7xx|*j6plus)
       echo 4
       ;;
     *j6eco|*j6entry)
@@ -286,7 +286,7 @@ get_num_remote_procs()
 get_rpmsg_proto_rproc_ids()
 { 
   case $SOC in
-    *dra7xx)
+    *dra7xx|*j6plus)
       rids=( `seq 1 4` )
       ;;
     *j6eco|*j6entry)
