@@ -24,7 +24,7 @@ if [ -z "$net_type" ]; then
 fi
 
 j=0
-devices=`ls /sys/class/net|grep -iE "${net_type}|enp"`
+devices=`ls /sys/class/net|grep -iE "${net_type}|wlp|enp"`
 for device in $devices
   do
     pci_interface=`udevadm info --attribute-walk --path=/sys/class/net/$device|grep -m 1 -i "pci"`
