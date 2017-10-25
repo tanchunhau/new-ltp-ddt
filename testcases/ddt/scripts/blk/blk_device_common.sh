@@ -168,8 +168,26 @@ find_part_with_biggest_size() {
       PART_NUM=$i
       DEVNODE="${PART_BASE_NODE}${PART_NUM}"
 
-      LINE=`echo -e "print\nquit\n" |parted ${DEV_BASE_NODE} |grep -E "^ ${PART_NUM}"`
-      SIZE=`echo "$LINE" |awk -F " " '{print $4}' |sed s'/[a-zA-Z].$//' `
+      LINE=`echo -e "print\nquit\n" |parted ${DEV_BASE_NODE} |grep -E "^\s*${PART_NUM} "`
+      #SIZE=`echo "$LINE" |awk -F " " '{print $4}' |sed s'/[a-zA-Z].$//' `
+      partsize=`echo "$LINE" |awk -F " " '{print $4}' `
+      # Convert all size to KB
+      shopt -s nocasematch
+      case "$partsize" in
+        *KB) SIZE=`echo ${partsize} |sed s'/[a-zA-Z].$//' `;;
+        *MB) 
+          partsize=`echo ${partsize} |sed s'/[a-zA-Z].$//' `
+          SIZE=`echo ${partsize}*1024 |bc` ;;
+        *) die "Don't know the unit for the partition size";;
+      esac
+      shopt -u nocasematch
+       
+      # if size is too small, do not use it as test partition
+      minsize=`echo 100*1024 |bc` #100M in KB
+      if (( $(echo "$SIZE < $minsize" |bc -l) ));then
+        continue
+      fi
+
       FLAG=`echo "$LINE" |awk -F " " '{print $7}'`
       PART_NAME=`echo "$LINE" |awk -F " " '{print $5}'`
 
