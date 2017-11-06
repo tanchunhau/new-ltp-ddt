@@ -178,6 +178,9 @@ find_part_with_biggest_size() {
         *MB) 
           partsize=`echo ${partsize} |sed s'/[a-zA-Z].$//' `
           SIZE=`echo ${partsize}*1024 |bc` ;;
+        *GB) 
+          partsize=`echo ${partsize} |sed s'/[a-zA-Z].$//' `
+          SIZE=`echo ${partsize}*1024*1024 |bc` ;;
         *) die "Don't know the unit for the partition size";;
       esac
       shopt -u nocasematch
