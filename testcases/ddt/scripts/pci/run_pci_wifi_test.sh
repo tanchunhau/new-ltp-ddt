@@ -99,7 +99,15 @@ AP_IP=`udhcpc -x hostname:${PLATFORM} -i $ETH_IFACE |awk '/DNS/ {print $4}' `
 do_cmd ifconfig $ETH_IFACE
 ipaddr=`get_eth_ipaddr.sh -i $ETH_IFACE` ||die "error getting ipaddr of $ETH_IFACE :: $ipaddr "
 sleep 1
-do_cmd ping $AP_IP -w $DURATION
+
+if [[ $DURATION -ge 300 ]]; then
+  end=$((SECONDS + $DURATION))
+  while [ $SECONDS -lt $end ]; do
+    do_cmd ping $AP_IP -w 300
+  done
+else
+  do_cmd ping $AP_IP -w $DURATION
+fi
 
 # clean up after pci eth test
 do_cmd "ifconfig $ETH_IFACE down"; 
