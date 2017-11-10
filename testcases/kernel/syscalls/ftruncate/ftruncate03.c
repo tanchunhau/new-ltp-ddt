@@ -48,10 +48,9 @@
 #include <inttypes.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define TESTFILE	"ftruncate03_tst_file"
 

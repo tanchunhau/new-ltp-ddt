@@ -17,12 +17,12 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Garrett Cooper, July 2009
+# Ngie Cooper, July 2009
 #
 
 # DO NOT USE THIS FILE FOR hugetlb / lib!!!
 LIBIPCDIR		:= ../lib
-LIBIPC			:= $(LIBIPCDIR)/libipc_hugetlb.a
+LIBIPC			:= $(LIBIPCDIR)/libhugetlb.a
 
 $(LIBIPCDIR):
 	mkdir -p "$@"
@@ -31,7 +31,7 @@ $(LIBIPC): $(LIBIPCDIR)
 
 CPPFLAGS		+= -I$(abs_srcdir)/$(LIBIPCDIR)
 LDFLAGS			+= -L$(abs_builddir)/$(LIBIPCDIR)
-LDLIBS			+= -lipc_hugetlb
+LDLIBS			+= -lhugetlb
 MAKE_DEPS		+= $(LIBIPC)
 
 include $(top_srcdir)/testcases/kernel/mem/include/libmem.mk

@@ -39,7 +39,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "test.h"
-#include "usctest.h"
 
 #define	FAILED 0
 #define	PASSED 1
@@ -48,7 +47,6 @@ char *TCID = "nextafter01";
 
 int local_flag = PASSED;
 int block_number;
-int errno;
 FILE *temp;
 int TST_TOTAL = 1;
 

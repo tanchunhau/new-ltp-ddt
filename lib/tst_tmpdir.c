@@ -56,7 +56,8 @@
  *		Neither tst_tmpdir() or tst_rmdir() has a return value.
  *
  *********************************************************/
-
+#define _GNU_SOURCE
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
@@ -66,10 +67,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <fcntl.h>
 
 #include "test.h"
-#include "rmobj.h"
 #include "ltp_priv.h"
+#include "lapi/futex.h"
 
 /*
  * Define some useful macros.
@@ -85,11 +88,6 @@
 #endif
 
 /*
- * Define function prototypes.
- */
-static void tmpdir_cleanup(void);
-
-/*
  * Define global variables.
  */
 extern char *TCID;		/* defined/initialized in main() */
@@ -97,6 +95,8 @@ static char *TESTDIR = NULL;	/* the directory created */
 
 static char test_start_work_dir[PATH_MAX];
 
+/* lib/tst_checkpoint.c */
+extern futex_t *tst_futexes;
 
 int tst_tmpdir_created(void)
 {
@@ -105,15 +105,127 @@ int tst_tmpdir_created(void)
 
 char *tst_get_tmpdir(void)
 {
-	/* Smack the user for calling things out of order. */
-	if (TESTDIR == NULL)
+	if (TESTDIR == NULL) {
 		tst_brkm(TBROK, NULL, "you must call tst_tmpdir() first");
+		return NULL;
+	}
+
 	return strdup(TESTDIR);
 }
 
 const char *tst_get_startwd(void)
 {
 	return test_start_work_dir;
+}
+
+static int rmobj(char *obj, char **errmsg)
+{
+	int ret_val = 0;
+	DIR *dir;
+	struct dirent *dir_ent;
+	char dirobj[PATH_MAX];
+	struct stat statbuf;
+	static char err_msg[1024];
+	int fd;
+
+	fd = open(obj, O_DIRECTORY | O_NOFOLLOW);
+	if (fd != -1) {
+		close(fd);
+
+		/* Do NOT perform the request if the directory is "/" */
+		if (!strcmp(obj, "/")) {
+			if (errmsg != NULL) {
+				sprintf(err_msg, "Cannot remove /");
+				*errmsg = err_msg;
+			}
+			return -1;
+		}
+
+		/* Open the directory to get access to what is in it */
+		if ((dir = opendir(obj)) == NULL) {
+			if (rmdir(obj) != 0) {
+				if (errmsg != NULL) {
+					sprintf(err_msg,
+						"rmdir(%s) failed; errno=%d: %s",
+						obj, errno, tst_strerrno(errno));
+					*errmsg = err_msg;
+				}
+				return -1;
+			} else {
+				return 0;
+			}
+		}
+
+		/* Loop through the entries in the directory, removing each one */
+		for (dir_ent = (struct dirent *)readdir(dir);
+		     dir_ent != NULL; dir_ent = (struct dirent *)readdir(dir)) {
+
+			/* Don't remove "." or ".." */
+			if (!strcmp(dir_ent->d_name, ".")
+			    || !strcmp(dir_ent->d_name, ".."))
+				continue;
+
+			/* Recursively call this routine to remove the current entry */
+			sprintf(dirobj, "%s/%s", obj, dir_ent->d_name);
+			if (rmobj(dirobj, errmsg) != 0)
+				ret_val = -1;
+		}
+
+		closedir(dir);
+
+		/* If there were problems removing an entry, don't attempt to
+		   remove the directory itself */
+		if (ret_val == -1)
+			return -1;
+
+		/* Get the link count, now that all the entries have been removed */
+		if (lstat(obj, &statbuf) < 0) {
+			if (errmsg != NULL) {
+				sprintf(err_msg,
+					"lstat(%s) failed; errno=%d: %s", obj,
+					errno, tst_strerrno(errno));
+				*errmsg = err_msg;
+			}
+			return -1;
+		}
+
+		/* Remove the directory itself */
+		if (statbuf.st_nlink >= 3) {
+			/* The directory is linked; unlink() must be used */
+			if (unlink(obj) < 0) {
+				if (errmsg != NULL) {
+					sprintf(err_msg,
+						"unlink(%s) failed; errno=%d: %s",
+						obj, errno, tst_strerrno(errno));
+					*errmsg = err_msg;
+				}
+				return -1;
+			}
+		} else {
+			/* The directory is not linked; remove() can be used */
+			if (remove(obj) < 0) {
+				if (errmsg != NULL) {
+					sprintf(err_msg,
+						"remove(%s) failed; errno=%d: %s",
+						obj, errno, tst_strerrno(errno));
+					*errmsg = err_msg;
+				}
+				return -1;
+			}
+		}
+	} else {
+		if (unlink(obj) < 0) {
+			if (errmsg != NULL) {
+				sprintf(err_msg,
+					"unlink(%s) failed; errno=%d: %s", obj,
+					errno, tst_strerrno(errno));
+				*errmsg = err_msg;
+			}
+			return -1;
+		}
+	}
+
+	return 0;
 }
 
 void tst_tmpdir(void)
@@ -136,9 +248,9 @@ void tst_tmpdir(void)
 		 * greatly simplify code in tst_rmdir().
 		 */
 		if (c != env_tmpdir) {
-			tst_brkm(TBROK, tmpdir_cleanup, "You must specify "
-				 "an absolute pathname for environment "
-				 "variable TMPDIR");
+			tst_brkm(TBROK, NULL, "You must specify an absolute "
+				 "pathname for environment variable TMPDIR");
+			return;
 		}
 		snprintf(template, PATH_MAX, "%s/%.3sXXXXXX", env_tmpdir, TCID);
 	} else {
@@ -146,19 +258,29 @@ void tst_tmpdir(void)
 	}
 
 	/* Make the temporary directory in one shot using mkdtemp. */
-	if (mkdtemp(template) == NULL)
-		tst_brkm(TBROK | TERRNO, tmpdir_cleanup,
+	if (mkdtemp(template) == NULL) {
+		tst_brkm(TBROK | TERRNO, NULL,
 			 "%s: mkdtemp(%s) failed", __func__, template);
-	if ((TESTDIR = strdup(template)) == NULL)
-		tst_brkm(TBROK | TERRNO, tmpdir_cleanup,
-			 "%s: strdup(%s) failed", __func__, template);
+		return;
+	}
 
-	if (chown(TESTDIR, -1, getgid()) == -1)
-		tst_brkm(TBROK | TERRNO, tmpdir_cleanup,
+	if ((TESTDIR = strdup(template)) == NULL) {
+		tst_brkm(TBROK | TERRNO, NULL,
+			 "%s: strdup(%s) failed", __func__, template);
+		return;
+	}
+
+	if (chown(TESTDIR, -1, getgid()) == -1) {
+		tst_brkm(TBROK | TERRNO, NULL,
 			 "chown(%s, -1, %d) failed", TESTDIR, getgid());
-	if (chmod(TESTDIR, DIR_MODE) == -1)
-		tst_brkm(TBROK | TERRNO, tmpdir_cleanup,
+		return;
+	}
+
+	if (chmod(TESTDIR, DIR_MODE) == -1) {
+		tst_brkm(TBROK | TERRNO, NULL,
 			 "chmod(%s, %#o) failed", TESTDIR, DIR_MODE);
+		return;
+	}
 
 	if (getcwd(test_start_work_dir, sizeof(test_start_work_dir)) == NULL) {
 		tst_resm(TINFO, "Failed to record test working dir");
@@ -199,23 +321,19 @@ void tst_rmdir(void)
 	}
 
 	/*
+	 * Unmap the backend file.
+	 * This is needed to overcome the NFS "silly rename" feature.
+	 */
+	if (tst_futexes) {
+		msync((void *)tst_futexes, getpagesize(), MS_SYNC);
+		munmap((void *)tst_futexes, getpagesize());
+	}
+
+	/*
 	 * Attempt to remove the "TESTDIR" directory, using rmobj().
 	 */
 	if (rmobj(TESTDIR, &errmsg) == -1) {
 		tst_resm(TWARN, "%s: rmobj(%s) failed: %s",
 			 __func__, TESTDIR, errmsg);
 	}
-}
-
-/*
- * tmpdir_cleanup(void) - This function is used when tst_tmpdir()
- *			  encounters an error, and must cleanup and exit.
- *			  It prints a warning message via tst_resm(), and
- *			  then calls tst_exit().
- */
-static void tmpdir_cleanup(void)
-{
-	tst_resm(TWARN,
-		 "%s: no user cleanup function called before exiting",
-		 __func__);
 }

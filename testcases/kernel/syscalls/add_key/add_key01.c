@@ -20,62 +20,24 @@
 /*
  * Basic test for the add_key() syscall.
  *
- * History:     Porting from Crackerjack to LTP is done by
+ * History:   Porting from Crackerjack to LTP is done by
  *	      Manas Kumar Nayak maknayak@in.ibm.com>
  */
 
-#include "config.h"
-
-#include <stdio.h>
 #include <errno.h>
-#ifdef HAVE_LINUX_KEYCTL_H
-# include <linux/keyctl.h>
-#endif
-#include "test.h"
-#include "usctest.h"
-#include "linux_syscall_numbers.h"
 
-char *TCID = "add_key01";
-int TST_TOTAL = 1;
+#include "tst_test.h"
+#include "lapi/keyctl.h"
 
-#ifdef HAVE_LINUX_KEYCTL_H
-
-static void cleanup(void)
+static void verify_add_key(void)
 {
-	TEST_CLEANUP;
-	tst_rmdir();
-}
-
-static void setup(void)
-{
-	TEST_PAUSE;
-	tst_tmpdir();
-}
-
-int main(int ac, char **av)
-{
-	const char *msg;
-
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	setup();
-
-	/* Call add_key. */
-	TEST(ltp_syscall
-	     (__NR_add_key, "keyring", "wjkey", NULL, 0,
-	      KEY_SPEC_THREAD_KEYRING));
+	TEST(add_key("keyring", "wjkey", NULL, 0, KEY_SPEC_THREAD_KEYRING));
 	if (TEST_RETURN == -1)
-		tst_resm(TFAIL | TTERRNO, "add_key call failed");
+		tst_res(TFAIL | TTERRNO, "add_key call failed");
 	else
-		tst_resm(TPASS, "add_key call succeeded");
+		tst_res(TPASS, "add_key call succeeded");
+}
 
-	cleanup();
-	tst_exit();
-}
-#else
-int main(void)
-{
-	tst_brkm(TCONF, NULL, "linux/keyctl.h was missing upon compilation.");
-}
-#endif /* HAVE_LINUX_KEYCTL_H */
+static struct tst_test test = {
+	.test_all = verify_add_key,
+};

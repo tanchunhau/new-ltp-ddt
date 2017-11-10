@@ -1,210 +1,67 @@
 /*
- * Copyright (c) 2000 Silicon Graphics, Inc.  All Rights Reserved.
+ * Copyright (c) 2016 Linux Test Project
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * This program is distributed in the hope that it would be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * Further, this software is distributed without any warranty that it is
- * free of the rightful claim of any third person regarding infringement
- * or the like.  Any license provided herein, whether implied or
- * otherwise, applies only to this software file.  Patent licenses, if
- * any, provided herein do not apply to combinations of this program with
- * other software, or any other product whatsoever.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Contact information: Silicon Graphics, Inc., 1600 Amphitheatre Pkwy,
- * Mountain View, CA  94043, or:
- *
- * http://www.sgi.com
- *
- * For further information regarding this notice, see:
- *
- * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
- *
+ * Check that pause() returns on signal with errno == EINTR.
  */
-/* $Id: pause01.c,v 1.6 2009/08/28 13:36:21 vapier Exp $ */
-/**********************************************************
- *
- *    OS Test - Silicon Graphics, Inc.
- *
- *    TEST IDENTIFIER	: pause01
- *
- *    EXECUTED BY	: anyone
- *
- *    TEST TITLE	: Basic test for pause(2)
- *
- *    PARENT DOCUMENT	: xxxtds01
- *
- *    TEST CASE TOTAL	: 1
- *
- *    WALL CLOCK TIME	: 2
- *
- *    CPU TYPES		: ALL
- *
- *    AUTHOR		: William Roske
- *
- *    CO-PILOT		: Dave Fenner
- *
- *    DATE STARTED	: 03/30/92
- *
- *    INITIAL RELEASE	: UNICOS 7.0
- *
- *    TEST CASES
- *
- *	1.) pause(2) returns...(See Description)
- *
- *    INPUT SPECIFICATIONS
- *	The standard options for system call tests are accepted.
- *	(See the parse_opts(3) man page).
- *
- *    OUTPUT SPECIFICATIONS
- *
- *    DURATION
- *	Terminates - with frequency and infinite modes.
- *
- *    SIGNALS
- *	Uses SIGUSR1 to pause before test if option set.
- *	(See the parse_opts(3) man page).
- *
- *    RESOURCES
- *	None
- *
- *    ENVIRONMENTAL NEEDS
- *      No run-time environmental needs.
- *
- *    SPECIAL PROCEDURAL REQUIREMENTS
- *	None
- *
- *    INTERCASE DEPENDENCIES
- *	None
- *
- *    DETAILED DESCRIPTION
- *	This is a Phase I test for the pause(2) system call.  It is intended
- *	to provide a limited exposure of the system call, for now.  It
- *	should/will be extended when full functional tests are written for
- *	pause(2).
- *
- *	Setup:
- *	  Setup signal handling.
- *	  Pause for SIGUSR1 if option specified.
- *
- *	Test:
- *	 Loop if the proper options are given.
- *	  Execute system call
- *	  Check return code, if system call failed (return=-1)
- *		Log the errno and Issue a FAIL message.
- *	  Otherwise, Issue a PASS message.
- *
- *	Cleanup:
- *	  Print errno log and/or timing stats if options given
- *
- *
- *#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#**/
-
 #include <errno.h>
 #include <signal.h>
-#include "test.h"
-#include "usctest.h"
+#include <stdlib.h>
+#include "tst_test.h"
 
-void setup();
-void cleanup();
-
-char *TCID = "pause01";
-int TST_TOTAL = 1;
-
-int exp_enos[] = { EINTR, 0 };
-
-void go();
-
-int main(int ac, char **av)
+static void sig_handler(int sig LTP_ATTRIBUTE_UNUSED)
 {
-	int lc;
-	const char *msg;
-
-    /***************************************************************
-     * parse standard options
-     ***************************************************************/
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-    /***************************************************************
-     * perform global setup for test
-     ***************************************************************/
-	setup();
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
-
-    /***************************************************************
-     * check looping state if -c option given
-     ***************************************************************/
-	for (lc = 0; TEST_LOOPING(lc); lc++) {
-
-		tst_count = 0;
-
-		(void)signal(SIGALRM, go);
-		alarm(1);
-		/*
-		 * Call pause(2)
-		 */
-		TEST(pause());
-
-		/* check return code.  Pause returns -1 and EINTR errno */
-		if (TEST_RETURN != -1) {
-			tst_resm(TFAIL,
-				 "pause() returned WITHOUT an error return code : %d",
-				 TEST_ERRNO);
-		} else {
-			/* log the errno */
-			TEST_ERROR_LOG(TEST_ERRNO);
-			if (TEST_ERRNO == EINTR)
-				tst_resm(TPASS, "pause() returned %ld",
-					 TEST_RETURN);
-			else
-				tst_resm(TFAIL,
-					 "pause() returned %ld. Expected %d (EINTR)",
-					 TEST_RETURN, EINTR);
-		}
-	}
-
-	cleanup();
-	tst_exit();
 }
 
-/***************************************************************
- * setup() - performs all ONE TIME setup for this test.
- ***************************************************************/
-void setup(void)
+static void do_child(void)
 {
+	SAFE_SIGNAL(SIGINT, sig_handler);
 
-	tst_sig(NOFORK, DEF_HANDLER, cleanup);
+	TST_CHECKPOINT_WAKE(0);
 
-	TEST_PAUSE;
+	TEST(pause());
+	if (TEST_RETURN != -1)
+		tst_res(TFAIL, "pause() succeeded unexpectedly");
+	else if (TEST_ERRNO == EINTR)
+		tst_res(TPASS, "pause() interrupted with EINTR");
+	else
+		tst_res(TFAIL | TTERRNO, "pause() unexpected errno");
+
+	TST_CHECKPOINT_WAKE(0);
+	exit(0);
 }
 
-/***************************************************************
- * cleanup() - performs all ONE TIME cleanup for this test at
- *		completion or premature exit.
- ***************************************************************/
-void cleanup(void)
+static void do_test(void)
 {
+	int pid, status;
+
+	pid = SAFE_FORK();
+	if (pid == 0)
+		do_child();
+
+	TST_CHECKPOINT_WAIT(0);
+	TST_PROCESS_STATE_WAIT(pid, 'S');
+	kill(pid, SIGINT);
+
 	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
+	 * TST_CHECKPOINT_WAIT has built-in timeout, if pause() doesn't return,
+	 * this checkpoint call will reliably end the test.
 	 */
-	TEST_CLEANUP;
-
+	TST_CHECKPOINT_WAIT(0);
+	SAFE_WAIT(&status);
 }
 
-/* routine to catch the alarm signal */
-void go(void)
-{
-}
+static struct tst_test test = {
+	.forks_child = 1,
+	.needs_checkpoints = 1,
+	.test_all = do_test,
+};

@@ -52,8 +52,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include "libclone.h"
 #include "test.h"
-#include <libclone.h>
 #include "safe_macros.h"
 
 char *TCID = "uts_namespace";
@@ -273,7 +273,7 @@ int P2(void *vtest)
 static void setup(void)
 {
 	gethostname(oldhost, HLEN);
-	tst_require_root(NULL);
+	tst_require_root();
 	check_newuts();
 }
 

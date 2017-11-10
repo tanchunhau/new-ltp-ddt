@@ -50,8 +50,7 @@
 #include <unistd.h>
 
 #include "test.h"
-#include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 
 char *TCID = "sched_getaffinity01";
 int TST_TOTAL = 1;
@@ -74,11 +73,8 @@ do { \
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 	setup();
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
@@ -174,6 +170,5 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }

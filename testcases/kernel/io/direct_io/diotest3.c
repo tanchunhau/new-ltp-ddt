@@ -49,14 +49,13 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/file.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/syscall.h>
 #include <errno.h>
 
 #include "diotest_routines.h"
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "diotest03";	/* Test program identifier.    */
 int TST_TOTAL = 3;		/* Total number of test conditions */
@@ -75,10 +74,7 @@ static int bufsize = BUFSIZE;	/* Buffersize. Default 4k */
 static int offset = 0;		/* Offset. Default 0 */
 static char filename[LEN];
 
-/*
- * prg_usage: display the program usage
-*/
-void prg_usage()
+static void prg_usage(void)
 {
 	fprintf(stderr,
 		"Usage: diotest3 [-b bufsize] [-o offset] [-n numchild] [-i iterations] [-f filename]\n");
@@ -97,7 +93,6 @@ int runtest(int fd_r, int fd_w, int childnum, int action)
 	char *buf1;
 	char *buf2;
 	off_t seekoff;
-	int bufsize = BUFSIZE;
 	int i;
 
 	/* Allocate for buffers */

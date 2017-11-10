@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <termio.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
 #include <sys/types.h>
@@ -36,7 +36,6 @@
 
 /** LTP Port **/
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "ptem01";		/* Test program identifier.    */
 int TST_TOTAL = 6;		/* Total number of test cases. */

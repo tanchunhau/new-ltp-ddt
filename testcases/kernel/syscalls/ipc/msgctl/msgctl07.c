@@ -39,10 +39,9 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <signal.h>
-#include <wait.h>
+#include <sys/wait.h>
 #include <stdio.h>
 #include "test.h"
-#include "usctest.h"
 #include "ipcmsg.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -76,16 +75,7 @@ int main(int argc, char *argv[])
 	int i, j, k;
 	sighandler_t alrm();
 
-#ifdef UCLINUX
-	const char *msg;
-
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-
-	maybe_run_child(&do_child_1, "ndd", 1, &msqid, &c1_msgp.type);
-	maybe_run_child(&do_child_2, "ndddd", 2, &msqid, &c1_msgp.type,
-			&c2_msgp.type, &c3_msgp.type);
-#endif
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -101,13 +91,7 @@ int main(int argc, char *argv[])
 		tst_brkm(TFAIL, NULL,
 			 "\tFork failed (may be OK if under stress)");
 	} else if (pid == 0) {
-#ifdef UCLINUX
-		if (self_exec(argv[0], "ndd", 1, msqid, c1_msgp.type) < 0) {
-			tst_brkm(TFAIL, NULL, "\tself_exec failed");
-		}
-#else
 		do_child_1();
-#endif
 	} else {
 		struct sigaction act;
 
@@ -124,7 +108,7 @@ int main(int argc, char *argv[])
 		ready = 0;
 		alarm(SECS);
 		while (!ready)	/* make the child wait */
-			;
+			usleep(50000);
 		for (i = 0; i < BYTES; i++)
 			p1_msgp.text[i] = 'i';
 		p1_msgp.type = 1;
@@ -147,14 +131,7 @@ int main(int argc, char *argv[])
 		tst_brkm(TFAIL, NULL,
 			 "\tFork failed (may be OK if under stress)");
 	} else if (pid == 0) {
-#ifdef UCLINUX
-		if (self_exec(argv[0], "ndddd", 1, msqid, c1_msgp.type,
-			      c2_msgp.type, c3_msgp.type) < 0) {
-			tst_brkm(TFAIL, NULL, "\tself_exec failed");
-		}
-#else
 		do_child_2();
-#endif
 	} else {
 		struct sigaction act;
 
@@ -171,7 +148,7 @@ int main(int argc, char *argv[])
 		ready = 0;
 		alarm(SECS);
 		while (!ready)	/* make the child wait */
-			;
+			usleep(50000);
 		for (i = 0; i < BYTES; i++)
 			p1_msgp.text[i] = 'i';
 		p1_msgp.type = 1;
@@ -227,7 +204,7 @@ int main(int argc, char *argv[])
 	tst_exit();
 }
 
-sighandler_t alrm(int sig)
+sighandler_t alrm(int sig LTP_ATTRIBUTE_UNUSED)
 {
 	ready++;
 	return 0;
@@ -302,6 +279,8 @@ void setup(void)
 {
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
+	tst_require_root();
+
 	TEST_PAUSE;
 
 	tst_tmpdir();
@@ -310,6 +289,4 @@ void setup(void)
 void cleanup(void)
 {
 	tst_rmdir();
-
-	TEST_CLEANUP;
 }

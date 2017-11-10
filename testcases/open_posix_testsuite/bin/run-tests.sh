@@ -5,7 +5,7 @@
 #
 # run_test contains logic moved out of Makefile.
 #
-# Garrett Cooper, June 2010
+# Ngie Cooper, June 2010
 #
 
 LOGFILE=${LOGFILE:=logfile}
@@ -29,7 +29,7 @@ run_test_loop() {
 
 	cat <<EOF
 *******************
-SUMMARY
+Testing $(basename $PWD)
 *******************
 $(printf "PASS\t\t%3d" $NUM_PASS)
 $(printf "FAIL\t\t%3d" $NUM_FAIL)

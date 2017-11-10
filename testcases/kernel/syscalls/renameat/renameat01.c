@@ -42,7 +42,6 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <fcntl.h>
-#include <error.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -50,7 +49,6 @@
 #include <sys/mount.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 #include "lapi/fcntl.h"
 #include "lapi/renameat.h"
@@ -110,21 +108,14 @@ static void renameat_verify(const struct test_case_t *);
 
 char *TCID = "renameat01";
 int TST_TOTAL = ARRAY_SIZE(test_cases);
-static int exp_enos[] = { EBADF, ENOTDIR, ELOOP, EROFS,
-							EMLINK, 0 };
 
 int main(int ac, char **av)
 {
 	int i, lc;
-	const char *msg;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	TEST_EXP_ENOS(exp_enos);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		tst_count = 0;
@@ -149,7 +140,7 @@ static void setup(void)
 			"2.6.16 and higher");
 	}
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -191,7 +182,7 @@ static void setup(void)
 	for (i = 0; i < 43; i++)
 		strcat(looppathname, TESTDIR2);
 
-	tst_mkfs(cleanup, device, fs_type, NULL);
+	tst_mkfs(cleanup, device, fs_type, NULL, NULL);
 	SAFE_MKDIR(cleanup, MNTPOINT, DIRMODE);
 	if (mount(device, MNTPOINT, fs_type, 0, NULL) < 0) {
 		tst_brkm(TBROK | TERRNO, cleanup,
@@ -249,8 +240,6 @@ static void renameat_verify(const struct test_case_t *tc)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	if (olddirfd > 0 && close(olddirfd) < 0)
 		tst_resm(TWARN | TERRNO, "close olddirfd failed");
 
@@ -260,11 +249,11 @@ static void cleanup(void)
 	if (filefd > 0 && close(filefd) < 0)
 		tst_resm(TWARN | TERRNO, "close filefd failed");
 
-	if (mount_flag && umount(MNTPOINT) < 0)
+	if (mount_flag && tst_umount(MNTPOINT) < 0)
 		tst_resm(TWARN | TERRNO, "umount %s failed", MNTPOINT);
 
 	if (device)
-		tst_release_device(NULL, device);
+		tst_release_device(device);
 
 	tst_rmdir();
 }

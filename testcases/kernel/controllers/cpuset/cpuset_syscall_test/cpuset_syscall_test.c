@@ -37,7 +37,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/shm.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <inttypes.h>
 #if HAVE_NUMA_H
 #include <numa.h>
@@ -47,7 +47,6 @@
 #endif
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "cpuset_syscall_test";
 int TST_TOTAL = 1;

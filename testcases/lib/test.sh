@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) Linux Test Project, 2014
+# Copyright (c) Linux Test Project, 2014-2017
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@ export LTP_RET_VAL=0
 export TST_COUNT=1
 export TST_LIB_LOADED=1
 
+. tst_ansi_color.sh
+
 # Exit values map
 tst_flag2mask()
 {
@@ -41,13 +43,18 @@ tst_flag2mask()
 
 tst_resm()
 {
-	tst_flag2mask "$1"
+	local ttype="$1"
+
+	tst_flag2mask "$ttype"
 	local mask=$?
 	LTP_RET_VAL=$((LTP_RET_VAL|mask))
 
 	local ret=$1
 	shift
-	echo "$TCID $TST_COUNT $ret : $@"
+
+	printf "$TCID $TST_COUNT "
+	tst_print_colored $ret "$ret:"
+	echo " $@"
 
 	case "$ret" in
 	TPASS|TFAIL)
@@ -96,8 +103,12 @@ tst_require_root()
 
 tst_exit()
 {
-	if [ -n "$TST_CLEANUP" ]; then
+	if [ -n "${TST_CLEANUP:-}" -a -z "${TST_NO_CLEANUP:-}" ]; then
 		$TST_CLEANUP
+	fi
+
+	if [ -n "${LTP_IPC_PATH:-}" -a -f "${LTP_IPC_PATH:-}" ]; then
+		rm -f "$LTP_IPC_PATH"
 	fi
 
 	# Mask out TINFO
@@ -112,13 +123,19 @@ tst_tmpdir()
 
 	TST_TMPDIR=$(mktemp -d "$TMPDIR/$TCID.XXXXXXXXXX")
 
+	chmod 777 "$TST_TMPDIR"
+
+	TST_STARTWD=$(pwd)
+
 	cd "$TST_TMPDIR"
 }
 
 tst_rmdir()
 {
-	cd "$LTPROOT"
-	rm -r "$TST_TMPDIR"
+	if [ -n "$TST_TMPDIR" ]; then
+		cd "$LTPROOT"
+		rm -r "$TST_TMPDIR"
+	fi
 }
 
 #
@@ -126,11 +143,39 @@ tst_rmdir()
 #
 tst_check_cmds()
 {
+	local cmd
 	for cmd in $*; do
 		if ! command -v $cmd > /dev/null 2>&1; then
 			tst_brkm TCONF "'$cmd' not found"
 		fi
 	done
+}
+
+# tst_retry "command" [times]
+# try run command for specified times, default is 3.
+# Function returns 0 if succeed in RETRIES times or the last retcode the cmd
+# returned
+tst_retry()
+{
+	local cmd="$1"
+	local RETRIES=${2:-"3"}
+	local i=$RETRIES
+
+	while [ $i -gt 0 ]; do
+		eval "$cmd"
+		ret=$?
+		if [ $ret -eq 0 ]; then
+			break
+		fi
+		i=$((i-1))
+		sleep 1
+	done
+
+	if [ $ret -ne 0 ]; then
+		tst_resm TINFO "Failed to execute '$cmd' after $RETRIES retries"
+	fi
+
+	return $ret
 }
 
 # tst_timeout "command arg1 arg2 ..." timeout
@@ -176,6 +221,180 @@ tst_timeout()
 	return $ret
 }
 
+ROD_SILENT()
+{
+	$@ > /dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		tst_brkm TBROK "$@ failed"
+	fi
+}
+
+ROD_BASE()
+{
+	local cmd
+	local arg
+	local file
+	local flag
+
+	for arg; do
+		file="${arg#\>}"
+		if [ "$file" != "$arg" ]; then
+			flag=1
+			if [ -n "$file" ]; then
+				break
+			fi
+			continue
+		fi
+
+		if [ -n "$flag" ]; then
+			file="$arg"
+			break
+		fi
+
+		cmd="$cmd $arg"
+	done
+
+	if [ -n "$flag" ]; then
+		$cmd > $file
+	else
+		$@
+	fi
+}
+
+ROD()
+{
+	ROD_BASE "$@"
+	if [ $? -ne 0 ]; then
+		tst_brkm TBROK "$@ failed"
+	fi
+}
+
+EXPECT_PASS()
+{
+	ROD_BASE "$@"
+	if [ $? -eq 0 ]; then
+		tst_resm TPASS "$@ passed as expected"
+	else
+		tst_resm TFAIL "$@ failed unexpectedly"
+	fi
+}
+
+EXPECT_FAIL()
+{
+	# redirect stderr since we expect the command to fail
+	ROD_BASE "$@" 2> /dev/null
+	if [ $? -ne 0 ]; then
+		tst_resm TPASS "$@ failed as expected"
+	else
+		tst_resm TFAIL "$@ passed unexpectedly"
+	fi
+}
+
+tst_mkfs()
+{
+	local fs_type=$1
+	local device=$2
+	shift 2
+	local fs_opts="$@"
+
+	if [ -z "$fs_type" ]; then
+		tst_brkm TBROK "No fs_type specified"
+	fi
+
+	if [ -z "$device" ]; then
+		tst_brkm TBROK "No device specified"
+	fi
+
+	tst_resm TINFO "Formatting $device with $fs_type extra opts='$fs_opts'"
+
+	ROD_SILENT mkfs.$fs_type $fs_opts $device
+}
+
+tst_umount()
+{
+	local device="$1"
+	local i=0
+
+	if ! grep -q "$device" /proc/mounts; then
+		tst_resm TINFO "The $device is not mounted, skipping umount"
+		return
+	fi
+
+	while [ "$i" -lt 50 ]; do
+		if umount "$device" > /dev/null; then
+			return
+		fi
+
+		i=$((i+1))
+
+		tst_resm TINFO "umount($device) failed, try $i ..."
+		tst_resm TINFO "Likely gvfsd-trash is probing newly mounted "\
+			       "fs, kill it to speed up tests."
+
+		tst_sleep 100ms
+	done
+
+	tst_resm TWARN "Failed to umount($device) after 50 retries"
+}
+
+# Check a module file existence
+# Should be called after tst_tmpdir()
+tst_module_exists()
+{
+	local mod_name="$1"
+
+	if [ -f "$mod_name" ]; then
+		TST_MODPATH="$mod_name"
+		return
+	fi
+
+	local mod_path="$LTPROOT/testcases/bin/$mod_name"
+	if [ -f "$mod_path" ]; then
+		TST_MODPATH="$mod_path"
+		return
+	fi
+
+	if [ -n "$TST_TMPDIR" ]; then
+		mod_path="$TST_STARTWD/$mod_name"
+		if [ -f "$mod_path" ]; then
+			TST_MODPATH="$mod_path"
+			return
+		fi
+	fi
+
+	tst_brkm TCONF "Failed to find module '$mod_name'"
+}
+
+# Appends LTP path when doing su
+tst_su()
+{
+	local usr="$1"
+	shift
+
+	su "$usr" -c "PATH=\$PATH:$LTPROOT/testcases/bin/ $@"
+}
+
+TST_CHECKPOINT_WAIT()
+{
+	ROD tst_checkpoint wait 10000 "$1"
+}
+
+TST_CHECKPOINT_WAKE()
+{
+	ROD tst_checkpoint wake 10000 "$1" 1
+}
+
+TST_CHECKPOINT_WAKE2()
+{
+	ROD tst_checkpoint wake 10000 "$1" "$2"
+}
+
+TST_CHECKPOINT_WAKE_AND_WAIT()
+{
+	TST_CHECKPOINT_WAKE "$1"
+	TST_CHECKPOINT_WAIT "$1"
+}
+
 # Check that test name is set
 if [ -z "$TCID" ]; then
 	tst_brkm TBROK "TCID is not defined"
@@ -194,4 +413,17 @@ if [ -z "$LTPROOT" ]; then
 	export LTP_DATAROOT="$LTPROOT/datafiles"
 else
 	export LTP_DATAROOT="$LTPROOT/testcases/data/$TCID"
+fi
+
+if [ "$TST_NEEDS_CHECKPOINTS" = "1" ]; then
+	LTP_IPC_PATH="/dev/shm/ltp_${TCID}_$$"
+
+	LTP_IPC_SIZE=$(getconf PAGESIZE)
+	if [ $? -ne 0 ]; then
+		tst_brkm TBROK "getconf PAGESIZE failed"
+	fi
+
+	ROD_SILENT dd if=/dev/zero of="$LTP_IPC_PATH" bs="$LTP_IPC_SIZE" count=1
+	ROD_SILENT chmod 600 "$LTP_IPC_PATH"
+	export LTP_IPC_PATH
 fi

@@ -63,6 +63,7 @@
 #include "config.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -73,7 +74,6 @@
 #include <string.h>
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "open11";
 
@@ -332,11 +332,8 @@ int main(int argc, char *argv[])
 	int i;
 	int fd;
 	int ret;
-	const char *msg;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, tst_exit, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -370,7 +367,7 @@ static void setup(void)
 	int fd;
 	int ret;
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_tmpdir();
 
@@ -420,6 +417,5 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }

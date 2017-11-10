@@ -38,6 +38,7 @@
 /*              Manas Kumar Nayak maknayak@in.ibm.com>                        */
 /******************************************************************************/
 
+#define _XOPEN_SOURCE 500
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -47,8 +48,7 @@
 #include <sys/stat.h>
 
 #include "test.h"
-#include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 
 struct testcase_t {
 	const char *msg;
@@ -145,7 +145,6 @@ struct testcase_t tdat[] = {
 
 char *TCID = "waitid02";
 static int TST_TOTAL = ARRAY_SIZE(tdat);
-static struct tst_checkpoint checkpoint;
 
 static void makechild(struct testcase_t *t, void (*childfn)(void))
 {
@@ -175,13 +174,13 @@ static void dummy_child(void)
 
 static void waiting_child(void)
 {
-	TST_CHECKPOINT_CHILD_WAIT(&checkpoint);
+	TST_SAFE_CHECKPOINT_WAIT(NULL, 0);
 }
 
 static void stopped_child(void)
 {
 	kill(getpid(), SIGSTOP);
-	TST_CHECKPOINT_CHILD_WAIT(&checkpoint);
+	TST_SAFE_CHECKPOINT_WAIT(NULL, 0);
 }
 
 static void setup2(struct testcase_t *t)
@@ -191,7 +190,7 @@ static void setup2(struct testcase_t *t)
 
 static void cleanup2(struct testcase_t *t)
 {
-	TST_CHECKPOINT_SIGNAL_CHILD(cleanup, &checkpoint);
+	TST_SAFE_CHECKPOINT_WAKE(cleanup, 0);
 	wait4child(t->child);
 }
 
@@ -216,7 +215,7 @@ static void setup5(struct testcase_t *t)
 static void cleanup5(struct testcase_t *t)
 {
 	kill(t->child, SIGCONT);
-	TST_CHECKPOINT_SIGNAL_CHILD(cleanup, &checkpoint);
+	TST_SAFE_CHECKPOINT_WAKE(cleanup, 0);
 	wait4child(t->child);
 }
 
@@ -232,7 +231,7 @@ static void setup6(struct testcase_t *t)
 
 static void cleanup6(struct testcase_t *t)
 {
-	TST_CHECKPOINT_SIGNAL_CHILD(cleanup, &checkpoint);
+	TST_SAFE_CHECKPOINT_WAKE(cleanup, 0);
 	wait4child(t->child);
 }
 
@@ -240,12 +239,11 @@ static void setup(void)
 {
 	TEST_PAUSE;
 	tst_tmpdir();
-	TST_CHECKPOINT_CREATE(&checkpoint);
+	TST_CHECKPOINT_INIT(tst_rmdir);
 }
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 	tst_exit();
 }
@@ -288,11 +286,8 @@ static void test_waitid(struct testcase_t *t)
 int main(int ac, char **av)
 {
 	int lc, testno;
-	const char *msg;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {

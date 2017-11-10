@@ -70,7 +70,6 @@
 #include <sys/mman.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #define TEMPFILE	"msync_file"
 #define BUF_SIZE	256
@@ -88,10 +87,9 @@ void cleanup();			/* cleanup function for the test */
 
 int main(int ac, char **av)
 {
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	tst_count = 0;
 
 	TEST(msync(addr, page_sz, MS_INVALIDATE));
 
@@ -103,7 +101,6 @@ int main(int ac, char **av)
 		tst_resm(TPASS, "Functionality of msync successful");
 
 	cleanup();
-
 	tst_exit();
 }
 
@@ -149,8 +146,6 @@ void setup(void)
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	if (munmap(addr, page_sz) == -1)
 		tst_resm(TBROK | TERRNO, "munmap failed");
 

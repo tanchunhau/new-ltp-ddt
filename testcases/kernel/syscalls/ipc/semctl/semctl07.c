@@ -44,10 +44,9 @@
 #include <signal.h>
 #include <errno.h>
 #include <stdio.h>
-#include <wait.h>
+#include <sys/wait.h>
 #include "ipcsem.h"
 #include "test.h"
-#include "usctest.h"
 
 void setup(void);
 void cleanup(void);
@@ -62,14 +61,9 @@ int main(int argc, char *argv[])
 {
 	int status;
 	struct semid_ds buf_ds;
-
-	union semun {
-		int val;
-		struct semid_ds *buf;
-		short *array;
-	};
-
 	union semun arg;
+
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -179,5 +173,4 @@ void cleanup(void)
 {
 	rm_sema(semid);
 	tst_rmdir();
-	TEST_CLEANUP;
 }

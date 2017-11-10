@@ -22,20 +22,18 @@
 
 #include <time.h>
 #include <signal.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <stdio.h>
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 
 char *TCID = "timer_gettime01";
 int TST_TOTAL = 3;
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 
@@ -48,18 +46,16 @@ static void setup(void)
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 
 	struct sigevent ev;
 	struct itimerspec spec;
 	int timer;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
-	ev.sigev_value = (sigval_t) 0;
+	ev.sigev_value = (union sigval) 0;
 	ev.sigev_signo = SIGALRM;
 	ev.sigev_notify = SIGEV_SIGNAL;
 	TEST(ltp_syscall(__NR_timer_create, CLOCK_REALTIME, &ev, &timer));

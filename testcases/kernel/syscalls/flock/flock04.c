@@ -76,12 +76,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup(void);
 void cleanup(void);
-
-int exp_enos[] = { EWOULDBLOCK, EAGAIN, 0 };
 
 char *TCID = "flock04";
 int TST_TOTAL = 2;
@@ -91,11 +88,9 @@ int fd, fd1, status;
 int main(int argc, char **argv)
 {
 	int lc, retval;
-	const char *msg;
 	pid_t pid;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -163,23 +158,19 @@ void setup(void)
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	TEST_EXP_ENOS(exp_enos);
-
 	TEST_PAUSE;
 
 	tst_tmpdir();
 
 	sprintf(filename, "flock04.%d", getpid());
 
-	fd = creat(filename, 0666);
+	fd = open(filename, O_CREAT | O_TRUNC | O_RDWR, 0666);
 	if (fd == -1)
 		tst_brkm(TFAIL, cleanup, "creating a new file failed");
 }
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	unlink(filename);
 
 	tst_rmdir();

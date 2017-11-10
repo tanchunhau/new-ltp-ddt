@@ -1,8 +1,7 @@
 #ifndef _MEM_H
 #define _MEM_H
 #include "config.h"
-#include "test.h"
-#include "usctest.h"
+#include "tst_test.h"
 
 #if defined(__powerpc__) || defined(__powerpc64__)
 #define MAXNODES		256
@@ -33,10 +32,9 @@ static inline void clean_node(unsigned long *array)
 
 #define LENGTH			(3UL<<30)
 #define TESTMEM			(1UL<<30)
-#define OVERCOMMIT		1
-#define NORMAL			2
-#define MLOCK			3
-#define KSM			4
+#define NORMAL			1
+#define MLOCK			2
+#define KSM			3
 
 long overcommit;
 void oom(int testcase, int lite, int retcode, int allow_sigkill);
@@ -46,6 +44,9 @@ void testoom(int mempolicy, int lite, int retcode, int allow_sigkill);
 
 #define PATH_KSM		"/sys/kernel/mm/ksm/"
 
+void create_same_memory(int size, int num, int unit);
+void save_max_page_sharing(void);
+void restore_max_page_sharing(void);
 void test_ksm_merge_across_nodes(unsigned long nr_pages);
 
 /* THP */
@@ -53,23 +54,11 @@ void test_ksm_merge_across_nodes(unsigned long nr_pages);
 #define PATH_THP		"/sys/kernel/mm/transparent_hugepage/"
 #define PATH_KHPD		PATH_THP "khugepaged/"
 
-int opt_nr_children, opt_nr_thps;
-char *opt_nr_children_str, *opt_nr_thps_str;
-void test_transparent_hugepage(int nr_children, int nr_thps,
-			       int hg_aligned, int mempolicy);
-void check_thp_options(int *nr_children, int *nr_thps);
-void thp_usage(void);
-
 /* HUGETLB */
 
 #define PATH_SHMMAX		"/proc/sys/kernel/shmmax"
 
 void write_memcg(void);
-void create_same_memory(int size, int num, int unit);
-int  opt_num, opt_size, opt_unit;
-char *opt_numstr, *opt_sizestr, *opt_unitstr;
-void check_ksm_options(int *size, int *num, int *unit);
-void ksm_usage(void);
 
 /* cpuset/memcg */
 
@@ -91,14 +80,13 @@ void mount_mem(char *name, char *fs, char *options, char *path, char *path_new);
 void umount_mem(char *path, char *path_new);
 
 /* shared */
-unsigned int get_a_numa_node(void (*cleanup_fn)(void));
+unsigned int get_a_numa_node(void);
 int  path_exist(const char *path, ...);
-long read_meminfo(char *item);
 void set_sys_tune(char *sys_file, long tune, int check);
 long get_sys_tune(char *sys_file);
-void cleanup(void);
-void setup(void);
 
 void update_shm_size(size_t *shm_size);
 
+/* MMAP */
+int range_is_mapped(unsigned long low, unsigned long high);
 #endif

@@ -48,10 +48,9 @@
  */
 #include <unistd.h>
 #include <signal.h>
-#include <wait.h>
+#include <sys/wait.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 #define	PIPEWRTCNT	100	/* must be an even number */
 
@@ -61,7 +60,7 @@ int TST_TOTAL = 1;
 void setup(void);
 void cleanup(void);
 
-ssize_t safe_read(int fd, void *buf, size_t count)
+ssize_t do_read(int fd, void *buf, size_t count)
 {
 	ssize_t n;
 
@@ -75,7 +74,6 @@ ssize_t safe_read(int fd, void *buf, size_t count)
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 
 	int i, red, wtstatus;
 	int pipefd[2];		/* fds for pipe read/write */
@@ -83,8 +81,7 @@ int main(int ac, char **av)
 	int Acnt = 0, Bcnt = 0;	/* count 'A' and 'B' */
 	int fork_1, fork_2;	/* ret values in parent */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -161,7 +158,7 @@ int main(int ac, char **av)
 				 "pipefd[1] close failed");
 		}
 
-		while ((red = safe_read(pipefd[0], rebuf, 100)) > 0) {
+		while ((red = do_read(pipefd[0], rebuf, 100)) > 0) {
 			for (i = 0; i < red; i++) {
 				if (rebuf[i] == 'A') {
 					Acnt++;
@@ -214,9 +211,4 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }

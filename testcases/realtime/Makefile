@@ -17,7 +17,7 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Garrett Cooper, September 2009
+# Ngie Cooper, September 2009
 #
 
 top_srcdir		?= ../..
@@ -67,10 +67,10 @@ aclocal.m4:
 
 autoconf: configure
 
-include/realtime_config.h.in: configure.in $(wildcard m4/*.m4) aclocal.m4
+include/realtime_config.h.in: configure.ac $(wildcard m4/*.m4) aclocal.m4
 	$(AUTOHEADER)
 
-configure: configure.in aclocal.m4
+configure: configure.ac aclocal.m4
 	$(AUTOCONF)
 automake: $(AUTOMAKE_FILES)
 $(AUTOMAKE_FILES): m4/Makefile.in

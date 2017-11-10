@@ -45,8 +45,7 @@
 #include <stdlib.h>
 
 #include "test.h"
-#include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 
 char *TCID = "newuname01";
 int testno;
@@ -73,7 +72,6 @@ int TST_TOTAL = 1;
 void cleanup(void)
 {
 
-	TEST_CLEANUP;
 	tst_rmdir();
 
 	tst_exit();
@@ -109,11 +107,8 @@ int main(int ac, char **av)
 {
 	struct utsname name;
 	int lc;
-	const char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 

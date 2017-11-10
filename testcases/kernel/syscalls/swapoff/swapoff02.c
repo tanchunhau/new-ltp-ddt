@@ -31,10 +31,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "test.h"
-#include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 #include "safe_macros.h"
-#include "tst_fs_type.h"
 
 static void setup(void);
 static void cleanup(void);
@@ -45,8 +43,6 @@ char *TCID = "swapoff02";
 int TST_TOTAL = 3;
 
 static uid_t nobody_uid;
-
-static int exp_enos[] = { EPERM, EINVAL, ENOENT, 0 };
 
 static struct test_case_t {
 	char *err_desc;
@@ -64,10 +60,8 @@ static struct test_case_t {
 int main(int ac, char **av)
 {
 	int lc, i;
-	const char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -110,8 +104,6 @@ int main(int ac, char **av)
 					}
 				}
 			}
-
-			TEST_ERROR_LOG(TEST_ERRNO);
 		}
 	}
 
@@ -137,9 +129,7 @@ static void setup(void)
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	TEST_EXP_ENOS(exp_enos);
-
-	tst_require_root(NULL);
+	tst_require_root();
 
 	nobody = SAFE_GETPWNAM(NULL, "nobody");
 	nobody_uid = nobody->pw_uid;
@@ -168,7 +158,5 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 }

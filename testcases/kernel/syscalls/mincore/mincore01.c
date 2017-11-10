@@ -43,10 +43,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 
-static int PAGESIZE;
+static int pagesize;
 static rlim_t STACK_LIMIT = 10485760;
 
 static void cleanup(void);
@@ -84,11 +83,8 @@ int TST_TOTAL = ARRAY_SIZE(TC);
 int main(int ac, char **av)
 {
 	int i, lc;
-	const char *msg;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, cleanup, "error parsing options: %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -150,7 +146,7 @@ static void setup4(struct test_case_t *tc)
 	}
 
 	tc->addr = global_pointer;
-	tc->len = as_lim.rlim_cur - (rlim_t)global_pointer + PAGESIZE;
+	tc->len = as_lim.rlim_cur - (rlim_t)global_pointer + pagesize;
 	tc->vector = global_vec;
 
 	/*
@@ -165,7 +161,7 @@ static void setup(void)
 	char *buf;
 	int fd;
 
-	PAGESIZE = getpagesize();
+	pagesize = getpagesize();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -174,7 +170,7 @@ static void setup(void)
 	TEST_PAUSE;
 
 	/* global_pointer will point to a mmapped area of global_len bytes */
-	global_len = PAGESIZE * 2;
+	global_len = pagesize * 2;
 
 	buf = SAFE_MALLOC(cleanup, global_len);
 	memset(buf, 42, global_len);
@@ -190,7 +186,7 @@ static void setup(void)
 				   PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
 	global_vec = SAFE_MALLOC(cleanup,
-				 (global_len + PAGESIZE - 1) / PAGESIZE);
+				 (global_len + pagesize - 1) / pagesize);
 
 	SAFE_CLOSE(cleanup, fd);
 }
@@ -219,8 +215,6 @@ static void mincore_verify(struct test_case_t *tc)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	free(global_vec);
 
 	if (munmap(global_pointer, global_len) == -1)

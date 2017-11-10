@@ -29,8 +29,8 @@
  *
  * ALGORITHM
  * Create and attach a shared memory segment, write to it
- * and then fork a child. The child Verifies that the shared memory segment
- * that it inherited from the parent conatins the same data that was originally
+ * and then fork a child. The child verifies that the shared memory segment
+ * that it inherited from the parent contains the same data that was originally
  * written to it by the parent.
  *
  */
@@ -49,16 +49,15 @@
 
 /** LTP Port **/
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "shmt07";		/* Test program identifier.    */
 int TST_TOTAL = 2;		/* Total number of test cases. */
 /**************/
 
 int child();
-int rm_shm(int);
+static int rm_shm(int);
 
-int main()
+int main(void)
 {
 	char *cp = NULL;
 	int shmid, pid, status;
@@ -119,8 +118,7 @@ int main()
 	tst_exit();
 }
 
-int rm_shm(shmid)
-int shmid;
+static int rm_shm(int shmid)
 {
 	if (shmctl(shmid, IPC_RMID, NULL) == -1) {
 		perror("shmctl");

@@ -73,14 +73,12 @@
 #include <errno.h>
 #include <sched.h>
 #include "test.h"
-#include "usctest.h"
 
 static void setup();
 static void cleanup();
 
 char *TCID = "sched_rr_get_interval03";
 struct timespec tp;
-static int exp_enos[] = { EINVAL, ESRCH, EFAULT, 0 };
 
 static pid_t unused_pid;
 static pid_t inval_pid = -1;
@@ -107,10 +105,8 @@ int main(int ac, char **av)
 {
 
 	int lc, i;
-	const char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -133,7 +129,6 @@ int main(int ac, char **av)
 					 " sched_rr_get_interval() returned %ld",
 					 TEST_RETURN);
 			}
-			TEST_ERROR_LOG(TEST_ERRNO);
 		}
 	}
 
@@ -147,6 +142,7 @@ int main(int ac, char **av)
 /* setup() - performs all ONE TIME setup for this test */
 void setup(void)
 {
+	tst_require_root();
 	/*
 	 * Initialize scheduling parameter structure to use with
 	 * sched_setscheduler()
@@ -154,8 +150,6 @@ void setup(void)
 	struct sched_param p = { 1 };
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	TEST_EXP_ENOS(exp_enos);
 
 	TEST_PAUSE;
 
@@ -173,11 +167,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

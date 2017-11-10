@@ -81,10 +81,10 @@ if [ $? -ne 0 ]; then
   exit
 fi
 
-while getopts cd:f:hi:l:m:Nnpqr:t:x arg
+while getopts cd:f:hi:l:m:Npqr:t:x arg
 do  case $arg in
     c)
-            $LTPROOT/../testcases/bin/genload --cpu 1 2>&1 1>/dev/null &
+            $LTPROOT/../testcases/bin/genload --cpu 1 >/dev/null 2>&1 &
 	    GenLoad=1 ;;
 
     d)      # append $$ to TMP, as it is recursively
@@ -97,9 +97,9 @@ do  case $arg in
 
     i)
             bytesize=$(($OPTARG * 1024 * 1024))
-            $LTPROOT/../testcases/bin/genload --io 1 2>&1 1>/dev/null &
+            $LTPROOT/../testcases/bin/genload --io 1 >/dev/null 2>&1 &
             $LTPROOT/../testcases/bin/genload --hdd 0 --hdd-bytes $bytesize \
-            2>&1 1>/dev/null &
+            >/dev/null 2>&1 &
 	    GenLoad=1 ;;
 
     l)
@@ -125,13 +125,10 @@ do  case $arg in
     m)
             memsize=$(($OPTARG * 1024 * 1024))
 	    $LTPROOT/../testcases/bin/genload  --vm 0 --vm-bytes $memsize\
-            2>&1 1>/dev/null &
+            >/dev/null 2>&1 &
 	    GenLoad=1;;
 
     N)	    run_netest=1;;
-
-    n)	    $LTPROOT/../testcases/bin/netpipe.sh
-	    NetPipe=1;;
 
     p)      pretty_prt=" -p ";;
 
@@ -217,7 +214,7 @@ fi
 
 if [ $GenLoad -eq 1 ]
 then
-	killall -9 genload
+	killall -9 genload >/dev/null 2>&1
 fi
 
 if [ $NetPipe -eq 1 ]

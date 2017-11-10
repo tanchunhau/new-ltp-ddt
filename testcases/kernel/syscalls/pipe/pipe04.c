@@ -49,12 +49,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "pipe04";
 int TST_TOTAL = 1;
-
-int exp_enos[] = { EBADF, 0 };
 
 int fildes[2];			/* fds for pipe read and write */
 
@@ -64,7 +61,7 @@ void c1func(void);
 void c2func(void);
 void alarmfunc(int);
 
-ssize_t safe_read(int fd, void *buf, size_t count)
+ssize_t do_read(int fd, void *buf, size_t count)
 {
 	ssize_t n;
 
@@ -78,7 +75,6 @@ ssize_t safe_read(int fd, void *buf, size_t count)
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 	pid_t c1pid, c2pid;
 	int wtstatus;
 	int bytesread;
@@ -86,8 +82,7 @@ int main(int ac, char **av)
 
 	char rbuf[BUFSIZ];
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&c1func, "ndd", 1, &fildes[0], &fildes[1]);
 	maybe_run_child(&c2func, "ndd", 2, &fildes[0], &fildes[1]);
@@ -137,7 +132,7 @@ int main(int ac, char **av)
 		 * Read a bit from the children first
 		 */
 		while ((acnt < 100) && (bcnt < 100)) {
-			bytesread = safe_read(fildes[0], rbuf, sizeof(rbuf));
+			bytesread = do_read(fildes[0], rbuf, sizeof(rbuf));
 			if (bytesread < 0) {
 				tst_resm(TFAIL, "Unable to read from pipe, "
 					 "errno=%d", errno);
@@ -221,11 +216,6 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 }
 
 void c1func(void)

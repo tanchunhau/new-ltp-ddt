@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 #
 #  Copyright (c) 2012 FUJITSU LIMITED
 #
@@ -114,7 +114,12 @@ setup()
 				$NSS_CONFIG_FILE
 		fi
 	else
-		tst_brkm TBROK NULL "$CONFIG_FILE not found!"
+		tst_resm TWARN "$CONFIG_FILE not found!"
+		touch $CONFIG_FILE
+	fi
+	chmod 0600 $CONFIG_FILE
+	if [ $? -ne 0 ]; then
+		tst_brkm TBROK NULL "fail to modify the permission of $CONFIG_FILE"
 	fi
 }
 
@@ -156,10 +161,10 @@ restart_sssd_daemon()
 #id_provider = local
 make_config_file()
 {
-	echo -e "[sssd]\nconfig_file_version = 2" > $CONFIG_FILE
-	echo -e "services = nss, pam\ndomains = LOCAL" >> $CONFIG_FILE
-	echo -e "\n[nss]\n\n[pam]\n" >> $CONFIG_FILE
-	echo -e "[domain/LOCAL]\nid_provider = local" >> $CONFIG_FILE
+	printf "[sssd]\nconfig_file_version = 2\n" > $CONFIG_FILE
+	printf "services = nss, pam\ndomains = LOCAL\n" >> $CONFIG_FILE
+	printf "\n[nss]\n\n[pam]\n\n" >> $CONFIG_FILE
+	printf "[domain/LOCAL]\nid_provider = local\n" >> $CONFIG_FILE
 }
 
 . cmdlib.sh

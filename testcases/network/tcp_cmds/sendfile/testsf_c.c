@@ -9,13 +9,13 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 #include <sys/file.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 #include "netdefs.h"
 
 int TST_TOTAL = 1;

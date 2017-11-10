@@ -39,11 +39,10 @@
  *
  * The documentation bug is filed as:
  * https://bugzilla.kernel.org/show_bug.cgi?id=15446 . If you want the message
- * removed, please ask your fellow kernel maintainer to fix his/her
- * documentation.
+ * removed, please ask your fellow kernel maintainer to fix their documentation.
  *
  * Thanks!
- * -Garrett
+ * -Ngie
  *
  * USAGE:  <for command-line>
  *  sysctl03 [-c n] [-e] [-i n] [-I x] [-P x] [-t]
@@ -62,7 +61,6 @@
  *	Test must be run as root.
  */
 #include "test.h"
-#include "usctest.h"
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdio.h>
@@ -87,19 +85,15 @@ int sysctl(int *name, int nlen, void *oldval, size_t * oldlenp,
 	return syscall(__NR__sysctl, &args);
 }
 
-#define SIZE(x) sizeof(x)/sizeof(x[0])
 #define OSNAMESZ 100
 
 void setup(void);
 void cleanup(void);
 
-int exp_enos[] = { EPERM, 0 };
-
 int main(int ac, char **av)
 {
 	int exp_eno;
 	int lc;
-	const char *msg;
 
 	char osname[OSNAMESZ];
 	int osnamelth, status;
@@ -107,9 +101,7 @@ int main(int ac, char **av)
 	pid_t pid;
 	struct passwd *ltpuser;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -123,23 +115,19 @@ int main(int ac, char **av)
 		exp_enos[0] = EACCES;
 	}
 
-	TEST_EXP_ENOS(exp_enos);
-
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
 		/* reset tst_count in case we are looping */
 		tst_count = 0;
 
 		strcpy(osname, "Linux");
-		osnamelth = SIZE(osname);
+		osnamelth = sizeof(osname);
 
-		TEST(sysctl(name, SIZE(name), 0, 0, osname, osnamelth));
+		TEST(sysctl(name, ARRAY_SIZE(name), 0, 0, osname, osnamelth));
 
 		if (TEST_RETURN != -1) {
 			tst_resm(TFAIL, "sysctl(2) succeeded unexpectedly");
 		} else {
-			TEST_ERROR_LOG(TEST_ERRNO);
-
 			if (TEST_ERRNO == exp_eno) {
 				tst_resm(TPASS | TTERRNO, "Got expected error");
 			} else if (errno == ENOSYS) {
@@ -152,7 +140,7 @@ int main(int ac, char **av)
 			}
 		}
 
-		osnamelth = SIZE(osname);
+		osnamelth = sizeof(osname);
 		if ((ltpuser = getpwnam("nobody")) == NULL) {
 			tst_brkm(TBROK, cleanup, "getpwnam() failed");
 		}
@@ -168,13 +156,11 @@ int main(int ac, char **av)
 		}
 
 		if (pid == 0) {
-			TEST(sysctl(name, SIZE(name), 0, 0, osname, osnamelth));
+			TEST(sysctl(name, ARRAY_SIZE(name), 0, 0, osname, osnamelth));
 
 			if (TEST_RETURN != -1) {
 				tst_resm(TFAIL, "call succeeded unexpectedly");
 			} else {
-				TEST_ERROR_LOG(TEST_ERRNO);
-
 				if (TEST_ERRNO == exp_eno) {
 					tst_resm(TPASS | TTERRNO,
 						 "Got expected error");
@@ -206,7 +192,7 @@ int main(int ac, char **av)
 
 void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
@@ -215,7 +201,6 @@ void setup(void)
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
 }
 
 #else

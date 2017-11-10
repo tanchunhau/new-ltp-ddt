@@ -58,9 +58,8 @@
 #include <unistd.h>
 
 #include "test.h"
-#include "usctest.h"
 #define CLEANUP cleanup
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 
 #ifdef HAVE_LIBAIO_H
 #include <libaio.h>
@@ -505,6 +504,7 @@ static int trigger_eventfd_overflow(int evfd, int *fd, io_context_t * ctx)
 	int ret;
 	struct iocb iocb;
 	struct iocb *iocbap[1];
+	struct io_event ioev;
 	static char buf[4 * 1024];
 
 	*ctx = 0;
@@ -535,6 +535,13 @@ static int trigger_eventfd_overflow(int evfd, int *fd, io_context_t * ctx)
 	if (ret < 0) {
 		errno = -ret;
 		tst_resm(TINFO | TERRNO, "error submitting iocb");
+		goto err_close_file;
+	}
+
+	ret = io_getevents(*ctx, 1, 1, &ioev, NULL);
+	if (ret < 0) {
+		errno = -ret;
+		tst_resm(TINFO | TERRNO, "error waiting for event");
 		goto err_close_file;
 	}
 
@@ -657,11 +664,9 @@ static void overflow_read_test(int evfd)
 int main(int argc, char **argv)
 {
 	int lc;
-	const char *msg;
 	int fd;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -720,7 +725,5 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 }

@@ -45,7 +45,6 @@
 #include <unistd.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 
 static void setup(void);
@@ -84,11 +83,8 @@ long rwflags[] = {
 int main(int argc, char *argv[])
 {
 	int lc, i;
-	const char *msg;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -114,7 +110,7 @@ int main(int argc, char *argv[])
 				tst_resm(TPASS, "mount(2) passed with "
 					 "rwflag = %ld", rwflags[i]);
 
-			TEST(umount(mntpoint));
+			TEST(tst_umount(mntpoint));
 			if (TEST_RETURN != 0)
 				tst_brkm(TBROK | TTERRNO, cleanup,
 					 "umount(2) failed for %s", mntpoint);
@@ -136,6 +132,7 @@ int test_rwflag(int i, int cnt)
 	time_t atime;
 	struct passwd *ltpuser;
 	struct stat file_stat;
+	char readbuf[20];
 
 	switch (i) {
 	case 0:
@@ -311,11 +308,13 @@ int test_rwflag(int i, int cnt)
 
 		if (write(fd, "TEST_MS_NOATIME", 15) != 15) {
 			tst_resm(TWARN | TERRNO, "write %s failed", file);
+			close(fd);
 			return 1;
 		}
 
 		if (fstat(fd, &file_stat) == -1) {
 			tst_resm(TWARN | TERRNO, "stat %s failed #1", file);
+			close(fd);
 			return 1;
 		}
 
@@ -323,13 +322,15 @@ int test_rwflag(int i, int cnt)
 
 		sleep(1);
 
-		if (read(fd, NULL, 20) == -1) {
+		if (read(fd, readbuf, sizeof(readbuf)) == -1) {
 			tst_resm(TWARN | TERRNO, "read %s failed", file);
+			close(fd);
 			return 1;
 		}
 
 		if (fstat(fd, &file_stat) == -1) {
 			tst_resm(TWARN | TERRNO, "stat %s failed #2", file);
+			close(fd);
 			return 1;
 		}
 		close(fd);
@@ -349,7 +350,7 @@ static void setup(void)
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_tmpdir();
 
@@ -359,7 +360,7 @@ static void setup(void)
 	if (!device)
 		tst_brkm(TCONF, cleanup, "Failed to obtain block device");
 
-	tst_mkfs(cleanup, device, fs_type, NULL);
+	tst_mkfs(cleanup, device, fs_type, NULL, NULL);
 
 	SAFE_MKDIR(cleanup, mntpoint, DIR_MODE);
 
@@ -378,10 +379,8 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	if (device)
-		tst_release_device(NULL, device);
+		tst_release_device(device);
 
 	tst_rmdir();
 }

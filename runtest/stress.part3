@@ -1,5 +1,5 @@
 #DESCRIPTION:Part three for ltpstress.sh
-abort01 ulimit -c 1024;abort01
+abort01 abort01
 
 accept01 accept01
 
@@ -7,8 +7,6 @@ access01 access01
 access02 access02
 access03 access03
 access04 access04
-access05 access05
-access06 access06
 
 acct01 acct01
 
@@ -85,7 +83,6 @@ creat05 creat05
 creat06 creat06
 creat07 creat07
 creat08 creat08
-creat09 creat09
 
 dup01 dup01
 dup02 dup02
@@ -101,15 +98,24 @@ dup203 dup203
 dup204 dup204
 dup205 dup205
 
+epoll_ctl01 epoll_ctl01
+epoll_ctl02 epoll_ctl02
+
+epoll_wait01 epoll_wait01
+epoll_wait02 epoll_wait02
+epoll_wait03 epoll_wait03
+
+epoll_pwait01 epoll_pwait01
+
 execl01 execl01
 execle01 execle01
 execlp01 execlp01
 
 execv01 execv01
 execve01 execve01
-execve02 execve02 -F $LTPROOT/testcases/bin/test3
+execve02 execve02
 execve03 execve03
-execve04 execve04 -F $LTPROOT/testcases/bin/test3
+execve04 execve04
 execve05 execve05 20 $LTPROOT/testcases/bin/execve05 $LTPROOT/testcases/bin/execve05 4
 execvp01 execvp01
 
@@ -164,6 +170,8 @@ fcntl26 fcntl26
 fcntl29 fcntl29
 fcntl30 fcntl30
 fcntl31 fcntl31
+fcntl32 fcntl32
+fcntl33 fcntl33
 
 fdatasync01 fdatasync01
 fdatasync02 fdatasync02
@@ -194,7 +202,6 @@ fpathconf01 fpathconf01
 fstat01 fstat01
 fstat02 fstat02
 fstat03 fstat03
-fstat04 fstat04
 fstat05 fstat05
 
 fstatfs01 fstatfs01
@@ -302,7 +309,7 @@ kill07 kill07
 kill08 kill08
 kill09 kill09
 kill10 kill10
-kill11 ulimit -c 1024;kill11
+kill11 kill11
 kill12 kill12
 
 lchown01 lchown01
@@ -326,14 +333,8 @@ llseek03 llseek03
 
 lseek01 lseek01
 lseek02 lseek02
-lseek03 lseek03
-lseek04 lseek04
-lseek05 lseek05
-lseek06 lseek06
 lseek07 lseek07
-lseek08 lseek08
-lseek09 lseek09
-lseek10 lseek10
+lseek11 lseek11
 
 lstat01A symlink01 -T lstat01
 lstat01 lstat01
@@ -382,6 +383,7 @@ mmap06 mmap06
 mmap07 mmap07
 mmap08 mmap08
 mmap09 mmap09
+mmap16 mmap16 -i 5
 
 modify_ldt01 modify_ldt01
 modify_ldt02 modify_ldt02
@@ -410,7 +412,6 @@ msgctl09 msgctl09
 msgget01 msgget01
 msgget02 msgget02
 msgget03 msgget03
-msgget04 msgget04
 
 msgrcv01 msgrcv01
 msgrcv02 msgrcv02
@@ -422,8 +423,6 @@ msgrcv07 msgrcv07
 
 msgsnd01 msgsnd01
 msgsnd02 msgsnd02
-msgsnd03 msgsnd03
-msgsnd04 msgsnd04
 msgsnd05 msgsnd05
 msgsnd06 msgsnd06
 
@@ -452,7 +451,6 @@ nice01 nice01
 nice02 nice02
 nice03 nice03
 nice04 nice04
-nice05 nice05
 
 open01 open01
 open01A symlink01 -T open01
@@ -467,6 +465,7 @@ open09 open09
 open10 open10
 open11 open11
 open12 open12
+open13 open13
 
 pathconf01 pathconf01
 
@@ -495,6 +494,9 @@ pread01 pread01
 pread02 pread02
 pread03 pread03
 
+preadv01 preadv01
+preadv02 preadv02
+
 profil01 profil01
 
 pselect01 pselect01
@@ -511,6 +513,9 @@ pwrite04 pwrite04
 pwrite01_64 pwrite01_64
 pwrite02_64 pwrite02_64
 pwrite04_64 pwrite04_64
+
+pwritev01 pwritev01
+pwritev02 pwritev02
 
 read01 read01
 read02 read02
@@ -663,9 +668,6 @@ setpgrp02 setpgrp02
 
 setpriority01 setpriority01
 setpriority02 setpriority02
-setpriority03 setpriority03
-setpriority04 setpriority04
-setpriority05 setpriority05
 
 setregid01 setregid01
 setregid02 setregid02
@@ -709,7 +711,6 @@ setuid04 setuid04
 
 shmat01 shmat01
 shmat02 shmat02
-shmat03 shmat03
 
 shmctl02 shmctl02
 shmctl03 shmctl03
@@ -741,6 +742,7 @@ signal02 signal02
 signal03 signal03
 signal04 signal04
 signal05 signal05
+signal06 signal06
 
 sigpending02 sigpending02
 
@@ -832,8 +834,6 @@ truncate03 truncate03
 # ulimit01 ulimit01
 
 umask01 umask01
-umask02 umask02
-umask03 umask03
 
 uname01 uname01
 uname02 uname02
@@ -874,23 +874,21 @@ waitpid06 waitpid06
 waitpid07 waitpid07
 waitpid08 waitpid08
 waitpid09 waitpid09
-waitpid10 waitpid10 5
+waitpid10 waitpid10
 waitpid11 waitpid11
 waitpid12 waitpid12
 waitpid13 waitpid13
 
 write01 write01
-write02 write02
 write03 write03
 write04 write04
 write05 write05
 
 writev01 writev01
 writev02 writev02
-writev03 writev03
-writev04 writev04
 writev05 writev05
 writev06 writev06
+writev07 writev07
 
 pty01 pty01
 hangup01 hangup01
@@ -898,5 +896,3 @@ hangup01 hangup01
 mc_cmds mc_cmds
 mc_opts export TCsrc=$LTPROOT/testcases/network/multicast/mc_opts; mc_opts
 rpc01 rpc01
-perf_lan perf_lan
-

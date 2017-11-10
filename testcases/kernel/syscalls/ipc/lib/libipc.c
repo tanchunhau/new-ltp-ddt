@@ -39,7 +39,6 @@
 #include "ipcsem.h"
 
 #include <pwd.h>
-#include <sys/timeb.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
@@ -142,12 +141,6 @@ void rm_sema(int sem_id)
 int getuserid(char *user)
 {
 	struct passwd *ent;
-
-	/* allocate some space for the passwd struct */
-	if ((ent = malloc(sizeof(struct passwd))) == NULL) {
-		tst_brkm(TBROK, cleanup, "couldn't allocate space for passwd"
-			 " structure");
-	}
 
 	/* get the uid value for the user */
 	if ((ent = getpwnam(user)) == NULL) {

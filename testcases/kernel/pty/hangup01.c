@@ -29,13 +29,12 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <sys/poll.h>
 
 /** LTP Port **/
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "hangup01";	/* Test program identifier.    */
 int TST_TOTAL = 5;		/* Total number of test cases. */

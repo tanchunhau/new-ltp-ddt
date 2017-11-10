@@ -18,7 +18,7 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Garrett Cooper, July 2009
+# Ngie Cooper, July 2009
 #
 # This file serves the sole purpose of executing every common piece of
 # prerequisite code for all of the smack tests, s.t. a lot of duplicate shell
@@ -27,20 +27,20 @@
 
 smackfsdir=${smackfsdir:=/smack}
 
-check_mounted() {
-	if ! expr "$smackfsdir" : "$(df -P | awk "\$NF == \"$smackfsdir\""'{ print $NF }')"; then
-		echo "smackfs not mounted at $smackfsdir"
-		exit 1
+check_mounted()
+{
+	grep -q $smackfsdir /proc/mounts
+	if [ $? -ne 0 ]; then
+		tst_brkm TCONF "smackfs not mounted at \"$smackfsdir\""
 	fi
 }
 
-check_onlycap() {
-	onlycap=`cat "$smackfsdir/onlycap" 2>/dev/null`
-	if [ "$onlycap" != "" ]; then
-		cat <<EOM
-The smack label reported for $smackfsdir/onlycap is "$onlycap", not the expected "".
-EOM
-		exit 1
+check_onlycap()
+{
+	onlycap=$(cat "$smackfsdir/onlycap" 2>/dev/null)
+	if [ -n "$onlycap" ]; then
+		tst_brkm TCONF "\"$smackfsdir/onlycap\" is \"$onlycap\", not" \
+			       "the expected \"\"."
 	fi
 }
 

@@ -28,14 +28,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <error.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 #include "fchownat.h"
 #include "lapi/fcntl.h"
@@ -45,7 +43,7 @@
 static void setup(void);
 static void cleanup(void);
 
-static int dirfd;
+static int dir_fd;
 static int fd;
 static int no_fd = -1;
 static int cu_fd = AT_FDCWD;
@@ -57,10 +55,10 @@ static struct test_case_t {
 	int *fds;
 	char *filenames;
 } test_cases[] = {
-	{0, 0, 0, &dirfd, TESTFILE},
+	{0, 0, 0, &dir_fd, TESTFILE},
 	{-1, ENOTDIR, 0, &fd, TESTFILE},
 	{-1, EBADF, 0, &no_fd, TESTFILE},
-	{-1, EINVAL, 9999, &dirfd, TESTFILE},
+	{-1, EINVAL, 9999, &dir_fd, TESTFILE},
 	{0, 0, 0, &cu_fd, TESTFILE},
 };
 
@@ -71,11 +69,9 @@ static void fchownat_verify(const struct test_case_t *);
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 	int i;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -100,7 +96,7 @@ static void setup(void)
 
 	tst_tmpdir();
 
-	dirfd = SAFE_OPEN(cleanup, "./", O_DIRECTORY);
+	dir_fd = SAFE_OPEN(cleanup, "./", O_DIRECTORY);
 
 	SAFE_TOUCH(cleanup, TESTFILE, 0600, NULL);
 
@@ -135,10 +131,8 @@ static void cleanup(void)
 	if (fd > 0)
 		close(fd);
 
-	if (dirfd > 0)
-		close(dirfd);
+	if (dir_fd > 0)
+		close(dir_fd);
 
 	tst_rmdir();
-
-	TEST_CLEANUP;
 }

@@ -23,7 +23,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <error.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -32,8 +31,7 @@
 #include <sys/mount.h>
 
 #include "test.h"
-#include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 #include "safe_macros.h"
 #include "lapi/fcntl.h"
 
@@ -85,22 +83,14 @@ int TST_TOTAL = ARRAY_SIZE(test_cases);
 static struct passwd *ltpuser;
 static void linkat_verify(const struct test_struct *);
 
-static int exp_enos[] = { ENAMETOOLONG, EEXIST, ELOOP,
-			  EACCES, EROFS, EMLINK, 0 };
-
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 	int i;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	TEST_EXP_ENOS(exp_enos);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 		tst_count = 0;
@@ -152,7 +142,7 @@ static void setup(void)
 	if ((tst_kvercmp(2, 6, 16)) < 0)
 		tst_brkm(TCONF, NULL, "This test needs kernel 2.6.16 or newer");
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -180,7 +170,7 @@ static void setup(void)
 	SAFE_MKDIR(cleanup, "./tmp", DIR_MODE);
 	SAFE_TOUCH(cleanup, TEST_EACCES, 0666, NULL);
 
-	tst_mkfs(cleanup, device, fs_type, NULL);
+	tst_mkfs(cleanup, device, fs_type, NULL, NULL);
 	SAFE_MKDIR(cleanup, "mntpoint", DIR_MODE);
 
 	if (mount(device, "mntpoint", fs_type, 0, NULL) < 0) {
@@ -214,13 +204,11 @@ static void setup_erofs(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
-
-	if (mount_flag && umount("mntpoint") < 0)
+	if (mount_flag && tst_umount("mntpoint") < 0)
 		tst_resm(TWARN | TERRNO, "umount device:%s failed", device);
 
 	if (device)
-		tst_release_device(NULL, device);
+		tst_release_device(device);
 
 	tst_rmdir();
 }

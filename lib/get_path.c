@@ -31,8 +31,6 @@
   * $PATH.
   */
 
-#include "test.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -40,7 +38,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define MIN(a, b) ((a)<(b)?(a):(b))
+#include "test.h"
 
 static int file_exist(const char *path)
 {

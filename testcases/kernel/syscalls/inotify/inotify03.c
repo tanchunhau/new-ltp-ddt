@@ -36,14 +36,13 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/syscall.h>
 #include <signal.h>
 #include "test.h"
-#include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 #include "inotify.h"
 
 char *TCID = "inotify03";
@@ -79,13 +78,10 @@ static const char *fs_type;
 
 int main(int argc, char *argv[])
 {
-	const char *msg;
 	int ret;
 	int len, i, test_num;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -106,9 +102,8 @@ int main(int argc, char *argv[])
 	tst_count = 0;
 
 	tst_resm(TINFO, "umount %s", device);
-	TEST(umount(mntpoint));
+	TEST(tst_umount(mntpoint));
 	if (TEST_RETURN != 0) {
-		TEST_ERROR_LOG(TEST_ERRNO);
 		tst_brkm(TBROK, cleanup, "umount(2) Failed "
 			 "while unmounting errno = %d : %s",
 			 TEST_ERRNO, strerror(TEST_ERRNO));
@@ -171,6 +166,8 @@ static void setup(void)
 {
 	int ret;
 
+	tst_require_root();
+
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
@@ -183,7 +180,7 @@ static void setup(void)
 	if (!device)
 		tst_brkm(TCONF, cleanup, "Failed to obtain block device");
 
-	tst_mkfs(cleanup, device, fs_type, NULL);
+	tst_mkfs(cleanup, device, fs_type, NULL, NULL);
 
 	if (mkdir(mntpoint, DIR_MODE) < 0) {
 		tst_brkm(TBROK | TERRNO, cleanup, "mkdir(%s, %#o) failed",
@@ -196,7 +193,6 @@ static void setup(void)
 
 	/* check return code */
 	if (TEST_RETURN != 0) {
-		TEST_ERROR_LOG(TEST_ERRNO);
 		tst_brkm(TBROK | TTERRNO, cleanup, "mount(2) failed");
 	}
 	mount_flag = 1;
@@ -242,15 +238,13 @@ static void cleanup(void)
 		tst_resm(TWARN | TERRNO, "close(%d) failed", fd_notify);
 
 	if (mount_flag) {
-		TEST(umount(mntpoint));
+		TEST(tst_umount(mntpoint));
 		if (TEST_RETURN != 0)
 			tst_resm(TWARN | TTERRNO, "umount(%s) failed",
 				 mntpoint);
 	}
 
-	tst_release_device(NULL, device);
-
-	TEST_CLEANUP;
+	tst_release_device(device);
 
 	tst_rmdir();
 }

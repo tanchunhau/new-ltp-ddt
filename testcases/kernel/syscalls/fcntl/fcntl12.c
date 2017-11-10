@@ -44,7 +44,6 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "fcntl12";
 int TST_TOTAL = 1;
@@ -57,33 +56,25 @@ void cleanup(void);
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 
 	pid_t pid;
 	int fd, i, status, max_files;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
 	/* check for looping state if -i option is given */
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
-
-		/* reset tst_count in case we are looping */
 		tst_count = 0;
 
-/* //block1: */
-		tst_resm(TINFO, "Enter block 1");
 		tst_resm(TINFO, "Test for errno EMFILE");
 		fail = 0;
 
 		pid = FORK_OR_VFORK();
 		if (pid < 0) {
-			tst_resm(TFAIL, "Fork failed");
-			cleanup();
-		} else if (pid == 0) {	/* child */
+			tst_brkm(TBROK | TERRNO, cleanup, "Fork failed");
+		} else if (pid == 0) {
 			max_files = getdtablesize();
 			for (i = 0; i < max_files; i++) {
 				if ((fd = open(fname, O_CREAT | O_RDONLY,
@@ -103,24 +94,17 @@ int main(int ac, char **av)
 			exit(0);
 		}
 		waitpid(pid, &status, 0);
-		if (WEXITSTATUS(status) == 0) {
-			tst_resm(TINFO, "block 1 PASSED");
-		} else {
-			tst_resm(TINFO, "block 1 FAILED");
-		}
-		tst_resm(TINFO, "Exit block 1");
+		if (WEXITSTATUS(status) == 0)
+			tst_resm(TPASS, "block 1 PASSED");
+		else
+			tst_resm(TFAIL, "block 1 FAILED");
 	}
 	cleanup();
 	tst_exit();
 }
 
-/*
- * setup()
- *	performs all ONE TIME setup for this test
- */
 void setup(void)
 {
-
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
 	TEST_PAUSE;
@@ -129,20 +113,8 @@ void setup(void)
 	tst_tmpdir();
 }
 
-/*
- * cleanup()
- *	performs all ONE TIME cleanup for this test at
- *	completion or premature exit
- */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
-
 	unlink(fname);
 	tst_rmdir();
-
 }

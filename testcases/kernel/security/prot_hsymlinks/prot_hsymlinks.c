@@ -43,9 +43,7 @@
 #include <signal.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
-#include "safe_file_ops.h"
 
 char *TCID = "prot_hsymlinks";
 int TST_TOTAL = 396;
@@ -191,16 +189,18 @@ int main(int argc, char *argv[])
 
 static void setup(int argc, char *argv[])
 {
-	const char *msg;
-	msg = parse_opts(argc, argv, options, &help);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, options, &help);
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	if (tst_kvercmp(3, 7, 0) < 0)
 		tst_brkm(TCONF, NULL,
 			"Test must be run with kernel 3.7 or newer");
+
+	if (eaccess("/etc/passwd", W_OK)) {
+		tst_brkm(TCONF, NULL,
+			"/etc/passwd is not accessible");
+	}
 
 	/* initialize user names */
 	strcpy(users[ROOT].name, "root");
@@ -290,7 +290,6 @@ static void cleanup(void)
 	}
 
 	tst_rmdir();
-	TEST_CLEANUP;
 }
 
 static int get_protected_hlinks(void)
@@ -374,7 +373,7 @@ static void init_base_dirs(void)
 
 static void init_files_dirs(void)
 {
-	int dir, usr;
+	unsigned int dir, usr;
 	/* create all other dirs and files */
 	for (dir = 0; dir < ARRAY_SIZE(bdirs); ++dir) {
 		for (usr = 0; usr < USERS_NUM; ++usr) {
@@ -437,8 +436,8 @@ static void create_link_path(char *buffer, int size, const char *path)
 
 static int create_check_slinks(const struct user_file *ufile, int owner)
 {
-	int result = 0;
-	int dir, usr;
+	int result = 0, usr;
+	unsigned int dir;
 	for (dir = 0; dir < ARRAY_SIZE(bdirs); ++dir) {
 		for (usr = 0; usr < USERS_NUM; ++usr) {
 			/* set user who will create symlink */
@@ -467,8 +466,8 @@ static int create_check_slinks(const struct user_file *ufile, int owner)
 
 static int create_check_hlinks(const struct user_file *ufile, int owner)
 {
-	int result = 0;
-	int dir, usr;
+	int result = 0, usr;
+	unsigned int dir;
 	for (dir = 0; dir < ARRAY_SIZE(bdirs); ++dir) {
 		for (usr = 0; usr < USERS_NUM; ++usr) {
 			/* can't create hardlink to directory */
@@ -539,7 +538,7 @@ static const int o_modes[] = {
 
 static int try_symlink(const char *name)
 {
-	int mode;
+	unsigned int mode;
 	for (mode = 0; mode < ARRAY_SIZE(o_modes); ++mode) {
 		if (try_open(name, o_modes[mode]) != -1)
 			return CAN_FOLLOW;

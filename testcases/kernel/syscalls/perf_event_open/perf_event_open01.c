@@ -43,8 +43,7 @@
 #endif
 
 #include "test.h"
-#include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 #include "safe_macros.h"
 
 char *TCID = "perf_event_open01";
@@ -82,11 +81,8 @@ static struct perf_event_attr pe;
 int main(int ac, char **av)
 {
 	int i, lc;
-	const char *msg;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -133,7 +129,7 @@ static int perf_event_open(struct perf_event_attr *hw_event, pid_t pid,
 }
 
 /* do_work() is copied form performance_counter02.c */
-#define LOOPS	1000000000
+#define LOOPS	100000000
 
 static void do_work(void)
 {
@@ -153,13 +149,14 @@ static void verify(struct test_case_t *tc)
 
 	TEST(perf_event_open(&pe, 0, -1, -1, 0));
 	if (TEST_RETURN == -1) {
-		if (TEST_ERRNO == ENOENT) {
-			tst_resm(TCONF,
+		if (TEST_ERRNO == ENOENT || TEST_ERRNO == EOPNOTSUPP) {
+			tst_resm(TCONF | TTERRNO,
 			         "perf_event_open for %s not supported",
 			         tc->config_name);
 		} else {
 			tst_brkm(TFAIL | TTERRNO, cleanup,
-				 "perf_event_open failed unexpectedly");
+				 "perf_event_open %s failed unexpectedly",
+				 tc->config_name);
 		}
 		return;
 	}
@@ -199,7 +196,6 @@ static void verify(struct test_case_t *tc)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 }
 
 #else

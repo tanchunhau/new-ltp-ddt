@@ -32,10 +32,9 @@
 #include <errno.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 #include "numa_helper.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 
 unsigned long get_max_node(void)
 {
@@ -66,7 +65,7 @@ static void get_nodemask_allnodes(nodemask_t * nodemask, unsigned long max_node)
 	struct stat st;
 
 	memset(nodemask, 0, nodemask_size);
-	for (i = 0; i < max_node; i++) {
+	for (i = 0; i < (int)max_node; i++) {
 		sprintf(fn, "/sys/devices/system/node/node%d", i);
 		if (stat(fn, &st) == 0)
 			nodemask_set(nodemask, i);
@@ -82,17 +81,26 @@ static int filter_nodemask_mem(nodemask_t * nodemask, unsigned long max_node)
 	 * avoid numa_get_mems_allowed(), because of bug in getpol()
 	 * utility function in older versions:
 	 * http://www.spinics.net/lists/linux-numa/msg00849.html
+	 *
+	 * At the moment numa_available() implementation also uses
+	 * get_mempolicy, but let's make explicit check for ENOSYS
+	 * here as well in case it changes in future. Silent ignore
+	 * of ENOSYS is OK, because without NUMA caller gets empty
+	 * set of nodes anyway.
 	 */
-	if (ltp_syscall(__NR_get_mempolicy, NULL, nodemask->n,
-		    max_node, 0, MPOL_F_MEMS_ALLOWED) < 0)
+	if (syscall(__NR_get_mempolicy, NULL, nodemask->n,
+		    max_node, 0, MPOL_F_MEMS_ALLOWED) < 0) {
+		if (errno == ENOSYS)
+			return 0;
 		return -2;
+	}
 #else
 	int i;
 	/*
 	 * old libnuma/kernel don't have MPOL_F_MEMS_ALLOWED, so let's assume
 	 * that we can use any node with memory > 0
 	 */
-	for (i = 0; i < max_node; i++) {
+	for (i = 0; i < (int)max_node; i++) {
 		if (!nodemask_isset(nodemask, i))
 			continue;
 		if (numa_node_size64(i, NULL) <= 0)
@@ -104,7 +112,7 @@ static int filter_nodemask_mem(nodemask_t * nodemask, unsigned long max_node)
 
 static int cpumask_has_cpus(char *cpumask, size_t len)
 {
-	int j;
+	unsigned int j;
 	for (j = 0; j < len; j++)
 		if (cpumask[j] == '\0')
 			return 0;
@@ -123,7 +131,7 @@ static void filter_nodemask_cpu(nodemask_t * nodemask, unsigned long max_node)
 	size_t len;
 	int i, ret;
 
-	for (i = 0; i < max_node; i++) {
+	for (i = 0; i < (int)max_node; i++) {
 		if (!nodemask_isset(nodemask, i))
 			continue;
 		sprintf(fn, "/sys/devices/system/node/node%d/cpumap", i);
@@ -164,9 +172,13 @@ int get_allowed_nodes_arr(int flag, int *num_nodes, int **nodes)
 		*nodes = NULL;
 
 #if HAVE_NUMA_H
-	unsigned long max_node = LTP_ALIGN(get_max_node(),
-						sizeof(unsigned long)*8);
-	unsigned long nodemask_size = max_node / 8;
+	unsigned long max_node, nodemask_size;
+
+	if (numa_available() == -1)
+		return 0;
+
+	max_node = LTP_ALIGN(get_max_node(), sizeof(unsigned long)*8);
+	nodemask_size = max_node / 8;
 
 	nodemask = malloc(nodemask_size);
 	if (nodes)
@@ -188,7 +200,7 @@ int get_allowed_nodes_arr(int flag, int *num_nodes, int **nodes)
 		if ((flag & NH_CPUS) == NH_CPUS)
 			filter_nodemask_cpu(nodemask, max_node);
 
-		for (i = 0; i < max_node; i++) {
+		for (i = 0; i < (int)max_node; i++) {
 			if (nodemask_isset(nodemask, i)) {
 				if (nodes)
 					(*nodes)[*num_nodes] = i;
@@ -269,23 +281,25 @@ void nh_dump_nodes(void)
 
 /*
  * is_numa - judge a system is NUMA system or not
- * NOTE: the function is designed to try to find more than
- *       1 available node, at least each node contains memory.
+ * @flag: NH_MEMS and/or NH_CPUS
+ * @min_nodes: find at least 'min_nodes' nodes with memory
+ * NOTE: the function is designed to try to find at least 'min_nodes'
+ * available nodes, where each node contains memory.
  * WARN: Don't use this func in child, as it calls tst_brkm()
  * RETURNS:
  *     0 - it's not a NUMA system
  *     1 - it's a NUMA system
  */
-int is_numa(void (*cleanup_fn)(void))
+int is_numa(void (*cleanup_fn)(void), int flag, int min_nodes)
 {
 	int ret;
 	int numa_nodes = 0;
 
-	ret = get_allowed_nodes_arr(NH_MEMS, &numa_nodes, NULL);
+	ret = get_allowed_nodes_arr(flag, &numa_nodes, NULL);
 	if (ret < 0)
 		tst_brkm(TBROK | TERRNO, cleanup_fn, "get_allowed_nodes_arr");
 
-	if (numa_nodes > 1)
+	if (numa_nodes >= min_nodes)
 		return 1;
 	else
 		return 0;

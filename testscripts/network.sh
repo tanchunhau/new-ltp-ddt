@@ -1,76 +1,121 @@
 #!/bin/sh
 
-TST_TOTAL=1
-TCID="network_settings"
-. test_net.sh
-
-# Network Test Parameters
-#
-# ---***** THESE MUST BE SET FOR CORRECT OPERATION *****---
-
-# Management Link
-export RHOST=${RHOST:-""}
-export PASSWD=${PASSWD:-""}
-
-# Warning:
-# Make sure to set valid interface names and IP addresses below.
-# 'networktests.sh' expects that IP addresses are already added to interface.
-#
-# Please note, that for 'networktests.sh' tests, management link and
-# test link can be the same.
-
-# Test Links
-# Set names for test interfaces, e.g. "eth0 eth1"
-export LHOST_IFACES=${LHOST_IFACES:-"eth0"}
-export RHOST_IFACES=${RHOST_IFACES:-"eth0"}
-
-# Set corresponding HW addresses, e.g. "00:00:00:00:00:01 00:00:00:00:00:02"
-export LHOST_HWADDRS=${LHOST_HWADDRS:-"$(tst_get_hwaddrs lhost)"}
-export RHOST_HWADDRS=${RHOST_HWADDRS:-"$(tst_get_hwaddrs rhost)"}
-
-# Set first three octets of the network address, default is '10.0.0'
-export IPV4_NETWORK=${IPV4_NETWORK:-"10.0.0"}
-# Set local host last octet, default is '2'
-export LHOST_IPV4_HOST=${LHOST_IPV4_HOST:-"2"}
-# Set remote host last octet, default is '1'
-export RHOST_IPV4_HOST=${RHOST_IPV4_HOST:-"1"}
-# Set the reverse of IPV4_NETWORK
-export IPV4_NETWORK_REVERSE=${IPV4_NETWORK_REVERSE:-"0.0.10"}
-# Set first three octets of the network address, default is 'fd00:1:1:1'
-export IPV6_NETWORK=${IPV6_NETWORK:-"fd00:1:1:1"}
-# Set local host last octet, default is '2'
-export LHOST_IPV6_HOST=${LHOST_IPV6_HOST:-":2"}
-# Set remote host last octet, default is '1'
-export RHOST_IPV6_HOST=${RHOST_IPV6_HOST:-":1"}
-
-export HTTP_DOWNLOAD_DIR=${HTTP_DOWNLOAD_DIR:-""}
-export FTP_DOWNLOAD_DIR=${FTP_DOWNLOAD_DIR:-""}
-export FTP_UPLOAD_DIR=${FTP_UPLOAD_DIR:-""}
-export FTP_UPLOAD_URLDIR=${FTP_UPLOAD_URLDIR:-""}
-
-# More information about network parameters can be found
-# in the following document: testcases/network/stress/README
-
-# ---***************************************************---
-
-# Don't use it in new tests, use tst_rhost_run() from test_net.sh instead.
-export LTP_RSH=${LTP_RSH:-"rsh -n"}
-
-export TMPDIR=/tmp/netpan-$$
-mkdir -p $TMPDIR
-CMDFILE=${TMPDIR}/network.tests
-VERBOSE="no"
-
+cd $(dirname $0)
 export LTPROOT=${LTPROOT:-"$PWD"}
-echo $LTPROOT | grep testscripts > /dev/null 2>&1
+echo $LTPROOT | grep -q testscripts
 if [ $? -eq 0 ]; then
 	cd ..
 	export LTPROOT=${PWD}
 fi
 
+export TMPDIR=/tmp/netpan-$$
+mkdir -p $TMPDIR
+CMDFILE=${TMPDIR}/network.tests
+VERBOSE="no"
+NO_KMSG=
+QUIET_MODE=
+TEST_CASES=
+
 export PATH="${PATH}:${LTPROOT}/testcases/bin"
+
+usage()
+{
+	echo "Usage: $0 OPTIONS"
+	echo "  -6    IPv6 tests"
+	echo "  -m    multicast tests"
+	echo "  -n    NFS tests"
+	echo "  -r    RPC tests"
+	echo "  -s    SCTP tests"
+	echo "  -t    TCP/IP command tests"
+	echo "  -c    TI-RPC tests"
+	echo "  -d    TS-RPC tests"
+	echo "  -a    Application stress tests (HTTP, SSH, DNS)"
+	echo "  -e    Interface stress tests"
+	echo "  -b    Stress tests with malformed ICMP packets"
+	echo "  -i    IPsec ICMP stress tests"
+	echo "  -T    IPsec TCP stress tests"
+	echo "  -U    IPsec UDP stress tests"
+	echo "  -R    route stress tests"
+	echo "  -M    multicast stress tests"
+	echo "  -F    network features tests (TFO, vxlan, etc.)"
+	echo "  -f x  where x is a runtest file"
+	echo "  -q    quiet mode (this implies not logging start of test"
+	echo "        in kernel log)"
+	echo "  -Q    don't log start of test in kernel log"
+	echo "  -V|v  verbose"
+	echo "  -h    print this help"
+}
+
+while getopts 6mnrstaebcdiTURMFf:qQVvh OPTION
+do
+	case $OPTION in
+	6) TEST_CASES="$TEST_CASES net.ipv6 net.ipv6_lib";;
+	m) TEST_CASES="$TEST_CASES net.multicast";;
+	n) TEST_CASES="$TEST_CASES net.nfs";;
+	r) TEST_CASES="$TEST_CASES net.rpc";;
+	s) TEST_CASES="$TEST_CASES net.sctp";;
+	t) TEST_CASES="$TEST_CASES net.tcp_cmds";;
+	c) TEST_CASES="$TEST_CASES net.rpc_tests";;
+	d) TEST_CASES="$TEST_CASES net.tirpc_tests";;
+	a) TEST_CASES="$TEST_CASES net_stress.appl";;
+	e) TEST_CASES="$TEST_CASES net_stress.interface";;
+	b) TEST_CASES="$TEST_CASES net_stress.broken_ip";;
+	i) TEST_CASES="$TEST_CASES net_stress.ipsec_icmp";;
+	T) TEST_CASES="$TEST_CASES net_stress.ipsec_tcp";;
+	U) TEST_CASES="$TEST_CASES net_stress.ipsec_udp";;
+	R) TEST_CASES="$TEST_CASES net_stress.route";;
+	M) TEST_CASES="$TEST_CASES net_stress.multicast";;
+	F) TEST_CASES="$TEST_CASES net.features";;
+	f) TEST_CASES=${OPTARG};;
+	q) QUIET_MODE="-q";;
+	Q) NO_KMSG="-Q";;
+	V|v) VERBOSE="yes";;
+	h) usage; exit 0;;
+	*) echo "Error: invalid option..."; usage; exit 1;;
+	esac
+done
+
+if [ "$OPTIND" -eq 1 ]; then
+	echo "Error: option is required"
+	usage
+	exit 1
+fi
+
+TST_TOTAL=1
+TCID="network_settings"
+
+. test_net.sh
 
 # Reset variables.
 # Don't break the tests which are using 'testcases/lib/cmdlib.sh'
 export TCID=
 export TST_LIB_LOADED=
+
+rm -f $CMDFILE
+
+for t in $TEST_CASES; do
+	cat  ${LTPROOT}/runtest/$t >> $CMDFILE
+done
+
+cd $TMPDIR
+
+cmd="${LTPROOT}/bin/ltp-pan $QUIET_MODE $NO_KMSG -e -l /tmp/netpan.log -S -a ltpnet -n ltpnet -f $CMDFILE"
+
+if [ ${VERBOSE} = "yes" ]; then
+	echo "Network parameters:"
+	echo " - ${LHOST_IFACES} local interface (MAC address: ${LHOST_HWADDRS})"
+	echo " - ${RHOST_IFACES} remote interface (MAC address: ${RHOST_HWADDRS})"
+
+	cat $CMDFILE
+	${LTPROOT}/ver_linux
+	echo ""
+	echo $cmd
+fi
+
+$cmd
+
+if [ $? -eq "0" ]; then
+	echo ltp-pan reported PASS
+else
+	echo ltp-pan reported FAIL
+fi

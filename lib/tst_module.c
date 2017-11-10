@@ -26,7 +26,7 @@
 
 #include "test.h"
 #include "ltp_priv.h"
-#include "tst_module.h"
+#include "old_module.h"
 
 void tst_module_exists(void (cleanup_fn)(void),
 	const char *mod_name, char **mod_path)
@@ -47,6 +47,7 @@ void tst_module_exists(void (cleanup_fn)(void),
 			tst_brkm(TBROK | TERRNO, cleanup_fn,
 				"asprintf failed at %s:%d",
 				__FILE__, __LINE__);
+			return;
 		}
 		err = access(buf, F_OK);
 	}
@@ -58,6 +59,7 @@ void tst_module_exists(void (cleanup_fn)(void),
 			tst_brkm(TBROK | TERRNO, cleanup_fn,
 				"asprintf failed at %s:%d",
 				__FILE__, __LINE__);
+			return;
 		}
 		err = access(buf, F_OK);
 	}
@@ -66,6 +68,7 @@ void tst_module_exists(void (cleanup_fn)(void),
 		free(buf);
 		tst_brkm(TCONF, cleanup_fn, "Failed to find module '%s'",
 			mod_name);
+		return;
 	}
 
 	if (mod_path != NULL)
@@ -94,12 +97,27 @@ void tst_module_load(void (cleanup_fn)(void),
 	for (i = offset; i < size; ++i)
 		mod_argv[i] = argv[i - offset];
 
-	tst_run_cmd(cleanup_fn, mod_argv, NULL, NULL);
+	tst_run_cmd(cleanup_fn, mod_argv, NULL, NULL, 0);
 	free(mod_path);
 }
 
 void tst_module_unload(void (cleanup_fn)(void), const char *mod_name)
 {
+	int i, rc;
+
 	const char *const argv[] = { "rmmod", mod_name, NULL };
-	tst_run_cmd(cleanup_fn, argv, NULL, NULL);
+
+	rc = 1;
+	for (i = 0; i < 50; i++) {
+		rc = tst_run_cmd(NULL, argv, "/dev/null", "/dev/null", 1);
+		if (!rc)
+			break;
+
+		usleep(20000);
+	}
+
+	if (rc) {
+		tst_brkm(TBROK, cleanup_fn,
+			 "could not unload %s module", mod_name);
+	}
 }

@@ -57,10 +57,8 @@
 #if HAVE_NUMAIF_H
 #include <numaif.h>
 #endif
-
-#include "usctest.h"
 #include "test.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 #include "include_j_h.h"
 #include "common_j_h.c"
 #include "numa_helper.h"
@@ -333,7 +331,6 @@ TEST_END:
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 
@@ -341,6 +338,9 @@ static void setup(void)
 {
 	/* check syscall availability */
 	ltp_syscall(__NR_get_mempolicy, NULL, NULL, 0, NULL, 0);
+
+	if (!is_numa(NULL, NH_MEMS, 1))
+		tst_brkm(TCONF, NULL, "requires NUMA with at least 1 node");
 
 	TEST_PAUSE;
 	tst_tmpdir();

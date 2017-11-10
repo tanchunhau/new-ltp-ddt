@@ -39,9 +39,10 @@
 #include <signal.h>
 #include <sys/param.h>
 #include <sys/resource.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #include "test.h"
-#include "usctest.h"
 
 #ifndef BSIZE
 #define BSIZE  BBSIZE
@@ -55,22 +56,20 @@ void cleanup();
 char *TCID = "brk01";
 int TST_TOTAL = 1;
 
-long Max_brk_byte_size;
-long Beg_brk_val;
+uintptr_t Max_brk_byte_size;
+uintptr_t Beg_brk_val;
 
 #if !defined(UCLINUX)
 
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 	int incr;
-	long nbrkpt;		/* new brk point value */
-	long cur_brk_val;	/* current size returned by sbrk */
-	long aft_brk_val;	/* current size returned by sbrk */
+	uintptr_t nbrkpt;		/* new brk point value */
+	uintptr_t cur_brk_val;	/* current size returned by sbrk */
+	uintptr_t aft_brk_val;	/* current size returned by sbrk */
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -93,7 +92,7 @@ int main(int ac, char **av)
 		 * every odd lc value, strink by one incr.
 		 * If lc is equal to 3, no change, special case.
 		 */
-		cur_brk_val = (long)sbrk(0);
+		cur_brk_val = (uintptr_t)sbrk(0);
 		if (lc == 3) {
 			nbrkpt = cur_brk_val;	/* no change, special one time case */
 		} else if ((lc % 2) == 0) {
@@ -121,21 +120,21 @@ int main(int ac, char **av)
 
 		if (TEST_RETURN == -1) {
 
-			aft_brk_val = (long)sbrk(0);
+			aft_brk_val = (uintptr_t)sbrk(0);
 			tst_resm(TFAIL | TTERRNO,
-				 "brk(%ld) failed (size before %ld, after %ld)",
+				 "brk(%"PRIuPTR") failed (size before %"PRIuPTR", after %"PRIuPTR")",
 				 nbrkpt, cur_brk_val, aft_brk_val);
 
 		} else {
-			aft_brk_val = (long)sbrk(0);
+			aft_brk_val = (uintptr_t)sbrk(0);
 			if (aft_brk_val == nbrkpt) {
 
 				tst_resm(TPASS,
-					 "brk(%ld) returned %ld, new size verified by sbrk",
+					 "brk(%"PRIuPTR") returned %"PRIuPTR", new size verified by sbrk",
 					 nbrkpt, TEST_RETURN);
 			} else {
 				tst_resm(TFAIL,
-					 "brk(%ld) returned %ld, sbrk before %ld, after %ld",
+					 "brk(%"PRIuPTR") returned %"PRIuPTR", sbrk before %"PRIuPTR", after %"PRIuPTR"",
 					 nbrkpt, TEST_RETURN,
 					 cur_brk_val, aft_brk_val);
 			}
@@ -180,17 +179,14 @@ void setup(void)
 	 * never attempt to take more than a * 1/4 of memory (by single test)
 	 */
 
-	if (ulim_sz < usr_mem_sz)
-		max_size = ulim_sz;
-	else
-		max_size = usr_mem_sz;
+	max_size = MIN(ulim_sz, usr_mem_sz);
 
 	max_size = max_size / (2 * ncpus);
 
 	if (max_size > (usr_mem_sz / 4))
 		max_size = usr_mem_sz / 4;	/* only fourth mem by single test */
 
-	Beg_brk_val = (long)sbrk(0);
+	Beg_brk_val = (uintptr_t)sbrk(0);
 
 	/*
 	 * allow at least 4 times a big as current.
@@ -207,8 +203,6 @@ void setup(void)
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 }
 
 #else

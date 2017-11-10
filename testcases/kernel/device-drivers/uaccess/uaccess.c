@@ -27,10 +27,8 @@
 #include <unistd.h>
 
 #include "test.h"
-#include "usctest.h"
-#include "tst_module.h"
+#include "old_module.h"
 #include "safe_macros.h"
-#include "safe_stdio.h"
 
 #include "ltp_uaccess.h"
 
@@ -45,8 +43,6 @@ static void cleanup(void)
 {
 	if (module_loaded)
 		tst_module_unload(NULL, module_name);
-
-	TEST_CLEANUP;
 }
 
 static int set_ptr_to_sysfs(int id, const void *ptr, const char *descr)
@@ -96,12 +92,9 @@ static void tc_write_userspace(void)
 
 int main(int argc, char *argv[])
 {
-	const char *msg;
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	if (tst_kvercmp(2, 6, 0) < 0) {
 		tst_brkm(TCONF, NULL,

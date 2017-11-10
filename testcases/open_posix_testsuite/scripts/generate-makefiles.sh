@@ -13,7 +13,7 @@
 #
 # See COPYING for more details.
 #
-# Garrett Cooper, June 2010
+# Ngie Cooper, June 2010
 #
 
 generate_locate_test_makefile() {
@@ -27,7 +27,6 @@ generate_locate_test_makefile() {
 	generate_makefiles make-gen.$maketype $*
 
 	rm -f make-gen.$maketype
-
 }
 
 generate_makefile() {
@@ -283,12 +282,14 @@ generate_makefiles() {
 
 export PATH="$PATH:`dirname "$0"`"
 
-AUTHORDATE=`grep "Garrett Cooper" "$0" | head -n 1 | sed 's,# *,,'`
+AUTHORDATE=`grep "Ngie Cooper" "$0" | head -n 1 | sed 's,# *,,'`
 PREFIX=`print-prefix.sh`
 EXEC_PREFIX="${PREFIX}/bin"
 TOP_SRCDIR=${TOP_SRCDIR:=`dirname "$0"`/..}
 
 GLOBAL_BOILERPLATE="${TOP_SRCDIR}/.global_boilerplate"
+
+CONFIG_MK="../../include/mk/config-openposix.mk"
 
 rm -f "$GLOBAL_BOILERPLATE"
 
@@ -299,6 +300,10 @@ $var+=		`cat "$TOP_SRCDIR/$var"`
 EOF
 	fi
 done
+
+if [ -f "$CONFIG_MK" ]; then
+	cat "$CONFIG_MK" >> "$GLOBAL_BOILERPLATE"
+fi
 
 # For the generic cases.
 generate_locate_test_makefile buildonly '.test' '-c'

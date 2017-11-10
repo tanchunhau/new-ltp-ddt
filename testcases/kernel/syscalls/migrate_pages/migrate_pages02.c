@@ -47,9 +47,8 @@
 #include <pwd.h>
 #include "config.h"
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 #include "numa_helper.h"
 #include "migrate_pages_common.h"
 
@@ -127,7 +126,7 @@ static int migrate_to_node(pid_t pid, int node)
 			tst_resm(TFAIL | TERRNO, "migrate_pages failed "
 				 "ret: %ld, ", TEST_RETURN);
 		else
-			tst_resm(TWARN, "migrate_pages could not migrate all "
+			tst_resm(TINFO, "migrate_pages could not migrate all "
 				 "pages, not migrated: %ld", TEST_RETURN);
 		print_mem_stats(pid, node);
 	}
@@ -319,11 +318,8 @@ static void test_migrate_other_process(int node1, int node2, int cap_sys_nice)
 int main(int argc, char *argv[])
 {
 	int lc;
-	const char *msg;
 
-	msg = parse_opts(argc, argv, options, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, options, NULL);
 
 	setup();
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
@@ -343,7 +339,7 @@ static void setup(void)
 	int pagesize = getpagesize();
 	void *p;
 
-	tst_require_root(NULL);
+	tst_require_root();
 	TEST(ltp_syscall(__NR_migrate_pages, 0, 0, NULL, NULL));
 
 	if (numa_available() == -1)
@@ -408,7 +404,6 @@ static void setup(void)
 static void cleanup(void)
 {
 	free(nodes);
-	TEST_CLEANUP;
 }
 
 #else /* __NR_migrate_pages */

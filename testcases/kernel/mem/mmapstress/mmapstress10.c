@@ -31,7 +31,6 @@
 #include <limits.h>
 /*****  LTP Port        *****/
 #include "test.h"
-#include "usctest.h"
 #define FAILED 0
 #define PASSED 1
 
@@ -149,7 +148,7 @@ unsigned randloops = 0;
 unsigned dosync = 0;
 unsigned do_offset = 0;
 unsigned pattern = 0;
-char filename[64];
+static const char *filename = "mmapstress10.out";
 
 void clean_mapper(int sig);
 void clean_writer(int sig);
@@ -271,9 +270,7 @@ int main(int argc, char *argv[])
 		anyfail();
 	}
 	(void)time(&t);
-	//(void)printf("%s: Started %s", argv[0], ctime(&t)); LTP Port
 
-	(void)sprintf(filename, "%sout.%d", progname, getpid());
 	seed = initrand();
 	pattern = seed & 0xff;
 
@@ -929,14 +926,14 @@ unsigned int initrand(void)
 }
 
 /*****  LTP Port        *****/
-void ok_exit()
+void ok_exit(void)
 {
 	tst_resm(TPASS, "Test passed\n");
 	tst_rmdir();
 	tst_exit();
 }
 
-int anyfail()
+int anyfail(void)
 {
 	tst_brkm(TFAIL, tst_rmdir, "Test failed\n");
 }

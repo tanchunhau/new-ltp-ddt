@@ -49,7 +49,6 @@
 #include <inttypes.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
 
 #define STRINGSIZE	27
@@ -113,17 +112,15 @@ void setup(void)
 	memset(&act, 0, sizeof(act));
 	act.sa_handler = catch_child;
 	sigemptyset(&act.sa_mask);
-	sigaddset(&act.sa_mask, SIGCLD);
-	if ((sigaction(SIGCLD, &act, NULL)) < 0) {
-		tst_resm(TFAIL, "SIGCLD signal setup failed, errno: %d", errno);
+	sigaddset(&act.sa_mask, SIGCHLD);
+	if ((sigaction(SIGCHLD, &act, NULL)) < 0) {
+		tst_resm(TFAIL, "SIGCHLD signal setup failed, errno: %d", errno);
 		fail = 1;
 	}
 }
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	tst_rmdir();
 
 }
@@ -268,7 +265,7 @@ void stop_child(void)
 {
 	struct flock fl;
 
-	signal(SIGCLD, SIG_DFL);
+	signal(SIGCHLD, SIG_DFL);
 	fl.l_type = STOP;
 	parent_put(&fl);
 	wait(0);
@@ -285,11 +282,8 @@ int main(int ac, char **av)
 	struct flock tl;
 
 	int lc;
-	const char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(ac, av, NULL, NULL);
 #ifdef UCLINUX
 	maybe_run_child(&do_child, "ddddd", &parent_pipe[0], &parent_pipe[1],
 			&child_pipe[0], &child_pipe[1], &fd);

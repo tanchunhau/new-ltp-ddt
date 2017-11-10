@@ -78,14 +78,12 @@
 #include <ucontext.h>
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "sigsuspend01";
 int TST_TOTAL = 1;
-int exp_enos[] = { EINTR, 0 };
 
 struct sigaction sa_new;	/* struct to hold signal info */
-sigset_t sigset;		/* signal set to hold signal lists */
+sigset_t signalset;		/* signal set to hold signal lists */
 sigset_t sigset1;
 sigset_t sigset2;
 
@@ -96,15 +94,10 @@ void sig_handler(int sig);	/* signal catching function */
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	/* set the expected errnos... */
-	TEST_EXP_ENOS(exp_enos);
 
 	for (lc = 0; TEST_LOOPING(lc); lc++) {
 
@@ -118,17 +111,12 @@ int main(int ac, char **av)
 		 * of the process and suspend process execution till
 		 * receipt of a signal 'SIGALRM'.
 		 */
-		TEST(sigsuspend(&sigset));
+		TEST(sigsuspend(&signalset));
 
 		/* Reset the alarm timer */
 		alarm(0);
 
 		if ((TEST_RETURN == -1) && (TEST_ERRNO == EINTR)) {
-			TEST_ERROR_LOG(TEST_ERRNO);
-			/*
-			 * Read the current signal mask of process,
-			 * Check whether previous signal mask preserved
-			 */
 			if (sigprocmask(SIG_UNBLOCK, 0, &sigset2) == -1) {
 				tst_resm(TFAIL, "sigprocmask() Failed "
 					 "to get previous signal mask "
@@ -172,7 +160,7 @@ void setup(void)
 	 * Initialise the signal sets with the list that
 	 * excludes/includes  all system-defined signals.
 	 */
-	if (sigemptyset(&sigset) == -1) {
+	if (sigemptyset(&signalset) == -1) {
 		tst_brkm(TFAIL, cleanup,
 			 "sigemptyset() failed, errno=%d : %s",
 			 errno, strerror(errno));
@@ -219,10 +207,5 @@ void sig_handler(int sig)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

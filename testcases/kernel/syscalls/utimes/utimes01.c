@@ -49,9 +49,8 @@
 #include <sys/mount.h>
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 
 #define MNTPOINT "mntpoint"
 #define TESTFILE1 "testfile1"
@@ -91,20 +90,14 @@ static void utimes_verify(const struct test_case_t *);
 
 char *TCID = "utimes01";
 int TST_TOTAL = ARRAY_SIZE(test_cases);
-static int exp_enos[] = { EACCES, ENOENT, EFAULT, EPERM, EROFS, 0 };
 
 int main(int ac, char **av)
 {
 	int i, lc;
-	const char *msg;
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
-
-	TEST_EXP_ENOS(exp_enos);
 
 	for (lc = 0; TEST_LOOPING(lc); ++lc) {
 		tst_count = 0;
@@ -122,7 +115,7 @@ static void setup(void)
 	struct passwd *ltpuser;
 	const char *fs_type;
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
@@ -146,7 +139,7 @@ static void setup(void)
 	SAFE_CHOWN(cleanup, TESTFILE2, ltpuser->pw_uid,
 		ltpuser->pw_gid);
 
-	tst_mkfs(cleanup, device, fs_type, NULL);
+	tst_mkfs(cleanup, device, fs_type, NULL, NULL);
 	SAFE_MKDIR(cleanup, MNTPOINT, DIR_MODE);
 	if (mount(device, MNTPOINT, fs_type, 0, NULL) == -1) {
 		tst_brkm(TBROK | TERRNO, cleanup,
@@ -183,8 +176,6 @@ static void utimes_verify(const struct test_case_t *tc)
 
 	TEST(utimes(tc->pathname, tc->times));
 
-	TEST_ERROR_LOG(TEST_ERRNO);
-
 	if (TEST_ERRNO == tc->exp_errno) {
 		tst_resm(TPASS | TTERRNO, "utimes() worked as expected");
 	} else {
@@ -202,14 +193,12 @@ static void cleanup(void)
 	if (seteuid(0) == -1)
 		tst_resm(TWARN | TERRNO, "seteuid(0) failed");
 
-	if (mount_flag && umount(MNTPOINT) == -1)
+	if (mount_flag && tst_umount(MNTPOINT) == -1)
 		tst_resm(TWARN | TERRNO, "umount %s failed", MNTPOINT);
 
 
 	if (device)
-		tst_release_device(NULL, device);
-
-	TEST_CLEANUP;
+		tst_release_device(device);
 
 	tst_rmdir();
 }

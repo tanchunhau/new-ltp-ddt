@@ -44,17 +44,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_ATTR_XATTR_H
-#include <attr/xattr.h>
+#ifdef HAVE_SYS_XATTR_H
+# include <sys/xattr.h>
 #endif
 #include <linux/fs.h>
 
 #include "test.h"
-#include "usctest.h"
 
 char *TCID = "setxattr03";
 
-#if defined HAVE_ATTR_XATTR_H && defined HAVE_FS_IOC_FLAGS
+#if defined HAVE_SYS_XATTR_H && defined HAVE_FS_IOC_FLAGS
 #define XATTR_TEST_KEY "user.testkey"
 #define XATTR_TEST_VALUE "this is a test value"
 #define XATTR_TEST_VALUE_SIZE (sizeof(XATTR_TEST_VALUE) - 1)
@@ -109,11 +108,8 @@ int main(int argc, char *argv[])
 {
 	int lc;
 	int i;
-	const char *msg;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, tst_exit, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -166,7 +162,7 @@ static void setup(void)
 {
 	int fd;
 
-	tst_require_root(NULL);
+	tst_require_root();
 
 	tst_tmpdir();
 
@@ -212,13 +208,12 @@ static void cleanup(void)
 	close(immu_fd);
 	close(append_fd);
 
-	TEST_CLEANUP;
 	tst_rmdir();
 }
 #else
 int main(void)
 {
-	tst_brkm(TCONF, NULL, "<attr/xattr.h> not present or FS_IOC_FLAGS "
+	tst_brkm(TCONF, NULL, "<sys/xattr.h> not present or FS_IOC_FLAGS "
 		 "missing in <linux/fs.h>");
 }
-#endif /* defined HAVE_ATTR_XATTR_H && defined HAVE_FS_IOC_FLAGS */
+#endif /* defined HAVE_SYS_XATTR_H && defined HAVE_FS_IOC_FLAGS */

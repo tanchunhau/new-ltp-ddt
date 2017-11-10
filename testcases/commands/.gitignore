@@ -1,5 +1,5 @@
-/ade/objdump/test_arch_debug
-/ade/objdump/test_arch_stripped
-/ade/size/test
+/ldd/datafiles/lddfile.out
+/ldd/datafiles/*.obj.so
 /cron/cron_dirs_check
-/eject/check_tray
+/eject/eject_check_tray
+/insmod/ltp_insmod01.ko

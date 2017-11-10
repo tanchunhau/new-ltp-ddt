@@ -3,8 +3,7 @@
 
 /* Harness Specific Include Files. */
 #include "test.h"
-#include "usctest.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 #include "config.h"
 
 #if defined HAVE_ASM_LDT_H

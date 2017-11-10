@@ -75,15 +75,13 @@
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup(void);
 void cleanup(void);
-
-int exp_enos[] = { EBADF, EINVAL, 0 };
 
 char *TCID = "flock02";
 int TST_TOTAL = 3;
@@ -93,10 +91,8 @@ int fd;
 int main(int argc, char **argv)
 {
 	int lc;
-	const char *msg;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -149,23 +145,19 @@ void setup(void)
 
 	tst_sig(FORK, DEF_HANDLER, cleanup);
 
-	TEST_EXP_ENOS(exp_enos);
-
 	TEST_PAUSE;
 
 	tst_tmpdir();
 
 	sprintf(filename, "flock02.%d", getpid());
 
-	fd = creat(filename, 0666);
+	fd = open(filename, O_CREAT | O_TRUNC | O_RDWR, 0666);
 	if (fd < 0)
 		tst_brkm(TFAIL | TERRNO, cleanup, "creat failed");
 }
 
 void cleanup(void)
 {
-	TEST_CLEANUP;
-
 	unlink(filename);
 	tst_rmdir();
 

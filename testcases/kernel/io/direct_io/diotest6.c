@@ -1,26 +1,23 @@
 /*
+ * Copyright (c) International Business Machines  Corp., 2002
+ *  04/30/2002 Narasimha Sharoff nsharoff@us.ibm.com
  *
- *   Copyright (c) International Business Machines  Corp., 2002
+ * This program is free software;  you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   This program is free software;  you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ * the GNU General Public License for more details.
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program;  if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /*
- * NAME
- *      diotest6.c
- *
  * DESCRIPTION
  *	Fork given number of children. Each child opens the same file, but
  *	uses its own file descriptior. The child does writes and reads from
@@ -35,12 +32,6 @@
  * USAGE
  *	diotest6 [-b bufsize] [-o offset] [-n numchild] [-i iterations]
  *			[-v nvector] [-f fileaname]
- *
- * History
- *	04/30/2002	Narasimha Sharoff nsharoff@us.ibm.com
- *
- * RESTRICTIONS
- *	None
 */
 
 #include <stdio.h>
@@ -48,7 +39,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/file.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/syscall.h>
 #include <sys/uio.h>
 #include <errno.h>
@@ -56,10 +47,9 @@
 #include "diotest_routines.h"
 
 #include "test.h"
-#include "usctest.h"
 
-char *TCID = "diotest06";	/* Test program identifier.    */
-int TST_TOTAL = 3;		/* Total number of test conditions */
+char *TCID = "diotest06";
+int TST_TOTAL = 3;
 
 #ifdef O_DIRECT
 
@@ -70,20 +60,17 @@ int TST_TOTAL = 3;		/* Total number of test conditions */
 #define	WRITE_DIRECT 2
 #define	RDWR_DIRECT 3
 
-static int iter = 100;		/* Iterations. Default 100 */
-static int bufsize = BUFSIZE;	/* Buffersize. Default 4k */
-static off64_t offset = 0;	/* Offset. Default 0 */
-static int nvector = 20;	/* Vector array. Default 20 */
-static char filename[LEN];	/* Test data file */
+static int iter = 100;
+static int bufsize = BUFSIZE;
+static off64_t offset = 0;
+static int nvector = 20;
+static char filename[LEN];
 static int fd1 = -1;
 
 static void setup(void);
 static void cleanup(void);
 
-/*
- * prg_usage: display the program usage
-*/
-void prg_usage()
+static void prg_usage(void)
 {
 	fprintf(stderr,
 		"Usage: diotest6 [-b bufsize] [-o offset] [-n numchild] [-i iterations] [-v nvector] [-f filename]\n");
@@ -98,77 +85,87 @@ void prg_usage()
 int runtest(int fd_r, int fd_w, int childnum, int action)
 {
 	off64_t seekoff;
-	int i, bufsize = BUFSIZE;
-	struct iovec *iov1, *iov2, *iovp;
+	int i, ret = -1;
+	ssize_t n = 0;
+	struct iovec *iov_r, *iov_w;
 
-	/* Allocate for buffers and data pointers */
-	seekoff = offset + bufsize * childnum;
-	if ((iov1 =
-	     (struct iovec *)valloc(sizeof(struct iovec) * nvector)) == NULL) {
-		tst_resm(TFAIL, "valloc buf1 failed: %s", strerror(errno));
-		return (-1);
+	/* allocate read/write io vectors */
+	iov_r = calloc(nvector, sizeof(*iov_r));
+	iov_w = calloc(nvector, sizeof(*iov_w));
+	if (!iov_r || !iov_w) {
+		tst_resm(TBROK | TERRNO, "calloc failed for iovector array");
+		free(iov_r);
+		free(iov_w);
+		return ret;
 	}
-	if ((iov2 =
-	     (struct iovec *)valloc(sizeof(struct iovec) * nvector)) == NULL) {
-		tst_resm(TFAIL, "valloc buf2 failed: %s", strerror(errno));
-		return (-1);
-	}
-	for (i = 0, iovp = iov1; i < nvector; iovp++, i++) {
-		if ((iovp->iov_base = valloc(bufsize)) == NULL) {
-			tst_resm(TFAIL, "valloc for iovp->iov_base: %s",
-				 strerror(errno));
-			return (-1);
+
+	/* allocate buffers and setup read/write io vectors */
+	for (i = 0; i < nvector; i++) {
+		iov_r[i].iov_base = valloc(bufsize);
+		if (!iov_r[i].iov_base) {
+			tst_resm(TBROK | TERRNO, "valloc error iov_r[%d]", i);
+			goto err;
 		}
-		iovp->iov_len = bufsize;
+		iov_r[i].iov_len = bufsize;
 	}
-	for (i = 0, iovp = iov2; i < nvector; iovp++, i++) {
-		if ((iovp->iov_base = valloc(bufsize)) == NULL) {
-			tst_resm(TFAIL, "valloc, iov2 for iovp->iov_base: %s",
-				 strerror(errno));
-			return (-1);
+	for (i = 0; i < nvector; i++) {
+		iov_w[i].iov_base = valloc(bufsize);
+		if (!iov_r[i].iov_base) {
+			tst_resm(TBROK | TERRNO, "valloc error iov_w[%d]", i);
+			goto err;
 		}
-		iovp->iov_len = bufsize;
+		iov_w[i].iov_len = bufsize;
 	}
 
 	/* seek, write, read and verify */
+	seekoff = offset + bufsize * childnum * nvector;
 	for (i = 0; i < iter; i++) {
-		/*
-		   fillbuf(buf1, bufsize, childnum+i);
-		 */
-		vfillbuf(iov1, nvector, childnum + i);
+		vfillbuf(iov_w, nvector, childnum+i);
+
 		if (lseek(fd_w, seekoff, SEEK_SET) < 0) {
 			tst_resm(TFAIL, "lseek before write failed: %s",
 				 strerror(errno));
-			return (-1);
+			goto err;
 		}
-		if (write(fd_w, iov1, bufsize) < bufsize) {
-			tst_resm(TFAIL, "write failed: %s", strerror(errno));
-			return (-1);
+		n = writev(fd_w, iov_w, nvector);
+		if (n < (bufsize * nvector)) {
+			tst_resm(TFAIL | TERRNO, "writev failed, ret = %zd", n);
+			goto err;
 		}
 		if (action == READ_DIRECT) {
 			/* Make sure data is on to disk before read */
 			if (fsync(fd_w) < 0) {
 				tst_resm(TFAIL, "fsync failed: %s",
 					 strerror(errno));
-				return (-1);
+				goto err;
 			}
 		}
 		if (lseek(fd_r, seekoff, SEEK_SET) < 0) {
 			tst_resm(TFAIL, "lseek before read failed: %s",
 				 strerror(errno));
-			return (-1);
+			goto err;
 		}
-		if (read(fd_r, iov2, bufsize) < bufsize) {
-			tst_resm(TFAIL, "read failed: %s", strerror(errno));
-			return (-1);
+		n = readv(fd_r, iov_r, nvector);
+		if (n < (bufsize * nvector)) {
+			tst_resm(TFAIL | TERRNO, "readv failed, ret = %zd", n);
+			goto err;
 		}
-		if (bufcmp((char *)iov1, (char *)iov2, bufsize) != 0) {
+		if (vbufcmp(iov_w, iov_r, nvector) != 0) {
 			tst_resm(TFAIL, "comparsion failed. Child=%d offset=%d",
 				 childnum, (int)seekoff);
-			return (-1);
+			goto err;
 		}
 	}
-	return 0;
+	ret = 0;
+
+err:
+	for (i = 0; i < nvector; i++)
+		free(iov_r[i].iov_base);
+	for (i = 0; i < nvector; i++)
+		free(iov_w[i].iov_base);
+	free(iov_r);
+	free(iov_w);
+	return ret;
 }
 
 /*
@@ -255,7 +252,7 @@ int child_function(int childnum, int action)
 int main(int argc, char *argv[])
 {
 	int *pidlst;
-	int numchild = 1;	/* Number of children. Default 5 */
+	int numchild = 1;
 	int i, fail_count = 0, failed = 0, total = 0;
 
 	/* Options */
@@ -394,15 +391,13 @@ static void cleanup(void)
 		unlink(filename);
 
 	tst_rmdir();
-
 }
 
 #else /* O_DIRECT */
 
-int main()
+int main(void)
 {
-
-	tst_resm(TCONF, "O_DIRECT is not defined.");
-	return 0;
+	tst_brkm(TCONF, NULL, "O_DIRECT is not defined.");
 }
+
 #endif /* O_DIRECT */

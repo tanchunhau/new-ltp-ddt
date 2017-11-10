@@ -44,9 +44,8 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <pwd.h>
-#include <wait.h>
+#include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 
 void setup(void);
 void cleanup(void);
@@ -59,14 +58,11 @@ int fail;
 int main(int argc, char **argv)
 {
 	int lc;
-	const char *msg;
 
 	pid_t pid, pid1;
 	int status;
 
-	if ((msg = parse_opts(argc, argv, NULL, NULL)) != NULL) {
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
-	}
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 
@@ -119,10 +115,5 @@ void setup(void)
  */
 void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 }

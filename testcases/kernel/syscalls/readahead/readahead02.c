@@ -44,9 +44,8 @@
 #include <fcntl.h>
 #include "config.h"
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 
 char *TCID = "readahead02";
 int TST_TOTAL = 1;
@@ -59,6 +58,8 @@ static size_t testfile_size = 64 * 1024 * 1024;
 static int opt_fsize;
 static char *opt_fsizestr;
 static int pagesize;
+
+#define MIN_SANE_READAHEAD (4u * 1024u)
 
 option_t options[] = {
 	{"s:", &opt_fsize, &opt_fsizestr},
@@ -80,7 +81,7 @@ static int check_ret(long expected_ret)
 			 "returned value = %ld", TEST_RETURN);
 		return 0;
 	}
-	tst_resm(TFAIL, "unexpected failure - "
+	tst_resm(TFAIL | TTERRNO, "unexpected failure - "
 		 "returned value = %ld, expected: %ld",
 		 TEST_RETURN, expected_ret);
 	return 1;
@@ -160,7 +161,7 @@ static void create_testfile(void)
 	char *tmp;
 	size_t i;
 
-	tst_resm(TINFO, "creating test file of size: %ld", testfile_size);
+	tst_resm(TINFO, "creating test file of size: %zu", testfile_size);
 	tmp = SAFE_MALLOC(cleanup, pagesize);
 
 	/* round to page size */
@@ -185,6 +186,7 @@ static void create_testfile(void)
 	free(tmp);
 }
 
+
 /* read_testfile - mmap testfile and read every page.
  * This functions measures how many I/O and time it takes to fully
  * read contents of test file.
@@ -201,11 +203,12 @@ static void read_testfile(int do_readahead, const char *fname, size_t fsize,
 			  unsigned long *cached)
 {
 	int fd;
-	size_t i;
+	size_t i = 0;
 	long read_bytes_start;
 	unsigned char *p, tmp;
 	unsigned long time_start_usec, time_end_usec;
-	off_t offset;
+	unsigned long cached_start, max_ra_estimate = 0;
+	off_t offset = 0;
 	struct timeval now;
 
 	fd = open(fname, O_RDONLY);
@@ -213,14 +216,31 @@ static void read_testfile(int do_readahead, const char *fname, size_t fsize,
 		tst_brkm(TBROK | TERRNO, cleanup, "Failed to open %s", fname);
 
 	if (do_readahead) {
-		/* read ahead in chunks, 2MB is maximum since 3.15-rc1 */
-		for (i = 0; i < fsize; i += 2*1024*1024) {
-			TEST(ltp_syscall(__NR_readahead, fd,
-				(off64_t) i, 2*1024*1024));
-			if (TEST_RETURN != 0)
+		cached_start = get_cached_size();
+		do {
+			TEST(readahead(fd, offset, fsize - offset));
+			if (TEST_RETURN != 0) {
+				check_ret(0);
 				break;
-		}
-		check_ret(0);
+			}
+
+			/* estimate max readahead size based on first call */
+			if (!max_ra_estimate) {
+				*cached = get_cached_size();
+				if (*cached > cached_start) {
+					max_ra_estimate = (1024 *
+						(*cached - cached_start));
+					tst_resm(TINFO, "max ra estimate: %lu",
+						max_ra_estimate);
+				}
+				max_ra_estimate = MAX(max_ra_estimate,
+					MIN_SANE_READAHEAD);
+			}
+
+			i++;
+			offset += max_ra_estimate;
+		} while ((size_t)offset < fsize);
+		tst_resm(TINFO, "readahead calls made: %zu", i);
 		*cached = get_cached_size();
 
 		/* offset of file shouldn't change after readahead */
@@ -284,7 +304,10 @@ static void test_readahead(void)
 
 	tst_resm(TINFO, "read_testfile(0)");
 	read_testfile(0, testfile, testfile_size, &read_bytes, &usec, &cached);
-	cached = cached - cached_low;
+	if (cached > cached_low)
+		cached = cached - cached_low;
+	else
+		cached = 0;
 
 	sync();
 	drop_caches();
@@ -292,7 +315,10 @@ static void test_readahead(void)
 	tst_resm(TINFO, "read_testfile(1)");
 	read_testfile(1, testfile, testfile_size, &read_bytes_ra,
 		      &usec_ra, &cached_ra);
-	cached_ra = cached_ra - cached_low;
+	if (cached_ra > cached_low)
+		cached_ra = cached_ra - cached_low;
+	else
+		cached_ra = 0;
 
 	tst_resm(TINFO, "read_testfile(0) took: %ld usec", usec);
 	tst_resm(TINFO, "read_testfile(1) took: %ld usec", usec_ra);
@@ -331,12 +357,9 @@ static void test_readahead(void)
 
 int main(int argc, char *argv[])
 {
-	const char *msg;
 	int lc;
 
-	msg = parse_opts(argc, argv, options, help);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, options, help);
 
 	if (opt_fsize)
 		testfile_size = atoi(opt_fsizestr);
@@ -352,7 +375,7 @@ int main(int argc, char *argv[])
 
 static void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 	tst_tmpdir();
 	TEST_PAUSE;
 
@@ -368,7 +391,6 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	TEST_CLEANUP;
 	unlink(testfile);
 	tst_rmdir();
 }

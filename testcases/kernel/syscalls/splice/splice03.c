@@ -40,9 +40,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "test.h"
-#include "usctest.h"
-#include "safe_macros.h"
+#include "tst_test.h"
 #include "lapi/splice.h"
 
 #define TEST_FILE "testfile"
@@ -59,13 +57,13 @@ static int appendfd;
 static int pipes[2];
 static loff_t offset;
 
-static struct test_case_t {
+static struct tcase {
 	int *fdin;
 	loff_t *offin;
 	int *fdout;
 	loff_t *offout;
 	int exp_errno;
-} test_cases[] = {
+} tcases[] = {
 	{ &badfd, NULL, &pipes[1], NULL, EBADF },
 	{ &pipes[0], NULL, &badfd, NULL, EBADF },
 	{ &wrfd, NULL, &pipes[1], NULL, EBADF },
@@ -75,106 +73,66 @@ static struct test_case_t {
 	{ &rdfd, NULL, &pipes[1], &offset, ESPIPE },
 };
 
-static void setup(void);
-static void cleanup(void);
-static void splice_verify(const struct test_case_t *);
-
-char *TCID = "splice03";
-int TST_TOTAL = ARRAY_SIZE(test_cases);
-static int exp_enos[] = { EBADF, EINVAL, ESPIPE, 0 };
-
-int main(int ac, char **av)
+static void setup(void)
 {
-	int i, lc;
-	const char *msg;
+	SAFE_FILE_PRINTF(TEST_FILE, STR);
+	rdfd = SAFE_OPEN(TEST_FILE, O_RDONLY);
 
-	msg = parse_opts(ac, av, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	wrfd = SAFE_OPEN(TEST_FILE2, O_WRONLY | O_CREAT, 0644);
 
-	setup();
+	appendfd = SAFE_OPEN(TEST_FILE3, O_RDWR | O_CREAT | O_APPEND, 0644);
 
-	TEST_EXP_ENOS(exp_enos);
+	SAFE_PIPE(pipes);
 
-	for (lc = 0; TEST_LOOPING(lc); lc++) {
-		tst_count = 0;
-
-		for (i = 0; i < TST_TOTAL; i++)
-			splice_verify(&test_cases[i]);
-	}
-
-	cleanup();
-	tst_exit();
+	SAFE_WRITE(1, pipes[1], STR, sizeof(STR) - 1);
 }
 
-void setup(void)
+static void splice_verify(unsigned int n)
 {
-	if ((tst_kvercmp(2, 6, 17)) < 0) {
-		tst_brkm(TCONF, cleanup, "This test can only run on kernels "
-			"that are 2.6.17 or higher");
-	}
+	struct tcase *tc = &tcases[n];
 
-	TEST_PAUSE;
-
-	tst_sig(FORK, DEF_HANDLER, cleanup);
-
-	tst_tmpdir();
-
-	SAFE_FILE_PRINTF(cleanup, TEST_FILE, STR);
-	rdfd = SAFE_OPEN(cleanup, TEST_FILE, O_RDONLY);
-
-	wrfd = SAFE_OPEN(cleanup, TEST_FILE2,
-		O_WRONLY | O_CREAT, 0644);
-
-	appendfd = SAFE_OPEN(cleanup, TEST_FILE3,
-		O_RDWR | O_CREAT | O_APPEND, 0644);
-
-	SAFE_PIPE(cleanup, pipes);
-
-	SAFE_WRITE(cleanup, 1, pipes[1], STR, sizeof(STR) - 1);
-}
-
-static void splice_verify(const struct test_case_t *tc)
-{
 	TEST(splice(*(tc->fdin), tc->offin, *(tc->fdout),
 		tc->offout, SPLICE_TEST_LEN, 0));
 
 	if (TEST_RETURN != -1) {
-		tst_resm(TFAIL, "splice() returned %ld, "
-			"expected -1, errno:%d", TEST_RETURN,
-			tc->exp_errno);
+		tst_res(TFAIL, "splice() returned %ld expected %s",
+			TEST_RETURN, tst_strerrno(tc->exp_errno));
 		return;
 	}
 
-	TEST_ERROR_LOG(TEST_ERRNO);
-
-	if (TEST_ERRNO == tc->exp_errno) {
-		tst_resm(TPASS | TTERRNO, "splice() failed as expected");
-	} else {
-		tst_resm(TFAIL | TTERRNO,
+	if (TEST_ERRNO != tc->exp_errno) {
+		tst_res(TFAIL | TTERRNO,
 			"splice() failed unexpectedly; expected: %d - %s",
-			tc->exp_errno, strerror(tc->exp_errno));
+			tc->exp_errno, tst_strerrno(tc->exp_errno));
+		return;
 	}
+
+	tst_res(TPASS | TTERRNO, "splice() failed as expected");
 }
 
-void cleanup(void)
+static void cleanup(void)
 {
-	TEST_CLEANUP;
+	if (rdfd > 0)
+		SAFE_CLOSE(rdfd);
 
-	if (rdfd && close(rdfd) < 0)
-		tst_resm(TWARN | TERRNO, "close rdfd failed");
+	if (wrfd > 0)
+		SAFE_CLOSE(wrfd);
 
-	if (wrfd && close(wrfd) < 0)
-		tst_resm(TWARN | TERRNO, "close wrfd failed");
+	if (appendfd > 0)
+		SAFE_CLOSE(appendfd);
 
-	if (appendfd && close(appendfd) < 0)
-		tst_resm(TWARN | TERRNO, "close appendfd failed");
+	if (pipes[0] > 0)
+		SAFE_CLOSE(pipes[0]);
 
-	if (pipes[0] && close(pipes[0]) < 0)
-		tst_resm(TWARN | TERRNO, "close pipes[0] failed");
-
-	if (pipes[1] && close(pipes[1]) < 0)
-		tst_resm(TWARN | TERRNO, "close pipes[1] failed");
-
-	tst_rmdir();
+	if (pipes[1] > 0)
+		SAFE_CLOSE(pipes[1]);
 }
+
+static struct tst_test test = {
+	.setup = setup,
+	.cleanup = cleanup,
+	.test = splice_verify,
+	.tcnt = ARRAY_SIZE(tcases),
+	.needs_tmpdir = 1,
+	.min_kver = "2.6.17",
+};

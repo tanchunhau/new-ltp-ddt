@@ -70,9 +70,8 @@ The -v flag makes it print out the values of each counter.
 #endif
 
 #include "test.h"
-#include "usctest.h"
 #include "safe_macros.h"
-#include "linux_syscall_numbers.h"
+#include "lapi/syscalls.h"
 
 char *TCID = "perf_event_open02";
 int TST_TOTAL = 1;
@@ -80,7 +79,7 @@ int TST_TOTAL = 1;
 #if HAVE_PERF_EVENT_ATTR
 
 #define MAX_CTRS	1000
-#define LOOPS		1000000000
+#define LOOPS		100000000
 
 static int count_hardware_counters(void);
 static void setup(void);
@@ -101,11 +100,8 @@ static int hwfd[MAX_CTRS], tskfd[MAX_CTRS];
 int main(int ac, char **av)
 {
 	int lc;
-	const char *msg;
 
-	msg = parse_opts(ac, av, options, help);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, options, help);
 
 	setup();
 
@@ -273,8 +269,6 @@ static void cleanup(void)
 {
 	int i;
 
-	TEST_CLEANUP;
-
 	for (i = 0; i < n; i++) {
 		if (hwfd[i] > 0 && close(hwfd[i]) == -1)
 			tst_resm(TWARN | TERRNO, "close(%d) failed", hwfd[i]);
@@ -334,7 +328,7 @@ static void verify(void)
 	}
 
 	ratio = (double)vtsum / vt0;
-	tst_resm(TINFO, "ratio: %.2f", ratio);
+	tst_resm(TINFO, "ratio: %lf", ratio);
 	if (ratio > nhw + 0.0001) {
 		tst_resm(TFAIL, "test failed (ratio was greater than )");
 	} else {
@@ -344,7 +338,7 @@ static void verify(void)
 
 static void help(void)
 {
-	printf("-v  print verbose infomation\n");
+	printf("  -v      Print verbose information\n");
 }
 
 #else

@@ -31,14 +31,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include "usctest.h"
+#include "pidns_helper.h"
 #include "test.h"
 #include "safe_macros.h"
-#include "libclone.h"
-#include "pidns_helper.h"
 
 #define PROCDIR "proc"
-char *TCID	= "pidns03";
+char *TCID = "pidns03";
 int TST_TOTAL	= 1;
 
 
@@ -49,7 +47,7 @@ static void cleanup(void)
 
 static void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 	check_newpid();
 	tst_tmpdir();
 	SAFE_MKDIR(cleanup, PROCDIR, 0555);
@@ -57,6 +55,7 @@ static void setup(void)
 
 int child_func(void *arg)
 {
+	ssize_t r;
 	char buf[10];
 
 	if (mount("none", PROCDIR, "proc", MS_RDONLY, NULL) == -1) {
@@ -65,11 +64,14 @@ int child_func(void *arg)
 	}
 
 	/* self is symlink to directory named after current pid number */
-	if (readlink(PROCDIR"/self", buf, sizeof(buf)) == -1) {
+	r = readlink(PROCDIR"/self", buf, sizeof(buf)-1);
+	if (r == -1) {
 		perror("readlink");
 		umount(PROCDIR);
 		return 1;
 	}
+
+	buf[r] = '\0';
 
 	umount(PROCDIR);
 
@@ -108,12 +110,9 @@ static void test(void)
 
 int main(int argc, char *argv[])
 {
-	const char *msg;
 	int lc;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 

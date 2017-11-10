@@ -24,12 +24,24 @@
 export TCID=utimensat01
 export TST_TOTAL=99
 export TST_COUNT=0
+. test.sh
 
-if tst_kvercmp 2 6 22 ; then
-       tst_resm TCONF "System kernel version is less than 2.6.22"
-       tst_resm TCONF "Cannot execute test"
-       exit 0
+if tst_kvcmp -lt "2.6.22"; then
+	tst_brkm TCONF "System kernel version is less than 2.6.22,cannot execute test"
 fi
+
+# Starting with 4.8.0 operations on immutable files return EPERM instead of
+# EACCES.
+# This patch has also been merged to stable 4.4 with
+# b3b4283 ("vfs: move permission checking into notify_change() for utimes(NULL)")
+if tst_kvcmp -ge "4.4.27" -a -lt "4.5.0"; then
+	imaccess=EPERM
+elif tst_kvcmp -lt "4.4.27"; then
+	imaccess=EACCES
+else
+	imaccess=EPERM
+fi
+
 
 RESULT_FILE=$TMPDIR/utimensat.result
 
@@ -39,8 +51,7 @@ FILE=$TEST_DIR/utimensat.test_file
 TEST_PROG=utimensat01
 
 if [ ! -f $LTPROOT/testcases/bin/$TEST_PROG ]; then
-	tst_resm TWARN "$LTPROOT/testcases/bin/$TEST_PROG is missing (please check install)"
-	exit 1
+	tst_brkm TBROK "$LTPROOT/testcases/bin/$TEST_PROG is missing (please check install)"
 fi
 
 # Summary counters of all test results
@@ -107,7 +118,7 @@ setup_file()
 
 test_failed()
 {
-    echo "FAILED test $test_num"
+    tst_resm TFAIL "FAILED test $test_num"
 
     failed_cnt=$(expr $failed_cnt + 1)
     failed_list="$failed_list $test_num"
@@ -177,7 +188,7 @@ check_result()
     fi
 
     passed_cnt=$(expr $passed_cnt + 1)
-    echo "PASSED test $test_num"
+    tst_resm TPASS "PASSED test $test_num"
 }
 
 run_test()
@@ -254,15 +265,13 @@ run_test()
 # Use trap to restore this line after program terminates.
 sudoers=/etc/sudoers
 if [ ! -r $sudoers ]; then
-	tst_resm TBROK "can't read $sudoers"
-	exit 1
+	tst_brkm TBROK "can't read $sudoers"
 fi
 pattern="[[:space:]]*Defaults[[:space:]]*requiretty.*"
 if grep -q "^${pattern}" $sudoers; then
 	tst_resm TINFO "Comment requiretty in $sudoers for automated testing systems"
 	if ! sed -r -i.$$ -e "s/^($pattern)/#\1/" $sudoers; then
-		tst_resm TBROK "failed to mangle $sudoers properly"
-		exit 1
+		tst_brkm TBROK "failed to mangle $sudoers properly"
 	fi
 	trap 'trap "" EXIT; restore_sudoers' EXIT
 fi
@@ -284,8 +293,7 @@ else
 fi
 
 if ! sudo $s_arg true; then
-	tst_resm TBROK "sudo cannot be run by user non-interactively"
-	exit 1
+	tst_brkm TBROK "sudo cannot be run by user non-interactively"
 fi
 if test ! -f $sudoers
 then
@@ -300,6 +308,16 @@ nuke_sudoers()
 }
 
 sudo $s_arg -u $test_user mkdir -p $TEST_DIR
+
+# Make sure chattr command is supported
+touch $TEST_DIR/tmp_file
+chattr +a $TEST_DIR/tmp_file
+if [ $? -ne 0 ] ; then
+	rm -rf $TEST_DIR
+	tst_brkm TCONF "chattr not supported"
+fi
+chattr -a $TEST_DIR/tmp_file
+
 cd $TEST_DIR
 chown root $LTPROOT/testcases/bin/$TEST_PROG
 chmod ugo+x,u+s $LTPROOT/testcases/bin/$TEST_PROG
@@ -410,10 +428,10 @@ echo "Testing immutable file, owned by self"
 echo
 
 echo "***** Testing times==NULL case *****"
-run_test -W "" 600 "+i" "" EACCES
+run_test -W "" 600 "+i" "" $imaccess
 
 echo "***** Testing times=={ UTIME_NOW, UTIME_NOW } case *****"
-run_test -W "" 600 "+i" "0 n 0 n" EACCES
+run_test -W "" 600 "+i" "0 n 0 n" $imaccess
 
 echo "***** Testing times=={ UTIME_OMIT, UTIME_OMIT } case *****"
 run_test -W "" 600 "+i" "0 o 0 o" SUCCESS n n
@@ -436,10 +454,10 @@ echo "Testing immutable append-only file, owned by self"
 echo
 
 echo "***** Testing times==NULL case *****"
-run_test -W "" 600 "+ai" "" EACCES
+run_test -W "" 600 "+ai" "" $imaccess
 
 echo "***** Testing times=={ UTIME_NOW, UTIME_NOW } case *****"
-run_test -W "" 600 "+ai" "0 n 0 n" EACCES
+run_test -W "" 600 "+ai" "0 n 0 n" $imaccess
 
 echo "***** Testing times=={ UTIME_OMIT, UTIME_OMIT } case *****"
 run_test -W "" 600 "+ai" "0 o 0 o" SUCCESS n n
@@ -494,7 +512,6 @@ date
 echo "Total tests: $test_num; passed: $passed_cnt; failed: $failed_cnt"
 if test $failed_cnt -gt 0; then
     echo "Failed tests: $failed_list"
-    exit -1
 fi
 
-exit
+tst_exit

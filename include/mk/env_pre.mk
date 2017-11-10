@@ -17,7 +17,7 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Garrett Cooper, September 2009
+# Ngie Cooper, September 2009
 #
 # This Makefile must be included first. NO IF'S, AND'S, OR BUT'S.
 #
@@ -92,6 +92,17 @@ srcdir				:= $(strip $(subst $(abs_top_srcdir)/,,$(abs_srcdir)))
 
 ifeq ($(srcdir),)
 srcdir				:= .
+endif
+
+# If config.mk or features.mk doesn't exist it's not an error for some targets
+# which are filtered below (e.g. clean). However these config files may be
+# needed for those targets (eg. the open posix testsuite is not cleaned even if
+# it's enabled by configure) thus it would be wise to do silent inclusion.
+ifneq ("$(wildcard $(abs_top_builddir)/include/mk/config.mk)","")
+include $(abs_top_builddir)/include/mk/config.mk
+endif
+ifneq ("$(wildcard $(abs_top_builddir)/include/mk/features.mk)","")
+include $(abs_top_builddir)/include/mk/features.mk
 endif
 
 # autotools, *clean, and help don't require config.mk, features.mk, etc...

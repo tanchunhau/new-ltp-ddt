@@ -32,17 +32,12 @@
 #include <sys/mount.h>
 #include <stdio.h>
 #include <errno.h>
-#include "test.h"
-#include "usctest.h"
-#include "libclone.h"
-#include "safe_macros.h"
-#include "safe_file_ops.h"
 #include "mountns_helper.h"
-
+#include "test.h"
+#include "safe_macros.h"
 
 char *TCID	= "mountns04";
 int TST_TOTAL	= 1;
-
 
 #if defined(MS_SHARED) && defined(MS_PRIVATE) \
     && defined(MS_REC) && defined(MS_UNBINDABLE)
@@ -73,12 +68,9 @@ static void test(void)
 
 int main(int argc, char *argv[])
 {
-	const char *msg;
 	int lc;
 
-	msg = parse_opts(argc, argv, NULL, NULL);
-	if (msg != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(argc, argv, NULL, NULL);
 
 	setup();
 

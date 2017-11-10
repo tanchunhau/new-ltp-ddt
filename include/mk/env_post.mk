@@ -17,7 +17,7 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Garrett Cooper, July 2009
+# Ngie Cooper, July 2009
 #
 
 ENV_PRE_LOADED			?= $(error You must load env_pre.mk before including this file)
@@ -25,7 +25,7 @@ ENV_PRE_LOADED			?= $(error You must load env_pre.mk before including this file)
 include $(top_srcdir)/include/mk/functions.mk
 
 ifndef ENV_POST_LOADED
-ENV_PRE_LOADED = 1
+ENV_POST_LOADED = 1
 
 # Default source search path. Modify as necessary, but I would call that
 # poor software design if you need more than one search directory, and
@@ -33,12 +33,21 @@ ENV_PRE_LOADED = 1
 vpath %.c $(abs_srcdir)
 
 # For config.h, et all.
-CPPFLAGS			+= -I$(top_srcdir)/include -I$(top_builddir)/include
+CPPFLAGS			+= -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/include/old/
 
 LDFLAGS				+= -L$(top_builddir)/lib
 
 ifeq ($(UCLINUX),1)
 CPPFLAGS			+= -D__UCLIBC__ -DUCLINUX
+endif
+
+ifeq ($(ANDROID),1)
+# There are many undeclared functions, it's best not to accidentally overlook
+# them.
+CFLAGS				+= -Werror-implicit-function-declaration
+
+LDFLAGS				+= -L$(top_builddir)/lib/android_libpthread
+LDFLAGS				+= -L$(top_builddir)/lib/android_librt
 endif
 
 MAKE_TARGETS			?= $(notdir $(patsubst %.c,%,$(wildcard $(abs_srcdir)/*.c)))

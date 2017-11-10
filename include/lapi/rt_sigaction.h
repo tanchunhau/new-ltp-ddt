@@ -22,7 +22,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * Author: Liu Bo <liubo2009@cn.fujitsu.com>
- * Author: Garrett Cooper <yanegomi@gmail.com>
+ * Author: Ngie Cooper <yaneurabeya@gmail.com>
  *
  */
 
@@ -33,15 +33,23 @@
 
 #define INVAL_SA_PTR ((void *)-1)
 
+#if defined(__mips__)
+struct kernel_sigaction {
+	unsigned int sa_flags;
+	__sighandler_t k_sa_handler;
+	sigset_t sa_mask;
+};
+#else
 struct kernel_sigaction {
 	__sighandler_t k_sa_handler;
 	unsigned long sa_flags;
 	void (*sa_restorer) (void);
 	sigset_t sa_mask;
 };
+#endif
 
 /* This macro marks if (struct sigaction) has .sa_restorer member */
-#if !defined(__ia64__) && !defined(__alpha__) && !defined(__hppa__)
+#if !defined(__ia64__) && !defined(__alpha__) && !defined(__hppa__) && !defined(__mips__)
 # define HAVE_SA_RESTORER
 #endif
 
@@ -105,12 +113,14 @@ static inline int sig_initial(int sig)
 # if defined __arch64__ || defined __sparcv9
 
 /*
- * From glibc/sysdeps/unix/sysv/linux/sparc/sparc64/sigaction.c
+ * Based on glibc/sysdeps/unix/sysv/linux/sparc/sparc64/sigaction.c
  */
 
-static void __rt_sigreturn_stub(void)
+extern char *__rt_sig_stub;
+
+static void __attribute__((used)) __rt_sigreturn_stub(void)
 {
-	__asm__ ("mov %0, %%g1\n\t"
+	__asm__ ("__rt_sig_stub: mov %0, %%g1\n\t"
 		"ta  0x6d\n\t"
 		: /* no outputs */
 		: "i" (__NR_rt_sigreturn));
@@ -119,20 +129,22 @@ static void __rt_sigreturn_stub(void)
 # else /* sparc32 */
 
 /*
- * From glibc/sysdeps/unix/sysv/linux/sparc/sparc32/sigaction.c
+ * Based on glibc/sysdeps/unix/sysv/linux/sparc/sparc32/sigaction.c
  */
 
-static void __rt_sigreturn_stub(void)
+extern char *__rt_sig_stub, *__sig_stub;
+
+static void __attribute__((used)) __rt_sigreturn_stub(void)
 {
-	__asm__ ("mov %0, %%g1\n\t"
+	__asm__ ("__rt_sig_stub: mov %0, %%g1\n\t"
 		"ta  0x10\n\t"
 		: /* no outputs */
 		: "i" (__NR_rt_sigreturn));
 }
 
-static void __sigreturn_stub(void)
+static void __attribute__((used)) __sigreturn_stub(void)
 {
-	__asm__ ("mov %0, %%g1\n\t"
+	__asm__ ("__sig_stub: mov %0, %%g1\n\t"
 		"ta  0x10\n\t"
 		: /* no outputs */
 		: "i" (__NR_sigreturn));
@@ -140,6 +152,30 @@ static void __sigreturn_stub(void)
 
 # endif
 #endif /* __sparc__ */
+
+#ifdef __arc__
+
+#undef SA_RESTORER
+#define SA_RESTORER     0x04000000
+
+/*
+ * based on uClibc/libc/sysdeps/linux/arc/sigaction.c
+ */
+static void
+__attribute__ ((optimize("Os"))) __attribute__((used)) restore_rt(void)
+{
+	__asm__ (
+		"mov r8, %0	\n\t"
+#ifdef __ARCHS__
+		"trap_s	0	\n\t"
+#else
+		"trap0	\n\t"
+#endif
+		: /* no outputs */
+		: "i" (__NR_rt_sigreturn)
+		: "r8");
+}
+#endif
 
 /* This is a wrapper for __NR_rt_sigaction syscall.
  * act/oact values of INVAL_SA_PTR is used to pass
@@ -162,8 +198,9 @@ static int ltp_rt_sigaction(int signum, const struct sigaction *act,
 		kact.k_sa_handler = act->sa_handler;
 		memcpy(&kact.sa_mask, &act->sa_mask, sizeof(sigset_t));
 		kact.sa_flags = act->sa_flags;
+#ifndef __mips__
 		kact.sa_restorer = NULL;
-
+#endif
 		kact_p = &kact;
 	}
 
@@ -174,6 +211,9 @@ static int ltp_rt_sigaction(int signum, const struct sigaction *act,
 
 #ifdef __x86_64__
 	sig_initial(signum);
+#endif
+
+#if defined __x86_64__ || defined __arc__
 	kact.sa_flags |= SA_RESTORER;
 	kact.sa_restorer = restore_rt;
 #endif
@@ -181,12 +221,12 @@ static int ltp_rt_sigaction(int signum, const struct sigaction *act,
 #ifdef __sparc__
 	unsigned long stub = 0;
 # if defined __arch64__ || defined __sparcv9
-	stub = ((unsigned long) &__rt_sigreturn_stub) - 8;
+	stub = ((unsigned long) &__rt_sig_stub) - 8;
 # else /* sparc32 */
 	if ((kact.sa_flags & SA_SIGINFO) != 0)
-		stub = ((unsigned long) &__rt_sigreturn_stub) - 8;
+		stub = ((unsigned long) &__rt_sig_stub) - 8;
 	else
-		stub = ((unsigned long) &__sigreturn_stub) - 8;
+		stub = ((unsigned long) &__sig_stub) - 8;
 # endif
 #endif
 

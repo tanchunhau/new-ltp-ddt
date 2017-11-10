@@ -1,11 +1,12 @@
 AC_PREREQ(2.61)
-AC_INIT([ltp], [LTP_VERSION], [ltp-list@lists.sourceforge.net])
+AC_INIT([ltp], [LTP_VERSION], [ltp@lists.linux.it])
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_FILES([ \
     include/mk/config.mk \
+    include/mk/config-openposix.mk \
     include/mk/features.mk \
     lib/ltp.pc \
     m4/Makefile \
@@ -30,12 +31,11 @@ AC_PROG_YACC
 AC_PREFIX_DEFAULT(/opt/ltp)
 
 AC_CHECK_HEADERS([ \
-    dmapi.h \
     ifaddrs.h \
     libaio.h \
     mm.h \
     pthread.h \
-    attr/xattr.h \
+    sys/xattr.h \
     linux/genetlink.h \
     linux/mempolicy.h \
     linux/module.h \
@@ -43,7 +43,6 @@ AC_CHECK_HEADERS([ \
     sys/epoll.h \
     sys/inotify.h \
     sys/fanotify.h \
-    sys/jfsdmapi.h \
     sys/prctl.h \
 ])
 
@@ -102,24 +101,10 @@ fi
 
 # Testsuites knobs
 
-# testcases/kernel/power_management requires python.
-if test "x$with_python" = xyes; then
-    AC_ARG_WITH([power-management-testsuite],
-      [AC_HELP_STRING([--with-power-management-testsuite],
-        [compile and install the x86 power management testsuite (default=no)])],
-      [with_power_management_testsuite=yes],
-    )
-fi
-if test "x$with_power_management_testsuite" = xyes; then
-    AC_SUBST([WITH_POWER_MANAGEMENT_TESTSUITE],["yes"])
-else
-    AC_SUBST([WITH_POWER_MANAGEMENT_TESTSUITE],["no"])
-fi
-
 AC_ARG_WITH([open-posix-testsuite],
   [AC_HELP_STRING([--with-open-posix-testsuite],
     [compile and install the open posix testsuite (default=no)])],
-  [with_open_posix_testsuite=yes]
+  [with_open_posix_testsuite=$withval]
 )
 if test "x$with_open_posix_testsuite" = xyes; then
     AC_SUBST([WITH_OPEN_POSIX_TESTSUITE],["yes"])
@@ -144,6 +129,8 @@ else
 fi
 
 AC_CONFIG_SUBDIRS([utils/ffsb-6.0-rc2])
+
+AC_CONFIG_COMMANDS([syscalls.h], [cd include/lapi/syscalls; ./regen.sh])
 
 # END testsuites knobs
 LTP_CHECK_FORTIFY_SOURCE
@@ -175,10 +162,12 @@ LTP_CHECK_XFS_QUOTACTL
 LTP_CHECK_CLONE_SUPPORTS_7_ARGS
 LTP_CHECK_MKDIRAT
 LTP_CHECK_FCHOWNAT
+LTP_CHECK_FSTATAT
 LTP_CHECK_MKNODAT
 LTP_CHECK_READLINKAT
 LTP_CHECK_OPENAT
 LTP_CHECK_RENAMEAT
+LTP_CHECK_RENAMEAT2
 LTP_CHECK_FALLOCATE
 LTP_CHECK_SYSCALL_FCNTL
 LTP_CHECK_SYSCALL_PERF_EVENT_OPEN
@@ -190,5 +179,18 @@ LTP_CHECK_TIMERFD
 LTP_CHECK_CAN_SUPPORT
 LTP_CHECK_IOVEC
 LTP_CHECK_KEYCTL
+LTP_CHECK_LINUXRANDOM
+LTP_CHECK_IF_LINK
+LTP_CHECK_KCMP
+LTP_CHECK_KCMP_TYPE
+LTP_CHECK_PREADV
+LTP_CHECK_PWRITEV
+LTP_CHECK_EPOLL_PWAIT
+LTP_CHECK_KEYUTILS_SUPPORT
+LTP_CHECK_SYNC_ADD_AND_FETCH
+LTP_CHECK_BUILTIN_CLEAR_CACHE
+LTP_CHECK_MMSGHDR
+LTP_CHECK_UNAME_DOMAINNAME
+LTP_CHECK_X_TABLES
 
 AC_OUTPUT

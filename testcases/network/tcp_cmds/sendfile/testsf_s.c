@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/file.h>
 #include <errno.h>
 #include <sys/signal.h>
@@ -16,7 +17,6 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include "test.h"
-#include "usctest.h"
 #include "netdefs.h"
 
 int TST_TOTAL = 1;

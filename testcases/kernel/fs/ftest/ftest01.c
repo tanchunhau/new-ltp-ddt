@@ -52,13 +52,13 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include "test.h"
-#include "usctest.h"
 #include "libftest.h"
 
 char *TCID = "ftest01";
@@ -97,10 +97,8 @@ static int local_flag;
 int main(int ac, char *av[])
 {
 	int lc;
-	const char *msg;
 
-	if ((msg = parse_opts(ac, av, NULL, NULL)) != NULL)
-		tst_brkm(TBROK, NULL, "OPTION PARSING ERROR - %s", msg);
+	tst_parse_opts(ac, av, NULL, NULL);
 
 	setup();
 
@@ -265,6 +263,7 @@ static void dotest(int testers, int me, int fd)
 	char *bits, *hold_bits, *buf, *val_buf, *zero_buf;
 	char val;
 	int count, collide, chunk, whenmisc, xfr, i;
+	struct stat stat;
 
 	nchunks = max_size / csize;
 
@@ -370,9 +369,13 @@ static void dotest(int testers, int me, int fd)
 						 "count %d xfr %d file_max 0x%x, should be %d.",
 						 me, CHUNK(chunk), val, count,
 						 xfr, file_max, zero_buf[0]);
-					tst_resm(TFAIL,
-						 "Test[%d]: last_trunc = 0x%x.",
+					tst_resm(TINFO,
+						 "Test[%d]: last_trunc = 0x%x",
 						 me, last_trunc);
+					fstat(fd, &stat);
+					tst_resm(TINFO,
+						 "\tStat: size=%llx, ino=%x",
+						 stat.st_size, (unsigned)stat.st_ino);
 					sync();
 					ft_dumpbuf(buf, csize);
 					ft_dumpbits(bits, (nchunks + 7) / 8);
@@ -399,9 +402,13 @@ static void dotest(int testers, int me, int fd)
 						 "count %d xfr %d file_max 0x%x.",
 						 me, CHUNK(chunk), val, count,
 						 xfr, file_max);
-					tst_resm(TFAIL,
-						 "Test[%d]: last_trunc = 0x%x.",
+					tst_resm(TINFO,
+						 "Test[%d]: last_trunc = 0x%x",
 						 me, last_trunc);
+					fstat(fd, &stat);
+					tst_resm(TINFO,
+						 "\tStat: size=%llx, ino=%x",
+						 stat.st_size, (unsigned)stat.st_ino);
 					sync();
 					ft_dumpbuf(buf, csize);
 					ft_dumpbits(bits, (nchunks + 7) / 8);
@@ -554,11 +561,6 @@ static void term(int sig LTP_ATTRIBUTE_UNUSED)
 
 static void cleanup(void)
 {
-	/*
-	 * print timing stats if that option was specified.
-	 * print errno log if that option was specified.
-	 */
-	TEST_CLEANUP;
 
 	tst_rmdir();
 }

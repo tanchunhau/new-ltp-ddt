@@ -41,9 +41,11 @@ export TST_COUNT=0
 export TMP=${TMP:-/tmp}
 cd $TMP
 
-TOT_MEM_LIMIT=$1
-ACTIVE_MEM_LIMIT=$2
-PROC_MEM=$3
+PAGE_SIZE=$(getconf PAGESIZE)
+
+TOT_MEM_LIMIT=$PAGE_SIZE
+ACTIVE_MEM_LIMIT=$PAGE_SIZE
+PROC_MEM=$((PAGE_SIZE * 2))
 
 TST_PATH=$PWD
 STATUS_PIPE="$TMP/status_pipe"
@@ -54,7 +56,9 @@ FAIL=1
 # Check if the test process is killed on crossing boundary
 test_proc_kill()
 {
-	( cd $TMP && mem_process -m $PROC_MEM & )
+	cd $TMP
+	mem_process -m $PROC_MEM &
+	cd $OLDPWD
 	sleep 1
 	echo $! > tasks
 

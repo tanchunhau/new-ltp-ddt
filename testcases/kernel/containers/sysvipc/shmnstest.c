@@ -31,9 +31,8 @@
 #include <errno.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include "test.h"
-#include <libclone.h>
 #include "ipcns_helper.h"
+#include "test.h"
 
 char *TCID = "sysvipc_namespace";
 int TST_TOTAL = 1;
@@ -66,7 +65,7 @@ int check_shmid(void *vtest)
 
 static void setup(void)
 {
-	tst_require_root(NULL);
+	tst_require_root();
 	check_newipc();
 }
 
