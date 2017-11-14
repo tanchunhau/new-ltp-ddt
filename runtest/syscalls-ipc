@@ -27,8 +27,6 @@ msgrcv08 msgrcv08
 
 msgsnd01 msgsnd01
 msgsnd02 msgsnd02
-msgsnd03 msgsnd03
-msgsnd04 msgsnd04
 msgsnd05 msgsnd05
 msgsnd06 msgsnd06
 
@@ -54,7 +52,6 @@ semop05 semop05
 
 shmat01 shmat01
 shmat02 shmat02
-shmat03 shmat03
 
 shmctl01 shmctl01
 shmctl02 shmctl02

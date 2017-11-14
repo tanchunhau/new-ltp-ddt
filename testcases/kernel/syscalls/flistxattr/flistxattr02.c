@@ -87,12 +87,11 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	if (fd1 > 0 && close(fd1))
-		tst_res(TWARN | TERRNO, "failed to close file");
+	if (fd1 > 0)
+		SAFE_CLOSE(fd1);
 }
 
 static struct tst_test test = {
-	.tid = "flistxattr02",
 	.needs_tmpdir = 1,
 	.needs_root = 1,
 	.test = verify_flistxattr,

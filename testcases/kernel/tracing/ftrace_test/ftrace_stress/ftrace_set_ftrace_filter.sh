@@ -116,3 +116,4 @@ while true; do
 	echo "!$filter_format" > $TRACING_PATH/set_ftrace_filter
 	[ $? -ne 0 ] && tst_resm TFAIL "$0: remove filter <$filter_format> failed"
 done
+

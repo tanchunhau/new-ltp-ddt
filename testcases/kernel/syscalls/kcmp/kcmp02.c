@@ -73,11 +73,11 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	if (fd1 > 0 && close(fd1) < 0)
-		tst_res(TWARN | TERRNO, "close fd1 failed");
+	if (fd1 > 0)
+		SAFE_CLOSE(fd1);
 
-	if (fd2 > 0 && close(fd2) < 0)
-		tst_res(TWARN | TERRNO, "close fd2 failed");
+	if (fd2 > 0)
+		SAFE_CLOSE(fd2);
 }
 
 static void verify_kcmp(unsigned int n)
@@ -103,7 +103,6 @@ static void verify_kcmp(unsigned int n)
 }
 
 static struct tst_test test = {
-	.tid = "kcmp02",
 	.tcnt = ARRAY_SIZE(test_cases),
 	.setup = setup,
 	.cleanup = cleanup,

@@ -30,8 +30,6 @@ TCID="tcp_fastopen"
 
 . test_net.sh
 
-tfo_result="netload.res"
-
 while getopts :hu:sr:p:n:R:6 opt; do
 	case "$opt" in
 	h)
@@ -58,22 +56,7 @@ done
 
 cleanup()
 {
-	tst_resm TINFO "cleanup..."
-	tst_rhost_run -c "pkill -9 netstress\$"
 	tst_rmdir
-}
-
-read_result_file()
-{
-	if [ -f $tfo_result ]; then
-		if [ -r $tfo_result ]; then
-			cat $tfo_result
-		else
-			tst_brkm TBROK "Failed to read result file"
-		fi
-	else
-		tst_brkm TBROK "Failed to find result file"
-	fi
 }
 
 tst_require_root
@@ -90,13 +73,15 @@ trap "tst_brkm TBROK 'test interrupted'" INT
 TST_CLEANUP="cleanup"
 tst_tmpdir
 
-tst_resm TINFO "using old TCP API"
-tst_netload $(tst_ipaddr rhost) $tfo_result TFO -o -O
-time_tfo_off=$(read_result_file)
+tst_resm TINFO "using old TCP API and set tcp_fastopen to '0'"
+tst_netload -H $(tst_ipaddr rhost) -a $clients_num -r $client_requests \
+	-R $max_requests -t 0
+time_tfo_off=$(cat tst_netload.res)
 
-tst_resm TINFO "using new TCP API"
-tst_netload $(tst_ipaddr rhost) $tfo_result TFO
-time_tfo_on=$(read_result_file)
+tst_resm TINFO "using new TCP API and set tcp_fastopen to '3'"
+tst_netload -H $(tst_ipaddr rhost)  -a $clients_num -r $client_requests \
+	-R $max_requests -f -t 3
+time_tfo_on=$(cat tst_netload.res)
 
 tfo_cmp=$(( 100 - ($time_tfo_on * 100) / $time_tfo_off ))
 

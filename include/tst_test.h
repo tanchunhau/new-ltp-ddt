@@ -18,7 +18,12 @@
 #ifndef TST_TEST_H__
 #define TST_TEST_H__
 
+#ifdef __TEST_H__
+# error Oldlib test.h already included
+#endif /* __TEST_H__ */
+
 #include <unistd.h>
+#include <limits.h>
 
 #include "tst_common.h"
 #include "tst_res_flags.h"
@@ -34,6 +39,7 @@
 #include "tst_kvercmp.h"
 #include "tst_clone.h"
 #include "tst_kernel.h"
+#include "tst_minmax.h"
 
 /*
  * Reports testcase result.
@@ -58,8 +64,7 @@ void tst_resm_hexd_(const char *file, const int lineno, int ttype,
  */
 void tst_brk_(const char *file, const int lineno, int ttype,
               const char *fmt, ...)
-              __attribute__ ((format (printf, 4, 5)))
-              __attribute__ ((noreturn));
+              __attribute__ ((format (printf, 4, 5)));
 
 #define tst_brk(ttype, arg_fmt, ...) \
 	tst_brk_(__FILE__, __LINE__, (ttype), (arg_fmt), ##__VA_ARGS__)
@@ -75,7 +80,6 @@ pid_t safe_fork(const char *filename, unsigned int lineno);
 #include "tst_safe_macros.h"
 #include "tst_safe_file_ops.h"
 #include "tst_safe_net.h"
-#include "tst_safe_pthread.h"
 
 /*
  * Wait for all children and exit with TBROK if
@@ -97,6 +101,7 @@ struct tst_option {
  * On failure non-zero (errno) is returned.
  */
 int tst_parse_int(const char *str, int *val, int min, int max);
+int tst_parse_long(const char *str, long *val, long min, long max);
 int tst_parse_float(const char *str, float *val, float min, float max);
 
 struct tst_test {
@@ -109,22 +114,44 @@ struct tst_test {
 
 	const char *min_kver;
 
+	/* If set the test is compiled out */
+	const char *tconf_msg;
+
 	int needs_tmpdir:1;
 	int needs_root:1;
 	int forks_child:1;
 	int needs_device:1;
 	int needs_checkpoints:1;
+	int format_device:1;
+	int mount_device:1;
+	int needs_rofs:1;
 
-	unsigned int device_min_size;
+	/* Minimal device size in megabytes */
+	unsigned int dev_min_size;
 
-	/* override default timeout per test run */
-	unsigned int timeout;
+	/* Device filesystem type override NULL == default */
+	const char *dev_fs_type;
+
+	/* Options passed to SAFE_MKFS() when format_device is set */
+	const char *const *dev_fs_opts;
+	const char *dev_extra_opt;
+
+	/* Device mount options, used if mount_device is set */
+	const char *mntpoint;
+	unsigned int mnt_flags;
+	void *mnt_data;
+
+	/* override default timeout per test run, disabled == -1 */
+	int timeout;
 
 	void (*setup)(void);
 	void (*cleanup)(void);
 
 	void (*test)(unsigned int test_nr);
 	void (*test_all)(void);
+
+	/* Sampling function for timer measurement testcases */
+	int (*sample)(int clk_id, long long usec);
 
 	/* NULL terminated array of resource file names */
 	const char *const *resource_files;
@@ -160,11 +187,11 @@ extern int TEST_ERRNO;
 const char *tst_strerrno(int err);
 const char *tst_strsig(int sig);
 
+void tst_set_timeout(int timeout);
+
 #ifndef TST_NO_DEFAULT_MAIN
 
 static struct tst_test test;
-
-void tst_set_timeout(unsigned int timeout);
 
 int main(int argc, char *argv[])
 {
@@ -173,9 +200,8 @@ int main(int argc, char *argv[])
 
 #endif /* TST_NO_DEFAULT_MAIN */
 
-#define TST_TEST_TCONF(message)                                              \
-        static void tst_do_test(void) { tst_brk(TCONF, "%s", message); };    \
-        static struct tst_test test = { .test_all = tst_do_test, .tid = "" } \
+#define TST_TEST_TCONF(message)                                 \
+        static struct tst_test test = { .tconf_msg = message  } \
 /*
  * This is a hack to make the testcases link without defining TCID
  */

@@ -215,7 +215,7 @@ The path is constructed according to these rules:
 
 1. if '$LTPROOT' is set, return '$LTPROOT/testcases/data/$TCID'
 2. else if 'tst_tmpdir()' was called return '$STARTWD/datafiles'
-   (where '$STARTWD' is initial working directory as recorded by 'tst_tmdir()')
+   (where '$STARTWD' is initial working directory as recorded by 'tst_tmpdir()')
 3. else return '$CWD/datafiles'
 
 See 'testcases/commands/file/' for example.
@@ -224,9 +224,9 @@ See 'testcases/commands/file/' for example.
 ^^^^^^^^^^^^^^^^^^^^
 
 If you test needs to execute a binary, place it in the same directory as the
-testcase and name the file starting with testname_ ('.tid' see below).
-Once the test is executed by the framework, the path to the directory with all
-LTP binaries is added to the '$PATH' and you can execute it just by its name.
+testcase and name the file starting with '${test_binary_name}_'.  Once the
+test is executed by the framework, the path to the directory with all LTP
+binaries is added to the '$PATH' and you can execute it just by its name.
 
 TIP: If you need to execute such test from the LTP tree, you can add path to
      current directory to '$PATH' manually with: 'PATH="$PATH:$PWD" ./foo01'.
@@ -288,7 +288,6 @@ next:
 }
 
 static struct tst_test test = {
-	.tid = "getenv01",
 	.test_all = test,
 	.setup = setup,
 };
@@ -296,11 +295,6 @@ static struct tst_test test = {
 
 Each test includes the 'tst_test.h' header and must define the 'struct
 tst_test test' structure.
-
-The '.tid' defines test name (usually syscall/libcall name + number). The name
-is used in the test results as well as a base for temporary directory name if
-temporary directory is needed. In most of the cases it's the same as test
-filename without the extension.
 
 The overall test initialization is done in the 'setup()' function.
 
@@ -326,7 +320,9 @@ IMPORTANT: Only one of '.test' and '.test_all' can be set at a time.
 
 Each test has a default timeout set to 300s. The default timeout can be
 overriden by setting '.timeout' in the test structure or by calling
-'tst_set_timeout()' in the test 'setup()'.
+'tst_set_timeout()' in the test 'setup()'. There are a few testcases whose run
+time may vary arbitrarily, for these timeout can be disabled by setting it to
+-1.
 
 A word about the cleanup() callback
 +++++++++++++++++++++++++++++++++++
@@ -340,9 +336,6 @@ cleanup() callback.
 2. Make sure to free resources in the reverse order they were
    initialized. (Some of the steps may not depend on others and everything
    will work if there were swapped but let's keep it in order.)
-
-3. Avoid using SAFE_MACROS() in cleanup if you want the cleanup to carry on
-   when a cleanup step has failed.
 
 The first rule may seem complicated at first however, on the contrary, it's
 quite easy. All you have to do is to keep track of what was already
@@ -381,16 +374,23 @@ requires extra flag to be set after device was successfully mounted.
 -------------------------------------------------------------------------------
 static void cleanup(void)
 {
-	if (fd1 > 0 && close(fd1))
-		tst_res(TWARN | TERRNO, "close(fd1)");
+	if (fd1 > 0)
+		SAFE_CLOSE(fd1);
 
-	if (fd0 > 0 && close(fd0))
-		tst_res(TWARN | TERRNO, "close(fd0)");
+	if (fd0 > 0)
+		SAFE_CLOSE(fd0);
 
 	if (mount_flag && tst_umouont(MNTPOINT))
-		tst_res(TBROK | TERRNO, "umount(%s)", MNTPOINT);
+		tst_res(TWARN | TERRNO, "umount(%s)", MNTPOINT);
 }
 -------------------------------------------------------------------------------
+
+IMPORTANT: 'SAFE_MACROS()' used in cleanup *do not* exit the test. Failure
+           only produces a warning and the 'cleanup()' carries on. This is
+	   intentional as we want to execute as much 'cleanup()' as possible.
+
+WARNING: Calling tst_brk() in test 'cleanup()' does not exit the test as well
+         and 'TBROK' is converted to 'TWARN'.
 
 NOTE: Creation and removal of the test temporary directory is handled in
       the test library and the directory is removed recursively. Therefore
@@ -453,7 +453,8 @@ void tst_set_timeout(unsigned int timeout);
 -------------------------------------------------------------------------------
 
 Allows for setting timeout per test iteration dymanically in the test setup(),
-the timeout is specified in seconds.
+the timeout is specified in seconds. There are a few testcases whose runtime
+can vary arbitrarily, these can disable timeouts by setting it to -1.
 
 2.2.3 Test temporary directory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -689,6 +690,8 @@ checkpoints before the 'test()' function is called.
 
 TST_CHECKPOINT_WAIT(id)
 
+TST_CHECKPOINT_WAIT2(id, msec_timeout)
+
 TST_CHECKPOINT_WAKE(id)
 
 TST_CHECKPOINT_WAKE2(id, nr_wake)
@@ -701,8 +704,8 @@ unsigned integer which specifies checkpoint to wake/wait for. As a matter of
 fact it's an index to an array stored in a shared memory, so it starts on
 '0' and there should be enough room for at least of hundred of them.
 
-The 'TST_CHECKPOINT_WAIT()' suspends process execution until it's woken
-up or until timeout is reached.
+The 'TST_CHECKPOINT_WAIT()' and 'TST_CHECKPOINT_WAIT2()' suspends process
+execution until it's woken up or until timeout is reached.
 
 The 'TST_CHECKPOINT_WAKE()' wakes one process waiting on the checkpoint.
 If no process is waiting the function retries until it success or until
@@ -905,8 +908,18 @@ structure is initialized with a path to a test device and default filesystem
 to be used.
 
 You can also request minimal device size in megabytes by setting
-'.device_min_size' in the 'struct tst_test' structure. The device is
-guaranteed to have at least the requested size then.
+'.dev_min_size' the device is guaranteed to have at least the requested size
+then.
+
+If '.format_device' flag is set the device is formatted with a filesystem as
+well. You can use '.dev_fs_type' to override the default filesystem type if
+needed and pass additional options to mkfs via '.dev_fs_opts' and
+'.dev_extra_opt' pointers.
+
+If '.mount_device' is set, the device is mounted at '.mntpoint' which is used
+to pass a directory name that will be created and used as mount destination.
+You can pass additional flags and data to the mount command via '.mnt_flags'
+and '.mnt_data' pointers.
 
 [source,c]
 -------------------------------------------------------------------------------
@@ -1219,11 +1232,11 @@ there is need to set '.needs_tmpdir' as well.
 
 The test library looks for datafiles first, these are either stored in a
 directory called +datafiles+ in the +$PWD+ at the start of the test or in
-+$LTPROOT/testcases/data/$tid+. If the file is not found the library looks
-into +$LTPROOT/testcases/bin/+ and to +$PWD+ at the start of the test. This
-ensures that the testcases can copy the file(s) effortlessly both when test is
-started from the directory it was compiled in as well as when LTP was
-installed.
++$LTPROOT/testcases/data/${test_binary_name}+. If the file is not found the
+library looks into +$LTPROOT/testcases/bin/+ and to +$PWD+ at the start of the
+test. This ensures that the testcases can copy the file(s) effortlessly both
+when test is started from the directory it was compiled in as well as when LTP
+was installed.
 
 The file(s) are copied to the newly created test temporary directory which is
 set as the test working directory when the 'test()' functions is executed.
@@ -1296,7 +1309,6 @@ WARNING: All identifiers starting with TST_ or tst_ are reserved for the
 # This is a basic test for true shell buildin
 #
 
-TST_ID="true01"
 TST_TESTFUNC=do_test
 . tst_test.sh
 
@@ -1342,7 +1354,6 @@ starts the test.
 # Example test with tests in separate functions
 #
 
-TST_ID="example01"
 TST_TESTFUNC=test
 TST_CNT=2
 . tst_test.sh
@@ -1371,7 +1382,6 @@ found they are executed one by one.
 # Example test with tests in a single function
 #
 
-TST_ID="example02"
 TST_TESTFUNC=do_test
 TST_CNT=2
 . tst_test.sh
@@ -1451,7 +1461,6 @@ variable, if module wasn't found the test will exit with 'TCONF'.
 # Optional test command line parameters
 #
 
-TST_ID="example03"
 TST_OPTS="af:"
 TST_USAGE=usage
 TST_PARSE_ARGS=parse_args
@@ -1506,7 +1515,6 @@ if option has argument, its value in '$2'.
 # Optional test positional paramters
 #
 
-TST_ID="example04"
 TST_POS_ARGS=3
 TST_USAGE=usage
 TST_TESTFUNC=do_test
@@ -1780,7 +1788,7 @@ correct daemon name.
 | start_daemon()   | Starts daemon, name is passed as first parameter.
 | stop_daemon()    | Stops daemon, name is passed as first parameter.
 | restart_daemon() | Restarts daemon, name is passed as first parameter.
-| status_daemon()  | Returns daemon status, TODO: what is return value?
+| status_daemon()  | Detect daemon status (exit code: 0: running, 1: not running).
 |==============================================================================
 
 .Variables with detected names

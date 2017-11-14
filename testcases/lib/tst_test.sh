@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) Linux Test Project, 2014-2016
+# Copyright (c) Linux Test Project, 2014-2017
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,21 +29,20 @@ export TST_CONF=0
 export TST_COUNT=1
 export TST_ITERATIONS=1
 
+. tst_ansi_color.sh
+
 tst_do_exit()
 {
 	local ret=0
 
-	if [ -n "$TST_SETUP_STARTED" -a -n "$TST_CLEANUP" ]; then
+	if [ -n "$TST_SETUP_STARTED" -a -n "$TST_CLEANUP" -a \
+	     -z "$TST_NO_CLEANUP" ]; then
 		$TST_CLEANUP
 	fi
 
 	if [ "$TST_NEEDS_DEVICE" = 1 -a "$TST_DEVICE_FLAG" = 1 ]; then
-		losetup -a | grep -q "$TST_DEVICE"
-		if [ $? -eq 0 ]; then
-			losetup -d "$TST_DEVICE"
-			if [ $? -ne 0 ]; then
-				tst_res TWARN "'losetup -d $TST_DEVICE' failed"
-			fi
+		if ! tst_device release "$TST_DEVICE"; then
+			tst_res TWARN "Failed to release device '$TST_DEVICE'"
 		fi
 	fi
 
@@ -96,9 +95,14 @@ tst_res()
 	local res=$1
 	shift
 
+	tst_color_enabled
+	local color=$?
+
 	tst_inc_res "$res"
 
-	echo "$TST_ID $TST_COUNT $res : $@"
+	printf "$TCID $TST_COUNT "
+	tst_print_colored $res "$res: "
+	echo "$@"
 }
 
 tst_brk()
@@ -301,29 +305,12 @@ tst_run()
 			tst_brk "Use TST_NEEDS_TMPDIR must be set for TST_NEEDS_DEVICE"
 		fi
 
-		if [ -n "${LTP_DEV}" ]; then
-			tst_res TINFO "Using test device LTP_DEV='${LTP_DEV}'"
-			if [ ! -b ${LTP_DEV} ]; then
-				tst_brkm TBROK "${LTP_DEV} is not a block device"
-			fi
+		TST_DEVICE=$(tst_device acquire)
 
-			ROD_SILENT dd if=/dev/zero of="${LTP_DEV}" bs=1024 count=512
-
-			TST_DEVICE=${LTP_DEV}
-			TST_DEVICE_FLAG=0
-			return
+		if [ -z "$TST_DEVICE" ]; then
+			tst_brk "Failed to acquire device"
 		fi
 
-		ROD_SILENT dd if=/dev/zero of=test_dev.img bs=1024 count=153600
-
-		TST_DEVICE=$(losetup -f)
-		if [ $? -ne 0 ]; then
-			tst_brk TBROK "Couldn't find free loop device"
-		fi
-
-		tst_res TINFO "Found free device '${TST_DEVICE}'"
-
-		ROD_SILENT losetup ${TST_DEVICE} test_dev.img
 		TST_DEVICE_FLAG=1
 	fi
 
@@ -387,7 +374,8 @@ if TST_TEST_PATH=$(which $0) 2>/dev/null; then
 fi
 
 if [ -z "$TST_ID" ]; then
-	tst_brk TBROK "TST_ID is not defined"
+	filename=$(basename $0)
+	TST_ID=${filename%%.*}
 fi
 export TST_ID="$TST_ID"
 

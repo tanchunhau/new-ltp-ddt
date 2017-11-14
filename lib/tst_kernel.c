@@ -24,10 +24,19 @@ int tst_kernel_bits(void)
 	struct utsname buf;
 	int kernel_bits;
 
-	if (uname(&buf))
+	if (uname(&buf)) {
 		tst_brkm(TBROK | TERRNO, NULL, "uname()");
+		return -1;
+	}
 
 	kernel_bits = strstr(buf.machine, "64") ? 64 : 32;
+
+	/*
+	 * ARM64 (aarch64) defines 32-bit compatibility modes as
+	 * armv8l and armv8b (little and big endian).
+	 */
+	if (!strcmp(buf.machine, "armv8l") || !strcmp(buf.machine, "armv8b"))
+		kernel_bits = 64;
 
 	tst_resm(TINFO, "uname.machine=%s kernel is %ibit",
 	         buf.machine, kernel_bits);

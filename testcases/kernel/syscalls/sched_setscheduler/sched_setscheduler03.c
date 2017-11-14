@@ -171,10 +171,10 @@ static void do_test(unsigned int i)
 }
 
 static struct tst_test test = {
-	.tid = "sched_setscheduler03",
 	.tcnt = ARRAY_SIZE(cases),
 	.test = do_test,
 	.setup = setup,
 	.needs_root = 1,
 	.forks_child = 1
 };
+

@@ -61,8 +61,8 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	if (sockfd > 0 && close(sockfd))
-		tst_res(TWARN | TERRNO, "failed to close file");
+	if (sockfd > 0)
+		SAFE_CLOSE(sockfd);
 }
 
 static void verify_sendto(void)
@@ -84,7 +84,6 @@ static void verify_sendto(void)
 }
 
 static struct tst_test test = {
-	.tid = "sendto02",
 	.setup = setup,
 	.cleanup = cleanup,
 	.test_all = verify_sendto,

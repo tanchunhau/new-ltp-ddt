@@ -74,6 +74,7 @@ chroot04 chroot04
 
 clock_getres01 clock_getres01
 clock_nanosleep01 clock_nanosleep01
+clock_nanosleep02 clock_nanosleep02
 clock_nanosleep2_01 clock_nanosleep2_01
 
 clone01 clone01
@@ -84,6 +85,7 @@ clone05 clone05
 clone06 clone06
 clone07 clone07
 clone08 clone08
+clone09 clone09
 
 close01 close01
 close02 close02
@@ -267,6 +269,10 @@ fcntl33 fcntl33
 fcntl33_64 fcntl33_64
 fcntl34 fcntl34
 fcntl34_64 fcntl34_64
+fcntl35 fcntl35
+fcntl35_64 fcntl35_64
+fcntl36 fcntl36
+fcntl36_64 fcntl36_64
 
 fdatasync01 fdatasync01
 fdatasync02 fdatasync02
@@ -374,7 +380,7 @@ getgroups03_16 getgroups03_16
 
 gethostbyname_r01 gethostbyname_r01
 
-gethostid01 x=`which hostid > /dev/null;echo $?`; if [ $x -eq 0 ]; then hostid; else echo "hostid is N/A"; fi
+gethostid01 gethostid01
 
 gethostname01 gethostname01
 
@@ -422,7 +428,7 @@ get_robust_list01 get_robust_list01
 getrusage01 getrusage01
 getrusage02 getrusage02
 getrusage03 getrusage03
-getrusage04 getrusage04 -m 10
+getrusage04 getrusage04
 
 getsid01 getsid01
 getsid02 getsid02
@@ -430,6 +436,7 @@ getsid02 getsid02
 getsockname01 getsockname01
 
 getsockopt01 getsockopt01
+getsockopt02 getsockopt02
 
 gettid01 gettid01
 
@@ -444,6 +451,7 @@ getuid03_16 getuid03_16
 getxattr01 getxattr01
 getxattr02 getxattr02
 getxattr03 getxattr03
+getxattr04 getxattr04
 
 #Needs tty device.
 #ioctl01 ioctl01 -D /dev/tty0
@@ -452,6 +460,9 @@ getxattr03 getxattr03
 # Introducing ioctl tests for all /dev/tty* devices
 ioctl01_02   test_ioctl
 ioctl03      ioctl03
+ioctl04      ioctl04
+ioctl05      ioctl05
+ioctl06      ioctl06
 
 inotify_init1_01 inotify_init1_01
 inotify_init1_02 inotify_init1_02
@@ -469,6 +480,8 @@ fanotify03 fanotify03
 fanotify04 fanotify04
 fanotify05 fanotify05
 fanotify06 fanotify06
+fanotify07 fanotify07
+fanotify08 fanotify08
 
 ioperm01 ioperm01
 ioperm02 ioperm02
@@ -483,6 +496,10 @@ io_setup01 io_setup01
 io_submit01 io_submit01
 
 keyctl01 keyctl01
+keyctl02 keyctl02
+keyctl03 keyctl03
+keyctl04 keyctl04
+keyctl05 keyctl05
 
 kcmp01 kcmp01
 kcmp02 kcmp02
@@ -540,14 +557,8 @@ llseek03 llseek03
 
 lseek01 lseek01
 lseek02 lseek02
-lseek03 lseek03
-lseek04 lseek04
-lseek05 lseek05
-lseek06 lseek06
 lseek07 lseek07
-lseek08 lseek08
-lseek09 lseek09
-lseek10 lseek10
+lseek11 lseek11
 
 lstat01A symlink01 -T lstat01
 lstat01A_64 symlink01 -T lstat01_64
@@ -645,6 +656,7 @@ move_pages08 move_pages.sh 08
 move_pages09 move_pages.sh 09
 move_pages10 move_pages.sh 10
 move_pages11 cd $LTPROOT/testcases/bin && chown root move_pages11 && chmod 04755 move_pages11 && move_pages.sh 11
+move_pages12 move_pages12
 
 mprotect01 mprotect01
 mprotect02 mprotect02
@@ -693,14 +705,13 @@ msgrcv08 msgrcv08
 
 msgsnd01 msgsnd01
 msgsnd02 msgsnd02
-msgsnd03 msgsnd03
-msgsnd04 msgsnd04
 msgsnd05 msgsnd05
 msgsnd06 msgsnd06
 
 msync01 msync01
 msync02 msync02
 msync03 msync03
+msync04 msync04
 
 munlock01 munlock01
 munlock02 munlock02
@@ -753,6 +764,9 @@ madvise01 madvise01
 madvise02 madvise02
 madvise05 madvise05
 madvise06 madvise06
+madvise07 madvise07
+madvise08 madvise08
+madvise09 madvise09
 
 newuname01 newuname01
 
@@ -815,6 +829,8 @@ pselect01 pselect01
 pselect01_64 pselect01_64
 pselect02 pselect02
 pselect02_64 pselect02_64
+pselect03 pselect03
+pselect03_64 pselect03_64
 
 ptrace01 ptrace01
 ptrace02 ptrace02
@@ -839,6 +855,7 @@ pwritev02_64 pwritev02_64
 
 quotactl01 quotactl01
 quotactl02 quotactl02
+quotactl03 quotactl03
 
 read01 read01
 read02 read02
@@ -846,8 +863,7 @@ read03 read03
 read04 read04
 
 readahead01 readahead01
-# /proc/pid/io is not available
-#readahead02 readahead02
+readahead02 readahead02
 
 readdir01 readdir01
 readdir02 readdir02
@@ -876,6 +892,7 @@ recvfrom01 recvfrom01
 
 recvmsg01 recvmsg01
 recvmsg02 recvmsg02
+recvmsg03 recvmsg03
 
 remap_file_pages01 remap_file_pages01
 remap_file_pages02 remap_file_pages02
@@ -907,6 +924,7 @@ renameat202 renameat202 -i 10
 
 request_key01 request_key01
 request_key02 request_key02
+cve-2017-6951 cve-2017-6951
 
 rmdir01 rmdir01
 rmdir02 rmdir02
@@ -1131,6 +1149,7 @@ set_tid_address01 set_tid_address01
 setsid01 setsid01
 
 setsockopt01 setsockopt01
+cve-2016-4997 cve-2016-4997
 
 settimeofday01 settimeofday01
 settimeofday02 settimeofday02
@@ -1150,7 +1169,7 @@ setxattr03 setxattr03
 
 shmat01 shmat01
 shmat02 shmat02
-shmat03 shmat03
+cve-2017-5669 cve-2017-5669
 
 shmctl01 shmctl01
 shmctl02 shmctl02
@@ -1210,8 +1229,10 @@ socketpair02 socketpair02
 sockioctl01 sockioctl01
 
 splice01 splice01
-splice02 seq 1 20000 | splice02 splice02-temp
+splice02 seq 1 20000 | splice02
 splice03 splice03
+splice04 splice04
+splice05 splice05
 
 tee01 tee01
 tee02 tee02
@@ -1342,6 +1363,7 @@ umask01 umask01
 uname01 uname01
 uname02 uname02
 uname03 uname03
+cve-2012-0957 cve-2012-0957
 
 unlink01 symlink01 -T unlink01
 unlink05 unlink05
@@ -1418,7 +1440,6 @@ waitid01 waitid01
 waitid02 waitid02
 
 write01 write01
-write02 write02
 write03 write03
 write04 write04
 write05 write05
@@ -1443,3 +1464,8 @@ futex_wake03 futex_wake03
 futex_wake04 futex_wake04
 futex_wait_bitset01 futex_wait_bitset01
 futex_wait_bitset02 futex_wait_bitset02
+
+memfd_create01 memfd_create01
+memfd_create02 memfd_create02
+
+copy_file_range01 copy_file_range01

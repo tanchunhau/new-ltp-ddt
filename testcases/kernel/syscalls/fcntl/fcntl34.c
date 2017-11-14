@@ -26,6 +26,7 @@
 #include <sched.h>
 
 #include "lapi/fcntl.h"
+#include "tst_safe_pthread.h"
 #include "tst_test.h"
 
 static int thread_cnt;
@@ -142,7 +143,6 @@ static void test01(void)
 }
 
 static struct tst_test test = {
-	.tid = "fcntl34",
 	.min_kver = "3.15.0",
 	.needs_tmpdir = 1,
 	.test_all = test01,
