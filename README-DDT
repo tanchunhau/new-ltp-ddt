@@ -296,7 +296,7 @@ git status
 resolve conflicts if there is any
 git commit
 
-* delete files which were deleted in LTP from 'ltp' branch
+* optional: delete files which were deleted in LTP from 'ltp' branch
 git diff ltp..ltp-20150119 --summary > diff_between_ltp_and_ltp-20150119.txt
 write a script to delete and 'git rm' the files which are being deleted by LTP
 git commit
@@ -305,10 +305,22 @@ git commit
 git checkout next
 git merge ltp
 git status
-resolve conflicts if there is any
+
+Usually, there are some conflicts. Copy 'Unmerged paths' part to a seperate file; 
+then
+# First, use the below to resolve the conflicts:
+# For 'testcases/ddt/Makefile' use 'git checkout --ours' to merge
+# For others, use 'git checkout --theirs' to resolove the conflicts
+#
+# Then, use 'git add/rm' to commit
+# For 'deleted by them', use 'git rm' to remove those files
+# For 'added by us', use 'git rm' to remove them if they are not added by ltp-ddt
+# For others, use 'git add' to add those files
+#
+# For 'runltp', need manually resolve the conflict and add it.
 git commit
 
-* compare files between 'next' and 'ltp' and overwrite the files in 'next' for non-ddt files if there is any diff
+* optional: compare files between 'next' and 'ltp' and overwrite the files in 'next' for non-ddt files if there is any diff
 
 * build/test new ltp-ddt
 
