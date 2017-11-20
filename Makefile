@@ -3,6 +3,7 @@
 #
 #    Copyright (C) 2009-2010, Cisco Systems Inc.
 #    Copyright (C) 2010-2011, Linux Test Project.
+#    Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -19,6 +20,11 @@
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # Ngie Cooper, July 2009
+# 
+#    Change Log:
+#    03/10/2011, Carlos Hernandez:
+#	Include platforms directory.
+#       Include only testcases/ddt tests
 #
 
 # Force IDcheck.sh to fix any issues found with $(DESTDIR)/etc/group and
@@ -70,10 +76,22 @@ $(1):: | $$(abs_top_builddir)/$$(basename $$(subst -,.,$(1)))
 endif
 endef
 
-COMMON_TARGETS		+= testcases tools
+COMMON_TARGETS    += tools testcases/ddt 
+COMMON_TARGETS    += testcases/kernel/timers
+COMMON_TARGETS    += testcases/kernel/ipc
+COMMON_TARGETS    += testcases/kernel/mem
+COMMON_TARGETS    += testcases/kernel/lib
+COMMON_TARGETS    += testcases/kernel/syscalls
+COMMON_TARGETS    += testcases/kernel/security
+COMMON_TARGETS    += testcases/kernel/sched
+COMMON_TARGETS    += testcases/kernel/hotplug
+COMMON_TARGETS    += testcases/misc/math
+COMMON_TARGETS    += testcases/lib
+COMMON_TARGETS    += testcases/realtime
+
 # Don't want to nuke the original files if we're installing in-build-tree.
 ifneq ($(BUILD_TREE_STATE),$(BUILD_TREE_SRCDIR_INSTALL))
-INSTALL_TARGETS		+= runtest scenario_groups testscripts
+INSTALL_TARGETS		+= runtest scenario_groups testscripts platforms skips
 CLEAN_TARGETS		+= include runtest scenario_groups testscripts
 endif
 INSTALL_TARGETS		+= $(COMMON_TARGETS)
@@ -214,6 +232,9 @@ endif
 help:
 	@echo "Please read the Configuration section in $(top_srcdir)/INSTALL"
 	@exit 1
+
+cscope: $(COMMON_TARGETS)
+	cscope -R -b
 
 ## Menuconfig
 menuconfig:
