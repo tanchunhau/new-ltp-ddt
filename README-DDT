@@ -317,7 +317,7 @@ then
 # For 'added by us', use 'git rm' to remove them if they are not added by ltp-ddt
 # For others, use 'git add' to add those files
 #
-# For 'runltp', need manually resolve the conflict and add it.
+# For 'runltp' and top 'Makefile', need manually resolve the conflict and add it.
 git commit
 
 * optional: compare files between 'next' and 'ltp' and overwrite the files in 'next' for non-ddt files if there is any diff
