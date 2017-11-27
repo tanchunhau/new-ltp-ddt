@@ -12,8 +12,8 @@
 # GNU General Public License for more details.
 # 
 
-# Get devnode for non mtd device like 'mmc', 'usb', 'usbxhci', 'sata'
-# Input: DEVICE_TYPE like 'mmc', 'usb', 'usbxhci', 'sata'
+# Get devnode for non mtd device like 'mmc', 'usb', 'usbxhci', 'usbotg', 'sata'
+# Input: DEVICE_TYPE like 'mmc', 'usb', 'usbxhci', 'usbotg', 'sata'
 # Optional Input: DEVICE PROPERTIES like 'superspeed'
 # Output: DEV_NODE like /dev/mmcblk0p1 
 
@@ -47,7 +47,7 @@ find_scsi_basenode() {
           done
         fi
       ;;
-      usb|usbxhci)
+      usb|usbxhci|usbotg)
         usb_cnt_interface=`get_usb_controller_name.sh "$SCSI_DEVICE"`
         usb_speed_found=1
         # in USB case, extra param is used to indicate usb speed
@@ -134,16 +134,11 @@ case $DEV_TYPE in
           create_three_partitions $emmc_basenode 80 1024 > /dev/null
           DEV_NODE=`find_part_with_biggest_size "$emmc_basenode" "emmc"` || die "error getting partition with biggest size: $DEV_NODE"
         ;;
-        usb)
-          basenode=`find_scsi_basenode "usb"` || die "error getting usb base node: $basenode"
+        usb|usbxhci|usbotg)
+          basenode=`find_scsi_basenode "$DEV_TYPE"` || die "error getting usb base node: $basenode"
           # create 3 partitions with the size 80M, 2048M, and remaining if there is no partition
           create_three_partitions $basenode 80 1024 > /dev/null
           DEV_NODE=`find_part_with_biggest_size "$basenode" "usb"` || die "error getting partition with biggest size: $DEV_NODE"
-        ;;
-        usbxhci)
-          basenode=`find_scsi_basenode "usbxhci"` || die "error getting usbxhci base node: $basenode" 
-          create_three_partitions $basenode 80 1024 > /dev/null
-          DEV_NODE=`find_part_with_biggest_size "$basenode" "usbxhci"` || die "error getting partition with biggest size: $DEV_NODE"
         ;;
         pci)
           basenode=`find_scsi_basenode "pci"` || die "error getting pci basenode: $basenode" 

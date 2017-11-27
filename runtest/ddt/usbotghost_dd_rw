@@ -1,0 +1,8 @@
+# @name USB w/r test using existing FS
+# @desc USB device write/read test with with whatever fs in drive
+# @requires usbotg/host  
+# @setup_requires usbotghostmsc
+
+USBOTGHOST_S_FUNC_DD_RW_10M source "common.sh"; do_cmd install_modules.sh "usbotg"; do_cmd blk_device_dd_readwrite_test.sh -b "1M" -c "10" -d "usbotg"
+
+USBOTGHOST_M_FUNC_DD_RW_100M source "common.sh"; do_cmd install_modules.sh "usbotg"; do_cmd blk_device_dd_readwrite_test.sh -b "10M" -c "10" -d "usbotg" -l "5"

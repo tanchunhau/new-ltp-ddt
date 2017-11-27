@@ -1,0 +1,10 @@
+# @name USB Host Write/Read Performance test
+# @desc format usb device first and then mount it and do read write perf test
+# @requires usbotg/host/msc
+# @setup_requires usbotghostmsc
+
+
+USBOTGHOST_L_PERF_HIGHSPEED_VFAT_0001 source 'common.sh' ; do_cmd "modprobe g_zero"; do_cmd install_modules.sh 'usbotg' ; blk_device_filesystem_perf_test.sh -f vfat -s 100 -B "102400 262144" -d "usbotg" -t "60" -e "highspeed"; do_cmd "modprobe -r g_zero"
+USBOTGHOST_L_PERF_HIGHSPEED_EXT2_0001 source 'common.sh' ; do_cmd "modprobe g_zero"; do_cmd install_modules.sh 'usbotg' ; blk_device_filesystem_perf_test.sh -f ext2 -s 100 -B "102400 1048576 5242880" -d "usbotg" -t "60" -e "highspeed"; do_cmd "modprobe -r g_zero"
+USBOTGHOST_L_PERF_HIGHSPEED_EXT4_0001 source 'common.sh' ; do_cmd "modprobe g_zero"; do_cmd install_modules.sh 'usbotg' ; blk_device_filesystem_perf_test.sh -f ext4 -s 100 -B "102400 1048576 5242880" -d "usbotg" -t "60" -e "highspeed"; do_cmd "modprobe -r g_zero"
+

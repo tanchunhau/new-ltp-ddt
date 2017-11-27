@@ -103,13 +103,15 @@ do
     *musb_davinci)
       usb="CONFIG_USB_MUSB_DAVINCI_GLUE:davinci";;
     *musb_da8xx)
-      usb="CONFIG_USB_MUSB_DA8XX_GLUE:da8xx";;
+      usbotg="CONFIG_USB_MUSB_DA8XX_GLUE:musb_hdrc";;
     *musb_omap2430)
       usb="CONFIG_USB_MUSB_OMAP2PLUS_GLUE:omap2430";;
     *musb_am35x)
       usb="CONFIG_USB_MUSB_AM35X_GLUE:am35x";;
     *ehci-omap)
       usb="CONFIG_USB_EHCI_HCD_OMAP:ehci-omap";;
+    *ohci_da8xx)                                                                
+      usb="CONFIG_USB_OHCI_HCD:ohci_da8xx";; 
     *xhci-hcd)
       usb="CONFIG_USB_XHCI_PLAT_HCD:xhci_plat_hcd";;
     *crypto-omap)
