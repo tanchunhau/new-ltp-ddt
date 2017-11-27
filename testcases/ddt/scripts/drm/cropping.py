@@ -31,7 +31,7 @@ offset = int(h/4)
 fbs=[]
 
 for i in range(len(planes)):
-    fbs.append(pykms.DumbFramebuffer(card, w, h, pykms.PixelFormat.RGB888))
+    fbs.append(pykms.DumbFramebuffer(card, w, h, pykms.PixelFormat.ARGB8888))
     pykms.draw_rect(fbs[i], 0, 0, w, h, pykms.RGB(255*(i==0), 255*(i==1), 255*(i==2)))
     pykms.draw_rect(fbs[i], i*offset, i*offset, int(w/2**(i+1)), int(h/2**(i+1)), pykms.RGB(255*(i!=1), 255*(i!=2), 255*(i!=0)))
 
