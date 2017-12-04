@@ -3,6 +3,8 @@
 import pykms
 import time
 import random
+import sys
+import re
 
 # This hack makes drm initialize the fbcon, setting up the default connector
 card = pykms.Card()
@@ -30,8 +32,14 @@ offset = int(h/4)
 
 fbs=[]
 
+pix_fmt = pykms.PixelFormat.ARGB8888
+
+if len(sys.argv) > 1:
+    if re.match('am43.*',sys.argv[1],re.I):
+        pix_fmt = pykms.PixelFormat.RGB888
+
 for i in range(len(planes)):
-    fbs.append(pykms.DumbFramebuffer(card, w, h, pykms.PixelFormat.ARGB8888))
+    fbs.append(pykms.DumbFramebuffer(card, w, h, pix_fmt))
     pykms.draw_rect(fbs[i], 0, 0, w, h, pykms.RGB(255*(i==0), 255*(i==1), 255*(i==2)))
     pykms.draw_rect(fbs[i], i*offset, i*offset, int(w/2**(i+1)), int(h/2**(i+1)), pykms.RGB(255*(i!=1), 255*(i!=2), 255*(i!=0)))
 

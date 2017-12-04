@@ -4,7 +4,7 @@
 # @requires kms
 
 KMS_XS_FUNC_ZORDER source common.sh; /etc/init.d/weston stop && sleep 5; zorder.py 2>&1 | grep -i -e fail -e error -e invalid  -e 'not found' -e 'no such' && die "Zorder test failed"; echo "Test Passed"
-KMS_XS_FUNC_CROPPING source common.sh; /etc/init.d/weston stop && sleep 5; cropping.py  2>&1 | grep -i -e fail -e error -e invalid  -e 'not found' -e 'no such' && die "Cropping test failed"; echo "Test Passed"
+KMS_XS_FUNC_CROPPING source common.sh; /etc/init.d/weston stop && sleep 5; cropping.py  ${MACHINE} 2>&1 | grep -i -e fail -e error -e invalid  -e 'not found' -e 'no such' && die "Cropping test failed"; echo "Test Passed"
 KMS_XS_FUNC_SRC_TRANSPARENCY source common.sh; /etc/init.d/weston stop && sleep 5; transparency.py ${MACHINE} src  2>&1 | grep -i -e fail -e error -e invalid -e 'not found' -e 'no such' && die "Src transparency test failed"; echo "Test Passed"
 KMS_XS_FUNC_DST_TRANSPARENCY source common.sh; /etc/init.d/weston stop && sleep 5; transparency.py ${MACHINE} dst  2>&1 | grep -i -e fail -e error -e invalid -e 'not found' -e 'no such' && die "Dst transparency test failed"; echo "Test Passed"
 KMS_XS_FUNC_ALPHA_SRC_TRANSPARENCY source common.sh; /etc/init.d/weston stop && sleep 5; transparency.py ${MACHINE} alpha_src  2>&1 | grep -i -e fail -e error -e invalid -e 'not found' -e 'no such' && die "Aplha src transparency test failed"; echo "Test Passed"
