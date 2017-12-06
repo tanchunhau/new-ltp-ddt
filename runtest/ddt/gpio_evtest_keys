@@ -1,0 +1,6 @@
+# @name Check if the gpio keys are input event
+# @desc Check if the gpio keys are input event
+# @requires gpio 
+
+GPIO_S_FUNC_MATRIX_KEY source "common.sh"; check_gpio_keys.sh
+
