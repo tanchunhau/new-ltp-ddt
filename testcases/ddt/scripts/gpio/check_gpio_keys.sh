@@ -68,7 +68,7 @@ sleep 1
  
 # processing the evtest output                           
 do_cmd cat /evtest.log
-cat /evtest.log |grep -i 'matrix_keypad' || die "matrix_keypad is not input event"
+cat /evtest.log |grep -iE 'matrix_keypad|gpio_key' || die "matrix_keypad is not input event"
 do_cmd rm /evtest.log
 
 
