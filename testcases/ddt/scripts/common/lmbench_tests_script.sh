@@ -225,7 +225,7 @@ test_print_trc " ***** STARTING LATENCY BENCHMARKS ***** "
 	test_print_trc " procs           - 2"
 	test_print_trc " size_in_kbytes  - 128K"
 	test_print_trc " repetitions     - 100"
-	lat_ctx -s 128K -N 100 processes 2
+	lat_ctx -s 128K -N 100 2
 	RESULT=$(( $RESULT + $? ));
 	if [ $RESULT -eq 0 ] ; then
 		test_print_result PASS lat_ctx
@@ -240,7 +240,7 @@ test_print_trc " ***** STARTING LATENCY BENCHMARKS ***** "
 	test_print_trc " procs           - 2"
 	test_print_trc " size_in_kbytes  - 256K"
 	test_print_trc " repetitions     - 100"
-	lat_ctx -s 256K -N 100 processes 2
+	lat_ctx -s 256K -N 100 2
 	RESULT=$(( $RESULT + $? ));
 	if [ $RESULT -eq 0 ] ; then
 		test_print_result PASS lat_ctx
@@ -255,7 +255,7 @@ test_print_trc " ***** STARTING LATENCY BENCHMARKS ***** "
 	test_print_trc " procs           - 4"
 	test_print_trc " size_in_kbytes  - 128K"
 	test_print_trc " repetitions     - 100"
-	lat_ctx -s 128K -N 100 processes 4
+	lat_ctx -s 128K -N 100 4
 	RESULT=$(( $RESULT + $? ));
 	if [ $RESULT -eq 0 ] ; then
 		test_print_result PASS lat_ctx
@@ -270,7 +270,7 @@ test_print_trc " ***** STARTING LATENCY BENCHMARKS ***** "
 	test_print_trc " procs           - 4"
 	test_print_trc " size_in_kbytes  - 256K"
 	test_print_trc " repetitions     - 100"
-	lat_ctx -s 256K -N 100 processes 4
+	lat_ctx -s 256K -N 100 4
 	RESULT=$(( $RESULT + $? ));
 	if [ $RESULT -eq 0 ] ; then
 		test_print_result PASS lat_ctx
