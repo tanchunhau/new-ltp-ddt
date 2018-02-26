@@ -308,6 +308,8 @@ static int *fds;
 static function_info func_inf;
 static function_info fault_func_inf;
 int flt_msg_num=NUM_ITERATIONS;
+static char *reset_cmd = NULL;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 void * test_exec_call(void * arg)
 {
@@ -322,6 +324,17 @@ void * test_exec_call(void * arg)
     struct rppc_function_return *returned;
 
     for (i = args->start_num; i < args->start_num + NUM_ITERATIONS; i++) {
+        if(reset_cmd != NULL && i-args->start_num >= flt_msg_num) {
+            pthread_mutex_lock(&lock);
+            if(runTest) {
+                sleep(3);
+                runTest = false;
+                system(reset_cmd);
+                sleep(3);
+            }
+            pthread_mutex_unlock(&lock);
+            break;
+        }
         function = (struct rppc_function *)packet_buf;
         function->fxn_id = i - args->start_num != flt_msg_num ? func_inf.idx : fault_func_inf.idx;
         function->num_params = 1; //hard coded at the moment, should be based on func_inf->name
@@ -932,7 +945,7 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        c = getopt (argc, argv, "t:c:x:l:f:m:");
+        c = getopt (argc, argv, "t:c:x:l:f:m:r:");
         if (c == -1)
             break;
 
@@ -952,6 +965,9 @@ int main(int argc, char *argv[])
             break;
         case 'f':
             f_name = optarg;
+            break;
+        case 'r':
+            reset_cmd = optarg;
             break;
         case 'm':
             switch(atoi(optarg)){
@@ -1049,5 +1065,6 @@ int main(int argc, char *argv[])
     else {
         printf ("TEST STATUS: PASSED.\n");
     }
+
     return 0;
 }

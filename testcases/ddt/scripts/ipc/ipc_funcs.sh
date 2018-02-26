@@ -353,7 +353,8 @@ rpmsg_rpc_test_cmds()
   local __s_cmds
   local __m_cmds
 
-  OPTIND=1 
+  OPTIND=1
+  local __i=1
   local _iterations
   while getopts :p:c:f:s:m:t:u:n: arg
   do 
@@ -368,6 +369,7 @@ rpmsg_rpc_test_cmds()
       n)  __n_procs="$OPTARG";;
 
       \?)  test_print_trc "Invalid Option -$OPTARG ignored." >&2
+          shift 1
       ;;
     esac
   done
@@ -456,7 +458,7 @@ rpmsg_rpc_test()
     if [ $__num_match -ne 1 ]
     then
       __result=1
-      echo -e "${__test_log}\n$__command failed"
+      echo -e "\n$__command failed"
     else
       echo "$__command passed"
     fi
@@ -470,7 +472,7 @@ rpmsg_rpc_test()
     if [ $__num_match -ne $num_procs ]
     then
       let "__result|=2"
-      echo -e "$__test_log\nTest failed for ${__cmd}"
+      echo -e "\nTest failed for ${__cmd}"
     else
       echo -e "Test passed for ${__cmd}"
     fi
@@ -499,47 +501,40 @@ rpmsg_rpc_recovery_test()
   local __num_match
   local __command
   local __mr_events=''
-
+  local __i
+  local __rec_events
+  
   rpmsg_rpc_test_cmds -t s_cmds -u m_cmds -n num_procs $*
+  
+  OPTIND=1
+  while getopts ":r:" arg
+  do
+    case $arg in
+      r)  __rec_events=( $OPTARG )
+      ;;
+      \?) echo "ignoring option $OPTARG" >&2 #ignore
+         shift 1
+      ;;
+    esac
+  done
 
-  rpmsg_recovery_event __rec_events
-
-  i=0
-  #single rproc recovery
   for __cmd in "${m_cmds[@]}"
   do
-    __command="${__cmd} & sleep 5; ${__rec_events[$((i % num_procs))]}"
+    __command=${__cmd}
+    __i=0
+    for __i in `seq 0 $((${#__rec_events[@]} - 1))`
+    do
+      __command=${__command/triple  &/triple -m 1 -r \"devmem2 ${__rec_events[$((__i % num_procs))]} w 0xffffff02\" &}
+    done
+    __command="${__command} -m 1 -r \"devmem2 ${__rec_events[$((__i % num_procs))]} w 0xffffff02\""
+    echo -e "${__command}"
     __test_log=$(eval ${__command})
     __num_match=$(echo -e "$__test_log" | grep -i -c "TEST STATUS: PASSED")
     echo -e "$__num_match processors passed..."
     if [ $__num_match -ne $num_procs ]
     then
       let "__result|=2"
-      echo -e "$__test_log\nTest failed for ${__command}"
-    else
-      echo -e "Test passed for ${__command}"
-    fi
-    i=$((i+1))
-  done
-  
-  
-  __mr_events="${__rec_events[0]}"
-  for i in `seq 1 $((${#__rec_events[@]} - 1))`
-  do
-    __mr_events="${__mr_events} && ${__rec_events[$i]}"
-  done
-  
-  #Multiple rproc recovery
-  for __cmd in "${m_cmds[@]}"
-  do
-    __command="${__cmd} & sleep 5; ${__mr_events[@]}"
-    __test_log=$(eval ${__command})
-    __num_match=$(echo -e "$__test_log" | grep -i -c "TEST STATUS: PASSED")
-    echo -e "$__num_match processors passed..."
-    if [ $__num_match -ne $num_procs ]
-    then
-      let "__result|=2"
-      echo -e "$__test_log\nTest failed for ${__command}"
+      echo -e "Recovery triggered by ${__command}"
     else
       echo -e "Test passed for ${__command}"
     fi
@@ -671,7 +666,7 @@ rpmsg_proto_msgqapp_test()
     if [ $__num_match -ne 1 ]
     then
       __result=1
-      echo -e "${__test_log}\nTest failed for proc ${__rproc}"
+      echo -e "\nTest failed for proc ${__rproc}"
     else
       echo "Test passed for proc $__rproc"
     fi
@@ -696,7 +691,7 @@ rpmsg_proto_msgqapp_test()
     if [ $__num_match -ne $__num_procs ]
     then
       let "__result|=2"
-      echo -e "$__test_log\nTest failed for ${__multiproc_cmd:3}"
+      echo -e "\nTest failed for ${__multiproc_cmd:3}"
     else
       echo -e "Test passed for ${__multiproc_cmd:3}"
     fi
@@ -901,13 +896,42 @@ rpmsg_recovery_event()
 toggle_rprocs()
 {
   local __driver_sysfs='/sys/class/remoteproc'
-
+  local __result=''
+  local __b
+  local __a
+  local __type
+  local __mbox
   for __pru in `ls ${__driver_sysfs}/`
   do
     cat ${__driver_sysfs}/${__pru}/device/of_node/name | grep wkup_m3 && continue
-    echo "${1}ing $__pru ..."
+    __b=$(ls /dev/)
     echo $1 > ${__driver_sysfs}/${__pru}/state
+    __type=$(cat ${__driver_sysfs}/${__pru}/firmware | grep -o -e ipu[0-9] -e dsp[0-9] | tail -1)
+    case $MACHINE in
+      *dra7*|*am57*)
+        case $__type in
+          ipu1)
+            __mbox='0x48840050'
+            ;;
+          ipu2)
+            __mbox='0x48842050'
+            ;;
+          dsp1)
+            __mbox='0x48840044'
+            ;;
+          dsp2)
+            __mbox='0x48842044'
+            ;;
+        esac
+      ;;
+    esac
+
+    for __a in `bash -c "diff -u <(echo \"$__b\") <(ls /dev/)" | grep -v /dev/fd | grep ^[+-]`
+    do
+      __result="${__result}\n${__a:1}=${__pru}:${__mbox}"
+    done
   done
+  echo -e "$__result" | sort | grep -o '0x.*'
 }
 
 # Funtion to obtain the list of pru devices
@@ -956,8 +980,8 @@ list_pru_devs()
   esac
 }
 
-# Funtion to obtain the list of pru devices
-# Returns the list of PRU devices based on the MACHINE var value
+# Funtion to obtain the list of rproc devices
+# Returns the list of rproc devices based on the MACHINE var value
 list_rprocs()
 {
   case $SOC in
