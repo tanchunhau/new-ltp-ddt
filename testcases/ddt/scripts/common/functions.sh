@@ -506,6 +506,8 @@ suspend()
     test_print_trc "suspend function: usb_remove: $usb_remove"
     test_print_trc "suspend function: usb_module: $usb_module"
 
+    enable_pm_debug_messages
+
     if [ $use_wakelock -ne 0 ]; then
         report "removing wakelock $PSID (sec=$sec msec=$msec off=$off bug=$bug)"
         echo "$PSID" >/sys/power/wake_unlock
@@ -561,6 +563,12 @@ suspend()
     done
 
     no_suspend
+}
+
+enable_pm_debug_messages()
+{
+    grep '1' /sys/power/pm_debug_messages || echo 1 > /sys/power/pm_debug_messages
+    grep '^8' /proc/sys/kernel/printk || echo 8 > /proc/sys/kernel/printk
 }
 
 # check if suspend/standby is ok by checking the kernel messages
