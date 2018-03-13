@@ -23,8 +23,8 @@ usage()
 	echo "run_iperf.sh -H <host> [other iperf options (see iperf help)"
 	echo " -H <host>: IP address of Host running iperf in server mode"
 	echo " all other args are passed as-is to iperf"
-	echo " iperf help:"
-        echo `iperf -h`
+	echo " iperf3 help:"
+        echo `iperf3 -h`
 	exit 1
 }
 
@@ -74,5 +74,5 @@ dynamically. Please specify it when calling the script. \
 
 test_print_trc "Starting IPERF TEST"
 
-do_cmd "iperf -c ${IPERFHOST} $*"
+do_cmd "iperf3 -c ${IPERFHOST} $*"
 
