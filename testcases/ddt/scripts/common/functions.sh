@@ -1106,7 +1106,6 @@ shield_shell()
         create_cgroup rt $max_id
     fi
     for pid in $(cat /sys/fs/cgroup/tasks); do /bin/echo $pid > /sys/fs/cgroup/nonrt/tasks; done
-    /bin/echo $$ > /sys/fs/cgroup/rt/tasks
 }
 
 unshield_shell()
