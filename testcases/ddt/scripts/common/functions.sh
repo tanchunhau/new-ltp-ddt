@@ -1106,3 +1106,9 @@ unshield_shell()
     for pid in $(cat /sys/fs/cgroup/nonrt/tasks); do /bin/echo $pid > /sys/fs/cgroup/tasks; done
     for pid in $(cat /sys/fs/cgroup/rt/tasks); do /bin/echo $pid > /sys/fs/cgroup/tasks; done
 }
+
+check_jailhouse()
+{
+    which jailhouse || die "jailhouse is not in the filesystem"
+    lsmod |grep jailhouse || die "jailhouse kernel module is not available"
+}

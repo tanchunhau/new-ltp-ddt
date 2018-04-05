@@ -1,0 +1,20 @@
+# @name Jailhouse basic
+# @desc Jailhouse functional tests
+# @requires
+# @setup_requires
+
+JAILHOUSE_S_FUNC_ENABLE source 'functions.sh'; check_jailhouse; cell_prefix=`get_cell_name_prefix.sh`; jailhouse enable /usr/share/jailhouse/cells/${cell_prefix}.cell || die "Could not enable jailhouse using ${cell_prefix}.cell "
+
+JAILHOUSE_S_FUNC_DISABLE source 'functions.sh'; check_jailhouse; cell_prefix=`get_cell_name_prefix.sh`; jailhouse enable /usr/share/jailhouse/cells/${cell_prefix}.cell || die "Could not enable jailhouse using ${cell_prefix}.cell"; jailhouse disable || die "Could not disable jailhouse"
+
+JAILHOUSE_S_FUNC_LINUX_INMATE source 'functions.sh'; check_jailhouse; /usr/share/jailhouse/linux-demo.sh || die "Could not start linux-demo inmate"; jailhouse cell list | grep linux-inmate-demo | grep running || die "linux-demo inmate is not running"
+
+JAILHOUSE_S_FUNC_LINUX_INMATE_DESTROY source 'functions.sh'; check_jailhouse; /usr/share/jailhouse/linux-demo.sh || die "Could not start linux-demo inmate"; jailhouse cell list | grep linux-inmate-demo | grep running || die "linux-demo inmate is not running"; jailhouse cell shutdown linux-inmate-demo || die "Could not shutdown linux-inmate-demo"; jailhouse cell destroy linux-inmate-demo || die "Could not destroy linux-inmate-demo"
+
+JAILHOUSE_S_FUNC_GIC_DEMO source 'functions.sh'; check_jailhouse; cell_prefix=`get_cell_name_prefix.sh`; demo_arch_prefix=`get_demo_arch_name_prefix.sh`; jailhouse enable /usr/share/jailhouse/cells/${cell_prefix}.cell || die "Could not enable jailhouse using ${cell_prefix}.cell"; jailhouse cell create /usr/share/jailhouse/cells/${demo_arch_prefix}-gic-demo.cell || die "Could not create ${demo_arch_prefix}-gic-demo.cell"; jailhouse cell load gic-demo /usr/share/jailhouse/inmates/gic-demo.bin || die "Could not load gic-demo.bin on cell gic-demo"; jailhouse cell start gic-demo || die "Could not start gic-demo cell"; jailhouse cell list | grep gic-demo | grep running || die "gic-demo cell is not running"; jailhouse cell shutdown gic-demo || die "Could not shutdown gic-demo"; jailhouse cell destroy gic-demo || die "Could not destroy gic-demo"
+
+JAILHOUSE_S_FUNC_GIC_DEMO_DESTROY source 'functions.sh'; check_jailhouse; cell_prefix=`get_cell_name_prefix.sh`; demo_arch_prefix=`get_demo_arch_name_prefix.sh`; jailhouse enable /usr/share/jailhouse/cells/${cell_prefix}.cell || die "Could not enable jailhouse using ${cell_prefix}.cell"; jailhouse cell create /usr/share/jailhouse/cells/${demo_arch_prefix}-gic-demo.cell || die "Could not create ${demo_arch_prefix}-gic-demo.cell"; jailhouse cell load gic-demo /usr/share/jailhouse/inmates/gic-demo.bin || die "Could not load gic-demo.bin on cell gic-demo"; jailhouse cell destroy gic-demo || die "Could not destroy gic-demo"
+
+JAILHOUSE_S_FUNC_UART_DEMO source 'functions.sh'; check_jailhouse; cell_prefix=`get_cell_name_prefix.sh`; demo_arch_prefix=`get_demo_arch_name_prefix.sh`; jailhouse enable /usr/share/jailhouse/cells/${cell_prefix}.cell || die "Could not enable jailhouse using ${cell_prefix}.cell"; jailhouse cell create /usr/share/jailhouse/cells/${demo_arch_prefix}-uart-demo.cell || die "Could not create ${demo_arch_prefix}-uart-demo.cell"; jailhouse cell load uart-demo /usr/share/jailhouse/inmates/uart-demo.bin || die "Could not load uart-demo.bin on cell uart-demo"; jailhouse cell start uart-demo || die "Could not start uart-demo cell"; jailhouse cell list | grep uart-demo | grep running || die "uart-demo cell is not running"; jailhouse cell shutdown uart-demo || die "Could not shutdown uart-demo"; jailhouse cell destroy uart-demo || die "Could not destroy uart-demo"
+
+JAILHOUSE_S_FUNC_STATS_LINUX_INMATE source 'functions.sh'; check_jailhouse; /usr/share/jailhouse/linux-demo.sh || die "Could not start linux-demo inmate"; jailhouse cell list | grep linux-inmate-demo | grep running || die "linux-demo inmate is not running"; jailhouse cell stats 0 || die "Could not read cell 0 stats"; jailhouse cell stats 1 || die "Could not read cell 1 stats"
