@@ -1,0 +1,9 @@
+# @name
+#       Hardware spinlock test.
+# @desc
+#       probe test hw spinlock test module
+#       Acquire lock and try to acquire the lock again, second attempt
+#       must fail
+# @requires hwspinlock
+
+HWSPINLOCK_S_FUNC source "common.sh"; test_hwspinlock.sh -n 3

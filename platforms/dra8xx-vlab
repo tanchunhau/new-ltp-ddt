@@ -38,3 +38,4 @@ usb/host/superspeed
 ipc
 hdmi/audio/playback
 video/capture/*/v4l2
+hwspinlock
