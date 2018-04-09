@@ -79,7 +79,7 @@ done
 # DO NOT HARDCODE any value. If you need to use a specific value for your setup
 # use USER-DEFINED Params section above.
 
-if [[ $TRIALS -lte 0 ]]
+if [[ $TRIALS -le 0 ]]
 then
   usage
 fi
@@ -88,3 +88,5 @@ for i in seq 1 $TRIALS
 do
   load_test_module
 done
+
+exit 0
