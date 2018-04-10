@@ -69,6 +69,10 @@ case $MACHINE in
     #gpio_banks="0:0x4AE07838 2:0x4A009768"
     gpio_banks="2:0x4A009768"
   ;;
+  am574x-idk|am572x-idk)
+    #gpio_banks="0:0x4AE07838 2:0x4A009768"
+    gpio_banks="1:0x4A009760" # 0=>CM_WKUPAON_GPIO1_CLKCTRL; 1=>CM_L4PER_GPIO2_CLKCTRL
+  ;;
   am43xx-epos|am43xx-gpevm|am437x-idk)
     gpio_banks="" #No free gpio bank for testing
   ;;
