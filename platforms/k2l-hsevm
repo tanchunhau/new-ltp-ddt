@@ -1,0 +1,15 @@
+armv7l
+keystone
+k2l-evm
+net/eth1G
+net/dual_mac
+spi_master/mtd/spi_davinci
+jffs2
+watchdog
+ubifs
+i2c/eeprom
+nand/davinci_nand
+smp
+usb/host/msc/xhci-hcd
+gpio
+ipc
