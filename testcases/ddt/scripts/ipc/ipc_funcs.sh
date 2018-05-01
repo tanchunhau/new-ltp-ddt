@@ -24,13 +24,17 @@ setup_firmware()
   local __fw_pattern=$1
   local __fw_dir='/lib/firmware'
   local __fw_file
-  local __fw_files=$(ls /sys/class/remoteproc/remoteproc*/firmware)
+  local __rprocs=$(ls /sys/class/remoteproc)
+  local __rp
   local __fw
   local __new_pattern
   local __fw_type
-  for __fw_dst in $__fw_files
+  local __fw_dst
+
+  for __rp in $__rprocs
   do
-    __fw=$(cat ${__fw_dst})
+    __fw_dst="/sys/class/remoteproc/${__rp}/firmware"
+    __fw=$(cat /sys/class/remoteproc/${__rp}/device/of_node/firmware-name 2>/dev/null || cat $__fw_dst)
     case $__fw in
       *dsp*)
         __fw_type=dsp
@@ -212,11 +216,6 @@ ins_pru_mods()
 rm_pru_mods()
 {
   local __modules=(prueth rpmsg_pru pru_rproc pruss pruss_soc_bus)
-
-  for p in `ifconfig | grep 'HWaddr' | grep -o '^[a-z0-9]\+'`
-  do
-    ifconfig $p | grep -e 'inet addr' -e 'inet6 addr' || ifconfig $p down
-  done
 
   for __mod in ${__modules[@]}
   do
@@ -1043,4 +1042,15 @@ rpmsg_pru_test()
   fi
 
   return $__result
+}
+
+#Function to stop the ipc lad daemon
+ifdown_eth()
+{
+  for p in `ifconfig | grep 'HWaddr' | grep -o '^[a-z0-9]\+'`
+  do
+    ifconfig $p | grep -e 'inet addr' -e 'inet6 addr' || ifconfig $p down
+  done
+
+  return 0
 }
