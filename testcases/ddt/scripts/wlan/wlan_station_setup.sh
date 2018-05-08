@@ -35,7 +35,7 @@ fi
 
 
 `check_env_var 'AP_SSID'`
-demo_folder=`find / -name sta_start.sh`
+demo_folder=`find /usr/share -name sta_start.sh`
 [ -n "$demo_folder" ] || die "Unable to find sta_start.sh in filesystem. Make sure all station scripts are present." 
 demo_folder=${demo_folder%"/sta_start.sh"}
 nohup "$demo_folder"/sta_start.sh &
