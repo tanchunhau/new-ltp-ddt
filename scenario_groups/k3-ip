@@ -1,0 +1,12 @@
+# MPU Tests
+ddt/core_benchmarks
+ddt/smp_cpu_affinity
+
+# GIC (Interrupt) Tests
+ddt/system_mmc_smp_irq_affinity
+
+# GTC (Global Timer) Tests
+ddt/date
+
+# MMC Tests
+ddt/mmc_sdcard_dd_rw_ext2
