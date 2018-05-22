@@ -62,6 +62,8 @@ do
 
     *mmci-omap-hs)
       mmc="CONFIG_MMC_OMAP_HS:omap_hsmmc";;
+    *mmci-omap-sdhc)
+      mmc="CONFIG_MMC_SDHCI_OMAP:sdhci_omap";;
     *davinci_mmc)
       mmc="CONFIG_MMC_DAVINCI:davinci_mmc";;
 

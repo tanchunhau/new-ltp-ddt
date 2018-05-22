@@ -18,10 +18,10 @@ graphics/fb0/DA8xx_FB_Drv
 hwrng
 i2c/non_eeprom
 i2c/eeprom
-mmc_host/mmc/mmci-omap-hs
-mmc_host/sd/mmci-omap-hs
-mmc_host/sdhc/mmci-omap-hs
-mmc_host/sdxc/mmci-omap-hs
+mmc_host/mmc/mmci-omap-sdhc
+mmc_host/sd/mmci-omap-sdhc
+mmc_host/sdhc/mmci-omap-sdhc
+mmc_host/sdxc/mmci-omap-sdhc
 nand/omap2-nand
 ubifs
 jffs2

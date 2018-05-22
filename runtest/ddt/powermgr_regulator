@@ -4,3 +4,5 @@
 # @setup_requires
 
 POWERMGR_XS_FUNC_REGULATOR_FRAMEWORK_0001 source 'common.sh'; d=$(find /sys/class/regulator/**/* -name state -exec cat '{}' \; | grep enabled | wc -l); [ $d -gt 0 ] || die "There is not even one regulator enabled"
+
+POWERMGR_XS_FUNC_REGULATOR_ENABLED source 'common.sh'; regulators_check.sh

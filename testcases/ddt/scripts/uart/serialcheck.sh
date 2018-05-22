@@ -19,7 +19,7 @@ source "common.sh"  # Import do_cmd(), die() and other functions
 #### Functions definitions ####
 usage()
 {
-    echo "usage: ./${0##*/} [-r UART_RATE] [-l LOOPS]"
+    echo "usage: ./${0##*/} [-r UART_RATE] [-l LOOPS] [-x to enable HW flow control]"
     exit 1
 }
 
@@ -48,20 +48,28 @@ filter_out_used_ports() {
 
 run_serial_check() {
     for i in ${PORTS_TO_TEST[@]}; do    
-        echo ''; echo "Testing $i at $UART_RATE $UART_LOOPS times" 
-        serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m r -k &
-        sleep 1
-        serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m t -k || die "TEST FAILED"
+        if [ $UART_HWFLOW -eq 0 ]; then
+            echo ''; echo "Testing $i in loopback at $UART_RATE $UART_LOOPS times"
+            serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m r -k &
+            sleep 1
+            serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m t -k || die "TEST FAILED"
+        else
+            echo ''; echo "Testing $i with HW flow control at $UART_RATE $UART_LOOPS times"
+            serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m r -h &
+            sleep 1
+            serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m t -h || die "TEST FAILED"
+        fi
     done
     rm $temp_test_file
 }
 
 
 #### Process input parameters ####
-while getopts  :r:l:h arg
+while getopts  :r:l:xh arg
 do case $arg in
         r)      UART_RATE="$OPTARG";;
         l)      UART_LOOPS="$OPTARG";;
+        x)      UART_HWFLOW=1;;
         h)      usage;;
         :)      die "$0: Must supply an argument to -$OPTARG.";;
         \?)     die "Invalid Option -$OPTARG ";;
@@ -71,6 +79,7 @@ done
 # Default values 
 : ${UART_RATE:=115200}
 : ${UART_LOOPS:=5}
+: ${UART_HWFLOW:=0}
 
 PORTS_TO_TEST=();
 UART_PORTS=();
