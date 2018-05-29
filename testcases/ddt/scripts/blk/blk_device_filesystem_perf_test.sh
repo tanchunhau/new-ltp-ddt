@@ -126,6 +126,11 @@ test_print_trc "Device Partition Size is $DEVICE_PART_SIZE MB"
 
 # run filesystem perf test
 do_cmd "mkdir -p $MNT_POINT"
+if [ -n "$FS_TYPE" ]; then
+  do_cmd blk_device_prepare_format.sh -d "$DEVICE_TYPE" -n "$DEV_NODE" -f "$FS_TYPE" -m "$MNT_POINT" -o "$MNT_MODE"
+else
+  do_cmd blk_device_prepare_format.sh -d "$DEVICE_TYPE" -n "$DEV_NODE" -m "$MNT_POINT" -o "$MNT_MODE"
+fi
 for BUFFER_SIZE in $BUFFER_SIZES; do
 	test_print_trc "BUFFER SIZE = $BUFFER_SIZE"
 	test_print_trc "Checking if Buffer Size is valid"
@@ -135,11 +140,6 @@ for BUFFER_SIZE in $BUFFER_SIZES; do
 	#do_cmd blk_device_erase_format_part.sh -d $DEVICE_TYPE -n $DEV_NODE -f $FS_TYPE
 	#test_print_trc "Mounting the partition"
 	#do_cmd blk_device_do_mount.sh -n "$DEV_NODE" -f "$FS_TYPE" -d "$DEVICE_TYPE" -m "$MNT_POINT"
-	if [ -n "$FS_TYPE" ]; then
-    do_cmd blk_device_prepare_format.sh -d "$DEVICE_TYPE" -n "$DEV_NODE" -f "$FS_TYPE" -m "$MNT_POINT" -o "$MNT_MODE"
-  else
-    do_cmd blk_device_prepare_format.sh -d "$DEVICE_TYPE" -n "$DEV_NODE" -m "$MNT_POINT" -o "$MNT_MODE"
-  fi
 	# find out what is FS in the device
 	if [ -z "$FS_TYPE" ]; then
 		FS_TYPE=`mount | grep $DEV_NODE | cut -d' ' -f5 |head -1`
@@ -152,7 +152,9 @@ for BUFFER_SIZE in $BUFFER_SIZES; do
 
   TEST_FILE="${MNT_POINT}/test_file_$$"
 
-	do_cmd filesystem_tests -write -src_file $TMP_FILE -srcfile_size $SRCFILE_SIZE -file ${TEST_FILE} -buffer_size $BUFFER_SIZE -file_size $FILE_SIZE -performance 
+  for i in {1..5};do
+    do_cmd filesystem_tests -write -src_file $TMP_FILE -srcfile_size $SRCFILE_SIZE -file ${TEST_FILE} -buffer_size $BUFFER_SIZE -file_size $FILE_SIZE -performance 
+  done
 	do_cmd "rm -f $TMP_FILE"
 	do_cmd "sync"
 	# should do umount and mount before read to force to write to device
@@ -180,7 +182,7 @@ for BUFFER_SIZE in $BUFFER_SIZES; do
 	do_cmd "rm -f ${DST_TEST_FILE}"
 	test_print_trc "Unmount the device"
 	#do_cmd "umount $DEV_NODE"
-  do_cmd blk_device_unprepare.sh -n "$DEV_NODE" -d "$DEVICE_TYPE" -f "$FS_TYPE" -m "$MNT_POINT"
 done
+do_cmd blk_device_unprepare.sh -n "$DEV_NODE" -d "$DEVICE_TYPE" -f "$FS_TYPE" -m "$MNT_POINT"
 
 
