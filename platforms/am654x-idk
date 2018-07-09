@@ -1,6 +1,7 @@
 armv8
 am654
 am654x-idk
+emmc
 gpio
 graphics/
 hwrng
@@ -27,6 +28,7 @@ pru/eth2
 pru/eth3
 pru/eth4
 pru/eth5
+qspi_master/mtd
 rtc
 sata
 smp

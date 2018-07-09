@@ -1,6 +1,7 @@
 armv8
 am654
 am654x-evm
+emmc
 gpio
 graphics/
 hwrng
@@ -24,6 +25,7 @@ power_mgr/cpufreq/ondemand
 power_mgr/cpuidle
 pru/eth0
 pru/eth1
+qspi_master/mtd
 rtc
 sata
 smp
