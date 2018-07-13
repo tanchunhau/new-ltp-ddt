@@ -3,6 +3,8 @@
 # @requires 
 # @setup_requires 
 
+MEMORY_S_FUNC_CHECKSIZE source 'board_requirements.sh'; get_acceptable_memory_size; min_mem_size=`echo "$expected_memory * 0.95 / 1" |bc`; [ $(free | grep Mem:| awk '{print $2};') -gt $min_mem_size ]
+
 MEMORY_S_FUNC_MEMTESTER_1pct_1time source 'functions.sh'; run_memtest 1 1
 MEMORY_M_FUNC_MEMTESTER_10pct_1time source 'functions.sh'; run_memtest 10 1
 MEMORY_L_FUNC_MEMTESTER_50pct_1time source 'functions.sh'; run_memtest 50 1
