@@ -37,7 +37,7 @@ EOF
 exit 0
 }
 
-SYNC="sync=false"
+SYNC=""
 SCALING=""
 V_CONN=""
 A_DEV=""
@@ -61,7 +61,7 @@ do case $arg in
         f)
                 FILE=$OPTARG ;;
         s)
-                SYNC="sync=true" ;;
+                SYNC="" ;;
         x)
                 SCALING="scale=true" ;;
         c)
