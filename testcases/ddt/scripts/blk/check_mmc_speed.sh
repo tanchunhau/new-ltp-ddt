@@ -30,7 +30,7 @@ if [[ "$expected_mode" = "" ]]; then
     case $MACHINE in
       am57xx-evm |am572x-idk |am574x-idk)
         expected_mode="DDR52";;
-      dra7xx-evm | dra72x-evm | am654x-evm | am654x-idk)
+      dra7xx-evm | dra72x-evm )
         expected_mode="HS200";;
       am654x-evm | am654x-idk)
         expected_mode="HS400";;
