@@ -1,0 +1,21 @@
+# @name Check PCIe using loopback between PCIe0 and PCIe1
+# @desc Setup a epf_test function and run pcitest app
+# @requires pcie || pci
+
+PCI_XS_FUNC_PCIE_BARS source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -b
+
+PCI_XS_FUNC_PCIE_MSI source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -m
+
+PCI_XS_FUNC_PCIE_LEGACY_IRQ source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -l
+
+PCI_XS_FUNC_PCIE_READ source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -r
+
+PCI_XS_FUNC_PCIE_WRITE source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -w
+
+PCI_XS_FUNC_PCIE_COPY source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -c
+
+PCI_XS_FUNC_PCIE_READ_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -r -u
+
+PCI_XS_FUNC_PCIE_WRITE_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -w -u
+
+PCI_XS_FUNC_PCIE_COPY_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -c -u
