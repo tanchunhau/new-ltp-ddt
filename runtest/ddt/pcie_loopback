@@ -6,6 +6,8 @@ PCI_XS_FUNC_PCIE_BARS source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -b
 
 PCI_XS_FUNC_PCIE_MSI source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -m
 
+PCI_XS_FUNC_PCIE_MSIX source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -x
+
 PCI_XS_FUNC_PCIE_LEGACY_IRQ source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -l
 
 PCI_XS_FUNC_PCIE_READ source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -r
