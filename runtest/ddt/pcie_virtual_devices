@@ -11,3 +11,7 @@ PCI_XS_FUNC_PCIE_ENUMERATE_2_HOSTS source 'common.sh'; do_cmd test 2 -le $(lspci
 PCI_XS_FUNC_PCIE0_VEPF_BARS source "common.sh"; do_cmd pcie_ep_funcs.sh -n 3 -b -d /dev/pci-endpoint-test.0
 
 PCI_XS_FUNC_PCIE1_VEPF_BARS source "common.sh"; do_cmd pcie_ep_funcs.sh -n 3 -b -d /dev/pci-endpoint-test.1
+
+PCI_XS_FUNC_PCIE0_VEPF_MSI source "common.sh"; do_cmd pcie_ep_funcs.sh -n 3 -m -d /dev/pci-endpoint-test.0
+
+PCI_XS_FUNC_PCIE1_VEPF_MSI source "common.sh"; do_cmd pcie_ep_funcs.sh -n 3 -m -d /dev/pci-endpoint-test.1
