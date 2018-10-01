@@ -19,11 +19,13 @@ create_epf_test_func()
       VID=$3
       DEVID=$4
       MSI=$5
+      MSIX=$6
       FUNCDIR=$CONFIGFS/pci_ep/functions/pci_epf_test/func$IDX
       mkdir -p $FUNCDIR
       echo $VID > $FUNCDIR/vendorid
       echo $DEVID > $FUNCDIR/deviceid
       echo $MSI > $FUNCDIR/msi_interrupts
+      echo $MSIX > $FUNCDIR/msix_interrupts
       ln -s $FUNCDIR $CONFIGFS/pci_ep/controllers/$EPCTRL/
       cat $FUNCDIR/deviceid
       [ "$(cat $FUNCDIR/deviceid)" != "$DEVID" ] && return 1 || return 0
@@ -72,13 +74,30 @@ ep_test_msi()
       fi
 }
 
+
+ep_test_msix()
+{
+      MSIX=$1
+      OLD_COUNT=$(get_msi_interrupt_count $MSIX)
+      pcitest $TEST_DEV -x$MSIX || return 1
+      NEW_COUNT=$(get_msi_interrupt_count $MSIX)
+      if [ "$((OLD_COUNT + 1))" == "$NEW_COUNT" ]; then
+              return 0
+      else
+              echo unexpected interrupt count for MSI-X \#$MSIX
+              echo expected $((OLD_COUNT + 1)), got $NEW_COUNT
+              cat /proc/interrupts | grep MSI
+              return 1
+      fi
+}
+
 single_func_pcie_setup()
 {
       mount_configfs
       [ $? !=  0 ] && return 1
       #create endpoint function
       EP_CTRL=$(ls /sys/class/pci_epc) #this logic assumes only one EP ctrl
-      create_epf_test_func $EP_CTRL 1 0x104c 0xb500 16
+      create_epf_test_func $EP_CTRL 1 0x104c 0xb500 16 16
       [ $? !=  0 ] && return 1
       #start pcie ep ctrl
       pcie_ep_start $EP_CTRL
@@ -109,6 +128,14 @@ msi_tests()
       for i in $(seq 1 1 16)
       do
               do_cmd ep_test_msi $i
+      done
+}
+
+msix_tests()
+{
+      for i in $(seq 1 1 16)
+      do
+              do_cmd ep_test_msix $i
       done
 }
 
@@ -173,6 +200,7 @@ cat <<-EOF >&1
         -d device to test (ex: /dev/pci-endpoint-test.1)
         -b run BAR tests
         -m run MSI tests
+        -x run MSIX tests
         -l run legacy IRQ tests
         -r run read tests
         -w run write tests
@@ -187,14 +215,16 @@ exit 0
 ############################ Script Variables ##################################
 
 TRIALS=1
+IRQTYPE=1
 ################################ CLI Params ####################################
-while getopts  :d:n:hbmlrwcus arg
+while getopts  :d:n:hbxmlrwcus arg
 do case $arg in
         n)      export TRIALS="$OPTARG";;
         d)      export TEST_DEV="-D $OPTARG";;
         b)      DO_BAR_TEST=1;;
-        m)      echo msi; DO_MSI_TEST=1;;
-        l)      DO_IRQ_TEST=1;;
+        x)      IRQTYPE=2; DO_MSIX_TEST=1;;
+        m)      IRQTYPE=1; DO_MSI_TEST=1;;
+        l)      IRQTYPE=0; DO_IRQ_TEST=1;;
         r)      DO_READ_TEST=1;;
         w)      DO_WRITE_TEST=1;;
         c)      DO_COPY_TEST=1;;
@@ -214,7 +244,10 @@ then
   usage
 fi
 
+pcitest $TEST_DEV -i$IRQTYPE
+
 [ ! -z "$DO_BAR_TEST" ] && bar_tests
+[ ! -z "$DO_MSIX_TEST" ] && msix_tests
 [ ! -z "$DO_MSI_TEST" ] && msi_tests
 [ ! -z "$DO_IRQ_TEST" ] && irq_tests
 [ ! -z "$DO_READ_TEST" ] && read_tests
