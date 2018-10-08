@@ -34,7 +34,7 @@ setup_firmware()
   for __rp in $__rprocs
   do
     __fw_dst="/sys/class/remoteproc/${__rp}/firmware"
-    __fw=$((cat /sys/class/remoteproc/${__rp}/device/of_node/firmware-name 2>/dev/null | tr -d \\0) || cat $__fw_dst)
+    __fw=$((cat /sys/class/remoteproc/${__rp}/device/of_node/firmware-name 2>/dev/null) || cat $__fw_dst)
     case $__fw in
       *dsp*)
         __fw_type=dsp
