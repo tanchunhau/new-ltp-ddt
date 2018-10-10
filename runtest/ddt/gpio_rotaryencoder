@@ -1,0 +1,6 @@
+# @name Check if the rotary encoder are input event
+# @desc Check if the rotary encoder are input event
+# @requires gpio 
+
+GPIO_S_FUNC_ROTARY_ENCODER source "common.sh"; check_gpio_rotaryencoder.sh
+

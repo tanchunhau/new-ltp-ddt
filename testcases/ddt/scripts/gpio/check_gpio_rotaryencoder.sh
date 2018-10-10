@@ -68,7 +68,8 @@ sleep 1
  
 # processing the evtest output                           
 do_cmd cat /evtest.log
-cat /evtest.log |grep -iE 'matrix_keypad|gpio_key|gpio-keys' || die "matrix_keypad is not input event"
+cat /evtest.log |grep -iE 'gpio-decoder' || die "Rotary encoder is not input device"
 do_cmd rm /evtest.log
-
 do_cmd "cat /proc/interrupts |grep -i gpio"
+
+
