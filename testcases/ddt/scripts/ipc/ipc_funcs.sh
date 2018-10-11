@@ -54,7 +54,7 @@ setup_firmware()
         ;;
       *mcu*)
         __fw_type=r5f
-        __new_pattern=$(find_firmware_id "$__fw" r5f)
+        __new_pattern=r5f
         ;;
       am335x-pm-firmware*)
         continue
@@ -66,7 +66,7 @@ setup_firmware()
     esac
 
     __fw_file=$(find ${__fw_dir} -type f -iname "${__fw_pattern}" | grep "${__fw_type}" | grep "${__new_pattern}")
-    if [[ -z $__fw_file ]]
+    if [[ -z $__fw_file ]] && [[ $SOC != *"am654"* ]]
     then
       __fw_file=$(find ${__fw_dir} -type f -iname "${__fw_pattern}")
     fi
@@ -91,13 +91,13 @@ find_firmware_id()
 rm_ipc_mods()
 {
 
-  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc keystone_remoteproc ti_k3_r5_remoteproc remoteproc remoteproc virtio_rpmsg_bus rpmsg_core)
+  local __modules=(ti_k3_r5_remoteproc rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus rpmsg_core)
 
   reset_rproc_mpm
   kill_lad
   kill_mpm_daemon
 
-  toggle_rprocs stop
+  toggle_rprocs stop r5f
 
   rm_pru_mods
 
@@ -122,7 +122,7 @@ ins_ipc_mods()
       done
     ;;
     *)
-      __modules=(remoteproc omap_remoteproc keystone_remoteproc ti_k3_r5_remoteproc virtio_rpmsg_bus rpmsg_core)
+      __modules=(remoteproc omap_remoteproc keystone_remoteproc virtio_rpmsg_bus rpmsg_core ti_k3_r5_remoteproc)
   
       if [ $# -gt 0 ];
       then
@@ -276,7 +276,7 @@ get_num_remote_procs()
         ;;
       esac
       ;;
-    *omapl138|*am654)
+    *omapl138|*am654*)
       echo 1
       ;;
     *)
@@ -314,7 +314,7 @@ get_rpmsg_proto_rproc_ids()
         ;;
       esac
       ;;
-    *omapl138|*am654)
+    *omapl138|*am654*)
       rids=( 1 )
       ;;
     *)
@@ -907,6 +907,7 @@ rpmsg_recovery_event()
 # Function to bind/unbind the prus
 # Inputs:
 #   $1: action to perform, either "stop" or "start"
+#   $2: (optional) name of r5f to skip
 toggle_rprocs()
 {
   local __driver_sysfs='/sys/class/remoteproc'
@@ -915,9 +916,19 @@ toggle_rprocs()
   local __a
   local __type
   local __mbox
+  local __skip=''
+
+  if [ $# -gt 1 ]
+  then
+    for __rproc in ${@:2};
+    do
+      __skip="${__skip} -e ${__rproc}"
+    done
+  fi
+
   for __pru in `ls ${__driver_sysfs}/`
   do
-    cat ${__driver_sysfs}/${__pru}/device/of_node/name | grep wkup_m3 && continue
+    cat ${__driver_sysfs}/${__pru}/device/of_node/name | grep -e wkup_m3 ${__skip} && continue
     __b=$(ls /dev/)
     echo $1 > ${__driver_sysfs}/${__pru}/state
     __type=$(cat ${__driver_sysfs}/${__pru}/firmware | grep -o -e ipu[0-9] -e dsp[0-9] | tail -1)
