@@ -3,6 +3,8 @@
 import pykms
 import time
 import random
+import sys
+import re
 
 # This hack makes drm initialize the fbcon, setting up the default connector
 card = pykms.Card()
@@ -27,7 +29,13 @@ h = mode.vdisplay
 offset = int(h/2**(len(planes)-1))
 l_div = len(planes) - 1
 
-#print "width = {}, height = {}".format(w,h)
+def usage():
+  print("Failed: {} <platform i.e dra7xx>".format(sys.argv[0]))
+  exit(1)
+
+if len(sys.argv) != 2 : usage()
+
+platform = sys.argv[1]
 
 fbs=[]
 
@@ -35,20 +43,21 @@ for i in range(len(planes)):
     fbs.append(pykms.DumbFramebuffer(card, w, h, pykms.PixelFormat.RGB888))
     pykms.draw_rect(fbs[i], 0, 0, int(w/l_div), int(h/l_div), pykms.RGB(255*(1 & 2**(i%3)), 255*((2 & 2**(i%3)) >> i), 255*((4 & 2**(i%3)) >> i)))
 
-crtc.set_props({
-    "trans-key-mode": 0,
-    "trans-key": 0,
-    "background": 0,
-    "alpha_blender": 1,
-})
+if not re.match("am65.*", platform, re.I):
+    crtc.set_props({
+        "trans-key-mode": 0,
+        "trans-key": 0,
+        "background": 0,
+        "alpha_blender": 1,
+    })
+
 
 for i in range(len(planes)):
     plane = planes[i]
     fb = fbs[i]
 
     print("set crtc {}, plane {}, fb {} ({}, {})".format(crtc.id, plane.id, fbs[i].id, fb.width, fb.height))
-    
-    plane.set_props({
+    p_props = {
         "FB_ID": fb.id,
         "CRTC_ID": crtc.id,
         "SRC_X": 0,
@@ -59,7 +68,12 @@ for i in range(len(planes)):
         "CRTC_Y": i*offset,
         "CRTC_W": int(w/l_div),
         "CRTC_H": int(h/l_div),
-        "zorder": i,
-    })
+    }
+    if re.match("am65.*", platform, re.I):
+        p_props["zpos"] = i
+    else:
+        p_props["zorder"] = i
+
+    plane.set_props(p_props)
 
 time.sleep(3)

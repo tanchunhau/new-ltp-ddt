@@ -33,9 +33,9 @@ offset = int(h/4)
 fbs=[]
 
 pix_fmt = pykms.PixelFormat.ARGB8888
-
+platform = sys.argv[1]
 if len(sys.argv) > 1:
-    if re.match('am43.*',sys.argv[1],re.I):
+    if re.match('am43.*', platform, re.I):
         pix_fmt = pykms.PixelFormat.RGB888
 
 for i in range(len(planes)):
@@ -43,12 +43,13 @@ for i in range(len(planes)):
     pykms.draw_rect(fbs[i], 0, 0, w, h, pykms.RGB(255*(i==0), 255*(i==1), 255*(i==2)))
     pykms.draw_rect(fbs[i], i*offset, i*offset, int(w/2**(i+1)), int(h/2**(i+1)), pykms.RGB(255*(i!=1), 255*(i!=2), 255*(i!=0)))
 
-crtc.set_props({
-    "trans-key-mode": 0,
-    "trans-key": 0,
-    "background": 0,
-    "alpha_blender": 1,
-})
+if not re.match("am65.*", platform, re.I):
+    crtc.set_props({
+        "trans-key-mode": 0,
+        "trans-key": 0,
+        "background": 0,
+        "alpha_blender": 1,
+    })
 
 #Show the whole frame
 for i in range(len(planes)):
@@ -57,7 +58,7 @@ for i in range(len(planes)):
 
     print("set crtc {}, plane {}, fb {} ({}, {})".format(crtc.id, plane.id, fbs[i].id, fb.width, fb.height))
 
-    plane.set_props({
+    p_props = {
         "FB_ID": fb.id,
         "CRTC_ID": crtc.id,
         "SRC_X": 0,
@@ -68,8 +69,12 @@ for i in range(len(planes)):
         "CRTC_Y": 0,
         "CRTC_W": fb.width,
         "CRTC_H": fb.height,
-        "zorder": i,
-    })
+    }
+    if re.match("am65.*", platform, re.I):
+        p_props["zpos"] = i
+    else:
+        p_props["zorder"] = i
+    plane.set_props(p_props)
     time.sleep(1)
 
 #Show only the cropped rect
@@ -79,8 +84,8 @@ for i in range(len(planes)):
     p_w = int(fb.width/2**(i+1))
     p_h = int(fb.height/2**(i+1))
     print("set crtc {}, plane {}, fb {} ({}, {})".format(crtc.id, plane.id, fbs[i].id, fb.width, fb.height))
-    
-    plane.set_props({
+
+    p_props = {
         "FB_ID": fb.id,
         "CRTC_ID": crtc.id,
         "SRC_X": i*offset << 16,
@@ -90,8 +95,13 @@ for i in range(len(planes)):
         "CRTC_X": 0,
         "CRTC_Y": 0,
         "CRTC_W": p_w,
-        "CRTC_H": p_h,
-        "zorder": i,
-    })
+        "CRTC_H": p_h
+    }
+    if re.match("am65.*", platform, re.I):
+        p_props["zpos"] = i
+    else:
+        p_props["zorder"] = i
+
+    plane.set_props(p_props)
 
 time.sleep(3)
