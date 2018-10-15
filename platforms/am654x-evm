@@ -33,7 +33,7 @@ sound/capture/alsa
 sound/playback/alsa
 sound/capture/alsa/hisamplingrate
 sound/playback/alsa/hisamplingrate
-spi_master
+spi_master/mtd
 touchscreen
 usb/host/msc/xhci-hcd
 usb/host/hid/xhci-hcd
