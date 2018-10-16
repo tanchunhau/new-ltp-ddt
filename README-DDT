@@ -19,7 +19,7 @@
 3) HOW TO ADD NEW DDT TESTS:
 ================================================================================
  You only need to add files to two directories:
- testcases/ddt: Contains the test logic files (either c code or shell script)
+ testcases/ddt: Contains the test logic files (either c code, shell script or python script)
  runtest/ddt  : Contains the test scenario files. It calls the test logic files.
  
  * If your tests requires compiling c sources, create following directory 
@@ -29,7 +29,7 @@
    Please note that you don't need to add c sources for external tools (such as 
    iperf, lmbench, etc.), instead external tools should be added to the OE/Arago
    recipe that builds the test filesystem image.
- * If your tests use shell scripts, add the shell scripts to the
+ * If your tests use shell/python scripts, add the shell/python scripts to the
    testcases/ddt/scripts/ directory
  * Write a new test scenario file under runtest/ddt/. Also add a new line with
    the name of your new scenario file to scenario_groups/default-ddt.
@@ -37,7 +37,7 @@
 4) DDT TESTS IMPLEMENTATION GUIDELINES
 ================================================================================
 4.1) TEST CASES
- * Write you test code using c and/or linux shell scripts.
+ * Write you test code using c and/or linux shell scripts and/or python scripts.
  * Beware that the linux shell script should be compatible with the ash shell
    available in busybox.
  * Avoid hard-coding values that are specific to your platform, instead try to 
