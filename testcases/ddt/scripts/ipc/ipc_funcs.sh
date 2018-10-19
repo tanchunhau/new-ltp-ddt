@@ -31,6 +31,13 @@ setup_firmware()
   local __fw_type
   local __fw_dst
 
+  case $MACHINE in
+      *dra8*)
+          # dra8 doesn't yet support loading the firmware
+          return
+      ;;
+  esac
+
   for __rp in $__rprocs
   do
     __fw_dst="/sys/class/remoteproc/${__rp}/firmware"
@@ -82,8 +89,14 @@ find_firmware_id()
 rm_ipc_mods()
 {
 
-  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus rpmsg_core)
+  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc ti_k3_r5_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus rpmsg_core)
 
+  case $MACHINE in
+    dra8*)
+      # DRA8 does not yet support module unloading for remote procs because the firmware cannot be reloaded
+      return
+    ;;
+  esac
   reset_rproc_mpm
   kill_lad
   kill_mpm_daemon
@@ -112,8 +125,12 @@ ins_ipc_mods()
         modprobe ${__mod}
       done
     ;;
+    dra8*)
+      # DRA8 does not yet support module loading for remote procs because the firmware cannot be reloaded
+      return
+    ;;
     *)
-      __modules=(remoteproc omap_remoteproc keystone_remoteproc virtio_rpmsg_bus rpmsg_core)
+      __modules=(remoteproc omap_remoteproc ti_k3_r5_remoteproc keystone_remoteproc virtio_rpmsg_bus rpmsg_core)
   
       if [ $# -gt 0 ];
       then
@@ -247,6 +264,9 @@ start_mpm_daemon()
 get_num_remote_procs()
 {
   case $SOC in
+    *dra8xx)
+      echo 3
+      ;;
     *dra7xx|*j6plus)
       echo 4
       ;;
@@ -285,6 +305,9 @@ get_num_remote_procs()
 get_rpmsg_proto_rproc_ids()
 { 
   case $SOC in
+    *dra8xx)
+      rids=( `seq 1 3` )
+      ;;
     *dra7xx|*j6plus)
       rids=( `seq 1 4` )
       ;;
@@ -835,15 +858,23 @@ rpmsg_client_sample_test()
   local __num_procs=$1
   local __command
   local __loops=1
+  local __delay=3
   
   if [ $# -gt 1 ]
   then
     __loops=$2
   fi
+
+  case $SOC in
+    dra8xx)
+        # simulation time is very slow with all 3 cores enabled. reduce the delay to 1s
+	__delay=1
+    ;;
+  esac
   
   for idx in `seq 1 $__loops`
   do
-    __test_log=$(dmesg -c > /dev/null && modprobe rpmsg_client_sample || modprobe -f rpmsg_client_sample && sleep 3 && dmesg)
+    __test_log=$(dmesg -c > /dev/null && modprobe rpmsg_client_sample || modprobe -f rpmsg_client_sample && sleep $__delay && dmesg)
     __num_match=$(echo -e "$__test_log" | grep -c -i 'rpmsg[0-9]\+: incoming msg 100')
     __num_goodbye=$(echo -e "$__test_log" | grep -c -i 'rpmsg[0-9]\+: goodbye!')
     if [ $__num_match -ne 1 -o  $__num_goodbye -ne $(($__num_procs * 2)) ]
@@ -900,6 +931,14 @@ toggle_rprocs()
   local __a
   local __type
   local __mbox
+
+  case $MACHINE in
+      *dra8*)
+          # dra8 doesn't yet support toggling the remote proc
+          return
+      ;;
+  esac
+
   for __pru in `ls ${__driver_sysfs}/`
   do
     cat ${__driver_sysfs}/${__pru}/device/of_node/name | grep wkup_m3 && continue
@@ -984,6 +1023,9 @@ list_pru_devs()
 list_rprocs()
 {
   case $SOC in
+    dra8xx)
+      echo "41000000.r5f 5c00000.r5f 5e00000.r5f"
+    ;;
     dra7xx)
       echo "40800000.dsp 41000000.dsp 58820000.ipu 55020000.ipu"
     ;;
