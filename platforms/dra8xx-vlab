@@ -9,6 +9,7 @@ mmc_host/mmc
 mmc_host/sd
 mmc_host/sdhc
 mmc_host/sdxc
+emmc
 nand
 ubifs
 jffs2
