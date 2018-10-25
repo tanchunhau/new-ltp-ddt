@@ -155,9 +155,14 @@ case $MACHINE in
 		sound='CONFIG_SND_DM6467_SOC_EVM:snd-soc-evm';;
 	k2*-evm)
 		usb='CONFIG_USB_XHCI_HCD:xhci-hcd';;
-    dragonboard410c|hikey)
-        usb='CONFIG_USB_STORAGE:usb-storage';;
-
+	dragonboard410c)
+		usb='CONFIG_USB_STORAGE:usb-storage';;
+	hikey)
+		usb='CONFIG_USB_STORAGE:usb-storage'
+		rtc='CONFIG_RTC_DRV_EFI:rtc-efi'
+		spi='CONFIG_SPI_MASTER:spi CONFIG_SPI_PL022:spi-pl022'
+		mmc='CONFIG_MMC:mmc-hikey'
+		sata='CONFIG_SATA_AHCI_PLATFORM:ahci_platform';;
 esac
 
 # Define default values for variables being overriden
