@@ -177,12 +177,12 @@ virtual_func_pcie_setup()
       cleanup
       #create endpoint functions (physical and virtual)
       EP_CTRL=$(ls /sys/class/pci_epc) #this logic assumes only one EP ctrl
-      create_epf_test_virt_func 1 0   0x104c 0xb500 4 8
-      create_epf_test_virt_func 1 1   0x104c 0xb500 4 8
+      create_epf_test_virt_func 1 0   0x104c 0xb500 16 16
+      create_epf_test_virt_func 1 1   0x104c 0xb500 16 16
       create_epf_test_func $EP_CTRL 1 0x104c 0xb500 16 16
       [ $? !=  0 ] && return 1
-      export MSI_ARRAY="0.16.20.24"
-      export MSIX_ARRAY="0.16.24.32"
+      export MSI_ARRAY="0.16.32.48"
+      export MSIX_ARRAY="0.16.32.48"
       #start pcie ep ctrl
       pcie_ep_start $EP_CTRL
       # Remove bridge
