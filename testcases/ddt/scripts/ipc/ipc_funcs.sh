@@ -844,6 +844,33 @@ rpmsg_proto_msgqmulti_test()
   return $__result
 }
 
+rpmsg_client_sample_test_dra8()
+{
+  local __result=0
+  local __test_log
+  local __num_goodbye
+  local __num_procs=$1
+  local __loops=1
+  local __delay=1
+
+  for idx in `seq 1 $__loops`
+  do
+    __test_log=$(dmesg -c > /dev/null && modprobe rpmsg_client_sample || modprobe -f rpmsg_client_sample && sleep $__delay && dmesg)
+    __num_match=$(echo -e "$__test_log" | grep -c -i 'virtio[0-9].*: incoming msg 100')
+    __num_goodbye=$(echo -e "$__test_log" | grep -c -i 'virtio[0-9].*: goodbye!')
+    if [ $__num_match -ne $__num_procs -o  $__num_goodbye -ne $__num_procs ]
+    then
+      __result=$((__result + 1))
+      echo -e "${__test_log}\nTest failed..."
+    else
+      echo "Test passed..."
+    fi
+    rmmod rpmsg_client_sample
+  done
+
+  return $__result
+}
+
 # Funtion to run the RPMSG client sample test based on the kernel's 
 # samples/rpmsg module
 # Inputs:
@@ -860,17 +887,17 @@ rpmsg_client_sample_test()
   local __loops=1
   local __delay=3
   
+  case $SOC in
+    dra8xx)
+        rpmsg_client_sample_test_dra8 $*
+        return $?
+    ;;
+  esac
+
   if [ $# -gt 1 ]
   then
     __loops=$2
   fi
-
-  case $SOC in
-    dra8xx)
-        # simulation time is very slow with all 3 cores enabled. reduce the delay to 1s
-	__delay=1
-    ;;
-  esac
   
   for idx in `seq 1 $__loops`
   do
