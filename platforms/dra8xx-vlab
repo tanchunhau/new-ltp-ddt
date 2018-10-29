@@ -13,6 +13,7 @@ emmc
 nand
 ubifs
 jffs2
+kms
 net/eth10M
 net/eth100M
 net/eth1G
