@@ -1110,6 +1110,8 @@ set_cgroup_load_balance()
 {
     mount_cgroup
     cat /sys/fs/cgroup/cpuset.sched_load_balance | grep $1 &> /dev/null || echo $1 > /sys/fs/cgroup/cpuset.sched_load_balance
+    cat /sys/fs/cgroup/rt/cpuset.sched_load_balance | grep $1 &> /dev/null || echo $1 > /sys/fs/cgroup/rt/cpuset.sched_load_balance
+    cat /sys/fs/cgroup/nonrt/cpuset.sched_load_balance | grep $1 &> /dev/null || echo $1 > /sys/fs/cgroup/nonrt/cpuset.sched_load_balance
 }
 
 # Run shell and subsequent Processes started from it on shielded (i.e. separate) CPU
