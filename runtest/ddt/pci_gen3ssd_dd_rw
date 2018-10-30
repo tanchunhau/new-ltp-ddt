@@ -18,6 +18,6 @@ PCI_S_FUNC_NVMESSD_DD_RW_10M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_
 
 PCI_M_FUNC_NVMESSD_DD_RW_100M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -b "1M" -c "100" -d "pci" 
 
-PCI_L_STRESS_NVMESSD_DD_RW_10M_100TIMES source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "10M" -c "1" -d "pci" -l "100"
+PCI_L_STRESS_NVMESSD_DD_RW_10M_100TIMES source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -b "10M" -c "1" -d "pci" -l "100"
 
 
