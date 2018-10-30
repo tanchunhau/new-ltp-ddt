@@ -1,0 +1,23 @@
+# @name PCI NVMe SSD w/r tests 
+# @desc Perform mkfs first, then do read write 
+# @requires pci || pcie
+# @setup_requires pciegen3ssd
+
+PCI_S_FUNC_NVMESSD_VFAT_DD_RW_10M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -f "vfat" -b "1M" -c "10" -d "pci" 
+
+PCI_M_FUNC_NVMESSD_VFAT_DD_RW_100M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -f "vfat" -b "1M" -c "100" -d "pci" 
+
+# comment out since there is problem with ext4 for nvme
+#PCI_S_FUNC_NVMESSD_EXT4_DD_RW_10M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "10M" -c "1" -d "pci" 
+
+#PCI_M_FUNC_NVMESSD_EXT4_DD_RW_100M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "10M" -c "10" -d "pci" 
+
+#PCI_L_STRESS_NVMESSD_EXT4_DD_RW_10M_100TIMES source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "10M" -c "1" -d "pci" -l "100"
+
+PCI_S_FUNC_NVMESSD_DD_RW_10M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -b "1M" -c "10" -d "pci" 
+
+PCI_M_FUNC_NVMESSD_DD_RW_100M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -b "1M" -c "100" -d "pci" 
+
+PCI_L_STRESS_NVMESSD_DD_RW_10M_100TIMES source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -b "10M" -c "1" -d "pci" -l "100"
+
+

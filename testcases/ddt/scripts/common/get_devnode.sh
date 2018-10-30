@@ -41,6 +41,11 @@ case $DEVICE_TYPE in
         ;;
 esac
 
+# double check device node
+if [ ! -e $DEV_NODE ]; then
+    skip_test "$DEVICE_TYPE: platform does not have device $DEV_NODE"
+fi
+
 ############################ USER-DEFINED Params ##############################
 # Try to avoid defining values here, instead see if possible
 # to determine the value dynamically

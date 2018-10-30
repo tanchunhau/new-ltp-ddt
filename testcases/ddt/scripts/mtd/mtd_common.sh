@@ -35,6 +35,8 @@ find_part_type() {
         PART_TYPE="nor"
       elif [[ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'qspi'` ]];then
         PART_TYPE="qspi"
+      elif [[ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'ospi'` ]];then
+        PART_TYPE="qspi"
       elif [[ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'spi'` ]];then
         if [[ `cat /proc/mtd |grep -E "mtd$PART |mtd${PART}: "|grep -i qspi ` ]];then
           PART_TYPE="qspi"

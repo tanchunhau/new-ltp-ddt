@@ -29,7 +29,7 @@ source "common.sh"
 #       2nd partition size in MB
 create_three_partitions() {
     if [ $# -ne 3 ]; then
-      die "Usage: $0 <dev_base_node ex. /dev/mmcblk0, /dev/sda> <1st partition size> <2nd partition size>"
+      die "Usage: $0 <dev_base_node ex. /dev/mmcblk0, /dev/sda>, /dev/nvme0n1 <1st partition size> <2nd partition size>"
     fi
 
     basenode=$1
@@ -106,7 +106,7 @@ get_part_util_to_use()
 
 # This function return DEVNODE with the biggest size.
 #   If the partition is boot or rootfs partition, it will be skipped.
-# Input: DEV_BASE_NODE: like /dev/mmcblk0, /dev/sda etc
+# Input: DEV_BASE_NODE: like /dev/mmcblk0, /dev/sda, /dev/nvme0n1 etc
 #        DEVICE_TYPE: like 'mmc', 'usb'
 # Output: test partition which is biggest partition; but not boot or rootfs partition
 
@@ -288,6 +288,11 @@ printout_model(){
   case "$DEV_NODE" in
     *sd*)
       BASE_SD=`echo "$DEV_NODE" |sed "s/\/dev\///" |sed "s/[0-9]$//"` 
+      do_cmd "cat /sys/block/$BASE_SD/device/model"
+      ;;
+    *nvme*)
+      # /dev/nvme0n1p1
+      BASE_SD=`echo "$DEV_NODE" |sed "s/\/dev\///" |sed "s/p[0-9]$//"` 
       do_cmd "cat /sys/block/$BASE_SD/device/model"
       ;;
     *)

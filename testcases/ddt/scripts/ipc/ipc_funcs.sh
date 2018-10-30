@@ -41,7 +41,7 @@ setup_firmware()
   for __rp in $__rprocs
   do
     __fw_dst="/sys/class/remoteproc/${__rp}/firmware"
-    __fw=$(cat /sys/class/remoteproc/${__rp}/device/of_node/firmware-name 2>/dev/null || cat $__fw_dst)
+    __fw=$((cat /sys/class/remoteproc/${__rp}/device/of_node/firmware-name 2>/dev/null) || cat $__fw_dst)
     case $__fw in
       *dsp*)
         __fw_type=dsp
@@ -52,8 +52,16 @@ setup_firmware()
         __new_pattern=$(find_firmware_id "$__fw" ipu)
         ;;
       *pru*)
-        __fw_type=pru
+        __fw_type=PRU
         __new_pattern=$(find_firmware_id "$__fw" pru)
+        ;;
+      *rtu*)
+        __fw_type=RTU
+        __new_pattern=$(find_firmware_id "$__fw" rtu)
+        ;;
+      *mcu*)
+        __fw_type=r5f
+        __new_pattern=r5f
         ;;
       am335x-pm-firmware*)
         continue
@@ -64,12 +72,13 @@ setup_firmware()
         ;;
     esac
 
-    __fw_file=$(find ${__fw_dir} -type f -name "${__fw_pattern}" | grep "${__fw_type}" | grep "${__new_pattern}")
-    if [[ -z $__fw_file ]]
+    __fw_file=$(find ${__fw_dir} -type f -iname "${__fw_pattern}" | grep "${__fw_type}" | grep "${__new_pattern}")
+    if [[ -z $__fw_file ]] && [[ $SOC != *"am654"* ]]
     then
-      __fw_file=$(find ${__fw_dir} -type f -name "${__fw_pattern}")
+      __fw_file=$(find ${__fw_dir} -type f -iname "${__fw_pattern}")
     fi
-    if [[ !  -z  $__fw_file  ]]
+    __n_l=$(echo -n "$__fw_file" | wc -l)
+    if [[ !  -z  $__fw_file ]] && [[ "$__n_l" -eq 0 ]]
     then
       echo "Setting ${__fw_file:14} on $__fw_dst ..."
       echo "${__fw_file:14}" > $__fw_dst
@@ -81,7 +90,7 @@ setup_firmware()
 
 find_firmware_id()
 {
-  echo "$1" | grep -o "$2[^-]*" | grep -o '[0-9].*'
+  echo "$1" | grep -i -o "$2[^-]*" | grep -o '[0-9].*'
 }
 
 # Function to rmod the rpmsg loadable modules so that new firmware can 
@@ -101,7 +110,7 @@ rm_ipc_mods()
   kill_lad
   kill_mpm_daemon
 
-  toggle_rprocs stop
+  toggle_rprocs stop r5f
 
   rm_pru_mods
 
@@ -220,7 +229,7 @@ ins_pru_mods()
   local __modules=(pruss pru_rproc pruss_soc_bus prueth)
 
   case $MACHINE in
-    am57*|am43xx*|am335x*|k2g*)
+    am57*|am43xx*|am335x*|k2g*|am65*)
       for __mod in ${__modules[@]}
       do
         modprobe ${__mod}
@@ -232,7 +241,7 @@ ins_pru_mods()
 
 rm_pru_mods()
 {
-  local __modules=(prueth rpmsg_pru pru_rproc pruss pruss_soc_bus)
+  local __modules=(prueth icssg_prueth rpmsg_pru pru_rproc pruss pruss_soc_bus)
 
   for __mod in ${__modules[@]}
   do
@@ -287,7 +296,7 @@ get_num_remote_procs()
         ;;
       esac
       ;;
-    *omapl138)
+    *omapl138|*am654*)
       echo 1
       ;;
     *)
@@ -328,7 +337,7 @@ get_rpmsg_proto_rproc_ids()
         ;;
       esac
       ;;
-    *omapl138)
+    *omapl138|*am654*)
       rids=( 1 )
       ;;
     *)
@@ -592,6 +601,9 @@ kill_lad()
     omapl138*)
       killall lad_omapl138
       ;;
+    am65*)
+      killall lad_am65xx
+      ;;
     *)
       echo "Machine ${MACHINE} not supported"
       return 1
@@ -627,6 +639,9 @@ start_lad()
       ;;
     omapl138*)
       lad_omapl138
+      ;;
+    am65*)
+      lad_am65xx
       ;;
     *)
       echo "Machine ${MACHINE} not supported"
@@ -950,6 +965,7 @@ rpmsg_recovery_event()
 # Function to bind/unbind the prus
 # Inputs:
 #   $1: action to perform, either "stop" or "start"
+#   $2: (optional) name of r5f to skip
 toggle_rprocs()
 {
   local __driver_sysfs='/sys/class/remoteproc'
@@ -965,10 +981,19 @@ toggle_rprocs()
           return
       ;;
   esac
+  local __skip=''
+
+  if [ $# -gt 1 ]
+  then
+    for __rproc in ${@:2};
+    do
+      __skip="${__skip} -e ${__rproc}"
+    done
+  fi
 
   for __pru in `ls ${__driver_sysfs}/`
   do
-    cat ${__driver_sysfs}/${__pru}/device/of_node/name | grep wkup_m3 && continue
+    cat ${__driver_sysfs}/${__pru}/device/of_node/name | grep -e wkup_m3 ${__skip} && continue
     __b=$(ls /dev/)
     echo $1 > ${__driver_sysfs}/${__pru}/state
     __type=$(cat ${__driver_sysfs}/${__pru}/firmware | grep -o -e ipu[0-9] -e dsp[0-9] | tail -1)
@@ -1037,6 +1062,16 @@ list_pru_devs()
       for i in `seq 0 3`
       do
         echo "/dev/rpmsg_pru3${i}"
+      done
+    ;;
+    am65*)
+      for i in `seq 0 9`
+      do
+        echo "/dev/rpmsg_pru3${i}"
+      done
+      for i in `seq 0 1`
+      do
+        echo "/dev/rpmsg_pru4${i}"
       done
     ;;
     *)

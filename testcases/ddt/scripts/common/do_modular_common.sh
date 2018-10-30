@@ -74,15 +74,20 @@ do
 	fi
 
   # before doing modprobe remove, need make sure device is not mounted
-if [ ! -z "$DEVICE_TYPE" ] && [ "$DEVICE_TYPE" != "net" ]; then
-  	DEV_NODE=`get_blk_device_node.sh "$DEVICE_TYPE"` || die "error getting device node for $DEVICE_TYPE: $DEV_NODE"
-  	echo "dev_node: $DEV_NODE"
-  	dev_node_base=`echo $DEV_NODE |sed 's/[0-9]\+$//' `
-  	nodes=`ls ${dev_node_base}*`
-  	for node in $nodes; do
-      		do_cmd "mount" | grep "${node} " && do_cmd "umount $node"
-  	done
-fi
+  if [ ! -z "$DEVICE_TYPE" ] && [ "$DEVICE_TYPE" != "net" ]; then
+      DEV_NODE=`get_blk_device_node.sh "$DEVICE_TYPE"` || die "error getting device node for $DEVICE_TYPE: $DEV_NODE"
+      echo "dev_node: $DEV_NODE"
+      if [[ $DEV_NODE = *mmcblk* ]]; then
+        echo "umount /dev/mmcblk*"
+        umount /dev/mmcblk*
+      else
+        dev_node_base=`echo $DEV_NODE |sed 's/[0-9]\+$//' `
+        nodes=`ls ${dev_node_base}*`
+        for node in $nodes; do
+          do_cmd "mount" | grep "${node} " && do_cmd "umount $node"
+        done
+      fi
+  fi
 	do_cmd rmmod.sh "$MOD_NAME"
 
   x=$((x+1))

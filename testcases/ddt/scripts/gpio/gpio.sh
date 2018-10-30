@@ -126,6 +126,9 @@ case $MACHINE in
   k2hk-evm|k2e-evm|k2l-evm)
     GPIO_NUM_IN_BANKS="6,8"
   ;;
+  am654x-evm|am654x-idk)
+    GPIO_NUM_IN_BANKS="0,0,0"
+  ;;
   k2g-evm)
     GPIO_NUM_IN_BANKS="6,9,1,0"
     if [[ "$MACHINE" == "k2g-evm" ]]; then

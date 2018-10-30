@@ -1,0 +1,12 @@
+# @name SMP Tests
+# @desc Basic tests to validate proper multi-core scheduling.
+# The tests count number of stress-ng matrix operations executed on
+# a fixed time and checks that number increases as more cores are enabled.
+# @requires smp
+# @setup_requires
+
+SMP_S_FUNC_DUAL_CORE source functions.sh; cmd="stress-ng --matrix 4 -t 10s --perf --matrix-size 16 --metrics-brief"; run_and_capture_values "taskset -c 0 $cmd" 's/.+matrix[[:space:]]+([[:digit:]]+)[[:space:]]+.*/\1/p' single_core; run_and_capture_values "taskset -c 0-1 $cmd" 's/.+matrix[[:space:]]+([[:digit:]]+)[[:space:]]+.*/\1/p' dual_core; check_array_values dual_core[@] single_core[@] "-gt" 0.9
+
+SMP_S_FUNC_TRI_CORE source functions.sh; cmd="stress-ng --matrix 4 -t 10s --perf --matrix-size 16 --metrics-brief"; run_and_capture_values "taskset -c 0-1 $cmd" 's/.+matrix[[:space:]]+([[:digit:]]+)[[:space:]]+.*/\1/p' dual_core; run_and_capture_values "taskset -c 0-2 $cmd" 's/.+matrix[[:space:]]+([[:digit:]]+)[[:space:]]+.*/\1/p' tri_core; check_array_values tri_core[@] dual_core[@] "-gt" 0.9
+
+SMP_S_FUNC_QUAD_CORE source functions.sh; cmd="stress-ng --matrix 4 -t 10s --perf --matrix-size 16 --metrics-brief"; run_and_capture_values "taskset -c 0-2 $cmd" 's/.+matrix[[:space:]]+([[:digit:]]+)[[:space:]]+.*/\1/p' tri_core; run_and_capture_values "taskset -c 0-3 $cmd" 's/.+matrix[[:space:]]+([[:digit:]]+)[[:space:]]+.*/\1/p' quad_core; check_array_values quad_core[@] tri_core[@] "-gt" 0.9

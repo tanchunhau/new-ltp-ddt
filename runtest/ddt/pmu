@@ -1,0 +1,8 @@
+# @name Performance Monitor Unit (PMU)
+# @desc Validate Performance Monitor Unit integration with perf utility
+# @requires
+# @setup_requires
+
+PMU_S_FUNC_DETAILED_CPUSTATS source 'common.sh'; dmesg|grep 'hw perfevents' || die "HW perf events are not available, check your config"; perf stat -d -d -d dd if=/dev/zero of=/dev/null count=1000000
+
+PMU_S_FUNC_ARMV7_A15_PMU source 'common.sh'; dmesg|grep 'hw perfevents' || die "HW perf events are not available, check your config"; perf stat -e armv7_cortex_a15/cpu_cycles/,armv7_cortex_a15/memory_error/,armv7_cortex_a15/mem_access/,armv7_cortex_a15/l1d_cache/,armv7_cortex_a15/l1i_cache/,armv7_cortex_a15/l2d_cache/ dd if=/dev/zero of=/dev/null count=1000000

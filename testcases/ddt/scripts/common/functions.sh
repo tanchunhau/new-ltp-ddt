@@ -245,12 +245,18 @@ get_clk_summary() {
 # $1: First array
 # $2: Second array
 # $3: comparison operation e.g. "-lt"
+# $4: [Optional] First array multiplier.
 check_array_values() {
+    local multiplier=1
+    if [ -n "$4" ]; then
+        multiplier=$4
+    fi
     local old=("${!1}")
     local new=("${!2}")
     for i in "${!old[@]}"; do
         echo "Checking assertion for index $i"
-        assert [ ${old[$i]} $3 ${new[$i]} ]
+        adjusted_value=$(echo "(${old[$i]} * $multiplier)/1" | bc)
+        assert [ $adjusted_value $3 ${new[$i]} ]
     done
 }
 
@@ -1075,6 +1081,11 @@ run_cyclictest()
       END {if (max > passcriteria) {print "TEST:FAILED"; exit 1;} else {print "TEST:PASSED"; exit 0}}'
 }
 
+mount_cgroup()
+{
+    ls /sys/fs/cgroup/tasks &> /dev/null || mount -t cgroup -ocpuset cpuset /sys/fs/cgroup/
+}
+
 # $1: name
 # $2: cpuset
 # $3: memset (default 0)
@@ -1087,11 +1098,18 @@ create_cgroup()
     if [ $3"x" != "x" ]; then
         memset=$3
     fi
-    ls /sys/fs/cgroup/tasks &> /dev/null || mount -t cgroup -ocpuset cpuset /sys/fs/cgroup/
+    mount_cgroup
     ls /sys/fs/cgroup/$1 &> /dev/null || mkdir /sys/fs/cgroup/$1
     echo $2 > /sys/fs/cgroup/$1/cpuset.cpus
     echo $memset > /sys/fs/cgroup/$1/cpuset.mems
     echo 1 > /sys/fs/cgroup/$1/cpuset.cpu_exclusive
+}
+
+# $1: 0 to disable, 1 to enable
+set_cgroup_load_balance()
+{
+    mount_cgroup
+    cat /sys/fs/cgroup/cpuset.sched_load_balance | grep $1 &> /dev/null || echo $1 > /sys/fs/cgroup/cpuset.sched_load_balance
 }
 
 # Run shell and subsequent Processes started from it on shielded (i.e. separate) CPU
@@ -1105,6 +1123,7 @@ shield_shell()
         create_cgroup nonrt "0-$((max_id-1))"
         create_cgroup rt $max_id
     fi
+    set_cgroup_load_balance 0
     for pid in $(cat /sys/fs/cgroup/tasks); do /bin/echo $pid > /sys/fs/cgroup/nonrt/tasks; done
     /bin/echo $$ > /sys/fs/cgroup/rt/tasks
 }
@@ -1113,6 +1132,16 @@ unshield_shell()
 {
     for pid in $(cat /sys/fs/cgroup/nonrt/tasks); do /bin/echo $pid > /sys/fs/cgroup/tasks; done
     for pid in $(cat /sys/fs/cgroup/rt/tasks); do /bin/echo $pid > /sys/fs/cgroup/tasks; done
+    set_cgroup_load_balance 1
+}
+
+# Run a command and capture one or more values into an array
+# $1: Command to execute
+# $2: sed command to capture and print values, e.g. 's/.+myprefix([[:digit:]]+)mysuffix.*/\1 /p'
+# $3: Array to save values into
+run_and_capture_values() {
+    local __arrayvalues=$3
+    eval $__arrayvalues="($($1 2>&1 | sed -rn $2))"
 }
 
 check_jailhouse()

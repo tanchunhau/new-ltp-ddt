@@ -67,6 +67,7 @@ is_lnksta_expected()
   ep_cap=$2
   lnksta=$3
   item=$4   # speed or width
+  max_width=$5
 
   unit=''
   if [[ $item = 'speed' ]]; then
@@ -81,6 +82,12 @@ is_lnksta_expected()
     expected=$rc_cap
   else
     expected=$ep_cap
+  fi
+  # Lower the expected width based on max_width.
+  if [[ $item = 'width' ]]; then
+    if [[ $(echo "$expected > $max_width" |bc -l) -ne 0 ]]; then
+      expected=$max_width
+    fi  
   fi
 
   if [[ -z $expected ]]; then
@@ -97,6 +104,16 @@ is_lnksta_expected()
   fi
 }
 
+get_dut_max_width()
+{
+  case $MACHINE in
+    am654x-idk | am574x-idk)
+      rtn=4;;
+    *)
+      rtn=1;;
+  esac
+  echo $rtn 
+}
 
 #########################################################################
 #echo "::::::::PCIe numeric IDs::::::::"
@@ -145,7 +162,9 @@ echo "=============================================="
 # check if the speed and width is at expected through LnkSta 
 is_lnksta_expected $rc_speed_cap $ep_speed_cap $rc_speed_sta 'speed' || die "PCIe link speed is not at expected speed!"
 
-is_lnksta_expected $rc_width_cap $ep_width_cap $rc_width_sta 'width' || die "PCIe link width is not at expected width!"
+# Since dut has limitation of width, so pass dut max width here to compare
+dut_max_width=`get_dut_max_width`
+is_lnksta_expected $rc_width_cap $ep_width_cap $rc_width_sta 'width' $dut_max_width || die "PCIe link width is not at expected width!"
 
 
 # end of script
