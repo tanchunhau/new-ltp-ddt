@@ -12,7 +12,7 @@
 
 2) ARCHITECTURE HIGHLIGHTS:
 ================================================================================
- * Based on LTP http://ltp.sourceforge.net/
+ * Based on LTP https://github.com/linux-test-project/ltp
  * Support dynamic selection/filtering of test cases based on platform
  * Support test parameters overrides based on platform
 
