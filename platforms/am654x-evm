@@ -26,6 +26,7 @@ power_mgr/cpuidle
 pru/eth0
 pru/eth1
 qspi_master/mtd
+r5f
 rtc
 sata
 smp

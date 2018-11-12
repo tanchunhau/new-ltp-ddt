@@ -30,6 +30,7 @@ pru/eth3
 pru/eth4
 pru/eth5
 qspi_master/mtd
+r5f
 rtc
 sata
 smp
