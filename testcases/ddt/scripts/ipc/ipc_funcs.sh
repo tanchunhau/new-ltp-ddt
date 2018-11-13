@@ -52,9 +52,9 @@ setup_firmware()
         __fw_type=RTU
         __new_pattern=$(find_firmware_id "$__fw" rtu)
         ;;
-      *mcu*)
+      *mcu*|*r5f*)
         __fw_type=r5f
-        __new_pattern=r5f
+        __new_pattern=$(find_firmware_id "$__fw" r5f | tr a-z A-Z)
         ;;
       am335x-pm-firmware*)
         continue
