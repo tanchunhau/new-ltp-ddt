@@ -34,8 +34,11 @@ create_test_file() {
 
 get_uart_ports() {
 for i in ${ARRAY[@]}; do
+    PORT=/dev/`echo $i | cut -d'/' -f 5`
+    # Activate port in case it will be initialized only when startup
+    echo "DDT TESTING" > $PORT 2>/dev/null
     if [ `cat $i` -ne 0 ]; then
-        UART_PORTS=("${UART_PORTS[@]}" /dev/`echo $i | cut -d'/' -f 5 `)
+        UART_PORTS=("${UART_PORTS[@]}" "$PORT")
     fi
 done
 }
