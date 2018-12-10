@@ -4,3 +4,7 @@
 
 
 RGX_S_FUNC_BLIT source 'common.sh'; output=`rgx_blit_test`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
+
+RGX_S_FUNC_KICKSYNC source 'common.sh'; output=`rgx_kicksync_test`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+
+RGX_S_FUNC_TWIDDLING source 'common.sh'; output=`rgx_twiddling_test`;if [[ $output = *"FAILED"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
