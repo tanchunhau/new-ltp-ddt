@@ -23,12 +23,12 @@ power_mgr/cpufreq/performance
 power_mgr/cpufreq/powersave
 power_mgr/cpufreq/ondemand
 power_mgr/cpuidle
-pru/eth0
 pru/eth1
 pru/eth2
 pru/eth3
 pru/eth4
 pru/eth5
+pru/eth6
 qspi_master/mtd
 r5f
 rtc
