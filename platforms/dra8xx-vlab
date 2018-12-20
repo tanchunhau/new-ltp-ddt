@@ -32,6 +32,7 @@ sound/playback/alsa
 sound/capture/alsa/hisamplingrate
 sound/playback/alsa/hisamplingrate
 spi_master
+tidec
 touchscreen
 usb/host/msc
 usb/host/hid

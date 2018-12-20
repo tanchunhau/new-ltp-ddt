@@ -41,6 +41,7 @@ sound/capture/alsa/<drivername>
 sound/playback/alsa/<drivername>
 spi_master/mtd/<drivername>
 spi_master/eeprom/<drivername>
+tidec
 usb/host/msc/<drivername>
 usb/host/hid/<drivername>
 usb/host/iso/<drivername>

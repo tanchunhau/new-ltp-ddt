@@ -1,0 +1,16 @@
+# @name TI Decoder Tests
+# @desc Test functionality of Texas Instruments' video decoders
+# @requires tidec
+# @setup_requires
+
+TIDEC_S_FUNC_DECODE_AUD_MW_E.264 source 'ti_decode.sh'; run_tidec_decode -i /usr/share/ti/tidec-decode/AUD_MW_E.264 -o output_00.raw || die "Decode operation did not complete successfully"; md5sum output_00.raw | grep 9f0a93088c16686fc314ebc5dde79e1f || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_BA1_FT_C.264 source 'ti_decode.sh'; run_tidec_decode -i /usr/share/ti/tidec-decode/BA1_FT_C.264 -o output_00.raw || die "Decode operation did not complete successfully"; md5sum output_00.raw | grep c5e3240f286b6bb8faffa9180af75352 || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_BAMQ1_JVC_C.264 source 'ti_decode.sh'; run_tidec_decode -i /usr/share/ti/tidec-decode/BAMQ1_JVC_C.264 -o output_00.raw || die "Decode operation did not complete successfully"; md5sum output_00.raw | grep 8a9d260e03e95e1b10a474bf82ed8ac7 || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_BAMQ2_JVC_C.264 source 'ti_decode.sh'; run_tidec_decode -i /usr/share/ti/tidec-decode/BAMQ2_JVC_C.264 -o output_00.raw || die "Decode operation did not complete successfully"; md5sum output_00.raw | grep 9416c03003ed4a75b871bce2936428d3 || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_BA_MW_D.264  source 'ti_decode.sh'; run_tidec_decode -i /usr/share/ti/tidec-decode/BA_MW_D.264 -o output_00.raw || die "Decode operation did not complete successfully"; md5sum output_00.raw | grep 0895e2994cce77ddf7bdd8fd8834a1bb || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_BANM_MW_D.264 source 'ti_decode.sh'; run_tidec_decode -i /usr/share/ti/tidec-decode/BANM_MW_D.264 -o output_00.raw || die "Decode operation did not complete successfully"; md5sum output_00.raw | grep 6ee4f678a0a438f50ef55faeabc60743 || die "decoded file does not match expected md5sum"
