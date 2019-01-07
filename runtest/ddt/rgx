@@ -45,6 +45,9 @@ RGX_S_FUNC_GLES1_ARGB32 source 'common.sh'; output=`gles1test1 10 argb32`;echo $
 
 RGX_S_FUNC_GLES2_ARGB32 source 'common.sh'; output=`gles2test1 10 argb32`; if [[ $output != *"finished"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
 
+RGX_S_FUNC_GLES1IMAGEEXTERNAL source 'common.sh'; output=`gles1image_external -D tidss -f 2`;echo $output
+
+
 
 
 
