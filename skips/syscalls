@@ -13,6 +13,15 @@ prot_hsymlinks
 setregid02
 setregid02_16
 
+
+# Skipping per Linaro analysis
+# https://git.linaro.org/qa/test-definitions.git/tree/automated/linux/ltp/skipfile-lkft.yaml
+creat08
+open10
+open11
+readahead02
+perf_event_open02
+
 # Skipping to avoid false negatives due to limited memory in
 # embedded devices (i.e. no space left in device errors)
 # These tests requires 256MB which is not available in many
