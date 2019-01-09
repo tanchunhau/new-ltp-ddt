@@ -47,6 +47,11 @@ RGX_S_FUNC_GLES2_ARGB32 source 'common.sh'; output=`gles2test1 10 argb32`; if [[
 
 RGX_S_FUNC_GLES1IMAGEEXTERNAL source 'common.sh'; output=`gles1image_external -D tidss -f 2`;echo $output
 
+RGX_S_FUNC_GLES3RENDERPVR source 'common.sh'; output=`gles3_render_to_image 3 pvr`; if [[ $output != *"finished"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+
+RGX_S_FUNC_GLES3RENDERTIDSS source 'common.sh'; output=`gles3_render_to_image 2 tidss`; if [[ $output != *"finished"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+
+
 
 
 
