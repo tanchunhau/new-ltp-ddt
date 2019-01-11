@@ -274,7 +274,7 @@ get_num_remote_procs()
 {
   case $SOC in
     *dra8xx)
-      echo 3
+      echo 4
       ;;
     *dra7xx|*j6plus)
       echo 4
