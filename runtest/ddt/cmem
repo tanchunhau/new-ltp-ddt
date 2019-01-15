@@ -1,0 +1,6 @@
+# @name CMEM APITest
+# @desc Running CMEM-provided API Test
+# @requires
+# @setup_requires
+
+CMEM_S_FUNC_APITEST source 'common.sh'; dmesg_output=`dmesg|grep cmem|grep initialized`; if [[ -z "$dmesg_output" ]]; then die "CMEM is not initialized. Check if dtb has CMEM node"; output=`apitest -n 10240`;if [[ $output != *"test done"* ]]; then die "Demo reports failed. Re-run manually to find rootcause. Check output $output ";fi;
