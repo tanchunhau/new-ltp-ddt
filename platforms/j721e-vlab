@@ -1,6 +1,6 @@
 armv8
-dra8xx
-dra8xx-vlab
+j721e
+j721e-vlab
 gpio
 graphics/
 hwrng
