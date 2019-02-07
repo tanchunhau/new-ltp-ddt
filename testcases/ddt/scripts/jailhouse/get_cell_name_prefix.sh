@@ -20,14 +20,14 @@ source "common.sh"  # Import do_cmd(), die() and other functions
 # initilized and exported by runltp script based on platform option (-P)
 
 # Define default values for variables being overriden
-PREFIX='k3-dra8'
+PREFIX='k3-j721e'
 
 case $ARCH in
 esac
 case $DRIVER in
 esac
 case $SOC in
-	dra8xx) PREFIX='k3-dra822';;
+	j721e) PREFIX='k3-j721e';;
 	am654) PREFIX='k3-am654';;
 esac
 case $MACHINE in

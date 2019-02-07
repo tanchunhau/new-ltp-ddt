@@ -32,8 +32,8 @@ setup_firmware()
   local __fw_dst
 
   case $MACHINE in
-      *dra8*)
-          # dra8 doesn't yet support loading the firmware
+      *j721e*)
+          # j721e doesn't yet support loading the firmware
           return
       ;;
   esac
@@ -101,8 +101,8 @@ rm_ipc_mods()
   local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc ti_k3_r5_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus rpmsg_core)
 
   case $MACHINE in
-    dra8*)
-      # DRA8 does not yet support module unloading for remote procs because the firmware cannot be reloaded
+    j721e*)
+      # J721e does not yet support module unloading for remote procs because the firmware cannot be reloaded
       return
     ;;
   esac
@@ -134,8 +134,8 @@ ins_ipc_mods()
         modprobe ${__mod}
       done
     ;;
-    dra8*)
-      # DRA8 does not yet support module loading for remote procs because the firmware cannot be reloaded
+    j721e*)
+      # J721e does not yet support module loading for remote procs because the firmware cannot be reloaded
       return
     ;;
     *)
@@ -273,7 +273,7 @@ start_mpm_daemon()
 get_num_remote_procs()
 {
   case $SOC in
-    *dra8xx)
+    *j721e)
       echo 4
       ;;
     *dra7xx|*j6plus)
@@ -314,7 +314,7 @@ get_num_remote_procs()
 get_rpmsg_proto_rproc_ids()
 { 
   case $SOC in
-    *dra8xx)
+    *j721e)
       rids=( `seq 1 3` )
       ;;
     *dra7xx|*j6plus)
@@ -859,7 +859,7 @@ rpmsg_proto_msgqmulti_test()
   return $__result
 }
 
-rpmsg_client_sample_test_dra8()
+rpmsg_client_sample_test_j721e()
 {
   local __result=0
   local __test_log
@@ -903,8 +903,8 @@ rpmsg_client_sample_test()
   local __delay=3
   
   case $SOC in
-    dra8xx)
-        rpmsg_client_sample_test_dra8 $*
+    j721e)
+        rpmsg_client_sample_test_j721e $*
         return $?
     ;;
   esac
@@ -976,8 +976,8 @@ toggle_rprocs()
   local __mbox
 
   case $MACHINE in
-      *dra8*)
-          # dra8 doesn't yet support toggling the remote proc
+      *j721e*)
+          # J721e doesn't yet support toggling the remote proc
           return
       ;;
   esac
@@ -1085,7 +1085,7 @@ list_pru_devs()
 list_rprocs()
 {
   case $SOC in
-    dra8xx)
+    j721e)
       echo "41000000.r5f 5c00000.r5f 5e00000.r5f"
     ;;
     dra7xx)
