@@ -6,3 +6,4 @@
 ION_S_FUNC_ALLOCATE source 'common.sh'; output=`ion_test -a alloc`; if [[ $output != *"passed"* ]]; then die "ION Alloc Tests failed.";fi
 ION_S_FUNC_MAP source 'common.sh'; output=`ion_test -a map`; if [[ $output != *"passed"* ]]; then die "ION Map Tests failed.";fi
 ION_S_FUNC_SHARE source 'common.sh'; output=`ion_test -a share`; if [[ $output != *"passed"* ]]; then die "ION Share Tests failed.";fi
+ION_S_FUNC_UNITTESTS source 'common.sh'; output=`ion-unit-tests`; shopt -s nocasematch; if [[ $output != *"passed"* ]]; then die "ION Unit Tests failed.";fi; shopt -u nocasematch
