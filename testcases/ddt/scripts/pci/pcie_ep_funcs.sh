@@ -148,6 +148,8 @@ single_func_pcie_setup()
       pci_remove_device 17cd 0200
       # rescan PCI
       echo 1 > /sys/bus/pci/rescan
+      # wait a bit to let the enumeration complete
+      sleep 1
 }
 
 multi_func_pcie_setup()
@@ -168,6 +170,8 @@ multi_func_pcie_setup()
       pci_remove_device 17cd 0200
       # rescan PCI
       echo 1 > /sys/bus/pci/rescan
+      # wait a bit to let the enumeration complete
+      sleep 1
 }
 
 virtual_func_pcie_setup()
@@ -189,6 +193,8 @@ virtual_func_pcie_setup()
       pci_remove_device 17cd 0200
       # rescan PCI
       echo 1 > /sys/bus/pci/rescan
+      # wait a bit to let the enumeration complete
+      sleep 1
       for f in /sys/bus/pci/devices/*/sriov_numvfs
       do
           echo 2 > $f
