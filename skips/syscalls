@@ -13,6 +13,9 @@ prot_hsymlinks
 setregid02
 setregid02_16
 
+# skipped due to very long test time
+msgctl10
+msgctl11
 
 # Skipping per Linaro analysis
 # https://git.linaro.org/qa/test-definitions.git/tree/automated/linux/ltp/skipfile-lkft.yaml
