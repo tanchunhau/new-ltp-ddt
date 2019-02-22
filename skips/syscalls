@@ -17,6 +17,9 @@ setregid02_16
 msgctl10
 msgctl11
 
+#skipped due to lack of space in /tmp
+fanotify05
+
 # Skipping per Linaro analysis
 # https://git.linaro.org/qa/test-definitions.git/tree/automated/linux/ltp/skipfile-lkft.yaml
 creat08
