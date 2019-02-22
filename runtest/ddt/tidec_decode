@@ -3,14 +3,26 @@
 # @requires tidec
 # @setup_requires
 
-TIDEC_S_FUNC_DECODE_AUD_MW_E.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/AUD_MW_E.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 9f0a93088c16686fc314ebc5dde79e1f || die "decoded file does not match expected md5sum"
+TIDEC_S_FUNC_DECODE_AUD_MW_E.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/AUD_MW_E.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep e83a38c08bf61830530435dfee134ca9 || die "decoded file does not match expected md5sum"
 
 TIDEC_S_FUNC_DECODE_BA1_FT_C.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/BA1_FT_C.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep c5e3240f286b6bb8faffa9180af75352 || die "decoded file does not match expected md5sum"
 
-TIDEC_S_FUNC_DECODE_BAMQ1_JVC_C.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/BAMQ1_JVC_C.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 8a9d260e03e95e1b10a474bf82ed8ac7 || die "decoded file does not match expected md5sum"
+TIDEC_S_FUNC_DECODE_BAMQ1_JVC_C.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/BAMQ1_JVC_C.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 9d58ded839ed274299b1b4626da191cc || die "decoded file does not match expected md5sum"
 
-TIDEC_S_FUNC_DECODE_BAMQ2_JVC_C.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/BAMQ2_JVC_C.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 9416c03003ed4a75b871bce2936428d3 || die "decoded file does not match expected md5sum"
+TIDEC_S_FUNC_DECODE_BAMQ2_JVC_C.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/BAMQ2_JVC_C.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 8b4837b2f33b86f5d15d77aed3b2d9a0 || die "decoded file does not match expected md5sum"
 
-TIDEC_S_FUNC_DECODE_BA_MW_D.264  source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/BA_MW_D.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 0895e2994cce77ddf7bdd8fd8834a1bb || die "decoded file does not match expected md5sum"
+TIDEC_S_FUNC_DECODE_BA_MW_D.264  source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/BA_MW_D.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 9073f914a6b6da67552ab76cde1bdf85 || die "decoded file does not match expected md5sum"
 
-TIDEC_S_FUNC_DECODE_BANM_MW_D.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/BANM_MW_D.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 6ee4f678a0a438f50ef55faeabc60743 || die "decoded file does not match expected md5sum"
+TIDEC_S_FUNC_DECODE_BANM_MW_D.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/BANM_MW_D.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 2240a60ad26bfa4af57bd461b8680909 || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_YUVFULL_544X480.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/yuvfull_544x480.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep f945e5bdccf47161c385bf8060eb72a9 || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_FOREMAN_128X64.h265 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/foreman_128x64_128x64_8bit_10frames_ctu32_qp32_Inter_SAO_AMP_Debl_NoPCM.h265 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 8d5a01e85303c2e0021b85754ea801e0 || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_AKIYO_QCIF_420_HP_LEV10_DB.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/akiyo_qcif_420_hp_lev10_db.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 81b9093edd64f47a06ad4e89298ac245 || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_H264_176_144_5_CHROMA2_422_HIGH_25FR.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/h264_176_144_5_chroma2_422_high_25fr.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 6ebdae0b644e52c19f17bde07cc82151 || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_TEST_ERR_CONS_176X144.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/test_err_cons_176x144.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep bd8c1e2ace3764cce6d6a37d61673d98 || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_WB_10BIT_QP21_I-ONLY_1920X1088_10FR.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/WB_10bit_QP21_I-Only_1920x1088_10fr.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 2a430df43a0bfc8659e054fdff82e279 || die "decoded file does not match expected md5sum"
