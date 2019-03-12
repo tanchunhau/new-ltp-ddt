@@ -5,6 +5,8 @@
 
 TIDEC_S_FUNC_DECODE_AUD_MW_E.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/AUD_MW_E.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep e83a38c08bf61830530435dfee134ca9 || die "decoded file does not match expected md5sum"
 
+TIDEC_S_FUNC_DECODE_PROFILER_AUD_MW_E.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/AUD_MW_E.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep e83a38c08bf61830530435dfee134ca9 || die "decoded file does not match expected md5sum"; output=`dmesg`; echo "OUTPUT is $output"; if [[ $output != *"picture buf decode time is"* ]]; then die "Expected output from profiler is not found";fi
+
 TIDEC_S_FUNC_DELAYED_DECODE_AUD_MW_E.264 source 'ti_decode.sh'; F=$(mktemp); do_cmd "sleep 60"; run_tidec_decode -i /usr/share/ti/tidec-decode/AUD_MW_E.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep e83a38c08bf61830530435dfee134ca9 || die "decoded file does not match expected md5sum"
 
 TIDEC_S_FUNC_DECODE_BA1_FT_C.264 source 'ti_decode.sh'; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/BA1_FT_C.264 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep c5e3240f286b6bb8faffa9180af75352 || die "decoded file does not match expected md5sum"
