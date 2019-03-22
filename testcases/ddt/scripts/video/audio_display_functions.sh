@@ -25,6 +25,9 @@ get_hdmi_audio_devnode()
     beaglebone)
       get_audio_devnodes.sh -d hifi
     ;;
+    k2g*)
+      get_audio_devnodes.sh -d i2s-hifi
+    ;;
     *)
       get_audio_devnodes.sh -d hdmi
     ;;
