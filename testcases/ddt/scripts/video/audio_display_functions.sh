@@ -31,6 +31,19 @@ get_hdmi_audio_devnode()
   esac
 }
 
+#Function to obtain the driver hint (if any) needed so that modetest
+#knows which driver to use
+#Output:
+#the -M <driver> hint it needed, otherwise empty string
+get_modetest_hint()
+{
+  case $MACHINE in
+    am6*|k2g*)
+      echo "-M tidss"
+    ;;
+  esac
+}
+
 #Function to obtain the connector ids and modes supported by a connector.
 #This function will only return information of connectors with connected
 #status
@@ -45,7 +58,7 @@ get_hdmi_audio_devnode()
 get_video_connector_info()
 {
   assert [ ${#} -eq 1 -o ${#} -eq 2 ]
-  local __info=$(modetest)
+  local __info=$(modetest $(get_modetest_hint))
   local __dss_info
   local __conn_inf
   local __conn_ids
@@ -144,8 +157,8 @@ disp_audio_test()
     __failed_fr=0
     __expected_fr=( $(echo "$mode" | grep -o '\-[0-9]\+' | cut -d '-' -f 2 | sort | uniq) )
     echo "Expected frame rates: ${__expected_fr[@]}"
-    echo "modetest -t -d -v -s $mode &>mode_test_log.txt & mt_pid=\$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=\$? ; kill -9 \$mt_pid"
-    __test_log=$(modetest -t -v -s $mode 2>&1 & mt_pid=$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid; echo alsa_rc=$__alsa_rc)
+    echo "modetest $(get_modetest_hint) -t -d -v -s $mode &>mode_test_log.txt & mt_pid=\$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=\$? ; kill -9 \$mt_pid"
+    __test_log=$(modetest $(get_modetest_hint) -t -v -s $mode 2>&1 & mt_pid=$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid; echo alsa_rc=$__alsa_rc)
     echo "$__test_log"
     __alsa_rc=$(echo "$__test_log" | grep alsa_rc= | cut -d '=' -f 2) 
     __freqs=( $(echo -e "$__test_log" | grep freq: | cut -d ' ' -f 2) )
@@ -270,5 +283,5 @@ get_video_connectors_id()
 	  __filter=$*
   fi
   
-  modetest -c | grep -i -v disconnected | grep -i $__filter | grep -o ^[0-9]* 
+  modetest $(get_modetest_hint) -c | grep -i -v disconnected | grep -i $__filter | grep -o ^[0-9]*
 }
