@@ -46,6 +46,7 @@ usb/slave/usbslave_ncm
 usb/slave/usbslave_mass_storage
 usb/slave/usbslave_multi
 usb/slave/usbslave_cdc
+wlan
 ipc
 hdmi/audio/playback
 video/capture/*/v4l2

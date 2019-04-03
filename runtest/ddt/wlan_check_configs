@@ -1,0 +1,9 @@
+# @name Check if config NL80211_TESTMODE is set to y 
+# @desc Check if config NL80211_TESTMODE is set to y
+# @requires wlan
+# @setup_requires 
+
+WLAN_XS_FUNC_CHECK_CONFIG_NL80211_TESTMODE source 'common.sh'; check_config_options "y" CONFIG_NL80211_TESTMODE;  
+
+
+
