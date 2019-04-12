@@ -138,7 +138,7 @@ single_func_pcie_setup()
       cleanup
       #create endpoint function
       EP_CTRL=$(ls /sys/class/pci_epc) #this logic assumes only one EP ctrl
-      create_epf_test_func $EP_CTRL 1 0x104c 0xb500 16 16
+      create_epf_test_func $EP_CTRL 1 0x104c 0xb00d 16 16
       [ $? !=  0 ] && return 1
       export MSI_ARRAY="0.16"
       export MSIX_ARRAY="0.16"
@@ -159,8 +159,8 @@ multi_func_pcie_setup()
       cleanup
       #create 2 endpoint functions (physical)
       EP_CTRL=$(ls /sys/class/pci_epc) #this logic assumes only one EP ctrl
-      create_epf_test_func $EP_CTRL 1 0x104c 0xb500 16 16
-      create_epf_test_func $EP_CTRL 2 0x104c 0xb500 16 16
+      create_epf_test_func $EP_CTRL 1 0x104c 0xb00d 16 16
+      create_epf_test_func $EP_CTRL 2 0x104c 0xb00d 16 16
       [ $? !=  0 ] && return 1
       export MSI_ARRAY="0.16.32"
       export MSIX_ARRAY="0.16.32"
@@ -181,9 +181,9 @@ virtual_func_pcie_setup()
       cleanup
       #create endpoint functions (physical and virtual)
       EP_CTRL=$(ls /sys/class/pci_epc) #this logic assumes only one EP ctrl
-      create_epf_test_virt_func 1 0   0x104c 0xb500 16 16
-      create_epf_test_virt_func 1 1   0x104c 0xb500 16 16
-      create_epf_test_func $EP_CTRL 1 0x104c 0xb500 16 16
+      create_epf_test_virt_func 1 0   0x104c 0xb00d 16 16
+      create_epf_test_virt_func 1 1   0x104c 0xb00d 16 16
+      create_epf_test_func $EP_CTRL 1 0x104c 0xb00d 16 16
       [ $? !=  0 ] && return 1
       export MSI_ARRAY="0.16.32.48"
       export MSIX_ARRAY="0.16.32.48"
