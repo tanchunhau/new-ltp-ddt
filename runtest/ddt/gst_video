@@ -4,6 +4,7 @@
 VIDEO_S_FUNC_GST_MPEG4_480P source 'common.sh'; do_cmd 'gst.sh -d "M4V/HistoryOfTI-480p.m4v" -c "mpeg4" -r "480p"'
 VIDEO_M_FUNC_GST_MPEG4_WQVGA source 'common.sh'; do_cmd 'gst.sh -d "M4V/HistoryOfTI-WQVGA.m4v" -c "mpeg4" -r "WQVGA"'
 VIDEO_M_FUNC_GST_MPEG4_WVGA source 'common.sh'; do_cmd 'gst.sh -d "M4V/HistoryOfTI-WVGA.m4v" -c "mpeg4" -r "WVGA"'
+VIDEO_M_FUNC_GST_MPEG4_YUV_EGLImage  source 'common.sh'; ls /usr/share/ti/video/TearOfSteel-AV-Short-720x406.mp4 || die "Required file /usr/share/ti/video/TearOfSteel-AV-Short-720x406.mp4 is not available"; do_cmd "gst-launch-1.0 filesrc location='/usr/share/ti/video/TearOfSteel-AV-Short-720x406.mp4' ! queue ! qtdemux name=demux demux.video_0 ! queue ! avdec_mpeg4 ! videoconvert ! 'video/x-raw, format=(string)YUY2' ! waylandsink use-drm=true"
 VIDEO_S_FUNC_GST_MPEG2_480P source 'common.sh'; do_cmd 'gst.sh -d "M2V/HistoryOfTI-480p.m2v" -c "mpeg2" -r "480p"'
 VIDEO_M_FUNC_GST_MPEG2_WQVGA source 'common.sh'; do_cmd 'gst.sh -d "M2V/HistoryOfTI-WQVGA.m2v" -c "mpeg2" -r "WQVGA"'
 VIDEO_M_FUNC_GST_MPEG2_WVGA source 'common.sh'; do_cmd 'gst.sh -d "M2V/HistoryOfTI-WVGA.m2v" -c "mpeg2" -r "WVGA"'
