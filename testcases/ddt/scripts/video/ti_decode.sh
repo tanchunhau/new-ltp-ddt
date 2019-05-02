@@ -29,5 +29,5 @@ insert_video_modules()
 run_tidec_decode()
 {
 	insert_video_modules
-	tidec_decode $* | grep 'test app completed successfully'
+	tidec_decode -b $* | grep 'test app completed successfully'
 }
