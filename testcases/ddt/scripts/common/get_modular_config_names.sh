@@ -47,6 +47,8 @@ do
     
     *ti_cpsw)                                 
       net="CONFIG_TI_CPSW:ti_cpsw";;
+    *ti_am65_cpsw_nuss)                                 
+      net="CONFIG_TI_AM65_CPSW_NUSS:ti_am65_cpsw_nuss";;
     *ti_netcp)                                 
       net="CONFIG_TI_KEYSTONE_NETCP_ETHSS:keystone_netcp_ethss";;
 
@@ -66,8 +68,6 @@ do
       mmc="CONFIG_MMC_SDHCI_OMAP:sdhci_omap";;
     *davinci_mmc)
       mmc="CONFIG_MMC_DAVINCI:davinci_mmc";;
-    *sdhci_am654)
-      mmc="CONFIG_MMC_SDHCI_AM654:sdhci_am654";;
 
     *rtc-s35390a)
       rtc="CONFIG_RTC_DRV_S35390A:rtc-s35390a";; #not sure this is the right one.
@@ -120,6 +120,8 @@ do
       usb="CONFIG_USB_XHCI_PLAT_HCD:xhci_plat_hcd";;
     *crypto-omap)
       crypto="CONFIG_CRYPTO_DEV_OMAP_AES:omap-aes CONFIG_CRYPTO_DEV_OMAP_SHAM:omap-sham";;
+    *sa2ul)
+      crypto="CONFIG_CRYPTO_DEV_SA2UL:sa2ul"
 
   esac
 done
