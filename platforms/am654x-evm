@@ -1,6 +1,7 @@
 armv8
 am654
 am654x-evm
+adc/tscadc
 emmc
 gpio
 graphics/
