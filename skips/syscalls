@@ -66,3 +66,11 @@ umount2_02
 umount2_03
 utime06
 utimes01
+
+#remove tests that take forever
+fork13
+msgctl10
+msgctl11
+msgctl08
+rename14
+epoll01

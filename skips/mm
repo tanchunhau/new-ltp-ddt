@@ -3,6 +3,18 @@ ksm03_01
 ksm05
 vma05
 
+#skipping test that last forever
+mtest06
+shm_test01
+thp01
+
+#skipping test that can fail badly
+oom01
+oom02
+oom03
+oom04
+oom05
+
 # Skipped because tests are not suitable for embedded devices
 # where memory is limited and these tests trigger oom killer
 overcommit_memory02
