@@ -70,3 +70,37 @@ get_acceptable_memory_size()
 
   export expected_memory
 }
+
+# Return expected r5f lockstep cores
+get_num_r5f_lockstep_cores()
+{
+  local expected_r5f_lockstep=''
+
+  case $MACHINE in
+    am65*)
+      expected_r5f_lockstep=1 ;;
+  esac
+
+  if [ -z "$expected_r5f_lockstep" ]; then
+    die "No value is defined for $MACHINE in get_num_r5f_lockstep_cores() at board_requirements.sh"
+  fi
+
+  echo $expected_r5f_lockstep
+}
+
+# Return expected r5f cores in split mode
+get_num_r5f_splitmode_cores()
+{
+  local expected_r5f_splitmode=''
+
+  case $MACHINE in
+    am65*)
+      expected_r5f_splitmode=2 ;;
+  esac
+
+  if [ -z "$expected_r5f_splitmode" ]; then
+    die "No value is defined for $MACHINE in get_num_r5f_splitmode_cores() at board_requirements.sh"
+  fi
+
+  echo $expected_r5f_splitmode
+}

@@ -43,7 +43,7 @@ for i in range(len(planes)):
     pykms.draw_rect(fbs[i], 0, 0, w, h, pykms.RGB(255*(i==0), 255*(i==1), 255*(i==2)))
     pykms.draw_rect(fbs[i], i*offset, i*offset, int(w/2**(i+1)), int(h/2**(i+1)), pykms.RGB(255*(i!=1), 255*(i!=2), 255*(i!=0)))
 
-if not re.match("am65.*|j721e.*", platform, re.I):
+if not re.match("am65.*|k2.*|j721e.*", platform, re.I):
     crtc.set_props({
         "trans-key-mode": 0,
         "trans-key": 0,
@@ -72,6 +72,8 @@ for i in range(len(planes)):
     }
     if re.match("am65.*|j721e.*", platform, re.I):
         p_props["zpos"] = i
+    if re.match("k2.*", platform, re.I):
+        pass
     else:
         p_props["zorder"] = i
     plane.set_props(p_props)
@@ -99,6 +101,8 @@ for i in range(len(planes)):
     }
     if re.match("am65.*|j721e.*", platform, re.I):
         p_props["zpos"] = i
+    if re.match("k2.*", platform, re.I):
+        pass
     else:
         p_props["zorder"] = i
 

@@ -6,10 +6,10 @@ gpio
 graphics/
 hwrng
 i2c
-mmc_host/mmc
-mmc_host/sd
-mmc_host/sdhc
-mmc_host/sdxc
+mmc_host/mmc/sdhci_am654
+mmc_host/sd/sdhci_am654
+mmc_host/sdhc/sdhci_am654
+mmc_host/sdxc/sdhci_am654
 nand
 ubifs
 jffs2
@@ -23,9 +23,10 @@ power_mgr/cpufreq/performance
 power_mgr/cpufreq/powersave
 power_mgr/cpufreq/ondemand
 power_mgr/cpuidle
-pru/eth0
 pru/eth1
+pru/eth2
 qspi_master/mtd
+r5f
 rtc
 sata
 smp
@@ -45,6 +46,7 @@ usb/slave/usbslave_ncm
 usb/slave/usbslave_mass_storage
 usb/slave/usbslave_multi
 usb/slave/usbslave_cdc
+wlan
 ipc
 hdmi/audio/playback
 video/capture/*/v4l2

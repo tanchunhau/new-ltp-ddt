@@ -1,0 +1,8 @@
+# @name Test basic load/unload of R5F cores
+# @desc Test basic functionality of R5F remoteproc
+# @requires ipc && r5f
+# @setup_requires
+
+RPROC_XS_FUNC_R5F_LOCKSTEP_MODE source 'board_requirements.sh'; expected_cores=$(get_num_r5f_lockstep_cores); num_cores=$(find /sys/kernel/debug/remoteproc/ -name "name" -exec cat {} \; |grep r5f |wc -l); [ $num_cores -eq $expected_cores ] || die "Found:${num_cores} cores but expected ${expected_cores} cores"
+
+RPROC_XS_FUNC_R5F_SPLIT_MODE source 'board_requirements.sh'; expected_cores=$(get_num_r5f_splitmode_cores); num_cores=$(find /sys/kernel/debug/remoteproc/ -name "name" -exec cat {} \; |grep r5f |wc -l); [ $num_cores -eq $expected_cores ] || die "Found:${num_cores} cores but expected ${expected_cores} cores"

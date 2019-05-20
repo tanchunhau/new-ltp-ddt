@@ -1,3 +1,9 @@
 ksm03
 ksm03_01
 ksm05
+vma05
+
+# Skipped because tests are not suitable for embedded devices
+# where memory is limited and these tests trigger oom killer
+overcommit_memory02
+thp02

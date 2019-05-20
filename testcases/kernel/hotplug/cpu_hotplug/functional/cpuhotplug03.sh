@@ -116,7 +116,7 @@ until [ $LOOP_COUNT -gt $HOTPLUG03_LOOPS ]; do
 		tst_brkm TBROK "CPU${CPU_TO_TEST} cannot be onlined"
 	fi
 
-	sleep 1
+	sleep 3
 
 	# Verify at least one process has migrated to the new CPU
 	# Since procps v3.3.15, we need to accurately select command name

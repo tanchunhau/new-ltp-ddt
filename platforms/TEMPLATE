@@ -33,6 +33,7 @@ power_mgr/dynamic_ticks/<drivername>
 power_mgr/smartreflex
 pru/<drivername>
 qspi_master/mtd/<drivername>
+r5f
 rtc/<drivername>
 sata/<drivername>
 sdma/<drivername>

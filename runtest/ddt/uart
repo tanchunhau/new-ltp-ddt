@@ -1,5 +1,5 @@
 # @name UART Read/Write tests
-# @desc Use git://git.breakpoint.cc/bigeasy/serialcheck.git to validate UART at various rates
+# @desc Use https://github.com/nsekhar/serialcheck to validate UART at various rates
 # Since serialcheck relies on termbits.h rate definitions, it is not possible to go over 4M.
 # @requires 
 # @setup_requires 
