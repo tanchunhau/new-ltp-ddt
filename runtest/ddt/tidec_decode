@@ -49,4 +49,6 @@ TIDEC_S_FUNC_GST_DECODE_FAKESINK_AUD_MW_E.264 source 'ti_decode.sh'; insert_vide
 
 TIDEC_S_FUNC_GST_DECODE_FILESINK_AUD_MW_E.264 source 'ti_decode.sh'; insert_video_modules; gst-launch-1.0 filesrc location=/usr/share/ti/tidec-decode/AUD_MW_E.264 ! h264parse ! v4l2h264dec ! video/x-raw,format='(string)'NV12 ! filesink location=/tmp/AUD_MW_E.yuv || die "GStreamer operation did not complete successfully"
 
+TIDEC_S_FUNC_GST_DECODE_KMSSINK_BA1_FT_C.264 source 'ti_decode.sh'; insert_video_modules; gst-launch-1.0 playbin uri=file:///usr/share/ti/tidec-decode/BA1_FT_C.264 video-sink=kmssink || die "GStreamer operation did not complete successfully"
 
+TIDEC_S_FUNC_GST_DECODE_AV_KMSSINK_BAMQ2_JVC_C.264 source 'ti_decode.sh'; insert_video_modules; gst-launch-1.0 filesrc location=/usr/share/ti/tidec-decode/BAMQ2_JVC_C.264 ! h264parse ! v4l2h264dec ! kmssink || die "GStreamer operation did not complete successfully"
