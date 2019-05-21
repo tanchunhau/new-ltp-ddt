@@ -4,40 +4,31 @@
 # @setup_requires
 
 # Start one worker per cpu for each CPU stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_CPU source 'common.sh'; stress-ng --class cpu --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
+SYSTEM_L_STRESS_STRESSNG_CPU source 'common.sh'; stress-ng --cpu 0 -t 4h || die "One or more stressors failed"
 
 # Start one worker per cpu for each CPU-CACHE stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_CPUCACHE source 'common.sh'; stress-ng --class cpu-cache --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
+SYSTEM_L_STRESS_STRESSNG_CPUCACHE source 'common.sh'; stress-ng --cache 0 -t 4h || die "One or more stressors failed"
 
 # Start one worker per cpu for each DEVICE stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_DEVICE source 'common.sh'; stress-ng --class device --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
+SYSTEM_L_STRESS_STRESSNG_DEVICE source 'common.sh'; stress-ng --dev 0 -t 4h || die "One or more stressors failed"
 
 # Start one worker per cpu for each IO stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_IO source 'common.sh'; stress-ng --class io --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
+SYSTEM_L_STRESS_STRESSNG_IO source 'common.sh'; stress-ng --iomix 0 -t 4h || die "One or more stressors failed"
 
 # Start one worker per cpu for each INTERRUPT stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_INTERRUPT source 'common.sh'; stress-ng --class interrupt --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
+SYSTEM_L_STRESS_STRESSNG_INTERRUPT source 'common.sh'; stress-ng --sleep 100 -t 4h || die "One or more stressors failed"
 
 # Start one worker per cpu for each FILESYSTEM stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_FILESYSTEM source 'common.sh'; stress-ng --class filesystem --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
+SYSTEM_L_STRESS_STRESSNG_FILESYSTEM source 'common.sh'; stress-ng --hdd 0 --hdd-bytes 1m --aggressive -t 4h || die "One or more stressors failed"
 
 # Start one worker per cpu for each MEMORY stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_MEMORY source 'common.sh'; stress-ng --class memory --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
+SYSTEM_L_STRESS_STRESSNG_MEMORY source 'common.sh'; stress-ng --vm 10 --vm-bytes 80% -t 4h || die "One or more stressors failed"
 
 # Start one worker per cpu for each NETWORK stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_NETWORK source 'common.sh'; stress-ng --class network --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
-
-# Start one worker per cpu for each OS stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_OS source 'common.sh'; stress-ng --class os --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
+SYSTEM_L_STRESS_STRESSNG_NETWORK source 'common.sh'; stress-ng --netdev 0 -t 4h || die "One or more stressors failed"
 
 # Start one worker per cpu for each PIPE stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_PIPE source 'common.sh'; stress-ng --class pipe --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
-
-# Start one worker per cpu for each SCHEDULER stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_SCHEDULER source 'common.sh'; stress-ng --class scheduler --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
-
-# Start one worker per cpu for each VM stressor in parallel
-SYSTEM_L_STRESS_STRESSNG_VM source 'common.sh'; stress-ng --class vm --all 0 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
+SYSTEM_L_STRESS_STRESSNG_PIPE source 'common.sh'; stress-ng --pipe 10 -t 4h || die "One or more stressors failed"
 
 # Start one cpu stressors per core, 2 io stressors, 4 fork stressors and 4 vm stressors using 64M of virtual memory.
 SYSTEM_L_STRESS_STRESSNG_MIX4H source 'common.sh'; stress-ng --cpu 0 --io 2 --vm 4 --vm-bytes 64M --fork 4 -t 4h; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
@@ -49,10 +40,6 @@ SYSTEM_XL_STRESS_STRESSNG_ALL source 'common.sh'; stress-ng --all 0 -t 23h; echo
 #####################################################################
 ############### START OF PERFORMANCE ORIENTED TESTS #################
 #####################################################################
-
-SYSTEM_M_PERF_STRESSNG_MEMORY source 'common.sh'; stress-ng --class memory --all 0 -t 15m --perf --metrics-brief --times; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
-
-SYSTEM_M_PERF_STRESSNG_VM source 'common.sh'; stress-ng --class vm --all 0 -t 15m --perf --metrics-brief --times; echo $?|grep 2 && die "One or more stressors failed" || echo "All stressors properly initialized passed"
 
 # Start 4 workers that copy 2MB of data from a shared region to a buffer using memcpy(3) and then move the data in the
 # buffer with memmove(3) with 3 different alignments.
