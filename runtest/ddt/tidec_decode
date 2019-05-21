@@ -44,3 +44,9 @@ TIDEC_M_FUNC_DECODE_BACK_TO_BACK_AKIYO_QCIF source 'ti_decode.sh'; F=$(mktemp); 
 TIDEC_S_FUNC_GST_DECODE_AUD_MW_E.264 source 'ti_decode.sh'; insert_video_modules; gst-launch-1.0 filesrc location=/usr/share/ti/tidec-decode/AUD_MW_E.264 ! h264parse ! v4l2h264dec ! video/x-raw,format='(string)'NV12 ! kmssink || die "GStreamer operation did not complete successfully"
 
 TIDEC_S_FUNC_GST_DECODE_FOREMAN_128X64.h265 source 'ti_decode.sh'; insert_video_modules; gst-launch-1.0 playbin uri=file:///usr/share/ti/tidec-decode/foreman_128x64_128x64_8bit_10frames_ctu32_qp32_Inter_SAO_AMP_Debl_NoPCM.h265 video-sink=kmssink || die "GStreamer operation did not complete successfully"
+
+TIDEC_S_FUNC_GST_DECODE_FAKESINK_AUD_MW_E.264 source 'ti_decode.sh'; insert_video_modules; gst-launch-1.0 filesrc location=/usr/share/ti/tidec-decode/AUD_MW_E.264 ! h264parse ! v4l2h264dec ! video/x-raw,format='(string)'NV12 ! fakesink || die "GStreamer operation did not complete successfully"
+
+TIDEC_S_FUNC_GST_DECODE_FILESINK_AUD_MW_E.264 source 'ti_decode.sh'; insert_video_modules; gst-launch-1.0 filesrc location=/usr/share/ti/tidec-decode/AUD_MW_E.264 ! h264parse ! v4l2h264dec ! video/x-raw,format='(string)'NV12 ! filesink location=/tmp/AUD_MW_E.yuv || die "GStreamer operation did not complete successfully"
+
+
