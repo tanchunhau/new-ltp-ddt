@@ -3,7 +3,7 @@
 
 source "common.sh"  # Import do_cmd(), die() and other functions
 
-file=`find /sys/firmware/devicetree/ -name "ti\,adc-channels"`
+file=`find /sys/firmware/devicetree/ -name "ti\,adc-channels" | head -n 1`
 if [ -z $file ]; then
         echo "ti,adc-channels not found on device tree"
         exit 1
