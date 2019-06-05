@@ -48,6 +48,7 @@ find_scsi_basenode() {
         fi
       ;;
       usb|usbxhci|usbotg)
+        sleep 30 # give usb some time to get enumerated
         usb_cnt_interface=`get_usb_controller_name.sh "$SCSI_DEVICE"`
         usb_speed_found=1
         # in USB case, extra param is used to indicate usb speed
