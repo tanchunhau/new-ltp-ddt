@@ -12,28 +12,11 @@ case $DRIVER in
 esac                                                              
 case $SOC in                                  
 am654)
-      CRYPTO_IP='udma'
-esac              
-case $MACHINE in                                                              
-esac
-case $ip_type in
-aes)
+	count=`get_num_sa2ul_interrupts.sh -c 0`
 ;;
-esac
-case $ip_type in                                                              
-des|3des)
-        echo "CCCCC"$CRYPTO_IP
-	if [ $SOC = "am43xx" ]
-	then
-		CRYPTO_IP='edma'
-	else
-		CRYPTO_IP='omap-dma-engine'
-	fi;;
 *)
-	if [ $SOC != "am654" ]
-	then
-		CRYPTO_IP='edma'
-	fi;;
-esac                                                                          
-
-echo $CRYPTO_IP
+	IRQ_NUM=`get_irq_for_iface.sh -i $ip_type`
+	count=`get_num_interrupts_for_irq.sh -i $IRQ_NUM -c 0`
+;;        
+esac              
+echo $count

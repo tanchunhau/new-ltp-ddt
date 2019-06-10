@@ -46,7 +46,8 @@ SINK="fakesink"
 FRAMES=60
 FRAMEINFO=""
 RATE=", framerate=30/1"
-while getopts :s:r:c:n:f:t: arg
+IOMODE=5
+while getopts :s:r:c:n:f:t:i: arg
 do case $arg in
         n)
                 NODE=$OPTARG ;;
@@ -61,6 +62,8 @@ do case $arg in
                 FRAMES=$OPTARG ;;
         f)
                 RATE=", framerate=${OPTARG}/1" ;;
+        i)
+                IOMODE=$OPTARG ;;
         \?)
 		            echo "Invalid Option -$OPTARG ignored." >&2
                 usage
@@ -84,8 +87,8 @@ esac
 # value you want
 
 ########################### REUSABLE TEST LOGIC ###############################
-echo "gst-launch-1.0 v4l2src device=/dev/${NODE} num-buffers=${FRAMES} ${RESOLUTION} ! ${CODEC} ! ${SINK}"
-gst-launch-1.0 v4l2src device=/dev/${NODE} num-buffers=${FRAMES} ${RESOLUTION} ! ${CODEC} ! ${SINK} 2>&1 | grep -i 'error'
+echo "gst-launch-1.0 v4l2src device=/dev/${NODE} num-buffers=${FRAMES} io-mode=${IOMODE} ${RESOLUTION} ! ${CODEC} ! ${SINK}"
+gst-launch-1.0 v4l2src device=/dev/${NODE} num-buffers=${FRAMES} io-mode=${IOMODE} ${RESOLUTION} ! ${CODEC} ! ${SINK} 2>&1 | grep -i 'error'
 if [ $? -eq 0 ]; then 
   die "Problem while trying to capture and encode video"
 fi
