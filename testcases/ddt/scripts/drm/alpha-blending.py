@@ -44,7 +44,7 @@ for i in range(len(planes)):
     fbs.append(pykms.DumbFramebuffer(card, w, h, pykms.PixelFormat.ARGB8888))
     pykms.draw_rect(fbs[i], 0, 0, side, side, pykms.RGB(128, 255*(1 & 2**i), 255*((2 & 2**i) >> i), 255*((4 & 2**i) >> i)))
 
-if not re.match("am65.*", platform, re.I):
+if not re.match("am65.*|j721e.*", platform, re.I):
     crtc.set_props({
         "trans-key-mode": 0,
         "trans-key": 0,
@@ -68,7 +68,7 @@ for i in range(len(planes)):
         "CRTC_W": side,
         "CRTC_H": side,
     }
-    if re.match("am65.*", platform, re.I):
+    if re.match("am65.*|j721e.*", platform, re.I):
         p_props["zpos"] = i
         p_props["alpha"] = int(65535/(i+1))
     else:

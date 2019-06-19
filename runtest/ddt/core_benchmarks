@@ -1,0 +1,24 @@
+# @name Core Performance Benchmarks
+# @desc Run various core performance benchmarks. It is assumed that benchmarks are installed in the filesystem.
+# @requires
+# @setup_requires
+
+CORE_S_PERF_DHRYSTONE_CORE0 source 'common.sh'; cat /sys/devices/system/cpu/online | grep 0 && run_processes.sh -c "runDhrystone" -n 1 -a 0x1 -d 1
+
+CORE_S_PERF_DHRYSTONE_CORE1 source 'common.sh'; num_cores=`cat /sys/devices/system/cpu/online`; [ $(echo $num_cores| cut -d'-' -f 2) -ge 1 ] && run_processes.sh -c "runDhrystone" -n 1 -a 0x2 -d 1
+
+CORE_S_PERF_WHETSTONE_CORE0 source 'common.sh'; cat /sys/devices/system/cpu/online | grep 0 && run_processes.sh -c "runWhetstone" -n 1 -a 0x1 -d 1
+
+CORE_S_PERF_WHETSTONE_CORE1 source 'common.sh'; num_cores=`cat /sys/devices/system/cpu/online`; [ $(echo $num_cores| cut -d'-' -f 2) -ge 1 ] && run_processes.sh -c "runWhetstone" -n 1 -a 0x2 -d 1
+
+CORE_S_PERF_NBENCH_CORE0 source 'common.sh'; cat /sys/devices/system/cpu/online | grep 0 && run_processes.sh -c "runNBench.sh" -n 1 -a 0x1 -d 1
+
+CORE_S_PERF_NBENCH_CORE1 source 'common.sh'; num_cores=`cat /sys/devices/system/cpu/online`; [ $(echo $num_cores| cut -d'-' -f 2) -ge 1 ] && run_processes.sh -c "runNBench.sh" -n 1 -a 0x2 -d 1
+
+CORE_S_PERF_LINPACK_CORE0 source 'common.sh'; cat /sys/devices/system/cpu/online | grep 0 && run_processes.sh -c "runLinpack" -n 1 -a 0x1 -d 1
+
+CORE_S_PERF_LINPACK_CORE1 source 'common.sh'; num_cores=`cat /sys/devices/system/cpu/online`; [ $(echo $num_cores| cut -d'-' -f 2) -ge 1 ] && run_processes.sh -c "runLinpack" -n 1 -a 0x2 -d 1
+
+CORE_S_PERF_STREAMC_CORE0 source 'common.sh'; cat /sys/devices/system/cpu/online | grep 0 && run_processes.sh -c "stream_c" -n 1 -a 0x1 -d 1
+
+CORE_S_PERF_STREAMC_CORE1 source 'common.sh'; num_cores=`cat /sys/devices/system/cpu/online`; [ $(echo $num_cores| cut -d'-' -f 2) -ge 1 ] && run_processes.sh -c "stream_c" -n 1 -a 0x2 -d 1

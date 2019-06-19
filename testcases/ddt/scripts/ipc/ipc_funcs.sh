@@ -31,6 +31,13 @@ setup_firmware()
   local __fw_type
   local __fw_dst
 
+  case $MACHINE in
+      *j721e*)
+          # j721e doesn't yet support loading the firmware
+          return
+      ;;
+  esac
+
   for __rp in $__rprocs
   do
     __fw_dst="/sys/class/remoteproc/${__rp}/firmware"
@@ -91,8 +98,14 @@ find_firmware_id()
 rm_ipc_mods()
 {
 
-  local __modules=(ti_k3_r5_remoteproc rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus rpmsg_core)
+  local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc ti_k3_r5_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus rpmsg_core)
 
+  case $MACHINE in
+    j721e*)
+      # J721e does not yet support module unloading for remote procs because the firmware cannot be reloaded
+      return
+    ;;
+  esac
   reset_rproc_mpm
   kill_lad
   kill_mpm_daemon
@@ -121,8 +134,12 @@ ins_ipc_mods()
         modprobe ${__mod}
       done
     ;;
+    j721e*)
+      # J721e does not yet support module loading for remote procs because the firmware cannot be reloaded
+      return
+    ;;
     *)
-      __modules=(remoteproc omap_remoteproc keystone_remoteproc virtio_rpmsg_bus rpmsg_core ti_k3_r5_remoteproc)
+      __modules=(remoteproc omap_remoteproc ti_k3_r5_remoteproc keystone_remoteproc virtio_rpmsg_bus rpmsg_core)
   
       if [ $# -gt 0 ];
       then
@@ -256,6 +273,9 @@ start_mpm_daemon()
 get_num_remote_procs()
 {
   case $SOC in
+    *j721e)
+      echo 4
+      ;;
     *dra7xx|*j6plus)
       echo 4
       ;;
@@ -294,6 +314,9 @@ get_num_remote_procs()
 get_rpmsg_proto_rproc_ids()
 { 
   case $SOC in
+    *j721e)
+      rids=( `seq 1 3` )
+      ;;
     *dra7xx|*j6plus)
       rids=( `seq 1 4` )
       ;;
@@ -836,6 +859,33 @@ rpmsg_proto_msgqmulti_test()
   return $__result
 }
 
+rpmsg_client_sample_test_j721e()
+{
+  local __result=0
+  local __test_log
+  local __num_goodbye
+  local __num_procs=$1
+  local __loops=1
+  local __delay=1
+
+  for idx in `seq 1 $__loops`
+  do
+    __test_log=$(dmesg -c > /dev/null && modprobe rpmsg_client_sample || modprobe -f rpmsg_client_sample && sleep $__delay && dmesg)
+    __num_match=$(echo -e "$__test_log" | grep -c -i 'virtio[0-9].*: incoming msg 100')
+    __num_goodbye=$(echo -e "$__test_log" | grep -c -i 'virtio[0-9].*: goodbye!')
+    if [ $__num_match -ne $__num_procs -o  $__num_goodbye -ne $__num_procs ]
+    then
+      __result=$((__result + 1))
+      echo -e "${__test_log}\nTest failed..."
+    else
+      echo "Test passed..."
+    fi
+    rmmod rpmsg_client_sample
+  done
+
+  return $__result
+}
+
 # Funtion to run the RPMSG client sample test based on the kernel's 
 # samples/rpmsg module
 # Inputs:
@@ -850,7 +900,15 @@ rpmsg_client_sample_test()
   local __num_procs=$1
   local __command
   local __loops=1
+  local __delay=3
   
+  case $SOC in
+    j721e)
+        rpmsg_client_sample_test_j721e $*
+        return $?
+    ;;
+  esac
+
   if [ $# -gt 1 ]
   then
     __loops=$2
@@ -858,7 +916,7 @@ rpmsg_client_sample_test()
   
   for idx in `seq 1 $__loops`
   do
-    __test_log=$(dmesg -c > /dev/null && modprobe rpmsg_client_sample || modprobe -f rpmsg_client_sample && sleep 3 && dmesg)
+    __test_log=$(dmesg -c > /dev/null && modprobe rpmsg_client_sample || modprobe -f rpmsg_client_sample && sleep $__delay && dmesg)
     __num_match=$(echo -e "$__test_log" | grep -c -i 'rpmsg[0-9]\+: incoming msg 100')
     __num_goodbye=$(echo -e "$__test_log" | grep -c -i 'rpmsg[0-9]\+: goodbye!')
     if [ $__num_match -ne 1 -o  $__num_goodbye -ne $(($__num_procs * 2)) ]
@@ -916,6 +974,13 @@ toggle_rprocs()
   local __a
   local __type
   local __mbox
+
+  case $MACHINE in
+      *j721e*)
+          # J721e doesn't yet support toggling the remote proc
+          return
+      ;;
+  esac
   local __skip=''
 
   if [ $# -gt 1 ]
@@ -1020,6 +1085,9 @@ list_pru_devs()
 list_rprocs()
 {
   case $SOC in
+    j721e)
+      echo "41000000.r5f 5c00000.r5f 5e00000.r5f"
+    ;;
     dra7xx)
       echo "40800000.dsp 41000000.dsp 58820000.ipu 55020000.ipu"
     ;;

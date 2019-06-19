@@ -1,0 +1,6 @@
+# @name Basic date and time tests
+# @desc Check that global timer is working by calling date command
+# @requires
+# @setup_requires
+
+TIMERS_S_FUNC_DATE_INCREASES source 'common.sh'; sleep_time=10; t1=`date +%s`; sleep $sleep_time; t2=`date +%s`; [ $t2 -gt $t1 ] || die "date is not increasing"; echo "sleep time=$sleep_time, date time delta=$((t2 - t1))"

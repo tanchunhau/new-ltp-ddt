@@ -13,6 +13,13 @@ prot_hsymlinks
 setregid02
 setregid02_16
 
+# skipped due to very long test time
+msgctl10
+msgctl11
+
+#skipped due to lack of space in /tmp
+fanotify05
+
 # Skipping per Linaro analysis
 # https://git.linaro.org/qa/test-definitions.git/tree/automated/linux/ltp/skipfile-lkft.yaml
 creat08
@@ -59,3 +66,11 @@ umount2_02
 umount2_03
 utime06
 utimes01
+
+#remove tests that take forever
+fork13
+msgctl10
+msgctl11
+msgctl08
+rename14
+epoll01

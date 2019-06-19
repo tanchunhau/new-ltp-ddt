@@ -1,8 +1,6 @@
 # @name Check if the support for industrial input/output is there
 # @desc Check if the support for industrial input/output is there
-# @requires gpio 
+# @requires gpio
 
 BOARDDISCRETE_S_FUNC_OUTPUT source "common.sh"; boarddiscrete_tests.sh 'output'
 BOARDDISCRETE_S_FUNC_INPUT source "common.sh"; boarddiscrete_tests.sh 'input'
-
-

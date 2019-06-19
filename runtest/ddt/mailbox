@@ -1,0 +1,8 @@
+
+# @name
+#       Mailbox test.
+# @desc
+#       probe test mailbox test module
+# @requires mailbox
+
+MAILBOX_S_FUNC source "common.sh"; test_mailbox.sh -n 3

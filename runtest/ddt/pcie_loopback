@@ -1,0 +1,61 @@
+# @name Check PCIe using loopback between PCIe0 and PCIe1
+# @desc Setup a epf_test function and run pcitest app
+# @requires pcie || pci
+
+PCI_XS_FUNC_PCIE_BARS source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -b -d /dev/pci-endpoint-test.0
+
+PCI_XS_FUNC_PCIE_MSI source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -m -d /dev/pci-endpoint-test.0
+
+PCI_XS_FUNC_PCIE_MSIX source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -x -d /dev/pci-endpoint-test.0
+
+PCI_XS_FUNC_PCIE_LEGACY_IRQ source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -l -d /dev/pci-endpoint-test.0
+
+PCI_XS_FUNC_PCIE_READ source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -r -d /dev/pci-endpoint-test.0
+
+PCI_XS_FUNC_PCIE_WRITE source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -w -d /dev/pci-endpoint-test.0
+
+PCI_XS_FUNC_PCIE_COPY source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -c -d /dev/pci-endpoint-test.0
+
+PCI_XS_FUNC_PCIE_READ_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -r -u -d /dev/pci-endpoint-test.0
+
+PCI_XS_FUNC_PCIE_WRITE_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -w -u -d /dev/pci-endpoint-test.0
+
+PCI_XS_FUNC_PCIE_COPY_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -s -c -u -d /dev/pci-endpoint-test.0
+
+
+PCI_XS_FUNC_PCIE_MULTIFNC_BARS source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -b -f -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1
+
+PCI_XS_FUNC_PCIE_MULTIFNC_MSI source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -m -f -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1
+
+PCI_XS_FUNC_PCIE_MULTIFNC_MSIX source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -x -f -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1
+
+PCI_XS_FUNC_PCIE_MULTIFNC_READ source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -r -f -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1
+
+PCI_XS_FUNC_PCIE_MULTIFNC_WRITE source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -w -f -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1
+
+PCI_XS_FUNC_PCIE_MULTIFNC_COPY source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -c -f -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1
+
+PCI_XS_FUNC_PCIE_MULTIFNC_READ_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -r -u -f -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1
+
+PCI_XS_FUNC_PCIE_MULTIFNC_WRITE_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -w -u -f -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1
+
+PCI_XS_FUNC_PCIE_MULTIFNC_COPY_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -c -u -f -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1
+
+
+PCI_XS_FUNC_PCIE_VIRTFNC_BARS source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -b -v -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1 -d /dev/pci-endpoint-test.2
+
+PCI_XS_FUNC_PCIE_VIRTFNC_MSI source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -m -v -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1 -d /dev/pci-endpoint-test.2
+
+PCI_XS_FUNC_PCIE_VIRTFNC_MSIX source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -x -v -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1 -d /dev/pci-endpoint-test.2
+
+PCI_XS_FUNC_PCIE_VIRTFNC_READ source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -r -v -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1 -d /dev/pci-endpoint-test.2
+
+PCI_XS_FUNC_PCIE_VIRTFNC_WRITE source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -w -v -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1 -d /dev/pci-endpoint-test.2
+
+PCI_XS_FUNC_PCIE_VIRTFNC_COPY source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -c -v -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1 -d /dev/pci-endpoint-test.2
+
+PCI_XS_FUNC_PCIE_VIRTFNC_READ_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -r -u -v -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1 -d /dev/pci-endpoint-test.2
+
+PCI_XS_FUNC_PCIE_VIRTFNC_WRITE_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -w -u -v -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1 -d /dev/pci-endpoint-test.2
+
+PCI_XS_FUNC_PCIE_VIRTFNC_COPY_UNALIGNED source "common.sh"; do_cmd pcie_ep_funcs.sh -n 1 -c -u -v -d /dev/pci-endpoint-test.0 -d /dev/pci-endpoint-test.1 -d /dev/pci-endpoint-test.2

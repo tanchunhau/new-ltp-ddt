@@ -5,12 +5,12 @@
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation version 2.
-# 
+#
 # This program is distributed "as is" WITHOUT ANY WARRANTY of any
 # kind, whether express or implied; without even the implied warranty
 # of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # @desc Script to check the support of industrial input and output
 
 source "common.sh"
@@ -33,9 +33,9 @@ gpio_status=`cat /sys/kernel/debug/gpio`
 if [[ "$mode" = 'output' ]];then
   echo "$gpio_status" |grep "tpic2810" || die "Industrial Output TPIC2810 is not found in gpio table"
   gpio_number_range=`echo "$gpio_status" |grep "tpic2810" |cut -d' ' -f3 |sed 's/,$//'`
-  first_gpio=`echo $gpio_number_range |cut -d'-' -f1` 
-  last_gpio=`echo $gpio_number_range |cut -d'-' -f2` 
-  
+  first_gpio=`echo $gpio_number_range |cut -d'-' -f1`
+  last_gpio=`echo $gpio_number_range |cut -d'-' -f2`
+
   g=$first_gpio
   while [ $g -le $last_gpio ];do
     do_cmd "echo ${g} > /sys/class/gpio/export"
@@ -52,9 +52,9 @@ else
   # for input
   echo "$gpio_status" |grep "pisosr" || die "Industrial Input pisosr(SN65HVS882) is not found in gpio table"
   gpio_number_range=`echo "$gpio_status" |grep "pisosr" |cut -d' ' -f3 |sed 's/,$//'`
-  first_gpio=`echo $gpio_number_range |cut -d'-' -f1` 
-  last_gpio=`echo $gpio_number_range |cut -d'-' -f2` 
-  
+  first_gpio=`echo $gpio_number_range |cut -d'-' -f1`
+  last_gpio=`echo $gpio_number_range |cut -d'-' -f2`
+
   g=$first_gpio
   while [ $g -le $last_gpio ];do
     do_cmd "echo ${g} > /sys/class/gpio/export"
@@ -69,6 +69,5 @@ else
     do_cmd "echo ${g} > /sys/class/gpio/unexport"
     (( g++ ))
   done
-  
-fi
 
+fi

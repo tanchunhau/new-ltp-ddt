@@ -1145,3 +1145,9 @@ run_and_capture_values() {
     local __arrayvalues=$3
     eval $__arrayvalues="($($1 2>&1 | sed -rn $2))"
 }
+
+check_jailhouse()
+{
+    which jailhouse || die "jailhouse is not in the filesystem"
+    lsmod |grep jailhouse || die "jailhouse kernel module is not available"
+}

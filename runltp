@@ -653,11 +653,11 @@ main()
     INFO: no command files were provided. Will execute the following
           runtest scenario files:
 
-`cat $LTPROOT/scenario_groups/default-ddt | tr '\012' ' '`
+`cat $LTPROOT/scenario_groups/k3-ip | tr '\012' ' '`
     
 	EOF
 
-	SCENARIO_LISTS="$LTPROOT/scenario_groups/default-ddt"
+	SCENARIO_LISTS="$LTPROOT/scenario_groups/k3-ip"
         if [ "$RUN_NETEST" -eq 1 ]; then
             SCENARIO_LISTS="$SCENARIO_LISTS $LTPROOT/scenario_groups/network"
         fi

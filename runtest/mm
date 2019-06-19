@@ -92,7 +92,8 @@ vma04 vma04
 vma05 vma05.sh
 
 overcommit_memory01 overcommit_memory
-overcommit_memory02 overcommit_memory -R 0
+# overcommit_memory02 requires swap device to pass
+# overcommit_memory02 overcommit_memory -R 0
 overcommit_memory03 overcommit_memory -R 30
 overcommit_memory04 overcommit_memory -R 80
 overcommit_memory05 overcommit_memory -R 100
