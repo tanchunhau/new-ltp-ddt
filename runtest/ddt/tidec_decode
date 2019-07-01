@@ -52,3 +52,7 @@ TIDEC_S_FUNC_GST_DECODE_FILESINK_AUD_MW_E.264 source 'ti_decode.sh'; get_media; 
 TIDEC_S_FUNC_GST_DECODE_KMSSINK_BA1_FT_C.264 source 'ti_decode.sh'; get_media; insert_video_modules; gst-launch-1.0 playbin uri=file:///usr/share/ti/tidec-decode/BA1_FT_C.264 video-sink=kmssink || die "GStreamer operation did not complete successfully"
 
 TIDEC_S_FUNC_GST_DECODE_AV_KMSSINK_BAMQ2_JVC_C.264 source 'ti_decode.sh'; get_media; insert_video_modules; gst-launch-1.0 filesrc location=/usr/share/ti/tidec-decode/BAMQ2_JVC_C.264 ! h264parse ! v4l2h264dec ! kmssink || die "GStreamer operation did not complete successfully"
+
+TIDEC_S_FUNC_DECODE_NETFLIX_FOODMARKET_HIGH_3840X2160_IPB_40MBPS_5.1.264 source 'ti_decode.sh'; get_media; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/Netflix_FoodMarket_high_3840x2160_IPB_40mbps_5.1.264 -f 10 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 32c84759073a8a03140a089c49a600a5 || die "decoded file does not match expected md5sum"
+
+TIDEC_S_FUNC_DECODE_NETFLIX_FOODMARKET_HIGH_4096X2304_IPB_220MBPS.265 source 'ti_decode.sh'; get_media; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/Netflix_FoodMarket_high_4096x2304_IPB_220mbps.265 -f 10 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 21e2c3819943c61c4b6f2330ee055b13 || die "decoded file does not match expected md5sum"
