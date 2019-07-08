@@ -68,6 +68,8 @@ do
       mmc="CONFIG_MMC_SDHCI_OMAP:sdhci_omap";;
     *davinci_mmc)
       mmc="CONFIG_MMC_DAVINCI:davinci_mmc";;
+    *sdhci_am654)
+      mmc="CONFIG_MMC_SDHCI_AM654:sdhci_am654";;
 
     *rtc-s35390a)
       rtc="CONFIG_RTC_DRV_S35390A:rtc-s35390a";; #not sure this is the right one.
