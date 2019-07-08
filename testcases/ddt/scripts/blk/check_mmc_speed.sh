@@ -34,6 +34,8 @@ if [[ "$expected_mode" = "" ]]; then
         expected_mode="HS200";;
       am654x-evm | am654x-idk)
         expected_mode="HS200";;
+      j721e*)
+        expected_mode="HS400";;
 
       *)
         die "No expected eMMC mode is specified for this platform";;
