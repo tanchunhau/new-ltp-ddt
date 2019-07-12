@@ -42,7 +42,7 @@ get_pcie_speed()
   item2check=$2 # 'lnkcap:' or 'lnksta:'
 
   #lnk_speed=`lspci -d "$pci_id" -vv |grep -i "$item2check"|head -1 |grep -Eoi "Speed [0-9\.]+GT/s" |cut -d' ' -f2 |cut -d'G' -f1 `
-  lnk_speed=`lspci -vv |grep ${pci_id} -A35 |grep -i "${item2check}"|head -1 |grep -Eoi "Speed [0-9\.]+GT/s" |cut -d' ' -f2 |cut -d'G' -f1 `
+  lnk_speed=`lspci -Dvv |grep ${pci_id} -A45 |grep -i "${item2check}"|head -1 |grep -Eoi "Speed [0-9\.]+GT/s" |cut -d' ' -f2 |cut -d'G' -f1 `
   if [[ -z $lnk_speed ]]; then
     die "Could not get pcie speed capability or status"
   fi
@@ -55,7 +55,7 @@ get_pcie_width()
   item2check=$2 # 'lnkcap:' or 'lnksta:'
 
   #lnk_width=`lspci -d "$pci_id" -vv |grep -i "$item2check" |head -1 |grep -Eoi "Width x[0-9]+" |grep -Eo "[0-9]+" `
-  lnk_width=`lspci -vv |grep $1 -A35 |grep -i "${item2check}" |head -1 |grep -Eoi "Width x[0-9]+" |grep -Eo "[0-9]+" `
+  lnk_width=`lspci -Dvv |grep $1 -A35 |grep -i "${item2check}" |head -1 |grep -Eoi "Width x[0-9]+" |grep -Eo "[0-9]+" `
   if [[ -z $lnk_width ]]; then
     die "Could not get pcie width capability or status"
   fi
@@ -123,8 +123,8 @@ get_dut_max_width()
 do_cmd "lspci -nn"
 #echo "::::::::End of PCIe numeric IDs::::::::"
 
-echo "=============Output of lspci -vv=============="
-do_cmd 'lspci -vv'
+echo "=============Output of lspci -Dvv=============="
+do_cmd 'lspci -Dvv'
 echo "=============================================="
 
 #rc_id=`get_rc_id` || die "error getting rc_id: $rc_id"
@@ -153,13 +153,13 @@ do
   ep_bus='01'
   ep_id="${domain_num}:${ep_bus}"
   lspci -Dn |grep $ep_id || continue
-  ep_speed_cap=`get_pcie_speed "$ep_id" "lnkcap:" ` || die "error when getting speed cap for EP:${rc_speed_cap}"
-  ep_width_cap=`get_pcie_width "$ep_id" "lnkcap:" ` || die "error when getting width cap for EP:${rc_width_cap}"
+  ep_speed_cap=`get_pcie_speed "$ep_id" "lnkcap:" ` || die "error when getting speed cap for EP:${ep_speed_cap}"
+  ep_width_cap=`get_pcie_width "$ep_id" "lnkcap:" ` || die "error when getting width cap for EP:${ep_width_cap}"
 
   rc_speed_sta=`get_pcie_speed "$rc_id" "lnksta:" ` || die "error when getting speed sta for RC:${rc_speed_sta}"
   rc_width_sta=`get_pcie_width "$rc_id" "lnksta:" ` || die "error when getting width sta for RC:${rc_width_sta}"
-  ep_speed_sta=`get_pcie_speed "$ep_id" "lnksta:" ` || die "error when getting speed sta for EP:${rc_speed_sta}"
-  ep_width_sta=`get_pcie_width "$ep_id" "lnksta:" ` || die "error when getting width sta for EP:${rc_width_sta}"
+  ep_speed_sta=`get_pcie_speed "$ep_id" "lnksta:" ` || die "error when getting speed sta for EP:${ep_speed_sta}"
+  ep_width_sta=`get_pcie_width "$ep_id" "lnksta:" ` || die "error when getting width sta for EP:${ep_width_sta}"
 
   echo "::::::::RC and EP Capbility::::::::"
   echo "::::::::RC Speed ${rc_speed_cap}GT/s::::::::"
