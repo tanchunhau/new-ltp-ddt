@@ -1,0 +1,5 @@
+# @name Ethtool speed set and verify 
+# @desc Uses ethtool to change and verify speed of interface
+# @requires net
+
+ETH_XS_FUNC_MAC_CONFIG source 'common.sh'; interface="eth0"; test_mac="A0:F6:11:11:11:11"; nfs=`cat /proc/cmdline|grep nfs`; echo "NFS is $nfs"; if [ -n "$nfs" ]; then die "Use rootfs in mmc before running this test"; fi; initial_mac=`cat /sys/class/net/$interface/address`; echo "$initial_mac";`ifdown $interface`; `ifconfig $interface hw ether $test_mac`;final_mac=`cat /sys/class/net/$interface/address`;echo "FINAL MAC is $final_mac and TEST MAC is $test_mac"; `ifconfig $interface hw ether $initial_mac`; `ifup $interface`; if [ "${final_mac,,}" != "${test_mac,,}" ]; then die "MAC did not get set as expected Final $final_mac Test $test_mac"; fi
