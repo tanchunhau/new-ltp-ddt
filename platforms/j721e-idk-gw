@@ -6,10 +6,10 @@ graphics/
 hwrng
 hflash/mtd
 i2c
-mmc_host/mmc
-mmc_host/sd
-mmc_host/sdhc
-mmc_host/sdxc
+mmc_host/mmc/sdhci_am654
+mmc_host/sd/sdhci_am654
+mmc_host/sdhc/sdhci_am654
+mmc_host/sdxc/sdhci_am654
 emmc
 nand
 ubifs
