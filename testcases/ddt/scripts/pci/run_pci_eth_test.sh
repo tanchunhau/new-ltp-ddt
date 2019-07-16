@@ -49,7 +49,8 @@ test_print_trc "ETH_IFACE: $ETH_IFACE"
 
 do_cmd "lspci -nn"
 do_cmd "lspci -vv"
-do_cmd "cat /proc/interrupts |grep -i pci"
+echo "cat /proc/interrupts |grep -iE 'pci|msi'"
+cat /proc/interrupts |grep -iE 'pci|msi'
 
 # prepare pci eth test
 iface_list=`get_active_eth_interfaces.sh`; 
@@ -88,5 +89,7 @@ for interface in ${iface_list[@]}; do
   fi
 done
 
-do_cmd "cat /proc/interrupts |grep -i pci"
+echo "cat /proc/interrupts |grep -iE 'pci|msi'"
+cat /proc/interrupts |grep -iE 'pci|msi'
+echo "done"
 # end of script
