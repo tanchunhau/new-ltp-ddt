@@ -8,7 +8,7 @@ PCI_XS_FUNC_PCIE_ENUMERATE_1_HOST source 'common.sh'; do_cmd test 1 -le $(lspci 
 #check that at least 2 Cadence PCI hosts are present
 PCI_XS_FUNC_PCIE_ENUMERATE_2_HOSTS source 'common.sh'; do_cmd test 2 -le $(lspci | grep "PCI bridge: Cadence Design Systems" | wc -l)
 #check that at least 3 Cadence PCI hosts are present
-PCI_XS_FUNC_PCIE_ENUMERATE_2_HOSTS source 'common.sh'; do_cmd test 3 -le $(lspci | grep "PCI bridge: Cadence Design Systems" | wc -l)
+PCI_XS_FUNC_PCIE_ENUMERATE_3_HOSTS source 'common.sh'; do_cmd test 3 -le $(lspci | grep "PCI bridge: Cadence Design Systems" | wc -l)
 
 PCI_XS_FUNC_PCIE0_VEPF_BARS source "common.sh"; do_cmd pcie_ep_funcs.sh -n 3 -b -d /dev/pci-endpoint-test.0
 
