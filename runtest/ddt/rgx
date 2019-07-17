@@ -37,7 +37,7 @@ RGX_S_FUNC_GLES1 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS
 
 RGX_S_FUNC_GLES2 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles2test1' || bin='gles2test1'; $bin -f 1200
 
-RGX_L_STRESS_GLES1 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='gles1test1' || bin='gles1test1'; $bin 1000
+RGX_L_STRESS_GLES1 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles1test1' || bin='gles1test1'; $bin 1000
 
 RGX_L_STRESS_GLES2 source 'common.sh';  cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles2test1' || bin='gles2test1'; $bin 1000
 
