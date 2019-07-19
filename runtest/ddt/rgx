@@ -52,3 +52,5 @@ RGX_S_FUNC_GLES3RENDERPVR source 'common.sh'; cat /sys/kernel/debug/pvr/version 
 RGX_S_FUNC_GLES3RENDERTIDSS source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles3test1 -f 1200' || bin='gles3_render_to_image 2 tidss'; $bin
 
 RGX_S_FUNC_GLES3 source 'common.sh';  cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles3test1 -f 1200' || bin='gles3test1 -f 1200'; $bin
+
+RGX_XS_FUNC_MODULE_LOAD source 'common.sh'; lsmod | grep pvrsrvkm || die "Graphics module pvrsrvkm not detected"
