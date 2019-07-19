@@ -3,13 +3,13 @@
 # @requires graphics
 
 
-RGX_S_FUNC_BLIT source 'common.sh'; output=`rgx_blit_test`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
+RGX_S_FUNC_BLIT source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
 
-RGX_S_FUNC_BLIT_BTYPEBLIT source 'common.sh'; output=`rgx_blit_test -btype BLIT`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
+RGX_S_FUNC_BLIT_BTYPEBLIT source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test -btype BLIT`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
 
-RGX_S_FUNC_BLIT_BTYPEFILL source 'common.sh'; output=`rgx_blit_test -btype FILL`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
+RGX_S_FUNC_BLIT_BTYPEFILL source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test -btype FILL`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
 
-RGX_S_FUNC_BLIT_BTYPECLIP source 'common.sh'; output=`rgx_blit_test -btype CLIP`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
+RGX_S_FUNC_BLIT_BTYPECLIP source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test -btype CLIP`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
 
 RGX_S_FUNC_KICKSYNC_1 source 'common.sh'; output=`rgx_kicksync_test -n 1`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
 
@@ -33,17 +33,17 @@ RGX_S_FUNC_KICKSYNC_SYNCCONTEXTLOOP_4_10_100 source 'common.sh'; output=`rgx_kic
 
 RGX_S_FUNC_TWIDDLING source 'common.sh'; output=`rgx_twiddling_test`;if [[ $output = *"FAILED"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
 
-RGX_S_FUNC_GLES1 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles1test1' || bin='gles1test1'; $bin -f 1200
+RGX_S_FUNC_GLES1 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles1test1 -f' || bin='gles1test1'; $bin 1200
 
-RGX_S_FUNC_GLES2 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles2test1' || bin='gles2test1'; $bin -f 1200
+RGX_S_FUNC_GLES2 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles2test1 -f' || bin='gles2test1'; $bin 1200
 
-RGX_L_STRESS_GLES1 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles1test1' || bin='gles1test1'; $bin 1000
+RGX_L_STRESS_GLES1 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles1test1 -f' || bin='gles1test1'; $bin 1000
 
-RGX_L_STRESS_GLES2 source 'common.sh';  cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles2test1' || bin='gles2test1'; $bin 1000
+RGX_L_STRESS_GLES2 source 'common.sh';  cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles2test1 -f' || bin='gles2test1'; $bin 1000
 
-RGX_S_FUNC_GLES1_ARGB32 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles1test1' || bin='gles1test1'; $bin 10 argb32
+RGX_S_FUNC_GLES1_ARGB32 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles1test1 -f' || bin='gles1test1'; $bin 10 argb32
 
-RGX_S_FUNC_GLES2_ARGB32 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles2test1' || bin='gles2test1'; $bin 10 argb32
+RGX_S_FUNC_GLES2_ARGB32 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles2test1 -f' || bin='gles2test1'; $bin 10 argb32
 
 RGX_S_FUNC_GLES1IMAGEEXTERNAL source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles1test1 -f 1200' || bin='gles1image_external -D tidss -f 2'; $bin
 
