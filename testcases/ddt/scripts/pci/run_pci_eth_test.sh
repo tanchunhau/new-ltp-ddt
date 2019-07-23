@@ -69,6 +69,7 @@ for eth_iface in ${eth_ifaces[@]}; do
     do_cmd "ifconfig $interface down"; 
   done; 
   do_cmd "ifup ${eth_iface}"; 
+  do_cmd cat /proc/interrupts |grep -iE 'pci|msi'
   host=`get_eth_gateway.sh "-i ${eth_iface}"` || host=`get_eth_gateway.sh "-i eth0"` || die "error getting eth gateway address";
   echo "host:${host}"
 
@@ -76,6 +77,8 @@ for eth_iface in ${eth_ifaces[@]}; do
   if [ -n "$ACTION" ]; then
     eval "$ACTION"
   fi
+
+  do_cmd cat /proc/interrupts |grep -iE 'pci|msi'
 
   # clean up after pci eth test
   do_cmd "ifdown $eth_iface"; 
