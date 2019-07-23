@@ -1,0 +1,7 @@
+# @name USB Wireless Adapter Enumeration Test
+# @desc Use udevadm to determine if usb-wireless device is enumerated on usbhost. Needs usb-wlan adapter to be connected to usbhost port
+# @requires usb/host
+# @setup_requires usbhostwlan
+
+
+USBHOST_S_FUNC_WLAN_0001 source 'common.sh' ; do_cmd install_modules.sh 'usb' ; wlan_enum=`udevadm info /sys/class/net/wlan*|grep usb`; if [[ -z wlan_enum ]] ;then die "Failed enumeration of usb-wlan device"; fi 
