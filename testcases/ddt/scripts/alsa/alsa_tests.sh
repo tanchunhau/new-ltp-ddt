@@ -26,6 +26,7 @@
 #         f) Sample Format : Sample Format (S8,S16_LE,S24_LE,S32_LE)
 #         p) Period Size   : Period Size (1,2,4,8,etc)
 #         b) Buffer Size   : Buffer Size (64,512,32768,65536)
+#         B) Buffer Time   : Buffer Size in microseconds
 #         d) Duration      : Duration in Secs.
 #         c) Channel	   : Channel.
 #         F) File Name	   : File name to play from or capture to.
@@ -84,6 +85,16 @@ get_default_val()
   fi
 }
 
+check_buffer_time()
+{
+ BUFFERTIME=$BUFFERSIZE
+ TIME=$(aplay -v -D "$DEVICE" -f "$SAMPLEFORMAT" $FILE -d1 --disable-resample -r "$SAMPLERATE" -f "$SAMPLEFORMAT" -c "$CHANNEL" "$ACCESSTYPEARG" "$OPMODEARG" --buffer-time=$BUFFERTIME 2>&1 | grep 'rate         :\|buffer_size' | cut -d':' -f2 | tr '\n' ' ' | awk '{print ($2*1000000) / $1}')
+ [ $? != 0 ] && exit 1
+ test_print_trc "Buffer Time : $TIME us"
+ [ $(bc  <<< "$BUFFERTIME * 0.75 < $TIME") == 0 ] && test_print_trc "buffer is too short" && exit 1
+ [ $(bc  <<< "$TIME < $BUFFERTIME *1.25") == 0 ] && test_print_trc "buffer is too long" && exit 1
+ return 0
+}
 ################################ CLI Params ####################################
 # Please use getopts
 while getopts  :t:r:f:F:p:b:l:d:c:o:a:D:R:P:u:s:h arg
@@ -244,7 +255,7 @@ case "$TYPE" in
 	capture)
 		do_cmd arecord -D "$DEVICE" -f "$SAMPLEFORMAT" $FILE -d "$DURATION" -r "$SAMPLERATE" -c "$CHANNEL" "$ACCESSTYPEARG" "$OPMODEARG" --buffer-size=$BUFFERSIZE --period-size $PERIODSIZE
 		;;		
-	playback)
+	playback|check_buffer_time)
         if [ -n "$BLK_DEVICE" ]
         then
             FILE=$(download_to_blk_dev.sh -u $URL -o $FILE -d $BLK_DEVICE) || FILE='test.snd'
@@ -257,7 +268,12 @@ case "$TYPE" in
 			test_print_trc "$FILE Does not exists or has size zero. Using /dev/urandom as input file to generate noise"
 			FILE="/dev/urandom"
 		fi
-		do_cmd aplay -D "$DEVICE" -f "$SAMPLEFORMAT" $FILE -d "$DURATION" -r "$SAMPLERATE" -f "$SAMPLEFORMAT" -c "$CHANNEL" "$ACCESSTYPEARG" "$OPMODEARG"  --buffer-size=$BUFFERSIZE --period-size $PERIODSIZE
+
+		if [ $TYPE == "check_buffer_time" ] ; then
+			do_cmd check_buffer_time
+		else
+			do_cmd aplay -D "$DEVICE" -f "$SAMPLEFORMAT" $FILE -d "$DURATION" -r "$SAMPLERATE" -f "$SAMPLEFORMAT" -c "$CHANNEL" "$ACCESSTYPEARG" "$OPMODEARG" --buffer-size=$BUFFERSIZE --period-size $PERIODSIZE
+		fi
 		;;		
 	loopback)
 		do_cmd arecord -D "$REC_DEVICE" -f "$SAMPLEFORMAT" -d "$DURATION" -r "$SAMPLERATE" -c "$CHANNEL" "$ACCESSTYPEARG" "$OPMODEARG"  --buffer-size=$BUFFERSIZE --period-size $PERIODSIZE "|" aplay -D "$PLAY_DEVICE" -f "$SAMPLEFORMAT" -d "$DURATION" -r "$SAMPLERATE" -c "$CHANNEL" "$ACCESSTYPEARG" "$OPMODEARG"  --buffer-size=$BUFFERSIZE --period-size $PERIODSIZE
