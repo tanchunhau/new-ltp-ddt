@@ -1,0 +1,7 @@
+# @name Weston test
+# @desc Test case to validate Weston properties
+# @requires graphics
+
+WESTON_XS_FUNC_RUNNING	source common.sh; weston_tests.sh -t1 && echo "Test Passed" || die "weston not running"
+WESTON_XS_FUNC_DRM	source common.sh; weston_tests.sh -t2 && echo "Test Passed" || die "weston not using wl_drm protocol"
+WESTON_XS_FUNC_EGL 	source common.sh; weston_tests.sh -t3 && echo "Test Passed" || die "weston simple EGL test app failed"
