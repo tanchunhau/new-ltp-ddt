@@ -1,0 +1,4 @@
+# @name DMA
+# @desc DMA generic dma tests
+
+DMA_S_FUNC_POSITION_QUEYRING source "common.sh"; source pulseaudio_tests.sh; test_no_period_wakeup && echo "Test passed" || die "Test Failed"
