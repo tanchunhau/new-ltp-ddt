@@ -41,7 +41,7 @@ get_hdmi_audio_devnode()
 get_modetest_hint()
 {
   case $MACHINE in
-    am6*|k2g*)
+    am6*|k2g*|j7*)
       echo "-M tidss"
     ;;
   esac
