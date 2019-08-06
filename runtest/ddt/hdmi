@@ -18,3 +18,5 @@ HDMI_S_FUNC_PLAYBACK_720x576  source 'audio_display_functions.sh' ; modes=( $(ge
 HDMI_S_FUNC_PLAYBACK_720x480  source 'audio_display_functions.sh' ; modes=( $(get_video_connector_info hdmi 720x480) ); do_cmd 'disp_audio_test hdmi modes 10'
 
 HDMI_S_FUNC_PLAYBACK_640x480  source 'audio_display_functions.sh' ; modes=( $(get_video_connector_info hdmi 640x480) ); do_cmd 'disp_audio_test hdmi modes 10'
+
+HDMI_S_FUNC_PLAYBACK_2048x1152 source 'audio_display_functions.sh' ; modes=( $(get_video_connector_info hdmi 2048x1152) ); do_cmd 'disp_audio_test hdmi modes 20'

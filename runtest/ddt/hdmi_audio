@@ -50,3 +50,8 @@ HDMI_S_FUNC_AUDIO_PLAYBACK_640x480_44KHz  source 'audio_display_functions.sh' ; 
 HDMI_S_FUNC_AUDIO_PLAYBACK_640x480_48KHz  source 'audio_display_functions.sh' ; devnode=`get_hdmi_audio_devnode`; modes=( $(get_video_connector_info hdmi 640x480) ); do_cmd 'disp_audio_test hdmi modes 10 48000 $devnode'
 HDMI_S_FUNC_AUDIO_PLAYBACK_640x480_96KHz  source 'audio_display_functions.sh' ; devnode=`get_hdmi_audio_devnode`; modes=( $(get_video_connector_info hdmi 640x480) ); do_cmd 'disp_audio_test hdmi modes 10 96000 $devnode'
 HDMI_S_FUNC_AUDIO_PLAYBACK_640x480_192KHz  source 'audio_display_functions.sh' ; devnode=`get_hdmi_audio_devnode`; modes=( $(get_video_connector_info hdmi 640x480) ); do_cmd 'disp_audio_test hdmi modes 10 192000 $devnode'
+
+HDMI_S_FUNC_PLAYBACK_2048x1152_32KHz source 'audio_display_functions.sh' ; devnode=`get_hdmi_audio_devnode` ; modes=( $(get_video_connector_info hdmi 2048x1152) ); do_cmd 'disp_audio_test hdmi modes 20 32000 $devnode'
+HDMI_S_FUNC_PLAYBACK_2048x1152_44KHz source 'audio_display_functions.sh' ; devnode=`get_hdmi_audio_devnode` ; modes=( $(get_video_connector_info hdmi 2048x1152) ); do_cmd 'disp_audio_test hdmi modes 20 44100 $devnode'
+HDMI_S_FUNC_PLAYBACK_2048x1152_48KHz source 'audio_display_functions.sh' ; devnode=`get_hdmi_audio_devnode` ; modes=( $(get_video_connector_info hdmi 2048x1152) ); do_cmd 'disp_audio_test hdmi modes 20 48000 $devnode'
+HDMI_S_FUNC_PLAYBACK_2048x1152_96KHz source 'audio_display_functions.sh' ; devnode=`get_hdmi_audio_devnode` ; modes=( $(get_video_connector_info hdmi 2048x1152) ); do_cmd 'disp_audio_test hdmi modes 20 96000 $devnode'
