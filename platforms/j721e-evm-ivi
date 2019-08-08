@@ -4,7 +4,7 @@ j721e-evm
 gpio
 graphics/
 hwrng
-hflash/mtd
+hyperflash/mtd
 i2c
 mmc_host/mmc
 mmc_host/sd

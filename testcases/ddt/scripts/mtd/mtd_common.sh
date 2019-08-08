@@ -33,6 +33,8 @@ find_part_type() {
     else
       if [[ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'flash'` ]]; then
         PART_TYPE="nor"
+      elif [[ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'hyperbus'` ]];then
+        PART_TYPE="hflash"
       elif [[ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'qspi'` ]];then
         PART_TYPE="qspi"
       elif [[ `ls /sys/class/mtd/mtd$PART/device/driver/ | grep 'ospi'` ]];then
