@@ -23,8 +23,9 @@ source "common.sh"
 usage()
 {
 cat <<-EOF >&2
-        usage: ./${0##*/} [-f FILE] [-s] [-p] [-x] [-c v_id] [-a a_id] [-z audiosink] [-v videosink]
+        usage: ./${0##*/} [-f FILE] [-S file ] [-s] [-p] [-x] [-c v_id] [-a a_id] [-z audiosink] [-v videosink]
         -f absolute path of the stream to be played
+        -S absolute path of the subtitles (optionnal)
         -s Enable video and audio sync property
         -x Enable video scaling (Not available on all platforms or with -p)
         -c Video connector id
@@ -56,10 +57,12 @@ esac
 
 ############################ CLI Params ###########################################
 OPTIND=1
-while getopts :spxc:a:f:z:v: arg
+while getopts :spxc:a:f:S:z:v: arg
 do case $arg in
         f)
                 FILE=$OPTARG ;;
+        S)
+                SUBTITLES="suburi=file://$OPTARG" ;;
         s)
                 SYNC="" ;;
         x)
@@ -104,5 +107,5 @@ else
 fi
 sleep 3
 
-echo "gst-launch-1.0 playbin uri=file://${FILE} video-sink=\"${VSINK} ${SCALING} ${SYNC} ${V_CONN}\" audio-sink=\"${A_SINK} ${SYNC} ${A_DEV}\""
-gst-launch-1.0 playbin uri=file://${FILE} video-sink=\"${VSINK} ${SCALING} ${SYNC} ${V_CONN}\" audio-sink=\"${A_SINK} ${SYNC} ${A_DEV}\" || die "Problem occurred while trying to play stream"
+echo "gst-launch-1.0 playbin uri=file://${FILE} ${SUBTITLES} video-sink=\"${VSINK} ${SCALING} ${SYNC} ${V_CONN}\" audio-sink=\"${A_SINK} ${SYNC} ${A_DEV}\""
+gst-launch-1.0 playbin uri=file://${FILE} ${SUBTITLES} video-sink=\"${VSINK} ${SCALING} ${SYNC} ${V_CONN}\" audio-sink=\"${A_SINK} ${SYNC} ${A_DEV}\" || die "Problem occurred while trying to play stream"
