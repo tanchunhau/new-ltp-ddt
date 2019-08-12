@@ -82,6 +82,10 @@ done
 : ${MNT_MODE:='async'}
 : ${TIME_OUT:='30'}
 : ${MNT_POINT:=/mnt/partition_$DEVICE_TYPE}
+
+do_cmd "ls -al /dev/disk/by-path"
+do_cmd "ls -al /dev/disk/by-id"
+
 if [ -z $DEV_NODE ]; then
         DEV_NODE=`get_blk_device_node.sh "$DEVICE_TYPE" "$EXTRA_PARAM"` || die "error while getting device node: $DEV_NODE"
         test_print_trc "DEV_NODE return from get_blk_device_node is: $DEV_NODE" 

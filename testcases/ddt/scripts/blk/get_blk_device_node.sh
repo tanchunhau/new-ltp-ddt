@@ -89,6 +89,16 @@ find_scsi_basenode() {
           exit 0
         fi
       ;;
+      ufs)
+        file=`ls /dev/disk/by-id/* |grep -i 'scsi'|head -1`
+        if [[ ! -z "$file" ]]; then
+          #this_node=$(basename $(readlink $file))
+          #ls -l /dev/disk/by-path/platform-*ufs-scsi* > /dev/null |grep ${this_node} || (echo "${this_node} is not ufs-scsi node"; exit 1)
+          basenode="/dev/""$(basename $(readlink $file))"
+          echo $basenode
+          exit 0
+        fi
+      ;;
     esac
   # if could not find match, let user know
   echo "Could not find device node for SCSI device!"
@@ -154,6 +164,12 @@ case $DEV_TYPE in
           # Typically, sata harddisk is big, so create 16G (16384) to be able to run 10G filesize test 
           create_three_partitions $basenode 80 16384 > /dev/null
           DEV_NODE=`find_part_with_biggest_size "$basenode" "sata"` || die "error getting partition with biggest size: $DEV_NODE"
+        ;;
+        ufs)
+          basenode=`find_scsi_basenode "ufs"` || die "error getting sata basenode: $basenode" 
+          # Typically, sata harddisk is big, so create 16G (16384) to be able to run 10G filesize test 
+          create_three_partitions $basenode 80 16384 > /dev/null
+          DEV_NODE=`find_part_with_biggest_size "$basenode" "ufs"` || die "error getting partition with biggest size: $DEV_NODE"
         ;;
         *)
           die "Invalid device type in $0 script"

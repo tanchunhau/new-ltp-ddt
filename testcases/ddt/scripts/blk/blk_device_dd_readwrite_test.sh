@@ -90,6 +90,9 @@ if [[ "$DEVICE_TYPE" = "pci" ]]; then
   do_cmd "lspci -vv"
 fi
 
+do_cmd "ls -al /dev/disk/by-path"
+do_cmd "ls -al /dev/disk/by-id"
+
 if [ -z $DEV_NODE ]; then
   DEV_NODE=`get_blk_device_node.sh "$DEVICE_TYPE"` || die "error getting device node for $DEVICE_TYPE: $DEV_NODE"
   test_print_trc "DEV_NODE returned from get_blk_device_node is: $DEV_NODE"

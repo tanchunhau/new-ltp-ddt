@@ -1,0 +1,43 @@
+# @name UFS w/r test using existing FS or vfat or ext4
+# @desc UFS device write/read test with different fs in drive
+# @requires ufs 
+# @setup_requires ufs
+
+UFS_S_FUNC_DD_RW_10M source "common.sh"; do_cmd install_modules.sh "ufs"; do_cmd blk_device_dd_readwrite_test.sh -b "1M" -c "10" -d "ufs"
+
+UFS_M_FUNC_DD_RW_100M source "common.sh"; do_cmd install_modules.sh "ufs"; do_cmd blk_device_dd_readwrite_test.sh -b "10M" -c "10" -d "ufs" 
+
+
+UFS_S_FUNC_VFAT_DD_RW_B1C1 source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "vfat" -b "1" -c "1" -d "ufs"
+
+UFS_S_FUNC_VFAT_DD_RW_B64KC1 source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "vfat" -b "64K" -c "1" -d "ufs"
+
+UFS_S_FUNC_VFAT_DD_RW_B1MC10 source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "vfat" -b "1M" -c "10" -d "ufs"
+
+UFS_S_FUNC_VFAT_DD_RW_B5MC10 source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "vfat" -b "5M" -c "10" -d "ufs"
+
+UFS_M_FUNC_VFAT_DD_RW_B10MC10 source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "vfat" -b "10M" -c "10" -d "ufs"
+
+UFS_M_FUNC_VFAT_DD_RW_B10MC100_1G source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "vfat" -b "10M" -c "100" -d "ufs"
+
+UFS_L_FUNC_VFAT_DD_RW_B10MC100_10G source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "vfat" -b "10M" -c "100" -d "ufs" -w -l 10
+
+
+UFS_S_FUNC_EXT4_DD_RW_B1C1 source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "1" -c "1" -d "ufs"
+
+UFS_S_FUNC_EXT4_DD_RW_B64KC1 source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "64K" -c "1" -d "ufs"
+
+UFS_S_FUNC_EXT4_DD_RW_B1MC10 source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "1M" -c "10" -d "ufs"
+
+UFS_S_FUNC_EXT4_DD_RW_B5MC10 source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "5M" -c "10" -d "ufs"
+
+UFS_M_FUNC_EXT4_DD_RW_B10MC10 source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "10M" -c "10" -d "ufs"
+
+UFS_M_FUNC_EXT4_DD_RW_B10MC100_1G source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "10M" -c "100" -d "ufs"
+
+UFS_L_FUNC_EXT4_DD_RW_B10MC100_10G source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "10M" -c "100" -d "ufs" -w -l 10
+
+
+UFS_L_STRESS_VFAT_DD_RW_1G_100TIMES source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "vfat" -b "10M" -c "100" -d "ufs" -l 100
+
+UFS_L_STRESS_EXT4_DD_RW_1G_100TIMES source 'common.sh'; do_cmd install_modules.sh 'ufs'; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "10M" -c "100" -d "ufs" -l 100

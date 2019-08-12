@@ -15,6 +15,7 @@
 # Functions related to block device partition and its size 
 
 source "common.sh"
+
 ############################ Functions ################################
 
 # Create three partitions on blk device like emmc, usbhost, msata/sata etc if there
