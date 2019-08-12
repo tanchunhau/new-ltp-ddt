@@ -19,3 +19,4 @@ oom05
 # where memory is limited and these tests trigger oom killer
 overcommit_memory02
 thp02
+thp03
