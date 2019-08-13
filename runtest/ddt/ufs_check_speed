@@ -1,0 +1,17 @@
+# @name Check UFS certain UniPro attributes 
+# @desc Check UFS different attribute like gear speed, active lanes etc
+# @requires ufs
+# @setup_requires  
+
+MMC_S_FUNC_CHECK_TXGEAR_SPEED source "common.sh"; do_cmd check_ufs_attributes.sh -t 'speed' -e '3' -a '0x1568'
+
+MMC_S_FUNC_CHECK_RXGEAR_SPEED source "common.sh"; do_cmd check_ufs_attributes.sh -t 'speed' -e '3' -a '0x1583'
+
+MMC_S_FUNC_CHECK_TXDATA_LANES source "common.sh"; do_cmd check_ufs_attributes.sh -t 'lanes' -e '2' -a '0x1560'
+
+MMC_S_FUNC_CHECK_RXDATA_LANES source "common.sh"; do_cmd check_ufs_attributes.sh -t 'lanes' -e '2' -a '0x1580'
+
+MMC_S_FUNC_CHECK_HS_SERIES source "common.sh"; do_cmd check_ufs_attributes.sh -t 'series' -e '2' -a '0x156a'
+
+
+
