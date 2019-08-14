@@ -42,7 +42,7 @@ get_pcie_speed()
   item2check=$2 # 'lnkcap:' or 'lnksta:'
 
   #lnk_speed=`lspci -d "$pci_id" -vv |grep -i "$item2check"|head -1 |grep -Eoi "Speed [0-9\.]+GT/s" |cut -d' ' -f2 |cut -d'G' -f1 `
-  lnk_speed=`lspci -Dvv |grep ${pci_id} -A45 |grep -i "${item2check}"|head -1 |grep -Eoi "Speed [0-9\.]+GT/s" |cut -d' ' -f2 |cut -d'G' -f1 `
+  lnk_speed=`lspci -Dvv |grep ${pci_id} -A60 |grep -i "${item2check}"|head -1 |grep -Eoi "Speed [0-9\.]+GT/s" |cut -d' ' -f2 |cut -d'G' -f1 `
   if [[ -z $lnk_speed ]]; then
     die "Could not get pcie speed capability or status"
   fi
@@ -55,7 +55,7 @@ get_pcie_width()
   item2check=$2 # 'lnkcap:' or 'lnksta:'
 
   #lnk_width=`lspci -d "$pci_id" -vv |grep -i "$item2check" |head -1 |grep -Eoi "Width x[0-9]+" |grep -Eo "[0-9]+" `
-  lnk_width=`lspci -Dvv |grep $1 -A35 |grep -i "${item2check}" |head -1 |grep -Eoi "Width x[0-9]+" |grep -Eo "[0-9]+" `
+  lnk_width=`lspci -Dvv |grep $1 -A60 |grep -i "${item2check}" |head -1 |grep -Eoi "Width x[0-9]+" |grep -Eo "[0-9]+" `
   if [[ -z $lnk_width ]]; then
     die "Could not get pcie width capability or status"
   fi
