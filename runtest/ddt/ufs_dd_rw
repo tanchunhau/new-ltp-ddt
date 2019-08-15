@@ -1,7 +1,7 @@
 # @name UFS w/r test using existing FS or vfat or ext4
 # @desc UFS device write/read test with different fs in drive
 # @requires ufs 
-# @setup_requires ufs
+# @setup_requires 
 
 UFS_S_FUNC_DD_RW_10M source "common.sh"; do_cmd install_modules.sh "ufs"; do_cmd blk_device_dd_readwrite_test.sh -b "1M" -c "10" -d "ufs"
 
