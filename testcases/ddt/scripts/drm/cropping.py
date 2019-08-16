@@ -72,7 +72,7 @@ for i in range(len(planes)):
     }
     if re.match("am65.*|j721e.*", platform, re.I):
         p_props["zpos"] = i
-    if re.match("k2.*", platform, re.I):
+    elif re.match("k2.*", platform, re.I):
         pass
     else:
         p_props["zorder"] = i
@@ -101,7 +101,7 @@ for i in range(len(planes)):
     }
     if re.match("am65.*|j721e.*", platform, re.I):
         p_props["zpos"] = i
-    if re.match("k2.*", platform, re.I):
+    elif re.match("k2.*", platform, re.I):
         pass
     else:
         p_props["zorder"] = i
