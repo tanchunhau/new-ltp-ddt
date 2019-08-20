@@ -124,13 +124,13 @@ done
 ############################ Default Values for Params ###############################
 : ${TYPE:='loopback'}
 : ${FILE:='test.snd'}
-: ${REC_DEVICE:=$(get_audio_devnodes.sh -d aic -t record -e JAMR | grep 'hw:[0-9]' || echo 'hw:0,0')}
-: ${PLAY_DEVICE:=$(get_audio_devnodes.sh -d aic -t play -e JAMR | grep 'hw:[0-9]' || echo 'hw:0,0')}
+: ${REC_DEVICE:=$((get_audio_devnodes.sh -d pcm3168 -t record -e JAMR || get_audio_devnodes.sh -d aic -t record -e JAMR) | grep 'hw:[0-9]' || echo 'hw:0,0')}
+: ${PLAY_DEVICE:=$((get_audio_devnodes.sh -d pcm3168 -t play -e JAMR || get_audio_devnodes.sh -d aic -t play -e JAMR) | grep 'hw:[0-9]' || echo 'hw:0,0')}
 : ${DEVICE:=$PLAY_DEVICE}
 
 CAP_STRING=`aplay -D $DEVICE --dump-hw-params -d 1 /dev/zero 2>&1`
 if [ "$TYPE" == "capture" ] ; then
-  CAP_STRING=`arecord -D $DEVICE --dump-hw-params -d 1 $FILE 2>&1`
+  CAP_STRING=`arecord -D $REC_DEVICE --dump-hw-params -d 1 $FILE 2>&1`
 fi
 
 : ${SAMPLERATE:=$(get_default_val "$CAP_STRING" "RATE")}
@@ -253,7 +253,7 @@ test_print_trc " *************** END OF AUDIO DEV INFO ***************"
 case "$TYPE" in
 	
 	capture)
-		do_cmd arecord -D "$DEVICE" -f "$SAMPLEFORMAT" $FILE -d "$DURATION" -r "$SAMPLERATE" -c "$CHANNEL" "$ACCESSTYPEARG" "$OPMODEARG" --buffer-size=$BUFFERSIZE --period-size $PERIODSIZE
+		do_cmd arecord -D "$REC_DEVICE" -f "$SAMPLEFORMAT" $FILE -d "$DURATION" -r "$SAMPLERATE" -c "$CHANNEL" "$ACCESSTYPEARG" "$OPMODEARG" --buffer-size=$BUFFERSIZE --period-size $PERIODSIZE
 		;;		
 	playback|check_buffer_time)
         if [ -n "$BLK_DEVICE" ]
