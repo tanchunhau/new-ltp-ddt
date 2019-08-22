@@ -8,7 +8,9 @@ PCI_S_FUNC_NVMESSD_VFAT_DD_RW_10M source 'common.sh'; do_cmd "lspci -nn"; do_cmd
 PCI_M_FUNC_NVMESSD_VFAT_DD_RW_100M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -f "vfat" -b "1M" -c "100" -d "pci" 
 
 # comment out since there is problem with ext4 for nvme
-#PCI_S_FUNC_NVMESSD_EXT4_DD_RW_10M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "10M" -c "1" -d "pci" 
+PCI_S_FUNC_NVMESSD_EXT4_DD_RW_10M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "10M" -c "1" -d "pci" 
+
+PCI_S_FUNC_NVMESSD_EXT2_DD_RW_10M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -f "ext2" -b "10M" -c "1" -d "pci" 
 
 #PCI_M_FUNC_NVMESSD_EXT4_DD_RW_100M source 'common.sh'; do_cmd "lspci -nn"; do_cmd blk_device_dd_readwrite_test.sh -f "ext4" -b "10M" -c "10" -d "pci" 
 
