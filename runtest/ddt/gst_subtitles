@@ -1,0 +1,6 @@
+# @name GST subtitles
+# @desc Gstreamer subtitles test
+
+GST_S_SUBTITLES_KMSSINK_OGV_480p source 'audio_display_functions.sh'; file=$(mktemp); subs_file=$(mktemp); wget http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Video/OGV/sintel_trailer-480p.ogv -O $file && wget http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Video/OGV/sintel_trailer_gr.srt -O $subs_file || die "unable to get input files"; conn=$(get_video_connectors_id -v hdmi); aconn=$(get_audio_devnodes.sh -d aic -e JAMR); gst_dec.sh -f $file  -S $subs_file -x -c $conn -a $aconn -s -v kmssink
+
+GST_S_SUBTITLES_WAYLAND_OGV_480p source 'audio_display_functions.sh'; file=$(mktemp); subs_file=$(mktemp); wget http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Video/OGV/sintel_trailer-480p.ogv -O $file && wget http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/Video/OGV/sintel_trailer_gr.srt -O $subs_file || die "unable to get input files"; conn=$(get_video_connectors_id -v hdmi); aconn=$(get_audio_devnodes.sh -d aic -e JAMR); gst_dec.sh -f $file  -S $subs_file -x -c $conn -a $aconn -s -v waylandsink
