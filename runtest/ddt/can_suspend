@@ -1,0 +1,10 @@
+# @name
+#	CAN suspend test
+# @desc
+#	CAN suspend tests. No physical cables are required to run this test.
+#	EVM needs to be in the right profile which supports the pinmux for
+#	CAN. This comment applies to am335x-evm which requires EVM to be in
+#	profile 1. Profile 1 supports CAN instead of wlan on this EVM.
+# @requires can
+
+CAN_S_FUNC_SUSPEND source 'functions.sh';  interface='can0'; bitrate=1000000; do_cmd "ip link set $interface down"; do_cmd "ip link set $interface type can bitrate $bitrate"; do_cmd "ip link set $interface up"; init_state=`cat /sys/class/net/$interface/operstate`; run_processes.sh -c "/opt/ltp/runltp -P $PLATFORM -f ddt/powermgr_suspend -s 'POWERMGR_S_FUNC_SIMPLE_SUSPEND '";final_state=`cat /sys/class/net/$interface/operstate`; if [ $init_state != $final_state ]; then die "Suspend resume did not restore CAN state"; fi

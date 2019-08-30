@@ -1,0 +1,11 @@
+# @name
+#	CAN Modular test
+# @desc
+#	CAN modular tests. No physical cables are required to run this test.
+#	EVM needs to be in the right profile which supports the pinmux for
+#	CAN. This comment applies to am335x-evm which requires EVM to be in
+#	profile 1. Profile 1 supports CAN instead of wlan on this EVM.
+#       Tests that CAN interface exists and driver is built as module
+# @requires can
+
+CAN_S_FUNC_MODULAR source 'functions.sh';  interface='can0'; bitrate=1000000; can_interface=`ls /sys/class/net|grep $interface`; if [ -z $can_interface ]; then die "Check dtb to see if CAN is included"; fi; can_module=`zcat /proc/config.gz |grep CONFIG_CAN=m`; if [ -z $can_module ]; then die "CAN is not built as module"; fi
