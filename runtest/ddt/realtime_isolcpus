@@ -3,6 +3,6 @@
 # @requires smp
 # @setup_requires
 
-REALTIME_S_FUNC_ISOLCPUS_ENFORCE source 'functions.sh'; cat /proc/cmdline |grep isolcpus || die "isolcpus=0 must be set in cmdline"; cat /proc/$$/status | egrep 'Cpus_allowed_list:[[:space:]]+1-' || die "Core 0 was not isolated"
+REALTIME_S_FUNC_ISOLCPUS_ENFORCE source 'functions.sh'; cat /proc/cmdline |grep isolcpus || die "isolcpus=0 must be set in cmdline"; cat /proc/$$/status | egrep 'Cpus_allowed_list:[[:space:]]+1' || die "Core 0 was not isolated"
 
 REALTIME_S_FUNC_ISOLCPUS_TASKSET source 'functions.sh'; cat /proc/cmdline |grep isolcpus || die "isolcpus=0 must be set in cmdline"; taskset -c 0 /bin/sh -c "cat /proc/\$\$/status | egrep 'Cpus_allowed:[[:space:]]+1'" || die "taskset could not allocate task to isolated core"
