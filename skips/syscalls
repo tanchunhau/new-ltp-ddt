@@ -12,6 +12,8 @@ fanotify04
 prot_hsymlinks
 setregid02
 setregid02_16
+gethostid01
+sigwaitinfo01
 
 # skipped due to very long test time
 msgctl10
