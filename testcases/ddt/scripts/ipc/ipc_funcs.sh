@@ -90,7 +90,7 @@ setup_firmware()
 
 find_firmware_id()
 {
-  echo "$1" | grep -i -o "$2[^-]*" | grep -o '[0-9].*'
+  echo "$1" | grep -i -o "$2[^_-]*" | grep -o '[0-9].*'
 }
 
 # Function to rmod the rpmsg loadable modules so that new firmware can 

@@ -41,9 +41,12 @@ done
 
 # Define default values if possible
 : ${TEST_LOOP:=3}
-: ${DEVICE:=$(get_audio_devnodes.sh -d aic -t play | grep 'hw:[0-9]' || echo 'hw:0,0')}
-CARD=$(echo "${DEVICE}" | cut -c 4)
-
+: ${REC_DEVICE:=$((get_audio_devnodes.sh -d pcm3168 -t record -e JAMR || get_audio_devnodes.sh -d aic -t record -e JAMR) | grep 'hw:[0-9]' || echo 'hw:0,0')}
+: ${PLAY_DEVICE:=$((get_audio_devnodes.sh -d pcm3168 -t play -e JAMR || get_audio_devnodes.sh -d aic -t play -e JAMR) | grep 'hw:[0-9]' || echo 'hw:0,0')}
+PLAY_CARD=$(echo "${PLAY_DEVICE}" | cut -c 4)
+REC_CARD=$(echo "${REC_DEVICE}" | cut -c 4)
+PLAY_SW_STATE=1
+REC_SW_STATE=1
 ############################ USER-DEFINED Params ###############################
 # Try to avoid defining values here, instead see if possible
 # to determine the value dynamically. ARCH, DRIVER, SOC and MACHINE are 
@@ -56,77 +59,86 @@ esac
 case $SOC in
 esac
 case $MACHINE in
-*dra7xx-evm|am57xx-evm|k2g-evm)
-	CAPTURE_SWITCH_NAME_1="PGA Capture Switch";
-	PLAYBACK_SWITCH_NAME_1="Line Playback Switch";
-	PLAYBACK_SWITCH_NAME_2="HP Playback Switch"
+*dra7xx-evm|am57xx-evm|k2g-evm|am654x-evm)
+	CAPTURE_SWITCH_NAME=("PGA Capture Switch")
+	PLAYBACK_SWITCH_NAME=("Line Playback Switch" "HP Playback Switch")
 	;;
 am180x-evm|dm355-evm|dm365-evm|dm6446-evm|dm6467-evm|dm368-evm)
-	CAPTURE_SWITCH_NAME_1="PGA Capture Switch";
-	PLAYBACK_SWITCH_NAME_1="LineL Playback Switch"
-	PLAYBACK_SWITCH_NAME_2="LineR Playback Switch"
+	CAPTURE_SWITCH_NAME=("PGA Capture Switch")
+	PLAYBACK_SWITCH_NAME=("LineL Playback Switch"	"LineR Playback Switch")
 	;;
 omap3evm)	
-	CAPTURE_SWITCH_NAME_1="Analog Right AUXR Capture Switch";
-	CAPTURE_SWITCH_NAME_2="Analog Left AUXL Capture Switch";	
-	PLAYBACK_SWITCH_NAME_1="DAC2 Analog Playback Switch"
+	CAPTURE_SWITCH_NAME=("Analog Right AUXR Capture Switch" "Analog Left AUXL Capture Switch")	
+	PLAYBACK_SWITCH_NAME=("DAC2 Analog Playback Switch")
 	amixer cset numid=25 1,1
 	amixer cset numid=28 1,1	
 	;;
 am37x-evm|beagleboard)
-	CAPTURE_SWITCH_NAME_1="Analog Right AUXR Capture Switch";
-	CAPTURE_SWITCH_NAME_2="Analog Left AUXL Capture Switch";	
-	PLAYBACK_SWITCH_NAME_1="DAC2 Analog Playback Switch"
+	CAPTURE_SWITCH_NAME=("Analog Right AUXR Capture Switch" "Analog Left AUXL Capture Switch")	
+	PLAYBACK_SWITCH_NAME=("DAC2 Analog Playback Switch")
 	;;
 am3517-evm)
-	CAPTURE_SWITCH_NAME_1="Digital Capture Switch";
-	PLAYBACK_SWITCH_NAME_1="Digital Playback Switch"
+	CAPTURE_SWITCH_NAME=("Digital Capture Switch")
+	PLAYBACK_SWITCH_NAME=("Digital Playback Switch")
 	;;	
 da850-omapl138-evm)
-	CAPTURE_SWITCH_NAME_1="PGA Capture Switch";
-	PLAYBACK_SWITCH_NAME_1="Line Playback Switch"
+	CAPTURE_SWITCH_NAME=("PGA Capture Switch")
+	PLAYBACK_SWITCH_NAME=("Line Playback Switch")
 	;;	
 am387x-evm|am389x-evm|am335x-evm|dm385-evm|am43xx-gpevm)
-        CAPTURE_SWITCH_NAME_1="PGA Capture Switch";
-        PLAYBACK_SWITCH_NAME_1="HP Playback Switch"
+        CAPTURE_SWITCH_NAME=("PGA Capture Switch")
+        PLAYBACK_SWITCH_NAME=("HP Playback Switch")
         ;;
 am43xx-epos)
-        CAPTURE_SWITCH_NAME_1="ADC Capture Switch";
-        PLAYBACK_SWITCH_NAME_1="HP Driver Playback Switch"
-        PLAYBACK_SWITCH_NAME_2="Speaker Driver Playback Switch"
+        CAPTURE_SWITCH_NAME=("ADC Capture Switch")
+        PLAYBACK_SWITCH_NAME=("HP Driver Playback Switch" "Speaker Driver Playback Switch")
+        ;;
+j721e*)
+        CAPTURE_SWITCH_NAME=("ADC1 Mute Switch" "ADC2 Mute Switch" "ADC3 Mute Switch")
+        PLAYBACK_SWITCH_NAME=("DAC1 Invert Switch" "DAC2 Invert Switch" "DAC3 Invert Switch" "DAC4 Invert Switch")
+        PLAY_SW_STATE=0
+        REC_SW_STATE=0
         ;;
 esac
 
 ########################### REUSABLE TEST LOGIC ###############################
 
-amixer -c ${CARD} controls
-amixer -c ${CARD} contents
-arecord -D ${DEVICE} -f dat -d 300 | aplay -D ${DEVICE} -f dat -d 300&
+amixer -c ${PLAY_CARD} controls
+amixer -c ${PLAY_CARD} contents
+amixer -c ${REC_CARD} controls
+amixer -c ${REC_CARD} contents
+arecord -D ${REC_DEVICE} -f dat -d 300 | aplay -D ${PLAY_DEVICE} -f dat -d 300 &
 
 i=0
+capture_max=$((${#CAPTURE_SWITCH_NAME[@]} - 1))
+playback_max=$((${#PLAYBACK_SWITCH_NAME[@]} - 1))
 while [[ $i -lt $TEST_LOOP ]]
 do
-	do_cmd amixer -c ${CARD} cset name=\'$CAPTURE_SWITCH_NAME_1\' 0
-	if [ "$CAPTURE_SWITCH_NAME_2" != "" ] ; then
-		do_cmd amixer -c ${CARD} cset name=\'$CAPTURE_SWITCH_NAME_2\' 0
-	fi
-	sleep 15
-	do_cmd amixer -c ${CARD} cset name=\'$CAPTURE_SWITCH_NAME_1\' 1
-	if [ "$CAPTURE_SWITCH_NAME_2" != "" ] ; then
-		do_cmd amixer -c ${CARD} cset name=\'$CAPTURE_SWITCH_NAME_2\' 1
-	fi
-	sleep 15
+  
+  for cidx in `seq 0 $capture_max`
+  do
+	  do_cmd amixer -c ${REC_CARD} cset name=\'${CAPTURE_SWITCH_NAME[$cidx]}\' $(((REC_SW_STATE + 1) % 2))
+  done
+	sleep 8
+
+  for cidx in `seq 0 $capture_max`
+  do
+	  do_cmd amixer -c ${REC_CARD} cset name=\'${CAPTURE_SWITCH_NAME[$cidx]}\' $REC_SW_STATE
+	done
+	sleep 8
 	
-	do_cmd amixer -c ${CARD} cset name=\'$PLAYBACK_SWITCH_NAME_1\' 0
-	if [ "$PLAYBACK_SWITCH_NAME_2" != "" ] ; then
-		do_cmd amixer -c ${CARD} cset name=\'$PLAYBACK_SWITCH_NAME_2\' 0
-	fi
-	sleep 15
-	do_cmd amixer -c ${CARD} cset name=\'$PLAYBACK_SWITCH_NAME_1\' 1
-	if [ "$PLAYBACK_SWITCH_NAME_2" != "" ] ; then
-		do_cmd amixer -c ${CARD} cset name=\'$PLAYBACK_SWITCH_NAME_2\' 1
-	fi
-	sleep 15	
+  for pidx in `seq 0 $playback_max`
+  do
+	  do_cmd amixer -c ${PLAY_CARD} cset name=\'${PLAYBACK_SWITCH_NAME[$pidx]}\' $(((PLAY_SW_STATE + 1) % 2))
+	done
+	sleep 8
+
+  for pidx in `seq 0 $playback_max`
+  do
+	  do_cmd amixer -c ${PLAY_CARD} cset name=\'${PLAYBACK_SWITCH_NAME[$pidx]}\' $PLAY_SW_STATE
+	done
+	sleep 8
+
 	let "i += 1"	
 done
 

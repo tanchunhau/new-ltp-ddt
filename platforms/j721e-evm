@@ -1,6 +1,12 @@
 armv8
 j721e
 j721e-evm
+adc/tscadc
+crypto/sa2ul
+crypto/sa2ul/3des
+crypto/sa2ul/aes
+crypto/sa2ul/sha1
+crypto/sa2ul/sha256
 gpio
 graphics/
 hwrng
