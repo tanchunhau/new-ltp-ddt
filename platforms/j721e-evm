@@ -40,6 +40,7 @@ sound/capture/alsa/hisamplingrate
 sound/playback/alsa/hisamplingrate
 spi_master/mtd
 tidec
+tienc
 touchscreen
 ufs
 usb/host/msc/xhci-hcd
