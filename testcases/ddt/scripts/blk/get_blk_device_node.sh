@@ -90,7 +90,7 @@ find_scsi_basenode() {
         fi
       ;;
       ufs)
-        file=`ls /dev/disk/by-id/* |grep -i 'scsi'|head -1`
+        file=`ls /dev/disk/by-path/* |grep -i 'ufs-scsi-0:0:0:1'|head -1`
         if [[ ! -z "$file" ]]; then
           #this_node=$(basename $(readlink $file))
           #ls -l /dev/disk/by-path/platform-*ufs-scsi* > /dev/null |grep ${this_node} || (echo "${this_node} is not ufs-scsi node"; exit 1)
