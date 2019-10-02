@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
+# Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com/
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -19,40 +19,40 @@ source "functions.sh"
 # Load require video modules
 insert_video_modules()
 {
-	local _modules="videobuf2-common.ko videobuf2-memops.ko videobuf2-v4l2.ko videobuf2-dma-sg.ko videobuf2-dma-contig.ko v4l2-mem2mem.ko vxd-dec.ko"
+	local _modules="videobuf2-common.ko videobuf2-memops.ko videobuf2-v4l2.ko videobuf2-dma-sg.ko videobuf2-dma-contig.ko v4l2-mem2mem.ko vxd-dec.ko vxe_enc.ko"
 	for m in $_modules; do
 		lsmod | grep ${m%.ko} || modprobe $m
 	done
 }
 
-# Run  TI decoder
+# Run TI decoder
 run_tidec_decode()
 {
 	insert_video_modules
 	tidec_decode -b $* | grep 'test app completed successfully'
 }
 
+# Run TI encoder
+run_tienc_encode()
+{
+	insert_video_modules
+	tienc_encode $*
+}
+
 # Download Test media if not in fs
 get_media()
 {
-	local __media_url=http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/ti-dec-examples/testvecs
+	local __media_url=http://gtopentest-server.gt.design.ti.com/anonymous/common/Multimedia/ti-img-encode-decode-testvecs/$1
 	local __checksums=/tmp/checksums.txt
 	local __media_folder=/usr/share/ti/tidec-decode
 	local __media
 
-	OPTIND=1
-	while getopts ":s:" arg
-	do
-		case $arg in
-			s)  __=( $OPTARG )
-			;;
-			\?) echo "ignoring option $OPTARG" >&2 #ignore
-				shift 1
-			;;
-		esac
-	done
+  if [[ "$1" == "encoder" ]]
+  then
+    __media_folder=/usr/share/ti/tienc-encode
+  fi
 	ls ${__media_folder} &>/dev/null || mkdir -p ${__media_folder}
-	local __media_checksum=$(md5sum /usr/share/ti/tidec-decode/* | awk '{print $1}' | sort -u)
+	local __media_checksum=$(md5sum ${__media_folder}/* | awk '{print $1}' | sort -u)
 	Wget ${__media_url}/media_checksums.txt -O ${__checksums} || return 1
 	local __remote_checksum=$(awk '{print $1}' ${__checksums} | sort -u)
 	local __remote_media=$(awk '{print $2}' ${__checksums} | sort -u)
