@@ -100,7 +100,7 @@ if [ "$VSINK" == "waylandsink" ]
 then
     ps -ef | grep -i weston | grep -v grep || /etc/init.d/weston start
     systemctl stop matrix-gui-2.0
-    V_CONN="use-drm=true"
+    V_CONN=""
     SCALING=""
 else
     ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop
