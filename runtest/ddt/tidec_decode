@@ -57,7 +57,7 @@ TIDEC_S_FUNC_DECODE_NETFLIX_FOODMARKET_HIGH_3840X2160_IPB_40MBPS_5.1.264 source 
 
 TIDEC_S_FUNC_DECODE_NETFLIX_FOODMARKET_HIGH_4096X2304_IPB_220MBPS.265 source 'ti_codecs.sh'; get_media decoder; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/Netflix_FoodMarket_high_4096x2304_IPB_220mbps.265 -f 10 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 21e2c3819943c61c4b6f2330ee055b13 || die "decoded file does not match expected md5sum"
 
-TIDEC_S_FUNC_DECODE_CS32000x128_10FR_MJPG source 'ti_codecs.sh'; get_media decoder; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/cs32000x128_10fr.mjpg -f 10 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep xxxx || die "decoded file does not match expected md5sum"
+TIDEC_S_FUNC_DECODE_CS32000x128_10FR_MJPG source 'ti_codecs.sh'; get_media decoder; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/cs32000x128_10fr.mjpg -f 10 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep e9f1e0969c439107ee38a9cb8d6555ee || die "decoded file does not match expected md5sum"
 
 TIDEC_S_FUNC_DECODE_MOTHER_320x240_422_5FR_MJPG source 'ti_codecs.sh'; get_media decoder; F=$(mktemp); run_tidec_decode -i /usr/share/ti/tidec-decode/mother_320x240_422_5fr.mjpg -f 10 -o $F || die "Decode operation did not complete successfully"; MD5=$(md5sum ${F}_00.raw) ; echo $MD5 | grep 3783332ae0974fc412cccbeaf50aca58 || die "decoded file does not match expected md5sum"
 
