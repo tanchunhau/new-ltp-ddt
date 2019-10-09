@@ -38,11 +38,14 @@ esac
 done
 # Define default values if possible
 DEVICE=''
-if [[ "$*" != *-device* ]]
+if [[ "$*" == *-playback* ]]
 then
-  DEVICE=$(get_audio_devnodes.sh -d aic -t play | grep 'hw:[0-9]' || echo 'hw:0,0')
-  DEVICE="-device=${DEVICE}"
+  DEVICE=$((get_audio_devnodes.sh -d pcm3168 -t play -e JAMR || get_audio_devnodes.sh -d aic -t play -e JAMR) | grep 'hw:[0-9]' || echo 'hw:0,0')
+elif [[ "$*" == *-record* ]]
+then
+  DEVICE=$((get_audio_devnodes.sh -d pcm3168 -t record -e JAMR || get_audio_devnodes.sh -d aic -t record -e JAMR) | grep 'hw:[0-9]' || echo 'hw:0,0')
 fi
+DEVICE="-device=${DEVICE}"
 
 ############################ USER-DEFINED Params ###############################
 # Try to avoid defining values here, instead see if possible
