@@ -21,6 +21,7 @@ nand
 ubifs
 jffs2
 kms
+net/ti_cpsw
 net/eth10M/ti_am65_cpsw_nuss
 net/eth100M/ti_am65_cpsw_nuss
 net/eth1G/ti_am65_cpsw_nuss
