@@ -14,4 +14,6 @@ ALSA_XS_FUNC_LOOPBK_CHANNEL_STERIO_1 source 'common.sh' ; do_cmd install_modules
 ALSA_S_FUNC_LOOPBK_CHANNEL_STERIO_2 source 'common.sh' ; do_cmd install_modules.sh 'sound' ;do_cmd 'alsa_tests.sh -t loopback -c 2 -d 60'
 ALSA_S_FUNC_LOOPBK_CHANNEL_STERIO_3 source 'common.sh' ; do_cmd install_modules.sh 'sound' ;do_cmd 'alsa_tests.sh -t loopback -c 2 -d 300'
 
+ALSA_S_FUNC_CAPTURE_MAX_CHANNELS source 'alsa_funcs.sh' ; rec_device=$((get_audio_devnodes.sh -d pcm3168 -t record -e JAMR || get_audio_devnodes.sh -d aic -t record -e JAMR) | grep 'hw:[0-9]' || echo 'hw:0,0'); hw_dump=`dump_hw_params record $rec_device`; channels=`get_default_val "${hw_dump}" "CHANNELS" 1`; do_cmd "alsa_tests.sh -t capture -d 60 -c ${channels} -F /dev/null"
 
+ALSA_S_FUNC_PLAY_MAX_CHANNELS source 'alsa_funcs.sh' ; play_device=$((get_audio_devnodes.sh -d pcm3168 -t play -e JAMR || get_audio_devnodes.sh -d aic -t play -e JAMR) | grep 'hw:[0-9]' || echo 'hw:0,0'); hw_dump=`dump_hw_params play $play_device`; channels=`get_default_val "${hw_dump}" "CHANNELS" 1`; T=`mktemp`; do_cmd "alsa_tests.sh -t playback -d 60 -c ${channels} -F /dev/urandom"
