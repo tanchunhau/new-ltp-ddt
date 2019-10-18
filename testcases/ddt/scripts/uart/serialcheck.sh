@@ -19,7 +19,7 @@ source "common.sh"  # Import do_cmd(), die() and other functions
 #### Functions definitions ####
 usage()
 {
-    echo "usage: ./${0##*/} [-r UART_RATE] [-l LOOPS] [-x to enable HW flow control]"
+    echo "usage: ./${0##*/} [-r UART_RATE] [-l LOOPS] [-x to enable HW flow control] [-d PORT]"
     exit 1
 }
 
@@ -33,14 +33,18 @@ create_test_file() {
 }
 
 get_uart_ports() {
-for i in ${ARRAY[@]}; do
-    PORT=/dev/`echo $i | cut -d'/' -f 5`
-    # Activate port in case it will be initialized only when startup
-    echo "DDT TESTING" > $PORT 2>/dev/null
-    if [ `cat $i` -ne 0 ]; then
+    if [ -z "$PORT" ]; then
+        for i in ${ARRAY[@]}; do
+            PORT=/dev/`echo $i | cut -d'/' -f 5`
+            # Activate port in case it will be initialized only when startup
+            echo "DDT TESTING" > $PORT 2>/dev/null
+            if [ `cat $i` -ne 0 ]; then
+                UART_PORTS=("${UART_PORTS[@]}" "$PORT")
+            fi
+        done
+    else
         UART_PORTS=("${UART_PORTS[@]}" "$PORT")
     fi
-done
 }
 
 filter_out_used_ports() {
@@ -68,11 +72,12 @@ run_serial_check() {
 
 
 #### Process input parameters ####
-while getopts  :r:l:xh arg
+while getopts  :r:l:d:xh arg
 do case $arg in
         r)      UART_RATE="$OPTARG";;
         l)      UART_LOOPS="$OPTARG";;
         x)      UART_HWFLOW=1;;
+        d)      PORT="$OPTARG";;
         h)      usage;;
         :)      die "$0: Must supply an argument to -$OPTARG.";;
         \?)     die "Invalid Option -$OPTARG ";;
