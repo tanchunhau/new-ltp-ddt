@@ -58,9 +58,9 @@ run_serial_check() {
             serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m r -k || { kill -- -$PID 2>/dev/null; die "TEST FAILED"; }
         else
             echo ''; echo "Testing $i with HW flow control at $UART_RATE $UART_LOOPS times"
-            { sleep 1; serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m t -h; } &
+            { sleep 1; serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m r -h; } &
             PID=$!
-            serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m r -h || { kill -- -$PID 2>/dev/null; die "TEST FAILED"; }
+            sleep 1; serialcheck -b $UART_RATE -d $i -f $temp_test_file -l $UART_LOOPS -m t -h || { kill -- -$PID 2>/dev/null; die "TEST FAILED"; }
         fi
     done
     rm $temp_test_file
