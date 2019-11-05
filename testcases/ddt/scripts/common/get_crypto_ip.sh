@@ -22,7 +22,6 @@ aes)
 esac
 case $ip_type in                                                              
 des|3des)
-        echo "CCCCC"$CRYPTO_IP
 	if [ $SOC = "am43xx" ]
 	then
 		CRYPTO_IP='edma'
