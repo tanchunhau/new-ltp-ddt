@@ -1,0 +1,18 @@
+# @name J721E VIRT CPSW9G Ethernet mac 
+# @desc Brings net iface up and pings default gw. 
+#       Test relies on host side vatf-scripts to set the required environment
+#       variable. If a user wishes to run this test as a standalone LTP test
+#       then set environment to gateway of interface on dut by:
+#       export <cpsw9g_iface>_SERVER=<IP_Address_Of_Gateway>
+# @requires cpsw9g
+# @setup_requires cpsw9g
+
+CPSW9GVIRT_XS_FUNC_PING source 'common.sh'; iface=$cpsw9g_iface; host=${cpsw9g_iface}_SERVER; do_cmd "ping ${!host} -I $iface -c 3"
+
+CPSW9GVIRT_S_FUNC_PING_300S source 'common.sh'; iface=$cpsw9g_iface; host=${cpsw9g_iface}_SERVER; do_cmd "ping ${!host} -I $iface -w 300"
+
+CPSW9GVIRT_M_STRESS_PING_1800S source 'common.sh'; iface=$cpsw9g_iface; host=${cpsw9g_iface}_SERVER; do_cmd "ping ${!host} -I $iface -w 1800"
+
+CPSW9GVIRT_S_STRESS_PING_MULTI-PKT-SIZES source 'common.sh';  iface=$cpsw9g_iface; host=${cpsw9g_iface}_SERVER; for size in 128 512 1024 4096 8192 16384; do do_cmd "ping ${!host} -I $iface -c 3 -s ${size}";done
+
+CPSW9GVIRT_XS_FUNC_MAC_CONFIG source 'common.sh'; iface=$cpsw9g_iface; test_mac=`hexchars="0123456789ABCDEF"; end=$( for i in {1..10} ; do echo -n ${hexchars:$(( $RANDOM % 16 )):1} ; done | sed -e 's/\(..\)/:\1/g' ); echo 80$end`; initial_mac=`cat /sys/class/net/$iface/address`; echo "$initial_mac";ifdown $iface; ifconfig $iface hw ether $test_mac;final_mac=`cat /sys/class/net/$iface/address`;echo "FINAL MAC is $final_mac and TEST MAC is $test_mac"; ifconfig $iface hw ether $initial_mac; ifup $iface; if [ "${final_mac,,}" != "${test_mac,,}" ]; then die "MAC did not get set as expected Final $final_mac Test $test_mac"; fi

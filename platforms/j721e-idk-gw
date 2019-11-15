@@ -61,9 +61,4 @@ video/capture/*/v4l2
 hwspinlock
 mailbox
 displayport
-cpsw9g/eth0
-cpsw9g/eth1
-cpsw9g/eth2
-cpsw9g/eth3
-cpsw9g/eth4
-cpsw9g/eth5
+cpsw9g
