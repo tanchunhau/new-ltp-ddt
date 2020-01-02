@@ -153,7 +153,7 @@ int get_functions_info(int core_id, function_info** func_arr)
             fsize = lseek(ffd, 0L, SEEK_END);
             lseek(ffd, 0L, SEEK_SET);
             c_func = (function_info *)malloc(sizeof(function_info));
-            c_func->idx = (idx | 0x80000000);
+            c_func->idx = idx;
             c_func->name = (char *)malloc(fsize);
             read(ffd, c_func->name, fsize);
             c_func->next = func_inf;
