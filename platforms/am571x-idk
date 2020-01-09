@@ -27,6 +27,7 @@ mmc_host/sdxc/mmci-omap-sdhc
 nand/omap2-nand
 ubifs
 jffs2
+net/ti_cpsw
 net/eth10M/ti_cpsw
 net/eth100M/ti_cpsw
 net/eth1G/ti_cpsw
