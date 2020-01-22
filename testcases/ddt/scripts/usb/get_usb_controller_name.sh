@@ -39,4 +39,19 @@ else
   set `echo $driver_name |awk -F_ '{print $1,$2}'`
 fi
 controller_name=$1
+
+
+############################ USER-DEFINED Params ##############################
+# Try to avoid defining values here, instead see if possible
+# to determine the value dynamically
+case $ARCH in
+esac
+case $DRIVER in
+esac
+case $SOC in
+esac
+case $MACHINE in
+  omapl138-lcdk) controller_name="1e25000.usb";;
+esac
+
 echo $controller_name
