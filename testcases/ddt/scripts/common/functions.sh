@@ -235,8 +235,8 @@ get_clk_summary() {
   local __arrayvalues=$1
   data=`mktemp`
   cat /sys/kernel/debug/clk/clk_summary  > $data
-  sed -i -e 's/\-*//' -e 's/.*clock.*enable.*rate.*//' $data
-  eval $__arrayvalues="($(awk -- '{print $4};' $data))"
+  sed -i -e 's/\-*//' -e 's/.*clock.*count.*rate.*//' -e 's/.*enable.*prepare.*//' $data
+  eval $__arrayvalues="($(awk -- '{print $5};' $data))"
   rm $data
 }
 
