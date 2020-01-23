@@ -48,6 +48,7 @@ usb/host/msc/xhci-hcd
 usb/host/hid/xhci-hcd
 usb/host/iso/xhci-hcd
 usb/host/superspeed
+usbotg/host/msc
 ipc
 hdmi/audio/playback
 video/capture/*/v4l2
