@@ -3,6 +3,6 @@
 # @requires usbotg/host  
 # @setup_requires usbotghostmsc
 
-USBOTGHOST_S_FUNC_DD_RW_10M source "common.sh"; do_cmd "modprobe g_zero"; do_cmd install_modules.sh "usbotg"; do_cmd blk_device_dd_readwrite_test.sh -b "1M" -c "10" -d "usbotg"; do_cmd "modprobe -r g_zero"; 
+USBOTGHOST_S_FUNC_DD_RW_10M source "common.sh"; do_cmd "modprobe g_zero"; do_cmd sleep 5; do_cmd install_modules.sh "usbotg"; do_cmd blk_device_dd_readwrite_test.sh -b "1M" -c "10" -d "usb"; do_cmd "modprobe -r g_zero"; do_cmd sleep 5; 
 
-USBOTGHOST_M_FUNC_DD_RW_100M source "common.sh"; do_cmd "modprobe g_zero"; do_cmd install_modules.sh "usbotg"; do_cmd blk_device_dd_readwrite_test.sh -b "10M" -c "10" -d "usbotg" -l "5"; do_cmd "modprobe -r g_zero"; 
+USBOTGHOST_M_FUNC_DD_RW_100M source "common.sh"; do_cmd "modprobe g_zero"; do_cmd sleep 5; do_cmd install_modules.sh "usbotg"; do_cmd blk_device_dd_readwrite_test.sh -b "10M" -c "10" -d "usb" -l "5"; do_cmd "modprobe -r g_zero"; do_cmd sleep 5; 
