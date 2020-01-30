@@ -89,6 +89,17 @@ done
 : ${UART_LOOPS:=5}
 : ${UART_HWFLOW:=0}
 
+case $ARCH in
+esac
+case $DRIVER in
+esac
+case $SOC in
+j721e)
+	PORT="/dev/ttyS6"
+esac
+case $MACHINE in
+esac
+
 PORTS_TO_TEST=();
 UART_PORTS=();
 ARRAY=(`find /sys/class/tty/*/uartclk`);
