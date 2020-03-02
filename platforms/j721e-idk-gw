@@ -63,3 +63,4 @@ hwspinlock
 mailbox
 displayport
 cpsw9g
+watchdog
