@@ -53,7 +53,7 @@ TOTAL_INT_NUM=0
 declare -a arr=("chan0" "chan1" "chan2" "chan3" "chan4" "chan5")
 for i in "${arr[@]}"
 do
-   IRQ_NUM=`cat /proc/interrupts | grep -i "udma" | grep $i| head -n 1 | tail -n 1| cut -d':' -f 1`
+   IRQ_NUM=`cat /proc/interrupts | grep -i "dma-controller" | grep $i| head -n 1 | tail -n 1| cut -d':' -f 1`
    interrupts=`cat /proc/interrupts | grep "${IRQ_NUM}:" | cut -d':' -f 2`
    INT_NUM=`echo $interrupts | cut -d' ' -f $(( $CPU_NUM + 1 ))`
    TOTAL_INT_NUM=`expr $TOTAL_INT_NUM + $INT_NUM`
