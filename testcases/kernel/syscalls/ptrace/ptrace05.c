@@ -38,6 +38,7 @@
 #include "ptrace.h"
 
 #include "test.h"
+#include "lapi/signal.h"
 
 char *TCID = "ptrace05";
 int TST_TOTAL = 0;
@@ -70,6 +71,9 @@ int main(int argc, char **argv)
 	}
 
 	for (signum = start_signum; signum <= end_signum; signum++) {
+
+		if (signum >= __SIGRTMIN && signum < SIGRTMIN)
+			continue;
 
 		switch (child = fork()) {
 		case -1:

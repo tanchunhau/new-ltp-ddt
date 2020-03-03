@@ -33,14 +33,6 @@
   *   for general information
   */
 
- /* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
-
- /* We enable the following line to have mutex attributes defined */
-#ifndef WITHOUT_XOPEN
-#define _XOPEN_SOURCE	600
-#endif
-
 /********************************************************************************************/
 /****************************** standard includes *****************************************/
 /********************************************************************************************/
@@ -130,7 +122,7 @@ void *sendsig(void *arg)
 }
 
 /* Next are the signal handlers. */
-void sighdl1(int sig)
+void sighdl1(int sig LTP_ATTRIBUTE_UNUSED)
 {
 #ifdef WITH_SYNCHRO
 	if ((sem_post(&semsig1))) {
@@ -139,7 +131,7 @@ void sighdl1(int sig)
 #endif
 }
 
-void sighdl2(int sig)
+void sighdl2(int sig LTP_ATTRIBUTE_UNUSED)
 {
 #ifdef WITH_SYNCHRO
 	if ((sem_post(&semsig2))) {
@@ -151,7 +143,7 @@ void sighdl2(int sig)
 /* The following function loops on init/destroy some mutex (with different attributes)
  * it does check that no error code of EINTR is returned */
 
-void *threaded(void *arg)
+void *threaded(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	pthread_mutexattr_t ma[4], *pma[5];
 	pthread_mutex_t m[5];

@@ -26,7 +26,6 @@
      otherwise exit -1.
 */
 
-#define _XOPEN_SOURCE 600
 
 #include <signal.h>
 #include <stdio.h>
@@ -37,7 +36,7 @@
 
 int handler_count = 0;
 
-void handler(int signo)
+void handler(int signo LTP_ATTRIBUTE_UNUSED)
 {
 	static int inside_handler = 0;
 

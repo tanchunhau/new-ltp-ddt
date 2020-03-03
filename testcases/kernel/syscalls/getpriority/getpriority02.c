@@ -1,20 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) International Business Machines  Corp., 2001
- *  07/2001 Ported by Wayne Boyer
+ * Copyright (c) International Business Machines Corp., 2001
+ * Ported to LTP: Wayne Boyer
  *  11/2016 Modified by Guangwen Feng <fenggw-fnst@cn.fujitsu.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -53,13 +41,13 @@ static void verify_getpriority(unsigned int n)
 
 	TEST(getpriority(tc->which, tc->who));
 
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL, "getpriority(%d, %d) succeeds unexpectedly, "
-			       "returned %li", tc->which, tc->who, TEST_RETURN);
+			       "returned %li", tc->which, tc->who, TST_RET);
 		return;
 	}
 
-	if (tc->exp_errno != TEST_ERRNO) {
+	if (tc->exp_errno != TST_ERR) {
 		tst_res(TFAIL | TTERRNO,
 			"getpriority(%d, %d) should fail with %s",
 			tc->which, tc->who, tst_strerrno(tc->exp_errno));

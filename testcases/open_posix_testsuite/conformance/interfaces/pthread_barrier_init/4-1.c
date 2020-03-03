@@ -19,7 +19,6 @@
  * 3. Child thread call pthread_barrier_wait(), should block
  * 4. Main call pthread_barrier_init()
  */
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +35,7 @@ static int thread_state;
 #define EXITING_THREAD 3
 
 /* child thread */
-static void *fn_chld(void *arg)
+static void *fn_chld(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int rc = 0;
 

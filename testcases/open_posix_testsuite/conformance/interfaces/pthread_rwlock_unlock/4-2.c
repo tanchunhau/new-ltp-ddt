@@ -7,7 +7,7 @@
  * Test that pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
  *
  *	It 'may' fail if:
- *	[EINVAL]  rwlock doesn't refer to an intialized read-write lock
+ *	[EINVAL]  rwlock doesn't refer to an initialized read-write lock
  *	[EPERM]  the current thread doesn't hold the lock on the rwlock
  *
  *	Testing EPERM in this test.
@@ -21,7 +21,6 @@
  *     states it 'may' fail.
  */
 
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,7 +41,7 @@ static int rc, thread_state;
 #define ENTERED_THREAD 2
 #define EXITING_THREAD 3
 
-static void *fn_unlk(void *arg)
+static void *fn_unlk(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	thread_state = ENTERED_THREAD;
 	printf("un_thread: unlock read lock\n");

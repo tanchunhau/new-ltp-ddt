@@ -25,7 +25,6 @@
     4. Verify that sigtimedwait() sets errno to [EAGAIN].
  */
 
-#define _XOPEN_SOURCE 600
 #define _XOPEN_REALTIME 1
 
 #define TIMERSIGNAL SIGUSR1
@@ -42,7 +41,7 @@
 #include <sys/wait.h>
 #include "posixtest.h"
 
-void myhandler(int signo)
+void myhandler(int signo LTP_ATTRIBUTE_UNUSED)
 {
 	printf
 	    ("Test FAILED: %d seconds have elapsed and sigtimedwait() has not yet returned.\n",

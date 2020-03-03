@@ -23,7 +23,6 @@
  *
  */
 
-#define _XOPEN_SOURCE 600
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -32,6 +31,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <time.h>
 #include <aio.h>
 
 #include "posixtest.h"
@@ -45,6 +45,7 @@ int main(void)
 	char buf[BUF_SIZE];
 	int fd;
 	struct aiocb aiocb;
+	struct timespec completion_wait_ts = {0, 10000000};
 
 	if (sysconf(_SC_ASYNCHRONOUS_IO) < 200112L)
 		return PTS_UNSUPPORTED;
@@ -69,7 +70,7 @@ int main(void)
 	if (aio_write(&aiocb) != -1) {
 		int err;
 		do {
-			usleep(10000);
+			nanosleep(&completion_wait_ts, NULL);
 			err = aio_error(&aiocb);
 		} while (err == EINPROGRESS);
 

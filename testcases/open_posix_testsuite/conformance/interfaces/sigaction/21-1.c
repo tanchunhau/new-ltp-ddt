@@ -4,7 +4,6 @@
   a child process not transforming into a zombie after death.
 */
 
-#define _XOPEN_SOURCE 600
 
 #include <signal.h>
 #include <stdio.h>
@@ -14,7 +13,7 @@
 #include <errno.h>
 #include "posixtest.h"
 
-void handler(int signo)
+void handler(int signo LTP_ATTRIBUTE_UNUSED)
 {
 	printf("Caught SIGCHLD\n");
 }

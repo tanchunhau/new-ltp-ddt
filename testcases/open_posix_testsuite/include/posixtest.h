@@ -10,30 +10,6 @@
  * return codes
  */
 
-/*
- * Define PTS_DEVELOPER_MODE if you want to compile for developer scenarios,
- * including reporting errors (as opposed to warnings), when compiling some
- * test programs.
- */
-
-#if defined(_GNU_SOURCE)
-# if !AFFINITY_NEEDS_GNU_SOURCE
-#  if defined(PTS_DEVELOPER_MODE)
-#   error "Contains GNU-isms that need fixing."
-#  else
-#   warning "Contains GNU-isms that need fixing."
-#  endif
-# endif
-#endif
-
-#if defined(_BSD_SOURCE)
-# if defined(PTS_DEVELOPER_MODE)
-#  error "Contains BSD-isms that need fixing."
-# else
-#  warning "Contains BSD-isms that need fixing."
-# endif
-#endif
-
 #define PTS_PASS        0
 #define PTS_FAIL        1
 #define PTS_UNRESOLVED  2
@@ -43,3 +19,7 @@
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 #endif
+
+#define LTP_ATTRIBUTE_NORETURN		__attribute__((noreturn))
+#define LTP_ATTRIBUTE_UNUSED		__attribute__((unused))
+#define LTP_ATTRIBUTE_UNUSED_RESULT	__attribute__((warn_unused_result))

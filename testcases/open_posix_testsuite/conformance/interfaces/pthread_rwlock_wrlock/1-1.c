@@ -21,7 +21,6 @@
  * 7.  Main thread unlock 'rwlock'
  * 8.  Child got the lock
  */
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,7 +41,7 @@ static int thread_state;
 #define ENTERED_THREAD 2
 #define EXITING_THREAD 3
 
-static void *fn_wr(void *arg)
+static void *fn_wr(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 
 	thread_state = ENTERED_THREAD;

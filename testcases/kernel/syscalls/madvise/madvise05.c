@@ -1,15 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) Linux Test Project, 2014
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Library General Public License for more details.
  */
 /*
  * This is a regression test for madvise(2) system call. It tests kernel
@@ -38,17 +29,17 @@ static void verify_madvise(void)
 			MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE, -1, 0);
 
 	TEST(mprotect(p, ALLOC_SIZE, PROT_NONE));
-	if (TEST_RETURN == -1)
+	if (TST_RET == -1)
 		tst_brk(TBROK | TTERRNO, "mprotect failed");
 	TEST(madvise(p, ALLOC_SIZE, MADV_WILLNEED));
 	SAFE_MUNMAP(p, ALLOC_SIZE);
 
-	if (TEST_RETURN == 0) {
+	if (TST_RET == 0) {
 		tst_res(TPASS, "issue has not been reproduced");
 		return;
 	}
 
-	if (TEST_ERRNO == EBADF)
+	if (TST_ERR == EBADF)
 		tst_brk(TCONF, "CONFIG_SWAP=n");
 	else
 		tst_brk(TBROK | TTERRNO, "madvise failed");
@@ -57,4 +48,8 @@ static void verify_madvise(void)
 static struct tst_test test = {
 	.min_kver = "3.9.0",
 	.test_all = verify_madvise,
+	.tags = (const struct tst_tag[]) {
+		{"linux-git", "ee53664bda16"},
+		{}
+	}
 };

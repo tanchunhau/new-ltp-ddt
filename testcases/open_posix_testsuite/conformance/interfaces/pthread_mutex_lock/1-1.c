@@ -20,7 +20,6 @@
  *
  */
 
-#define _XOPEN_SOURCE 600
 
 #include <pthread.h>
 #include <stdio.h>
@@ -70,7 +69,7 @@ int main(void)
 	return PTS_PASS;
 }
 
-void *f1(void *parm)
+void *f1(void *parm LTP_ATTRIBUTE_UNUSED)
 {
 	int i, tmp;
 	int rc = 0;
@@ -78,6 +77,8 @@ void *f1(void *parm)
 
 	/* Loopd M times to acquire the mutex, increase the value,
 	   and then release the mutex. */
+
+	struct timespec lock_wait_ts = {0, 1000000};
 
 	for (i = 0; i < LOOPS; ++i) {
 		rc = pthread_mutex_lock(&mutex);
@@ -90,7 +91,7 @@ void *f1(void *parm)
 		tmp = value;
 		tmp = tmp + 1;
 		fprintf(stderr, "Thread(0x%p) holds the mutex\n", (void *)self);
-		usleep(1000);	/* delay the increasement operation */
+		nanosleep(&lock_wait_ts, NULL);	/* delay the increasement operation */
 		value = tmp;
 
 		rc = pthread_mutex_unlock(&mutex);

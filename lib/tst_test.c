@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2015-2016 Cyril Hrubis <chrubis@suse.cz>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -24,7 +12,6 @@
 #include <sys/mount.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/time.h>
 
 #define TST_NO_DEFAULT_MAIN
 #include "tst_test.h"
@@ -34,18 +21,29 @@
 #include "tst_ansi_color.h"
 #include "tst_safe_stdio.h"
 #include "tst_timer_test.h"
+#include "tst_clocks.h"
+#include "tst_timer.h"
+#include "tst_wallclock.h"
+#include "tst_sys_conf.h"
+#include "tst_kconfig.h"
 
 #include "old_resource.h"
 #include "old_device.h"
 #include "old_tmpdir.h"
+
+#define LINUX_GIT_URL "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id="
+#define CVE_DB_URL "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-"
 
 struct tst_test *tst_test;
 
 static const char *tid;
 static int iterations = 1;
 static float duration = -1;
+static float timeout_mul = -1;
 static pid_t main_pid, lib_pid;
 static int mntpoint_mounted;
+static int ovl_mounted;
+static struct timespec tst_start_time; /* valid only for test pid */
 
 struct results {
 	int passed;
@@ -68,6 +66,9 @@ static char ipc_path[1024];
 const char *tst_ipc_path = ipc_path;
 
 static char shm_path[1024];
+
+int TST_ERR;
+long TST_RET;
 
 static void do_cleanup(void);
 static void do_exit(int ret) __attribute__ ((noreturn));
@@ -101,7 +102,7 @@ static void setup_ipc(void)
 	results = SAFE_MMAP(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, ipc_fd, 0);
 
 	/* Checkpoints needs to be accessible from processes started by exec() */
-	if (tst_test->needs_checkpoints) {
+	if (tst_test->needs_checkpoints || tst_test->child_needs_reinit) {
 		sprintf(ipc_path, IPC_ENV_VAR "=%s", shm_path);
 		putenv(ipc_path);
 	} else {
@@ -129,6 +130,7 @@ static void cleanup_ipc(void)
 	if (results) {
 		msync((void*)results, size, MS_SYNC);
 		munmap((void*)results, size);
+		results = NULL;
 	}
 }
 
@@ -137,7 +139,6 @@ void tst_reinit(void)
 	const char *path = getenv(IPC_ENV_VAR);
 	size_t size = getpagesize();
 	int fd;
-	void *ptr;
 
 	if (!path)
 		tst_brk(TBROK, IPC_ENV_VAR" is not defined");
@@ -147,8 +148,8 @@ void tst_reinit(void)
 
 	fd = SAFE_OPEN(path, O_RDWR);
 
-	ptr = SAFE_MMAP(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	tst_futexes = (char*)ptr + sizeof(struct results);
+	results = SAFE_MMAP(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	tst_futexes = (char*)results + sizeof(struct results);
 	tst_max_futexes = (size - sizeof(struct results))/sizeof(futex_t);
 
 	SAFE_CLOSE(fd);
@@ -180,7 +181,7 @@ static void print_result(const char *file, const int lineno, int ttype,
 {
 	char buf[1024];
 	char *str = buf;
-	int ret, size = sizeof(buf), ssize;
+	int ret, size = sizeof(buf), ssize, int_errno;
 	const char *str_errno = NULL;
 	const char *res;
 
@@ -208,11 +209,20 @@ static void print_result(const char *file, const int lineno, int ttype,
 		abort();
 	}
 
-	if (ttype & TERRNO)
+	if (ttype & TERRNO) {
 		str_errno = tst_strerrno(errno);
+		int_errno = errno;
+	}
 
-	if (ttype & TTERRNO)
-		str_errno = tst_strerrno(TEST_ERRNO);
+	if (ttype & TTERRNO) {
+		str_errno = tst_strerrno(TST_ERR);
+		int_errno = TST_ERR;
+	}
+
+	if (ttype & TRERRNO) {
+		int_errno = TST_RET < 0 ? -(int)TST_RET : (int)TST_RET;
+		str_errno = tst_strerrno(int_errno);
+	}
 
 	ret = snprintf(str, size, "%s:%i: ", file, lineno);
 	str += ret;
@@ -235,7 +245,7 @@ static void print_result(const char *file, const int lineno, int ttype,
 				"Next message is too long and truncated:");
 	} else if (str_errno) {
 		ssize = size - 2;
-		ret = snprintf(str, size, ": %s", str_errno);
+		ret = snprintf(str, size, ": %s (%d)", str_errno, int_errno);
 		str += MIN(ret, ssize);
 		size -= MIN(ret, ssize);
 		if (ret >= ssize)
@@ -280,6 +290,8 @@ static void do_test_cleanup(void)
 
 	if (tst_test->cleanup)
 		tst_test->cleanup();
+
+	tst_free_all();
 
 	tst_brk_handler = tst_vbrk_;
 }
@@ -343,6 +355,7 @@ static void check_child_status(pid_t pid, int status)
 	case TBROK:
 	case TCONF:
 		tst_brk(ret, "Reported by child (%i)", pid);
+	break;
 	default:
 		tst_brk(TBROK, "Invalid child (%i) exit value %i", pid, ret);
 	}
@@ -379,11 +392,14 @@ pid_t safe_fork(const char *filename, unsigned int lineno)
 	if (!tst_test->forks_child)
 		tst_brk(TBROK, "test.forks_child must be set!");
 
-	fflush(stdout);
+	tst_flush();
 
 	pid = fork();
 	if (pid < 0)
 		tst_brk_(filename, lineno, TBROK | TERRNO, "fork() failed");
+
+	if (!pid)
+		atexit(tst_free_all);
 
 	return pid;
 }
@@ -402,6 +418,9 @@ static void print_help(void)
 {
 	unsigned int i;
 
+	fprintf(stderr, "Options\n");
+	fprintf(stderr, "-------\n");
+
 	for (i = 0; i < ARRAY_SIZE(options); i++)
 		fprintf(stderr, "%s\n", options[i].help);
 
@@ -410,6 +429,28 @@ static void print_help(void)
 
 	for (i = 0; tst_test->options[i].optstr; i++)
 		fprintf(stderr, "%s\n", tst_test->options[i].help);
+}
+
+static void print_test_tags(void)
+{
+	unsigned int i;
+	const struct tst_tag *tags = tst_test->tags;
+
+	printf("\nTags\n");
+	printf("----\n");
+
+	if (tags) {
+		for (i = 0; tags[i].name; i++) {
+			if (!strcmp(tags[i].name, "CVE"))
+				printf(CVE_DB_URL "%s\n", tags[i].value);
+			else if (!strcmp(tags[i].name, "linux-git"))
+				printf(LINUX_GIT_URL "%s\n", tags[i].value);
+			else
+				printf("%s: %s\n", tags[i].name, tags[i].value);
+		}
+	}
+
+	printf("\n");
 }
 
 static void check_option_collision(void)
@@ -455,6 +496,9 @@ static void parse_topt(unsigned int topts_len, int opt, char *optarg)
 	if (i >= topts_len)
 		tst_brk(TBROK, "Invalid option '%c' (should not happen)", opt);
 
+	if (*toptions[i].arg)
+		tst_res(TWARN, "Option -%c passed multiple times", opt);
+
 	*(toptions[i].arg) = optarg ? optarg : "";
 }
 
@@ -484,8 +528,10 @@ static void parse_opts(int argc, char *argv[])
 		case '?':
 			print_help();
 			tst_brk(TBROK, "Invalid option");
+		break;
 		case 'h':
 			print_help();
+			print_test_tags();
 			exit(0);
 		case 'i':
 			iterations = atoi(optarg);
@@ -571,26 +617,74 @@ int tst_parse_float(const char *str, float *val, float min, float max)
 	return 0;
 }
 
+static void print_colored(const char *str)
+{
+	if (tst_color_enabled(STDOUT_FILENO))
+		printf("%s%s%s", ANSI_COLOR_YELLOW, str, ANSI_COLOR_RESET);
+	else
+		printf("%s", str);
+}
+
+static void print_failure_hints(void)
+{
+	unsigned int i;
+	const struct tst_tag *tags = tst_test->tags;
+
+	if (!tags)
+		return;
+
+	int hint_printed = 0;
+	for (i = 0; tags[i].name; i++) {
+		if (!strcmp(tags[i].name, "linux-git")) {
+			if (!hint_printed) {
+				hint_printed = 1;
+				printf("\n");
+				print_colored("HINT: ");
+				printf("You _MAY_ be missing kernel fixes, see:\n\n");
+			}
+
+			printf(LINUX_GIT_URL "%s\n", tags[i].value);
+		}
+
+	}
+
+	hint_printed = 0;
+	for (i = 0; tags[i].name; i++) {
+		if (!strcmp(tags[i].name, "CVE")) {
+			if (!hint_printed) {
+				hint_printed = 1;
+				printf("\n");
+				print_colored("HINT: ");
+				printf("You _MAY_ be vunerable to CVE(s), see:\n\n");
+			}
+
+			printf(CVE_DB_URL "%s\n", tags[i].value);
+		}
+	}
+}
+
 static void do_exit(int ret)
 {
 	if (results) {
-		printf("\nSummary:\n");
-		printf("passed   %d\n", results->passed);
-		printf("failed   %d\n", results->failed);
-		printf("skipped  %d\n", results->skipped);
-		printf("warnings %d\n", results->warnings);
-
 		if (results->passed && ret == TCONF)
 			ret = 0;
 
-		if (results->failed)
+		if (results->failed) {
 			ret |= TFAIL;
+			print_failure_hints();
+		}
 
 		if (results->skipped && !results->passed)
 			ret |= TCONF;
 
 		if (results->warnings)
 			ret |= TWARN;
+
+		printf("\nSummary:\n");
+		printf("passed   %d\n", results->passed);
+		printf("failed   %d\n", results->failed);
+		printf("skipped  %d\n", results->skipped);
+		printf("warnings %d\n", results->warnings);
 	}
 
 	do_cleanup();
@@ -632,6 +726,7 @@ static int needs_tmpdir(void)
 {
 	return tst_test->needs_tmpdir ||
 	       tst_test->needs_device ||
+	       tst_test->mntpoint ||
 	       tst_test->resource_files ||
 	       tst_test->needs_checkpoints;
 }
@@ -683,17 +778,63 @@ static void assert_test_fn(void)
 		tst_brk(TBROK, "You can define only one test function");
 
 	if (tst_test->test && !tst_test->tcnt)
-		tst_brk(TBROK, "Number of tests (tcnt) must not be > 0");
+		tst_brk(TBROK, "Number of tests (tcnt) must be > 0");
 
 	if (!tst_test->test && tst_test->tcnt)
 		tst_brk(TBROK, "You can define tcnt only for test()");
+}
+
+static int prepare_and_mount_ro_fs(const char *dev,
+                                   const char *mntpoint,
+                                   const char *fs_type)
+{
+	char buf[PATH_MAX];
+
+	if (mount(dev, mntpoint, fs_type, 0, NULL)) {
+		tst_res(TINFO | TERRNO, "Can't mount %s at %s (%s)",
+			dev, mntpoint, fs_type);
+		return 1;
+	}
+
+	mntpoint_mounted = 1;
+
+	snprintf(buf, sizeof(buf), "%s/dir/", mntpoint);
+	SAFE_MKDIR(buf, 0777);
+
+	snprintf(buf, sizeof(buf), "%s/file", mntpoint);
+	SAFE_FILE_PRINTF(buf, "file content");
+	SAFE_CHMOD(buf, 0777);
+
+	SAFE_MOUNT(dev, mntpoint, fs_type, MS_REMOUNT | MS_RDONLY, NULL);
+
+	return 0;
+}
+
+static void prepare_and_mount_dev_fs(const char *mntpoint)
+{
+	const char *flags[] = {"nodev", NULL};
+	int mounted_nodev;
+
+	mounted_nodev = tst_path_has_mnt_flags(NULL, flags);
+	if (mounted_nodev) {
+		tst_res(TINFO, "tmpdir isn't suitable for creating devices, "
+			"mounting tmpfs without nodev on %s", mntpoint);
+		SAFE_MOUNT(NULL, mntpoint, "tmpfs", 0, NULL);
+		mntpoint_mounted = 1;
+	}
 }
 
 static void prepare_device(void)
 {
 	if (tst_test->format_device) {
 		SAFE_MKFS(tdev.dev, tdev.fs_type, tst_test->dev_fs_opts,
-			  tst_test->dev_extra_opt);
+			  tst_test->dev_extra_opts);
+	}
+
+	if (tst_test->needs_rofs) {
+		prepare_and_mount_ro_fs(tdev.dev, tst_test->mntpoint,
+		                        tdev.fs_type);
+		return;
 	}
 
 	if (tst_test->mount_device) {
@@ -711,6 +852,9 @@ static void do_setup(int argc, char *argv[])
 	if (tst_test->tconf_msg)
 		tst_brk(TCONF, "%s", tst_test->tconf_msg);
 
+	if (tst_test->needs_kconfigs)
+		tst_kconfig_check(tst_test->needs_kconfigs);
+
 	assert_test_fn();
 
 	tid = get_tid(argv);
@@ -726,6 +870,15 @@ static void do_setup(int argc, char *argv[])
 	if (tst_test->min_kver)
 		check_kver();
 
+	if (tst_test->needs_drivers) {
+		const char *name;
+		int i;
+
+		for (i = 0; (name = tst_test->needs_drivers[i]); ++i)
+			if (tst_check_driver(name))
+				tst_brk(TCONF, "%s driver not available", name);
+	}
+
 	if (tst_test->format_device)
 		tst_test->needs_device = 1;
 
@@ -739,31 +892,48 @@ static void do_setup(int argc, char *argv[])
 
 	setup_ipc();
 
+	if (tst_test->bufs)
+		tst_buffers_alloc(tst_test->bufs);
+
 	if (needs_tmpdir() && !tst_tmpdir_created())
 		tst_tmpdir();
+
+	if (tst_test->save_restore) {
+		const char * const *name = tst_test->save_restore;
+
+		while (*name) {
+			tst_sys_conf_save(*name);
+			name++;
+		}
+	}
 
 	if (tst_test->mntpoint)
 		SAFE_MKDIR(tst_test->mntpoint, 0777);
 
-	if ((tst_test->needs_rofs || tst_test->mount_device ||
-	     tst_test->all_filesystems) && !tst_test->mntpoint) {
+	if ((tst_test->needs_devfs || tst_test->needs_rofs ||
+	     tst_test->mount_device || tst_test->all_filesystems) &&
+	     !tst_test->mntpoint) {
 		tst_brk(TBROK, "tst_test->mntpoint must be set!");
 	}
 
+	if (!!tst_test->needs_rofs + !!tst_test->needs_devfs +
+	    !!tst_test->needs_device > 1) {
+		tst_brk(TBROK,
+			"Two or more of needs_{rofs, devfs, device} are set");
+	}
+
+	if (tst_test->needs_devfs)
+		prepare_and_mount_dev_fs(tst_test->mntpoint);
+
 	if (tst_test->needs_rofs) {
 		/* If we failed to mount read-only tmpfs. Fallback to
-		 * using a device with empty read-only filesystem.
+		 * using a device with read-only filesystem.
 		 */
-		if (mount(NULL, tst_test->mntpoint, "tmpfs", MS_RDONLY, NULL)) {
-			tst_res(TINFO | TERRNO, "Can't mount tmpfs read-only"
-				" at %s, setting up a device instead\n",
-				tst_test->mntpoint);
-			tst_test->mount_device = 1;
+		if (prepare_and_mount_ro_fs(NULL, tst_test->mntpoint, "tmpfs")) {
+			tst_res(TINFO, "Can't mount tmpfs read-only, "
+			        "falling back to block device...");
 			tst_test->needs_device = 1;
 			tst_test->format_device = 1;
-			tst_test->mnt_flags = MS_RDONLY;
-		} else {
-			mntpoint_mounted = 1;
 		}
 	}
 
@@ -784,23 +954,46 @@ static void do_setup(int argc, char *argv[])
 			prepare_device();
 	}
 
+	if (tst_test->needs_overlay && !tst_test->mount_device) {
+		tst_brk(TBROK, "tst_test->mount_device must be set");
+	}
+	if (tst_test->needs_overlay && !mntpoint_mounted) {
+		tst_brk(TBROK, "tst_test->mntpoint must be mounted");
+	}
+	if (tst_test->needs_overlay && !ovl_mounted) {
+		SAFE_MOUNT_OVERLAY();
+		ovl_mounted = 1;
+	}
+
 	if (tst_test->resource_files)
 		copy_resources();
+
+	if (tst_test->restore_wallclock)
+		tst_wallclock_save();
 }
 
 static void do_test_setup(void)
 {
 	main_pid = getpid();
 
+	if (tst_test->caps)
+		tst_cap_setup(tst_test->caps, TST_CAP_REQ);
+
 	if (tst_test->setup)
 		tst_test->setup();
 
 	if (main_pid != getpid())
 		tst_brk(TBROK, "Runaway child in setup()!");
+
+	if (tst_test->caps)
+		tst_cap_setup(tst_test->caps, TST_CAP_DROP);
 }
 
 static void do_cleanup(void)
 {
+	if (ovl_mounted)
+		SAFE_UMOUNT(OVL_MNT);
+
 	if (mntpoint_mounted)
 		tst_umount(tst_test->mntpoint);
 
@@ -812,6 +1005,12 @@ static void do_cleanup(void)
 		tst_futexes = NULL;
 		tst_rmdir();
 	}
+
+	if (tst_test->save_restore)
+		tst_sys_conf_restore(0);
+
+	if (tst_test->restore_wallclock)
+		tst_wallclock_restore();
 
 	cleanup_ipc();
 }
@@ -853,11 +1052,12 @@ static void run_tests(void)
 
 static unsigned long long get_time_ms(void)
 {
-	struct timeval tv;
+	struct timespec ts;
 
-	gettimeofday(&tv, NULL);
+	if (tst_clock_gettime(CLOCK_MONOTONIC, &ts))
+		tst_brk(TBROK | TERRNO, "tst_clock_gettime()");
 
-	return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+	return tst_timespec_to_ms(ts);
 }
 
 static void add_paths(void)
@@ -879,6 +1079,9 @@ static void add_paths(void)
 
 static void heartbeat(void)
 {
+	if (tst_clock_gettime(CLOCK_MONOTONIC, &tst_start_time))
+		tst_res(TWARN | TERRNO, "tst_clock_gettime() failed");
+
 	kill(getppid(), SIGUSR1);
 }
 
@@ -888,6 +1091,7 @@ static void testrun(void)
 	unsigned long long stop_time = 0;
 	int cont = 1;
 
+	heartbeat();
 	add_paths();
 	do_test_setup();
 
@@ -955,25 +1159,58 @@ static void sigint_handler(int sig LTP_ATTRIBUTE_UNUSED)
 	}
 }
 
+unsigned int tst_timeout_remaining(void)
+{
+	static struct timespec now;
+	unsigned int elapsed;
+
+	if (tst_clock_gettime(CLOCK_MONOTONIC, &now))
+		tst_res(TWARN | TERRNO, "tst_clock_gettime() failed");
+
+	elapsed = (tst_timespec_diff_ms(now, tst_start_time) + 500) / 1000;
+	if (results->timeout > elapsed)
+		return results->timeout - elapsed;
+
+	return 0;
+}
+
+unsigned int tst_multiply_timeout(unsigned int timeout)
+{
+	char *mul;
+	int ret;
+
+	if (timeout_mul == -1) {
+		mul = getenv("LTP_TIMEOUT_MUL");
+		if (mul) {
+			if ((ret = tst_parse_float(mul, &timeout_mul, 1, 10000))) {
+				tst_brk(TBROK, "Failed to parse LTP_TIMEOUT_MUL: %s",
+						tst_strerrno(ret));
+			}
+		} else {
+			timeout_mul = 1;
+		}
+	}
+	if (timeout_mul < 1)
+		tst_brk(TBROK, "LTP_TIMEOUT_MUL must to be int >= 1! (%.2f)",
+				timeout_mul);
+
+	if (timeout < 1)
+		tst_brk(TBROK, "timeout must to be >= 1! (%d)", timeout);
+
+	return timeout * timeout_mul;
+}
+
 void tst_set_timeout(int timeout)
 {
-	char *mul = getenv("LTP_TIMEOUT_MUL");
-
 	if (timeout == -1) {
 		tst_res(TINFO, "Timeout per run is disabled");
 		return;
 	}
 
-	results->timeout = timeout;
+	if (timeout < 1)
+		tst_brk(TBROK, "timeout must to be >= 1! (%d)", timeout);
 
-	if (mul) {
-		float m = atof(mul);
-
-		if (m < 1)
-			tst_brk(TBROK, "Invalid timeout multiplier '%s'", mul);
-
-		results->timeout = results->timeout * m + 0.5;
-	}
+	results->timeout = tst_multiply_timeout(timeout);
 
 	tst_res(TINFO, "Timeout per run is %uh %02um %02us",
 		results->timeout/3600, (results->timeout%3600)/60,
@@ -1031,12 +1268,14 @@ static int run_tcases_per_fs(void)
 {
 	int ret = 0;
 	unsigned int i;
-	const char *const *filesystems = tst_get_supported_fs_types();
+	const char *const *filesystems = tst_get_supported_fs_types(tst_test->dev_fs_flags);
 
 	if (!filesystems[0])
 		tst_brk(TCONF, "There are no supported filesystems");
 
 	for (i = 0; filesystems[i]; i++) {
+
+		tst_res(TINFO, "Testing on %s", filesystems[i]);
 		tdev.fs_type = filesystems[i];
 
 		prepare_device();
@@ -1062,9 +1301,12 @@ static int run_tcases_per_fs(void)
 	return ret;
 }
 
+unsigned int tst_variant;
+
 void tst_run_tcases(int argc, char *argv[], struct tst_test *self)
 {
-	int ret;
+	int ret = 0;
+	unsigned int test_variants = 1;
 
 	lib_pid = getpid();
 	tst_test = self;
@@ -1076,10 +1318,34 @@ void tst_run_tcases(int argc, char *argv[], struct tst_test *self)
 	SAFE_SIGNAL(SIGALRM, alarm_handler);
 	SAFE_SIGNAL(SIGUSR1, heartbeat_handler);
 
-	if (tst_test->all_filesystems)
-		ret = run_tcases_per_fs();
-	else
-		ret = fork_testrun();
+	if (tst_test->test_variants)
+		test_variants = tst_test->test_variants;
 
+	for (tst_variant = 0; tst_variant < test_variants; tst_variant++) {
+		if (tst_test->all_filesystems)
+			ret |= run_tcases_per_fs();
+		else
+			ret |= fork_testrun();
+
+		if (ret & ~(TCONF))
+			goto exit;
+	}
+
+exit:
 	do_exit(ret);
+}
+
+
+void tst_flush(void)
+{
+	int rval;
+
+	rval = fflush(stderr);
+	if (rval != 0)
+		tst_brk(TBROK | TERRNO, "fflush(stderr) failed");
+
+	rval = fflush(stderr);
+	if (rval != 0)
+		tst_brk(TBROK | TERRNO, "fflush(stdout) failed");
+
 }

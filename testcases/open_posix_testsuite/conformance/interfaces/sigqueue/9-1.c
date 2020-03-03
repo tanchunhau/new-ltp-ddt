@@ -22,7 +22,6 @@
  *
  */
 
-#define _XOPEN_SOURCE 600
 #define SIGTOTEST SIGRTMIN
 
 #include <signal.h>
@@ -80,7 +79,7 @@ int main(void)
 
 	for (i = 0; i < syslimit; i++) {
 		if (sigqueue(pid, SIGTOTEST, value) != 0) {
-			printf("Failed: sigqueue on %d of %d max, errno: %s\n",
+			printf("Failed: sigqueue on %d of %ld max, errno: %s\n",
 			       i, syslimit, strerror(errno));
 			return PTS_UNRESOLVED;
 		}

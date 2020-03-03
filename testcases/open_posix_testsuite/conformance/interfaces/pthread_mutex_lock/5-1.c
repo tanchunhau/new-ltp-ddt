@@ -41,14 +41,6 @@
   *   for general information
   */
 
-  /* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
-
- /* We enable the following line to have mutex attributes defined */
-#ifndef WITHOUT_XOPEN
-#define _XOPEN_SOURCE	600
-#endif
-
 /********************************************************************************************/
 /****************************** standard includes *****************************************/
 /********************************************************************************************/
@@ -99,7 +91,7 @@ sem_t semsig, semstart;
 int ctrl = 0;
 
 /*********  signal handler  **********/
-void sighdl(int sig)
+void sighdl(int sig LTP_ATTRIBUTE_UNUSED)
 {
 	if (sem_post(&semsig)) {
 		UNRESOLVED(errno, "Sem_post in signal handler");
@@ -107,7 +99,7 @@ void sighdl(int sig)
 }
 
 /********** thread *********/
-void *threaded(void *arg)
+void *threaded(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int ret, i;
 

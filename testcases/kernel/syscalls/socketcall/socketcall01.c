@@ -1,20 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) Wipro Technologies Ltd, 2002.  All Rights Reserved.
  *    AUTHOR : sowmya adiga<sowmya.adiga@wipro.com>
  * Copyright (c) 2016 Cyril Hrubis <chrubis@suse.cz>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
  */
 /*
  * This is a basic test for the socketcall(2) system call.
@@ -49,15 +37,15 @@ void verify_socketcall(unsigned int i)
 {
 	TEST(socketcall(TC[i].call, TC[i].args));
 
-	if (TEST_RETURN < 0) {
+	if (TST_RET < 0) {
 		tst_res(TFAIL | TTERRNO, "socketcall() for %s failed with %li",
-			TC[i].desc, TEST_RETURN);
+			TC[i].desc, TST_RET);
 		return;
 	}
 
 	tst_res(TPASS, "socketcall() for %s", TC[i].desc);
 
-	SAFE_CLOSE(TEST_RETURN);
+	SAFE_CLOSE(TST_RET);
 }
 
 static struct tst_test test = {

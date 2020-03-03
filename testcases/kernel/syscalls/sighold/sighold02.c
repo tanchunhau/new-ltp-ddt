@@ -49,15 +49,12 @@
 #include <sys/wait.h>
 #include "test.h"
 #include "safe_macros.h"
+#include "lapi/signal.h"
 
 /* _XOPEN_SOURCE disables NSIG */
 #ifndef NSIG
 # define NSIG _NSIG
 #endif
-
-/* Needed for NPTL */
-#define SIGCANCEL 32
-#define SIGTIMER 33
 
 /* ensure NUMSIGS is defined */
 #ifndef NUMSIGS
@@ -77,13 +74,14 @@ static int sigs_map[NUMSIGS];
 
 static int skip_sig(int sig)
 {
+	if (sig >= __SIGRTMIN && sig < SIGRTMIN)
+		return 1;
+
 	switch (sig) {
 	case SIGCHLD:
 	case SIGKILL:
 	case SIGALRM:
 	case SIGSTOP:
-	case SIGCANCEL:
-	case SIGTIMER:
 		return 1;
 	default:
 		return 0;

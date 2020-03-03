@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) International Business Machines  Corp., 2001
- *
- * This program is free software;  you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- * the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.
+ * Copyright (c) International Business Machines Corp., 2001
  */
 
 /*
@@ -41,12 +29,12 @@ static struct buf {
 static void verify_msgsnd(void)
 {
 	TEST(msgsnd(queue_id, &snd_buf, MSGSIZE, 0));
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL, "msgsnd() succeeded unexpectedly");
 		return;
 	}
 
-	if (TEST_ERRNO == EIDRM) {
+	if (TST_ERR == EIDRM) {
 		tst_res(TPASS | TTERRNO, "msgsnd() failed as expected");
 	} else {
 		tst_res(TFAIL | TTERRNO,

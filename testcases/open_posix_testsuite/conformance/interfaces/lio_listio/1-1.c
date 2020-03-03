@@ -21,7 +21,6 @@
  *
  */
 
-#define _XOPEN_SOURCE 600
 #include <sys/stat.h>
 #include <aio.h>
 #include <errno.h>
@@ -38,9 +37,11 @@
 #define NUM_AIOCBS	10
 #define BUF_SIZE	1024*1024
 
-int received_all = 0;
+static volatile int received_all = 0;
 
-void sigrt1_handler(int signum, siginfo_t * info, void *context)
+void sigrt1_handler(int signum LTP_ATTRIBUTE_UNUSED,
+	siginfo_t *info LTP_ATTRIBUTE_UNUSED,
+	void *context LTP_ATTRIBUTE_UNUSED)
 {
 	received_all = 1;
 }

@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Google, Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program, if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -49,10 +37,10 @@ static void try_to_read_negative_key(void)
 	 */
 	TEST(request_key("user", "description", "callout_info",
 			 KEY_SPEC_PROCESS_KEYRING));
-	if (TEST_RETURN != -1)
+	if (TST_RET != -1)
 		tst_brk(TBROK, "request_key() unexpectedly succeeded");
 
-	if (TEST_ERRNO != ENOKEY && TEST_ERRNO != ENOENT) {
+	if (TST_ERR != ENOKEY && TST_ERR != ENOENT) {
 		tst_brk(TBROK | TTERRNO,
 			"request_key() failed with unexpected error");
 	}
@@ -60,11 +48,11 @@ static void try_to_read_negative_key(void)
 	/* Get the ID of the negative key by reading the keyring */
 	TEST(keyctl(KEYCTL_READ, KEY_SPEC_PROCESS_KEYRING,
 		    &key_id, sizeof(key_id)));
-	if (TEST_RETURN < 0)
+	if (TST_RET < 0)
 		tst_brk(TBROK | TTERRNO, "KEYCTL_READ unexpectedly failed");
-	if (TEST_RETURN != sizeof(key_id)) {
+	if (TST_RET != sizeof(key_id)) {
 		tst_brk(TBROK, "KEYCTL_READ returned %ld but expected %zu",
-			TEST_RETURN, sizeof(key_id));
+			TST_RET, sizeof(key_id));
 	}
 
 	/*
@@ -73,11 +61,11 @@ static void try_to_read_negative_key(void)
 	 */
 	tst_res(TINFO, "trying to read from the negative key...");
 	TEST(keyctl(KEYCTL_READ, key_id, buffer, sizeof(buffer)));
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_brk(TFAIL,
 			"KEYCTL_READ on negative key unexpectedly succeeded");
 	}
-	if (TEST_ERRNO != ENOKEY) {
+	if (TST_ERR != ENOKEY) {
 		tst_brk(TFAIL | TTERRNO,
 			"KEYCTL_READ on negative key failed with unexpected error");
 	}
@@ -106,10 +94,18 @@ static void do_test(void)
 		return;
 	}
 
+	if (WIFEXITED(status) && WEXITSTATUS(status) == TCONF)
+		tst_brk(TCONF, "syscall not implemented");
+
 	tst_brk(TBROK, "Child %s", tst_strstatus(status));
 }
 
 static struct tst_test test = {
 	.test_all = do_test,
 	.forks_child = 1,
+	.tags = (const struct tst_tag[]) {
+		{"CVE", "2017-12912"},
+		{"linux-git", "37863c43b2c6"},
+		{}
+	}
 };

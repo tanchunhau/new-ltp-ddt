@@ -1,23 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Cyril Hrubis <chrubis@suse.cz>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <errno.h>
+#include <sched.h>
 #include "config.h"
 #ifdef HAVE_SYS_FANOTIFY_H
 # include <sys/fanotify.h>
@@ -88,4 +77,128 @@ int safe_personality(const char *filename, unsigned int lineno,
 	}
 
 	return prev_persona;
+}
+
+int safe_setregid(const char *file, const int lineno,
+		  gid_t rgid, gid_t egid)
+{
+	int rval;
+
+	rval = setregid(rgid, egid);
+	if (rval == -1) {
+		tst_brk_(file, lineno, TBROK | TERRNO,
+			 "setregid(%li, %li) failed",
+			 (long)rgid, (long)egid);
+	}
+
+	return rval;
+}
+
+
+int safe_setreuid(const char *file, const int lineno,
+		  uid_t ruid, uid_t euid)
+{
+	int rval;
+
+	rval = setreuid(ruid, euid);
+	if (rval == -1) {
+		tst_brk_(file, lineno, TBROK | TERRNO,
+			 "setreuid(%li, %li) failed",
+			 (long)ruid, (long)euid);
+	}
+
+	return rval;
+}
+
+
+int safe_sigaction(const char *file, const int lineno,
+                   int signum, const struct sigaction *act,
+                   struct sigaction *oldact)
+{
+	int rval;
+
+	rval = sigaction(signum, act, oldact);
+
+	if (rval == -1) {
+		tst_brk_(file, lineno, TBROK | TERRNO,
+			"sigaction(%s (%d), %p, %p) failed",
+			tst_strsig(signum), signum, act, oldact);
+	}
+
+	return rval;
+}
+
+struct group *safe_getgrnam(const char *file, const int lineno,
+			    const char *name)
+{
+	struct group *rval;
+
+	errno = 0;
+	rval = getgrnam(name);
+	if (rval == NULL) {
+		tst_brk_(file, lineno, TBROK | TERRNO,
+			"getgrnam(%s) failed", name);
+	}
+
+	return rval;
+}
+
+struct group *safe_getgrnam_fallback(const char *file, const int lineno,
+				     const char *name, const char *fallback)
+{
+	struct group *rval;
+
+	errno = 0;
+	rval = getgrnam(name);
+	if (rval == NULL) {
+		tst_res_(file, lineno, TINFO,
+			 "getgrnam(%s) failed - try fallback %s",
+			 name, fallback);
+		rval = safe_getgrnam(file, lineno, fallback);
+	}
+
+	return rval;
+}
+
+struct group *safe_getgrgid(const char *file, const int lineno, gid_t gid)
+{
+	struct group *rval;
+
+	errno = 0;
+	rval = getgrgid(gid);
+	if (rval == NULL) {
+		tst_brk_(file, lineno, TBROK | TERRNO,
+			"getgrgid(%li) failed", (long)gid);
+	}
+
+	return rval;
+}
+
+int safe_chroot(const char *file, const int lineno, const char *path)
+{
+	int rval;
+
+	rval = chroot(path);
+	if (rval == -1) {
+		tst_brk_(file, lineno, TBROK | TERRNO,
+			 "chroot(%s) failed", path);
+	}
+
+	return rval;
+}
+
+void safe_unshare(const char *file, const int lineno, int flags)
+{
+	int res;
+
+	res = unshare(flags);
+	if (res == -1) {
+		if (errno == EINVAL) {
+			tst_brk_(file, lineno, TCONF | TERRNO,
+				 "unshare(%d) unsupported", flags);
+		} else {
+			tst_brk_(file, lineno, TBROK | TERRNO,
+				 "unshare(%d) failed", flags);
+		}
+	}
 }

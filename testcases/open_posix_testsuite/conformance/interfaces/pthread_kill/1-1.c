@@ -45,8 +45,8 @@
 #define INMAIN 1
 #define SIGTOTEST SIGABRT
 
-int sem1;			/* Manual semaphore */
-int handler_called = 0;
+static int sem1;			/* Manual semaphore */
+static volatile int handler_called;
 
 void handler()
 {
@@ -103,7 +103,7 @@ int main(void)
 		printf("Test FAILED: Kill request timed out\n");
 		return PTS_FAIL;
 	} else if (handler_called == 0) {
-		printf("Test FAILED: Thread did not recieve or handle\n");
+		printf("Test FAILED: Thread did not received or handle\n");
 		return PTS_FAIL;
 	}
 

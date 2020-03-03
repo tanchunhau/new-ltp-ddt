@@ -1,20 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *
- *   Copyright (c) International Business Machines  Corp., 2001
- *
- *   This program is free software;  you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *   Copyright (c) International Business Machines Corp., 2001
  */
 
 /*
@@ -28,7 +14,7 @@
  *  As well as verify that, these test files can be
  *  stat/read/written/executed indeed as root and nobody respectively.
  *
- *	07/2001 Ported by Wayne Boyera
+ * Ported to LTP: Wayne Boyer
  *	06/2016 Modified by Guangwen Feng <fenggw-fnst@cn.fujitsu.com>
  */
 
@@ -75,7 +61,7 @@ static void access_test(struct tcase *tc, const char *user)
 
 	TEST(access(tc->pathname, tc->mode));
 
-	if (TEST_RETURN == -1) {
+	if (TST_RET == -1) {
 		tst_res(TFAIL | TTERRNO, "access(%s, %s) as %s failed",
 			tc->pathname, tc->name, user);
 		return;
@@ -90,7 +76,7 @@ static void access_test(struct tcase *tc, const char *user)
 		 */
 		TEST(stat(tc->targetname, &stat_buf));
 
-		if (TEST_RETURN == -1) {
+		if (TST_RET == -1) {
 			tst_res(TFAIL | TTERRNO, "stat(%s) as %s failed",
 				tc->targetname, user);
 			return;
@@ -105,14 +91,14 @@ static void access_test(struct tcase *tc, const char *user)
 		 */
 		TEST(open(tc->targetname, O_RDONLY));
 
-		if (TEST_RETURN == -1) {
+		if (TST_RET == -1) {
 			tst_res(TFAIL | TTERRNO,
 				"open %s with O_RDONLY as %s failed",
 				tc->targetname, user);
 			return;
 		}
 
-		SAFE_CLOSE(TEST_RETURN);
+		SAFE_CLOSE(TST_RET);
 
 		break;
 	case W_OK:
@@ -123,14 +109,14 @@ static void access_test(struct tcase *tc, const char *user)
 		 */
 		TEST(open(tc->targetname, O_WRONLY));
 
-		if (TEST_RETURN == -1) {
+		if (TST_RET == -1) {
 			tst_res(TFAIL | TTERRNO,
 				"open %s with O_WRONLY as %s failed",
 				tc->targetname, user);
 			return;
 		}
 
-		SAFE_CLOSE(TEST_RETURN);
+		SAFE_CLOSE(TST_RET);
 
 		break;
 	case X_OK:
@@ -143,7 +129,7 @@ static void access_test(struct tcase *tc, const char *user)
 
 		TEST(system(command));
 
-		if (TEST_RETURN != 0) {
+		if (TST_RET != 0) {
 			tst_res(TFAIL | TTERRNO, "execute %s as %s failed",
 				tc->targetname, user);
 			return;

@@ -1,17 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 * Copyright (c) 2016 Fujitsu Ltd.
 * Author: Xiao Yang <yangx.jy@cn.fujitsu.com>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of version 2 of the GNU General Public License as
-* published by the Free Software Foundation.
-*
-* This program is distributed in the hope that it would be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*
-* You should have received a copy of the GNU General Public License
-* alone with this program.
 */
 
 /*
@@ -56,12 +46,12 @@ static void verify_llistxattr(unsigned int n)
 	const char *name = filename[n];
 
 	TEST(llistxattr(name, NULL, 0));
-	if (TEST_RETURN == -1) {
+	if (TST_RET == -1) {
 		tst_res(TFAIL | TTERRNO, "llistxattr() failed");
 		return;
 	}
 
-	if (check_suitable_buf(name, TEST_RETURN))
+	if (check_suitable_buf(name, TST_RET))
 		tst_res(TPASS, "llistxattr() succeed with suitable buffer");
 	else
 		tst_res(TFAIL, "llistxattr() failed with small buffer");

@@ -42,13 +42,6 @@
   *   for general information
   */
 
-  /* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
-
- /* We need the setrlimit() function from X/OPEN standard */
-#ifndef WITHOUT_XOPEN
-#define _XOPEN_SOURCE	600
-
 /********************************************************************************************/
 /****************************** standard includes *****************************************/
 /********************************************************************************************/
@@ -97,7 +90,7 @@ pthread_mutex_t mtx;
 sem_t sem;
 
 /** child thread function **/
-void *threaded(void *arg)
+void *threaded(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int ret;
 	/* Try to lock the mutex once. The call must fail here. */
@@ -259,10 +252,3 @@ int main(void)
 
 	PASSED;
 }
-#else /* WITHOUT_XOPEN */
-int main(void)
-{
-	output_init();
-	UNTESTED("This test requires XSI features");
-}
-#endif

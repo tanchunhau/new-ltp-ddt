@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) Crackerjack Project., 2007-2008, Hitachi, Ltd
  * Copyright (c) 2017 Petr Vorel <pvorel@suse.cz>
@@ -6,19 +7,6 @@
  * Takahiro Yasui <takahiro.yasui.mp@hitachi.com>,
  * Yumiko Sugita <yumiko.sugita.yf@hitachi.com>,
  * Satoshi Fujiwara <sa-fuji@sdl.hitachi.co.jp>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <errno.h>
@@ -189,11 +177,11 @@ static void do_test(unsigned int i)
 
 	tc->test(i, p);
 
-	if (TEST_RETURN >= 0) {
+	if (TST_RET >= 0) {
 		/* Check policy of the allocated memory */
 		TEST(get_mempolicy(&policy, getnodemask->maskp,
 				   getnodemask->size, p, MPOL_F_ADDR));
-		if (TEST_RETURN < 0) {
+		if (TST_RET < 0) {
 			tst_res(TFAIL | TTERRNO, "get_mempolicy failed");
 			return;
 		}
@@ -216,12 +204,12 @@ static void do_test(unsigned int i)
 		}
 	}
 
-	if (TEST_RETURN != tc->ret) {
+	if (TST_RET != tc->ret) {
 		tst_res(TFAIL, "wrong return code: %ld, expected: %d",
-			TEST_RETURN, tc->ret);
+			TST_RET, tc->ret);
 		fail = 1;
 	}
-	if (TEST_RETURN == -1 && TEST_ERRNO != tc->err) {
+	if (TST_RET == -1 && TST_ERR != tc->err) {
 		tst_res(TFAIL | TTERRNO, "expected errno: %s, got",
 			tst_strerrno(tc->err));
 		fail = 1;
@@ -237,5 +225,5 @@ static struct tst_test test = {
 };
 
 #else
-TST_TEST_TCONF("test requires libnuma >= 2 and it's development packages");
+	TST_TEST_TCONF(NUMA_ERROR_MSG);
 #endif

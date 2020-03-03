@@ -8,6 +8,8 @@ core
 .gdb_history
 .gdbinit
 lib*.a
+.cache.mk
+*.dwo
 
 /aclocal.m4
 autom4te.cache
@@ -19,6 +21,7 @@ autom4te.cache
 /config.mk
 /config.status
 /config.sub
+/conf*/
 /install-sh
 /missing
 /include/config.h

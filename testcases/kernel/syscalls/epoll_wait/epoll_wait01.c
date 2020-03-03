@@ -1,19 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2016 Fujitsu Ltd.
  * Author: Guangwen Feng <fenggw-fnst@cn.fujitsu.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
- * the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.
  */
 
 /*
@@ -113,14 +101,14 @@ static void verify_epollout(void)
 
 	TEST(epoll_wait(epfd, &ret_evs, 1, -1));
 
-	if (TEST_RETURN == -1) {
+	if (TST_RET == -1) {
 		tst_res(TFAIL | TTERRNO, "epoll_wait() epollout failed");
 		return;
 	}
 
-	if (TEST_RETURN != 1) {
+	if (TST_RET != 1) {
 		tst_res(TFAIL, "epoll_wait() returned %li, expected 1",
-			TEST_RETURN);
+			TST_RET);
 		return;
 	}
 
@@ -151,14 +139,14 @@ static void verify_epollin(void)
 
 	TEST(epoll_wait(epfd, &ret_evs, 1, -1));
 
-	if (TEST_RETURN == -1) {
+	if (TST_RET == -1) {
 		tst_res(TFAIL | TTERRNO, "epoll_wait() epollin failed");
 		goto end;
 	}
 
-	if (TEST_RETURN != 1) {
+	if (TST_RET != 1) {
 		tst_res(TFAIL, "epoll_wait() returned %li, expected 1",
-			TEST_RETURN);
+			TST_RET);
 		goto end;
 	}
 
@@ -192,12 +180,12 @@ static void verify_epollio(void)
 	while (events) {
 		int events_matched = 0;
 
-		bzero(ret_evs, sizeof(ret_evs));
+		memset(ret_evs, 0, sizeof(ret_evs));
 		TEST(epoll_wait(epfd, ret_evs, 2, -1));
 
-		if (TEST_RETURN <= 0) {
+		if (TST_RET <= 0) {
 			tst_res(TFAIL | TTERRNO, "epoll_wait() returned %li",
-				TEST_RETURN);
+				TST_RET);
 			goto end;
 		}
 
@@ -213,7 +201,7 @@ static void verify_epollio(void)
 			events &= ~EPOLLOUT;
 		}
 
-		if (TEST_RETURN != events_matched) {
+		if (TST_RET != events_matched) {
 			tst_res(TFAIL,
 				"epoll_wait() returned unexpected events");
 			dump_epevs(ret_evs, 2);

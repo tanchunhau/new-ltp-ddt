@@ -1,20 +1,9 @@
 #!/bin/sh
-#
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (c) 2015 Fujitsu Ltd.
 # Author: Guangwen Feng <fenggw-fnst@cn.fujitsu.com>
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
-# the GNU General Public License for more details.
-#
 # Test which command with some basic options.
-#
 
 TST_CNT=10
 TST_SETUP=setup
@@ -39,21 +28,22 @@ setup()
 
 which_verify()
 {
-	until [ -z "$1" ]
-	do
+	local IFS i j
+	IFS="$IFS_FIRST_LEVEL"
+	for i in $1; do
 		found="no"
-		for i in $1; do
-			if grep -q "$i" temp; then
+		IFS="$IFS_SECOND_LEVEL"
+		for j in $i; do
+			if grep -F -q "$j" temp; then
 				found="yes"
 			fi
 		done
 		if [ "$found" != "yes" ]; then
-			echo "'$1' not found in:"
+			echo "'$i' not found in:"
 			cat temp
 			echo
 			return 1
 		fi
-		shift
 	done
 }
 
@@ -94,14 +84,16 @@ which_test()
 	tst_res TPASS "'${which_cmd}' passed."
 }
 
+IFS_FIRST_LEVEL='^'
+IFS_SECOND_LEVEL='|'
 do_test()
 {
 	case $1 in
-	1) which_test "" "pname" "$PWD/pname ./pname";;
-	2) which_test "--all" "pname" "$PWD/bin/pname" "$PWD/pname";;
-	3) which_test "-a" "pname" "$PWD/bin/pname ./bin/pname" "$PWD/pname ./pname";;
-	4) which_test "--read-alias" "pname" "pname='pname -i'" "$PWD/pname";;
-	5) which_test "-i" "pname" "pname='pname -i'" "$PWD/pname";;
+	1) which_test "" "pname" "$PWD/pname|./pname";;
+	2) which_test "-all" "pname" "$PWD/bin/pname|./bin/pname^$PWD/pname|./pname";;
+	3) which_test "-a" "pname" "$PWD/bin/pname|./bin/pname^$PWD/pname|./pname";;
+	4) which_test "--read-alias" "pname" "pname='pname -i'^$PWD/pname";;
+	5) which_test "-i" "pname" "pname='pname -i'^$PWD/pname";;
 	6) alias which='which --read-alias';
 	   which_test "--skip-alias" "pname" "$PWD/pname";
 	   unalias which;;

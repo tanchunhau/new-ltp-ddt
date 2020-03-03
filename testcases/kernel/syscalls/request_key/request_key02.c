@@ -1,20 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2016 Fujitsu Ltd.
  * Copyright (c) 2017 Petr Vorel <pvorel@suse.cz>
  *
  * Author: Xiao Yang <yangx.jy@cn.fujitsu.com>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * You should have received a copy of the GNU General Public License
- * alone with this program.
-*/
+ */
 
 /*
  * Test Name: request_key02
@@ -54,12 +44,12 @@ static void verify_request_key(unsigned int n)
 	struct test_case *tc = tcases + n;
 
 	TEST(request_key("keyring", tc->des, NULL, *tc->id));
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL, "request_key() succeed unexpectly");
 		return;
 	}
 
-	if (TEST_ERRNO == tc->exp_err) {
+	if (TST_ERR == tc->exp_err) {
 		tst_res(TPASS | TTERRNO, "request_key() failed expectly");
 		return;
 	}

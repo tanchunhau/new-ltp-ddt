@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2016 Red Hat, Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -61,7 +49,6 @@ static void setup(void)
 
 	pg_sz = getpagesize();
 
-	check_path(drop_caches_fname);
 	tst_res(TINFO, "dropping caches");
 	sync();
 	SAFE_FILE_PRINTF(drop_caches_fname, "3");
@@ -140,7 +127,7 @@ static void test_advice_willneed(void)
 	tst_res(TINFO, "SwapCached (before madvise): %ld", swapcached_start);
 
 	TEST(madvise(target, CHUNK_SZ, MADV_WILLNEED));
-	if (TEST_RETURN == -1)
+	if (TST_RET == -1)
 		tst_brk(TBROK | TERRNO, "madvise failed");
 
 	do {
@@ -185,4 +172,8 @@ static struct tst_test test = {
 	.min_kver = "3.10.0",
 	.needs_tmpdir = 1,
 	.needs_root = 1,
+	.tags = (const struct tst_tag[]) {
+		{"linux-git", "55231e5c898c"},
+		{}
+	}
 };

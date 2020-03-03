@@ -1,20 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) International Business Machines  Corp., 2001
+ * Copyright (c) International Business Machines Corp., 2001
  *  03/2001 Written by Wayne Boyer
  *  11/2016 Modified by Guangwen Feng <fenggw-fnst@cn.fujitsu.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -73,15 +61,15 @@ static void setpriority_test(struct tcase *tc)
 
 	TEST(setpriority(tc->which, tc->who, tc->prio));
 
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL,
 			"setpriority(%d, %d, %d) %ssucceeds unexpectedly "
 			"returned %ld", tc->which, tc->who, tc->prio, desc,
-			TEST_RETURN);
+			TST_RET);
 		return;
 	}
 
-	if (TEST_ERRNO != tc->exp_errno) {
+	if (TST_ERR != tc->exp_errno) {
 		tst_res(TFAIL | TTERRNO,
 			"setpriority(%d, %d, %d) %sshould fail with %s",
 			tc->which, tc->who, tc->prio, desc,

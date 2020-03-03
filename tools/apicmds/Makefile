@@ -26,9 +26,9 @@ include $(top_srcdir)/include/mk/testcases.mk
 
 CPPFLAGS		+= -D_GNU_SOURCE
 
-MAKE_TARGETS		:= $(addprefix tst_,brk brkm exit flush \
+MAKE_TARGETS		:= $(addprefix tst_,brk brkm exit \
 			     res resm ncpus ncpus_conf ncpus_max \
-			     get_unused_port fs_has_free)
+			     fs_has_free)
 
 include $(top_srcdir)/include/mk/generic_leaf_target.mk
 

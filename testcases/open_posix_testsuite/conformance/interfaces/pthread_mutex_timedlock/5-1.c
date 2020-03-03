@@ -22,7 +22,6 @@
  *
  */
 
-#define _XOPEN_SOURCE 600
 
 #include <time.h>
 #include <pthread.h>
@@ -82,7 +81,7 @@ int main(void)
  * f1()
  *
  * *************************/
-void *f1(void *parm)
+void *f1(void *parm LTP_ATTRIBUTE_UNUSED)
 {
 	struct timespec timeout;
 

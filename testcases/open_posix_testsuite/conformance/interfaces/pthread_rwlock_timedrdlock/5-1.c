@@ -21,7 +21,6 @@
  * 5.  The thread call pthread_rwlock_timedrdlock(). Should _NOT_ get ETIMEDOUT.
  */
 
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,10 +34,10 @@
 
 #define TIMEOUT 1
 static int thread_state;
-static int currsec1;
+static time_t currsec1;
 static int expired;
 
-static void *fn_rd_1(void *arg)
+static void *fn_rd_1(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	thread_state = ENTERED_THREAD;
 	struct timespec abs_timeout;
@@ -83,7 +82,7 @@ static void *fn_rd_1(void *arg)
 	return NULL;
 }
 
-static void *fn_rd_2(void *arg)
+static void *fn_rd_2(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	thread_state = ENTERED_THREAD;
 	struct timespec abs_timeout;

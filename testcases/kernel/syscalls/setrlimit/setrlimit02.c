@@ -1,21 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) International Business Machines  Corp., 2001
- *	07/2001 Ported by Wayne Boyer
+ * Copyright (c) International Business Machines Corp., 2001
+ * Ported to LTP: Wayne Boyer
  * Copyright (c) 2017 Cyril Hrubis <chrubis@suse.cz>
- *
- * This program is free software;  you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- * the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program;  if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 /*
  * Testcase to test the different errnos set by setrlimit(2) system call.
@@ -42,12 +29,12 @@ static void verify_setrlimit(unsigned int n)
 
 	TEST(setrlimit(tc->resource, tc->rlim));
 
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL, "call succeeded unexpectedly");
 		return;
 	}
 
-	if (TEST_ERRNO != tc->exp_errno) {
+	if (TST_ERR != tc->exp_errno) {
 		tst_res(TFAIL | TTERRNO,
 			"setrlimit() should fail with %s got",
 			tst_strerrno(tc->exp_errno));

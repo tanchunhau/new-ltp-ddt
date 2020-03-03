@@ -17,13 +17,12 @@
  * 2. Main create a child thread
  * 3. Child thread call pthread_barrier_wait(), should block
  * 4. While child thread is blocking, send SIGUSR1 to child
- * 5. The signal handler did nothing just print a messge
+ * 5. The signal handler did nothing just print a message
  * 6. After return from the signal handler, child should resume blocking
  * 7. Main call pthread_barrier_wait(), child and main should all return
  *    from pthread_barrier_wait()
  */
 
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +45,7 @@ void sig_handler()
 	printf("thread: interrupted by SIGUSR1\n");
 }
 
-static void *fn_chld(void *arg)
+static void *fn_chld(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int rc = 0;
 	struct sigaction act;

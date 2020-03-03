@@ -25,7 +25,7 @@
  * 	this is the same as ftest2, except that it uses lseek64
  *
  * CALLS
- *	open, close,  read, write, llseek,
+ *	open, close,  read, write, lseek64,
  *	unlink, chdir
  *
  *
@@ -100,7 +100,7 @@ static char *fstyp;
 int main(int ac, char *av[])
 {
 	int pid, child, status, count, k, j;
-	char name[3];
+	char name[MAXPATHLEN];
 
 	int lc;
 

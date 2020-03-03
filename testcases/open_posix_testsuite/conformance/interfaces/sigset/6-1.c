@@ -16,7 +16,6 @@
  4. Verify that SIGCHLD is pending.
 */
 
-#define _XOPEN_SOURCE 600
 
 #include <signal.h>
 #include <stdio.h>
@@ -28,7 +27,7 @@
 #define ERR_MSG(f, rc) printf("Failed: func: %s rc: %u errno: %s\n", \
 						f, rc, strerror(errno))
 
-void myhandler(int signo)
+void myhandler(int signo LTP_ATTRIBUTE_UNUSED)
 {
 	printf("SIGCHLD called. Inside handler\n");
 }

@@ -1,20 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2014 SUSE Linux.  All Rights Reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * Further, this software is distributed without any warranty that it is
- * free of the rightful claim of any third person regarding infringement
- * or the like.  Any license provided herein, whether implied or
- * otherwise, applies only to this software file.  Patent licenses, if
- * any, provided herein do not apply to combinations of this program with
- * other software, or any other product whatsoever.
  *
  * Started by Jan Kara <jack@suse.cz>
  *
@@ -25,6 +11,7 @@
  *     Generate enough events without reading them and check that overflow
  *     event is generated.
  */
+#define _GNU_SOURCE
 #include "config.h"
 
 #include <stdio.h>
@@ -39,6 +26,8 @@
 
 #if defined(HAVE_SYS_FANOTIFY_H)
 #include <sys/fanotify.h>
+
+#define MOUNT_PATH "fs_mnt"
 
 /* Currently this is fixed in kernel... */
 #define MAX_EVENTS 16384
@@ -58,7 +47,7 @@ void test01(void)
 	 * generate events
 	 */
 	for (i = 0; i < MAX_EVENTS + 1; i++) {
-		sprintf(fname, "fname_%d", i);
+		sprintf(fname, MOUNT_PATH"/fname_%d", i);
 		fd = SAFE_OPEN(fname, O_RDWR | O_CREAT, 0644);
 		SAFE_CLOSE(fd);
 	}
@@ -71,11 +60,11 @@ void test01(void)
 		if (len < 0) {
 			if (errno == -EAGAIN) {
 				tst_res(TFAIL, "Overflow event not "
-					 "generated!\n");
+					"generated!\n");
 				break;
 			}
 			tst_brk(TBROK | TERRNO,
-				 "read of notification event failed");
+				"read of notification event failed");
 			break;
 		}
 		if (event.fd != FAN_NOFD)
@@ -87,27 +76,27 @@ void test01(void)
 		if (event.mask != FAN_OPEN &&
 		    event.mask != FAN_Q_OVERFLOW) {
 			tst_res(TFAIL,
-				 "get event: mask=%llx (expected %llx)"
-				 "pid=%u fd=%d",
-				 (unsigned long long)event.mask,
-				 (unsigned long long)FAN_OPEN,
-				 (unsigned)event.pid, event.fd);
+				"got event: mask=%llx (expected %llx)"
+				"pid=%u fd=%d",
+				(unsigned long long)event.mask,
+				(unsigned long long)FAN_OPEN,
+				(unsigned)event.pid, event.fd);
 			break;
 		}
 		if (event.mask == FAN_Q_OVERFLOW) {
 			if (event.fd != FAN_NOFD) {
 				tst_res(TFAIL,
-					 "invalid overflow event: "
-					 "mask=%llx pid=%u fd=%d",
-					 (unsigned long long)event.mask,
-					 (unsigned)event.pid,
-					 event.fd);
+					"invalid overflow event: "
+					"mask=%llx pid=%u fd=%d",
+					(unsigned long long)event.mask,
+					(unsigned)event.pid,
+					event.fd);
 				break;
 			}
 			tst_res(TPASS,
-				 "get event: mask=%llx pid=%u fd=%d",
-				 (unsigned long long)event.mask,
-				 (unsigned)event.pid, event.fd);
+				"got event: mask=%llx pid=%u fd=%d",
+				(unsigned long long)event.mask,
+				(unsigned)event.pid, event.fd);
 				break;
 		}
 	}
@@ -119,11 +108,11 @@ static void setup(void)
 			O_RDONLY);
 
 	if (fanotify_mark(fd_notify, FAN_MARK_MOUNT | FAN_MARK_ADD, FAN_OPEN,
-			    AT_FDCWD, ".") < 0) {
+			  AT_FDCWD, MOUNT_PATH) < 0) {
 		tst_brk(TBROK | TERRNO,
-			 "fanotify_mark (%d, FAN_MARK_MOUNT | FAN_MARK_ADD, "
-			 "FAN_OPEN, AT_FDCWD, \".\") failed",
-			 fd_notify);
+			"fanotify_mark (%d, FAN_MARK_MOUNT | FAN_MARK_ADD, "
+			"FAN_OPEN, AT_FDCWD, \".\") failed",
+			fd_notify);
 	}
 }
 
@@ -138,7 +127,8 @@ static struct tst_test test = {
 	.setup = setup,
 	.cleanup = cleanup,
 	.needs_root = 1,
-	.needs_tmpdir = 1,
+	.mount_device = 1,
+	.mntpoint = MOUNT_PATH,
 };
 #else
 	TST_TEST_TCONF("system doesn't have required fanotify support");

@@ -1,17 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright(c) 2016 Fujitsu Ltd.
  * Author: Xiao Yang <yangx.jy@cn.fujitsu.com>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * You should have received a copy of the GNU General Public License
- * alone with this program.
  */
 
 /*
@@ -68,12 +58,12 @@ static void cleanup(void)
 static void verify_sendto(void)
 {
 	TEST(sendto(sockfd, NULL, 1, 0, (struct sockaddr *) &sa, sizeof(sa)));
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL, "sendto(fd, NULL, ...) succeeded unexpectedly");
 		return;
 	}
 
-	if (TEST_ERRNO == EFAULT) {
+	if (TST_ERR == EFAULT) {
 		tst_res(TPASS | TTERRNO,
 			"sendto(fd, NULL, ...) failed expectedly");
 		return;
@@ -87,4 +77,8 @@ static struct tst_test test = {
 	.setup = setup,
 	.cleanup = cleanup,
 	.test_all = verify_sendto,
+	.tags = (const struct tst_tag[]) {
+		{"linux-git", "6e51fe757259"},
+		{}
+	}
 };

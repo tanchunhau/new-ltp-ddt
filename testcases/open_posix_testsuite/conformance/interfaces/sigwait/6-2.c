@@ -29,8 +29,6 @@
 
 */
 
-/* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
 
 /******************************************************************************/
 /*************************** standard includes ********************************/
@@ -87,7 +85,7 @@ pthread_t last_awaken;
 sigset_t setusr;
 
 /* Thread function */
-void *threaded(void *arg)
+void *threaded(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int ret;
 	int sig;
