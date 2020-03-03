@@ -19,7 +19,6 @@
  - Verify that sigqueue returns 0.
  */
 
-#define _XOPEN_SOURCE 600
 #define _XOPEN_REALTIME 1
 #define SIGTOTEST SIGRTMIN
 #define NUMCALLS 5
@@ -31,9 +30,11 @@
 #include <errno.h>
 #include "posixtest.h"
 
-int counter = 0;
+static volatile int counter;
 
-void myhandler(int signo, siginfo_t * info, void *context)
+void myhandler(int signo LTP_ATTRIBUTE_UNUSED,
+	siginfo_t *info LTP_ATTRIBUTE_UNUSED,
+	void *context LTP_ATTRIBUTE_UNUSED)
 {
 	counter++;
 }

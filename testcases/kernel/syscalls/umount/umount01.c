@@ -1,24 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) Wipro Technologies Ltd, 2002.  All Rights Reserved.
+ * Author: Nirmala Devi Dhanasekar <nirmala.devi@wipro.com>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * AUTHOR		: Nirmala Devi Dhanasekar <nirmala.devi@wipro.com>
- *
- * DESCRIPTION
- *	This is a Phase I test for the umount(2) system call.
- *	It is intended to provide a limited exposure of the system call.
- *****************************************************************************/
+ * Phase I test for the umount(2) system call.
+ * It is intended to provide a limited exposure of the system call.
+ */
 
 #include <errno.h>
 #include <sys/mount.h>
@@ -38,13 +25,13 @@ static void verify_umount(void)
 
 	TEST(umount(MNTPOINT));
 
-	if (TEST_RETURN != 0 && TEST_ERRNO == EBUSY) {
+	if (TST_RET != 0 && TST_ERR == EBUSY) {
 		tst_res(TINFO, "umount() Failed with EBUSY "
 			"possibly some daemon (gvfsd-trash) "
 			"is probing newly mounted dirs");
 	}
 
-	if (TEST_RETURN != 0) {
+	if (TST_RET != 0) {
 		tst_res(TFAIL | TTERRNO, "umount() Failed");
 		return;
 	}
@@ -66,7 +53,6 @@ static void cleanup(void)
 
 static struct tst_test test = {
 	.needs_root = 1,
-	.needs_tmpdir = 1,
 	.format_device = 1,
 	.setup = setup,
 	.cleanup = cleanup,

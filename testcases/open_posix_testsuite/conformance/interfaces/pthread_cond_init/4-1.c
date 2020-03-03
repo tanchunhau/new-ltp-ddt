@@ -32,8 +32,6 @@
  *  Date:  31/05/2011
  */
 
- /* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
 
 #include <pthread.h>
 #include <stdio.h>
@@ -63,7 +61,6 @@ static void child(void)
 	void *prev = NULL;
 	struct rlimit rl;
 	pthread_cond_t cond;
-	pthread_condattr_t attr;
 	int rc;
 
 	/* Limit the process memory to a small value (8 for example). */
@@ -111,7 +108,6 @@ int main(void)
 	pid_t pid;
 	int child_status;
 	int status = PTS_UNRESOLVED;
-	int rc;
 
 	pid = fork();
 	if (pid < 0) {

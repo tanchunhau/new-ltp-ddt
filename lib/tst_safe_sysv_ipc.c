@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Xiao yang <yangx.jy@cn.fujitsu.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <sys/types.h>
@@ -22,6 +10,24 @@
 #define TST_NO_DEFAULT_MAIN
 #include "tst_test.h"
 #include "tst_safe_sysv_ipc.h"
+
+/*
+ * The IPC_STAT, IPC_SET and IPC_RMID can return either 0 or -1.
+ *
+ * Linux specific cmds either returns -1 on failure or positive integer
+ * either index into an kernel array or shared primitive indentifier.
+ */
+static int ret_check(int cmd, int ret)
+{
+	switch (cmd) {
+	case IPC_STAT:
+	case IPC_SET:
+	case IPC_RMID:
+		return ret != 0;
+	default:
+		return ret == -1;
+	}
+}
 
 int safe_msgget(const char *file, const int lineno, key_t key, int msgflg)
 {
@@ -72,10 +78,12 @@ int safe_msgctl(const char *file, const int lineno, int msqid, int cmd,
 	int rval;
 
 	rval = msgctl(msqid, cmd, buf);
-	if (rval == -1) {
-		tst_brk(TBROK | TERRNO, "%s:%d: msgctl(%i, %i, %p) failed",
-			file, lineno, msqid, cmd, buf);
+	if (ret_check(cmd, rval)) {
+		tst_brk(TBROK | TERRNO,
+			"%s:%d: msgctl(%i, %i, %p) = %i failed",
+			file, lineno, msqid, cmd, buf, rval);
 	}
+
 
 	return rval;
 }
@@ -127,9 +135,10 @@ int safe_shmctl(const char *file, const int lineno, int shmid, int cmd,
 	int rval;
 
 	rval = shmctl(shmid, cmd, buf);
-	if (rval == -1) {
-		tst_brk(TBROK | TERRNO, "%s:%d: shmctl(%i, %i, %p) failed",
-			file, lineno, shmid, cmd, buf);
+	if (ret_check(cmd, rval)) {
+		tst_brk(TBROK | TERRNO,
+			"%s:%d: shmctl(%i, %i, %p) = %i failed",
+			file, lineno, shmid, cmd, buf, rval);
 	}
 
 	return rval;

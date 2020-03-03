@@ -1,16 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 FUJITSU LIMITED. All rights reserved.
  * Author: Xiao Yang <yangx.jy@cn.fujitsu.com>
- *
- * This program is free software;  you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- * the GNU General Public License for more details.
  */
 
 /*
@@ -26,6 +17,8 @@
 
 #include "tst_test.h"
 
+static void *bad_addr;
+
 static void verify_setrlimit(void)
 {
 	int status;
@@ -33,14 +26,14 @@ static void verify_setrlimit(void)
 
 	pid = SAFE_FORK();
 	if (!pid) {
-		TEST(setrlimit(RLIMIT_NOFILE, (void *) -1));
-		if (TEST_RETURN != -1) {
+		TEST(setrlimit(RLIMIT_NOFILE, bad_addr));
+		if (TST_RET != -1) {
 			tst_res(TFAIL, "setrlimit()  succeeded unexpectedly");
 			exit(0);
 		}
 
 		/* Usually, setrlimit() should return EFAULT */
-		if (TEST_ERRNO == EFAULT) {
+		if (TST_ERR == EFAULT) {
 			tst_res(TPASS | TTERRNO,
 				"setrlimit() failed as expected");
 		} else {
@@ -67,7 +60,13 @@ static void verify_setrlimit(void)
 	tst_res(TBROK, "child %s", tst_strstatus(status));
 }
 
+static void setup(void)
+{
+	bad_addr = tst_get_bad_addr(NULL);
+}
+
 static struct tst_test test = {
 	.test_all = verify_setrlimit,
 	.forks_child = 1,
+	.setup = setup,
 };

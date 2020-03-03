@@ -1,17 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 * Copyright (c) 2015 Fujitsu Ltd.
 * Author: Xiao Yang <yangx.jy@cn.fujitsu.com>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of version 2 of the GNU General Public License as
-* published by the Free Software Foundation.
-*
-* This program is distributed in the hope that it would be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*
-* You should have received a copy of the GNU General Public License
-* alone with this program.
 */
 
 /*
@@ -62,14 +52,14 @@ static void verify_pwritev(unsigned int n)
 	SAFE_LSEEK(fd, 0, SEEK_SET);
 
 	TEST(pwritev(fd, wr_iovec, tc->count, tc->offset));
-	if (TEST_RETURN < 0) {
+	if (TST_RET < 0) {
 		tst_res(TFAIL | TTERRNO, "pwritev() failed");
 		return;
 	}
 
-	if (TEST_RETURN != tc->size) {
+	if (TST_RET != tc->size) {
 		tst_res(TFAIL, "pwritev() wrote %li bytes, expected %zi",
-			 TEST_RETURN, tc->size);
+			 TST_RET, tc->size);
 		return;
 	}
 

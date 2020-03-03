@@ -39,7 +39,7 @@ static int num_shms;
 static int shm_id_arr[MAXIDS];
 
 static long hugepages = 128;
-static long orig_shmmni;
+static long orig_shmmni = -1;
 static struct tst_option options[] = {
 	{"s:", &nr_opt, "-s   num  Set the number of the been allocated hugepages"},
 	{NULL, NULL, NULL}
@@ -49,11 +49,11 @@ static void test_hugeshmget(void)
 {
 	TEST(shmget(IPC_PRIVATE, shm_size,
 				SHM_HUGETLB | IPC_CREAT | IPC_EXCL | SHM_RW));
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL, "shmget succeeded unexpectedly");
 		return;
 	}
-	if (TEST_ERRNO == ENOSPC)
+	if (TST_ERR == ENOSPC)
 		tst_res(TPASS | TTERRNO, "shmget failed as expected");
 	else
 		tst_res(TFAIL | TTERRNO, "shmget failed unexpectedly "
@@ -70,6 +70,7 @@ static void setup(void)
 
 	SAFE_FILE_SCANF(PATH_SHMMNI, "%ld", &orig_shmmni);
 
+	limit_hugepages(&hugepages);
 	set_sys_tune("nr_hugepages", hugepages, 1);
 	SAFE_FILE_PRINTF(PATH_SHMMNI, "%ld", hugepages / 2);
 
@@ -104,7 +105,8 @@ static void cleanup(void)
 	for (i = 0; i < num_shms; i++)
 		rm_shm(shm_id_arr[i]);
 
-	FILE_PRINTF(PATH_SHMMNI, "%ld", orig_shmmni);
+	if (orig_shmmni != -1)
+		FILE_PRINTF(PATH_SHMMNI, "%ld", orig_shmmni);
 	restore_nr_hugepages();
 }
 

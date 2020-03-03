@@ -32,7 +32,7 @@ sem_t r_lock, w_lock;
 int reader_count = 0;
 int data = 0;
 
-int read_fun(int ID)
+int read_fun(int ID LTP_ATTRIBUTE_UNUSED)
 {
 	printf("read the board, data=%d \n", data);
 	return 0;
@@ -105,7 +105,7 @@ int *writer(void *ID)
 	pthread_exit(NULL);
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	pthread_t rea[READ_NUM], wri[WRITE_NUM];
 	int ReadID[READ_NUM], WriteID[WRITE_NUM];

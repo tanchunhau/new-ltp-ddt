@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Petr Vorel <pvorel@suse.cz>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <sys/socket.h>
@@ -152,13 +140,11 @@ int main(int argc, char *argv[])
 	else
 		get_in_addr(ip_str, &ip);
 
-	if (is_ipv6) {
-		print_svar_change("LHOST_IFACES", iface);
+	print_svar_change(is_rhost ? "RHOST_IFACES" : "LHOST_IFACES", iface);
+	if (is_ipv6)
 		print_ivar(is_rhost ? "IPV6_RPREFIX" : "IPV6_LPREFIX", prefix);
-	} else {
-		print_svar_change("RHOST_IFACES", iface);
+	else
 		print_ivar(is_rhost ? "IPV4_RPREFIX" : "IPV4_LPREFIX", prefix);
-	}
 
 	exit(EXIT_SUCCESS);
 }

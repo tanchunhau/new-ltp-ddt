@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Google, Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program, if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -38,21 +26,21 @@ static key_serial_t create_keyring(const char *description)
 {
 	TEST(add_key("keyring", description, NULL, 0,
 		     KEY_SPEC_PROCESS_KEYRING));
-	if (TEST_RETURN < 0) {
+	if (TST_RET < 0) {
 		tst_brk(TBROK | TTERRNO,
 			"unable to create keyring '%s'", description);
 	}
-	return TEST_RETURN;
+	return TST_RET;
 }
 
 static key_serial_t get_keyring_id(key_serial_t special_id)
 {
 	TEST(keyctl(KEYCTL_GET_KEYRING_ID, special_id, 1));
-	if (TEST_RETURN < 0) {
+	if (TST_RET < 0) {
 		tst_brk(TBROK | TTERRNO,
 			"unable to get ID of keyring %d", special_id);
 	}
-	return TEST_RETURN;
+	return TST_RET;
 }
 
 static void do_test(void)
@@ -95,4 +83,8 @@ static void do_test(void)
 static struct tst_test test = {
 	.test_all = do_test,
 	.needs_root = 1,
+	.tags = (const struct tst_tag[]) {
+		{"linux-git", "237bbd29f7a0"},
+		{}
+	}
 };

@@ -1,26 +1,14 @@
 #!/bin/sh
-#
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (c) 2015 Fujitsu Ltd.
 # Author: Guangwen Feng <fenggw-fnst@cn.fujitsu.com>
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
 # Test mkswap command with some basic options.
-#
 
 TST_CNT=10
 TST_SETUP=setup
 TST_TESTFUNC=do_test
 TST_NEEDS_ROOT=1
-TST_NEEDS_TMPDIR=1
 TST_NEEDS_DEVICE=1
 TST_NEEDS_CMDS="uuidgen blkid blockdev mkswap"
 . tst_test.sh
@@ -29,7 +17,7 @@ setup()
 {
 	UUID=`uuidgen`
 
-	PAGE_SIZE=`getconf PAGE_SIZE`
+	PAGE_SIZE=`tst_getconf PAGESIZE`
 
 	# Here get the size of the device and align it down to be the
 	# multiple of $PAGE_SIZE and use that as the size for testing.
@@ -37,25 +25,14 @@ setup()
 	DEVICE_SIZE=$((($real_size/$PAGE_SIZE * $PAGE_SIZE)/1024))
 }
 
-wait_for_file()
+check_for_file()
 {
 	local path="$1"
-	local retries=10
 
-	if [ -z "$path" ]; then
+	if [ -z "$path" -o -e "$path" ]; then
 		return
 	fi
-
-	while [ $retries -gt 0 ]; do
-		if [ -e "$path" ]; then
-			return
-		fi
-		tst_res TINFO "Waiting for $path to appear"
-		retries=$((retries - 1))
-		tst_sleep 10ms
-	done
-
-	tst_res TINFO "The file $path haven't appeared"
+	return 1
 }
 
 mkswap_verify()
@@ -75,7 +52,12 @@ mkswap_verify()
 		local pagesize=$PAGE_SIZE
 	fi
 
-	wait_for_file "$dev_file"
+	if tst_kvcmp -lt "2.6.35" && [ -n "$dev_file" ]; then
+		tst_res TINFO "Waiting for $dev_file to appear"
+		tst_sleep 100ms
+	else
+		TST_RETRY_FUNC "check_for_file $dev_file" 0
+	fi
 
 	swapon $swapfile 2>/dev/null
 
@@ -145,6 +127,8 @@ mkswap_test()
 		cat temp
 		return
 	fi
+
+	udevadm trigger --name-match=$TST_DEVICE
 
 	if [ -n "$device" ]; then
 		mkswap_verify "$mkswap_op" "$op_arg" "$device" "$size" "$dev_file"

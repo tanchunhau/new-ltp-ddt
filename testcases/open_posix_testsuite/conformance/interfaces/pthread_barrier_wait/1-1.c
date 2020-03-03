@@ -18,7 +18,6 @@
  * 4. Main call pthread_barrier_wait(), child and main should all return
  *    from pthread_barrier_wait()
  */
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +32,7 @@ static int thread_state;
 #define ENTERED_THREAD 2
 #define EXITING_THREAD 3
 
-static void *fn_chld(void *arg)
+static void *fn_chld(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int rc = 0;
 	thread_state = ENTERED_THREAD;

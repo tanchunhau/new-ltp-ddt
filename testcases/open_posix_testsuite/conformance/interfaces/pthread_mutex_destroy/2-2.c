@@ -25,14 +25,7 @@
 
  */
 
- /* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
-
- /* We need the XSI extention for the mutex attributes */
-#ifndef WITHOUT_XOPEN
-#define _XOPEN_SOURCE	600
-#endif
- /********************************************************************************************/
+/********************************************************************************************/
 /****************************** standard includes *****************************************/
 /********************************************************************************************/
 #include <pthread.h>
@@ -106,7 +99,7 @@ struct _scenar {
 int main(void)
 {
 	int ret;
-	int i, j;
+	unsigned int i, j;
 	pthread_mutex_t mtx;
 	pthread_mutexattr_t ma[NSCENAR + 1];
 	pthread_mutexattr_t *pma[NSCENAR + 2];

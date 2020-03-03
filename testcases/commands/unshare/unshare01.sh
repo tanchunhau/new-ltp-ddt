@@ -1,17 +1,7 @@
 #!/bin/sh
-#
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (c) 2017 FUJITSU LIMITED. All rights reserved.
 # Author: Xiao Yang <yangx.jy@cn.fujitsu.com>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
-# the GNU General Public License for more details.
 #
 # Test unshare command with some basic options.
 # 1) If we run unshare with "--user", UID in the newly created user namespace
@@ -35,7 +25,6 @@
 #    Please see the following URL for detailed information:
 #    http://man7.org/linux/man-pages/man7/user_namespaces.7.html
 #    http://man7.org/linux/man-pages/man7/mount_namespaces.7.html
-#
 
 TST_CNT=8
 TST_SETUP=setup
@@ -81,9 +70,9 @@ cleanup()
 
 check_id()
 {
-	local act_id=$1
-	local exp_id=$2
-	local cmd=$3
+	local act_id="$1"
+	local exp_id="$2"
+	local cmd="$3"
 
 	if [ ${act_id} -ne ${exp_id} ]; then
 		tst_res TFAIL "$cmd got wrong uid/gid"
@@ -94,9 +83,9 @@ check_id()
 
 check_mount()
 {
-	local tst_dir=$1
-	local exp_stat=$2
-	local cmd=$3
+	local tst_dir="$1"
+	local exp_stat="$2"
+	local cmd="$3"
 
 	case ${exp_stat} in
 	unmounted)
@@ -120,9 +109,9 @@ check_mount()
 
 unshare_test()
 {
-	local unshare_opts=$1
-	local verify_cmd=$2
-	local exp_result=$3
+	local unshare_opts="$1"
+	local verify_cmd="$2"
+	local exp_result="$3"
 
 	local unshare_cmd="unshare ${unshare_opts} ${verify_cmd}"
 

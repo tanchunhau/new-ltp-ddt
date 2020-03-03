@@ -24,7 +24,7 @@ top_srcdir		?= ../../../../..
 
 include $(top_srcdir)/include/mk/env_pre.mk
 
-INSTALL_TARGETS		:= rpc01
+INSTALL_TARGETS		:= rpc01.sh
 SUBDIRS			:= datafiles
 
 CPPFLAGS		+= -I$(abs_srcdir)/lib
@@ -49,3 +49,4 @@ MAKE_TARGETS		:= rpc1 rpc_server
 MAKE_DEPS		:= $(LIB)
 
 include $(top_srcdir)/include/mk/generic_trunk_target.mk
+include $(top_srcdir)/testcases/network/rpc/rpc-tirpc/tests_pack/Makefile.inc

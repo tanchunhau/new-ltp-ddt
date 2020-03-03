@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Richard Palethorpe <rpalethorpe@suse.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 /* Test for CVE-2017-7308 on a raw socket's ring buffer
  *
@@ -97,9 +85,9 @@ static int create_skbuf(unsigned int sizeof_priv)
 
 	sk = SAFE_SOCKET(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 	TEST(setsockopt(sk, SOL_PACKET, PACKET_VERSION, &ver, sizeof(ver)));
-	if (TEST_RETURN && TEST_ERRNO == EINVAL)
+	if (TST_RET && TST_ERR == EINVAL)
 		tst_brk(TCONF | TTERRNO, "TPACKET_V3 not supported");
-	if (TEST_RETURN)
+	if (TST_RET)
 		tst_brk(TBROK | TTERRNO, "setsockopt(sk, SOL_PACKET, PACKET_VERSION, TPACKET_V3)");
 
 	return setsockopt(sk, SOL_PACKET, PACKET_RX_RING, &req, sizeof(req));
@@ -108,7 +96,7 @@ static int create_skbuf(unsigned int sizeof_priv)
 static void good_size(void)
 {
 	TEST(create_skbuf(512));
-	if (TEST_RETURN)
+	if (TST_RET)
 		tst_brk(TBROK | TTERRNO, "Can't create ring buffer with good settings");
 
 	tst_res(TPASS, "Can create ring buffer with good settinegs");
@@ -117,9 +105,9 @@ static void good_size(void)
 static void bad_size(void)
 {
 	TEST(create_skbuf(3U << 30));
-	if (TEST_RETURN && TEST_ERRNO != EINVAL)
+	if (TST_RET && TST_ERR != EINVAL)
 		tst_brk(TBROK | TTERRNO, "Unexpected setsockopt() error");
-	if (TEST_RETURN)
+	if (TST_RET)
 		tst_res(TPASS | TTERRNO, "Refused bad tp_sizeof_priv value");
 	else
 		tst_res(TFAIL, "Allowed bad tp_sizeof_priv value");

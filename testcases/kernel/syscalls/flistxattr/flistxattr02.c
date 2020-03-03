@@ -1,17 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 * Copyright (c) 2016 RT-RK Institute for Computer Based Systems
 * Author: Dejan Jovicevic <dejan.jovicevic@rt-rk.com>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of version 2 of the GNU General Public License as
-* published by the Free Software Foundation.
-*
-* This program is distributed in the hope that it would be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*
-* You should have received a copy of the GNU General Public License
-* alone with this program.
 */
 
 /*
@@ -61,14 +51,14 @@ static void verify_flistxattr(unsigned int n)
 	char buf[t->size];
 
 	TEST(flistxattr(*t->fd, buf, t->size));
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL,
 			"flistxattr() succeeded unexpectedly (returned %ld)",
-			TEST_RETURN);
+			TST_RET);
 		return;
 	}
 
-	if (t->exp_err != TEST_ERRNO) {
+	if (t->exp_err != TST_ERR) {
 		tst_res(TFAIL | TTERRNO, "flistxattr() failed "
 			 "unexpectedlly, expected %s",
 			 tst_strerrno(t->exp_err));

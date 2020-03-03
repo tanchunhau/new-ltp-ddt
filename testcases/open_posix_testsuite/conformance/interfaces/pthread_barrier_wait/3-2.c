@@ -20,7 +20,6 @@
  * 6. After return from the signal handler, the child thread should continue as normal
  */
 
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +51,7 @@ void sig_handler()
 	}
 }
 
-static void *fn_chld(void *arg)
+static void *fn_chld(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int rc = 0;
 	struct sigaction act;

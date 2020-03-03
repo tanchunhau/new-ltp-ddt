@@ -21,7 +21,6 @@
  *     should get EBUSY
  * 7.  Main thread unlock 'rwlock'
  */
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +42,7 @@ static int get_ebusy;
 #define ENTERED_THREAD 2
 #define EXITING_THREAD 3
 
-static void *fn_wr(void *arg)
+static void *fn_wr(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	thread_state = ENTERED_THREAD;
 	int rc;

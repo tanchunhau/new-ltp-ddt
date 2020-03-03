@@ -1,29 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2012 Linux Test Project.  All Rights Reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * Further, this software is distributed without any warranty that it is
- * free of the rightful claim of any third person regarding infringement
- * or the like.  Any license provided herein, whether implied or
- * otherwise, applies only to this software file.  Patent licenses, if
- * any, provided herein do not apply to combinations of this program with
- * other software, or any other product whatsoever.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
  * Ngie Cooper, April 2012
- */
-
-/****************************************************************************
+ *
  * DESCRIPTION
  *     verify that IN_DELETE_SELF functions as expected
  *
@@ -34,23 +13,17 @@
  *
  *     Because of how the inotify(7) API is designed, we also need to catch the
  *     IN_ATTRIB and IN_IGNORED events.
- *
- ****************************************************************************/
+ */
 
 #include "config.h"
 
 #if defined(HAVE_SYS_INOTIFY_H)
-#include <sys/inotify.h>
+# include <sys/inotify.h>
 #endif
 #include <errno.h>
 #include <string.h>
-#include "test.h"
-#include "lapi/syscalls.h"
+#include "tst_test.h"
 #include "inotify.h"
-#include "safe_macros.h"
-
-char *TCID = "inotify04";
-int TST_TOTAL = 4;
 
 #if defined(HAVE_SYS_INOTIFY_H)
 
@@ -84,91 +57,52 @@ static struct tst_kern_exv kvers[] = {
 
 static void cleanup(void)
 {
-
 	if (reap_wd_dir && myinotify_rm_watch(fd_notify, wd_dir) == -1)
-		tst_resm(TWARN,
-			 "inotify_rm_watch(%d, %d) [1] failed", fd_notify,
-			 wd_dir);
+		tst_res(TWARN,
+			"inotify_rm_watch(%d, %d) [1] failed", fd_notify,
+			wd_dir);
 
 	if (reap_wd_file && myinotify_rm_watch(fd_notify, wd_file) == -1)
-		tst_resm(TWARN,
-			 "inotify_rm_watch(%d, %d) [2] failed", fd_notify,
-			 wd_file);
+		tst_res(TWARN,
+			"inotify_rm_watch(%d, %d) [2] failed", fd_notify,
+			wd_file);
 
-	if (fd_notify > 0 && close(fd_notify))
-		tst_resm(TWARN, "close(%d) [1] failed", fd_notify);
-
-	if (wd_dir > 0 && close(wd_dir))
-		tst_resm(TWARN, "close(%d) [2] failed", wd_dir);
-
-	if (wd_file > 0 && close(wd_file))
-		tst_resm(TWARN, "close(%d) [3] failed", wd_file);
-
-	tst_rmdir();
+	if (fd_notify > 0)
+		SAFE_CLOSE(fd_notify);
 }
 
 static void setup(void)
 {
-
-	tst_sig(NOFORK, DEF_HANDLER, cleanup);
-
-	TEST_PAUSE;
-
-	tst_tmpdir();
-
-	fd_notify = myinotify_init();
-	if (fd_notify == -1) {
-		if (errno == ENOSYS) {
-			tst_brkm(TCONF, cleanup,
-				 "inotify is not configured in this kernel.");
-		} else {
-			tst_brkm(TBROK | TERRNO, cleanup,
-				 "inotify_init failed");
-		}
-	}
-
-	SAFE_MKDIR(cleanup, TEST_DIR, 00700);
-
-	close(SAFE_CREAT(cleanup, TEST_FILE, 00600));
-
-	wd_dir = myinotify_add_watch(fd_notify, TEST_DIR, IN_ALL_EVENTS);
-	if (wd_dir == -1) {
-		tst_brkm(TBROK | TERRNO, cleanup,
-			 "inotify_add_watch(%d, \"%s\", IN_ALL_EVENTS) [1] failed",
-			 fd_notify, TEST_DIR);
-	}
-	reap_wd_dir = 1;
-
-	wd_file = myinotify_add_watch(fd_notify, TEST_FILE, IN_ALL_EVENTS);
-	if (wd_file == -1)
-		tst_brkm(TBROK | TERRNO, cleanup,
-			 "inotify_add_watch(%d, \"%s\", IN_ALL_EVENTS) [2] failed",
-			 fd_notify, TEST_FILE);
-	reap_wd_file = 1;
+	fd_notify = SAFE_MYINOTIFY_INIT();
 }
 
-int main(int argc, char **argv)
+void verify_inotify(void)
 {
-	int i, test_num, len;
+	int i = 0, test_num = 0, len;
+	int test_cnt = 0;
 
-	i = 0;
-	test_num = 0;
+	SAFE_MKDIR(TEST_DIR, 00700);
+	close(SAFE_CREAT(TEST_FILE, 00600));
 
-	tst_parse_opts(argc, argv, NULL, NULL);
+	wd_dir = SAFE_MYINOTIFY_ADD_WATCH(fd_notify, TEST_DIR, IN_ALL_EVENTS);
+	reap_wd_dir = 1;
 
-	setup();
+	wd_file = SAFE_MYINOTIFY_ADD_WATCH(fd_notify, TEST_FILE, IN_ALL_EVENTS);
+	reap_wd_file = 1;
 
-	tst_count = 0;
+	SAFE_RMDIR(TEST_DIR);
+	reap_wd_dir = 0;
 
-	rmdir(TEST_DIR);
-	event_set[tst_count].mask = IN_DELETE_SELF;
-	strcpy(event_set[tst_count].name, "");
-	tst_count++;
-	event_set[tst_count].mask = IN_IGNORED;
-	strcpy(event_set[tst_count].name, "");
-	tst_count++;
+	event_set[test_cnt].mask = IN_DELETE_SELF;
+	strcpy(event_set[test_cnt].name, "");
+	test_cnt++;
+	event_set[test_cnt].mask = IN_IGNORED;
+	strcpy(event_set[test_cnt].name, "");
+	test_cnt++;
 
-	unlink(TEST_FILE);
+	SAFE_UNLINK(TEST_FILE);
+	reap_wd_file = 0;
+
 	/*
 	 * When a file is unlinked, the link count is reduced by 1, and when it
 	 * hits 0 the file is removed.
@@ -177,92 +111,86 @@ int main(int argc, char **argv)
 	 * understand how Unix works.
 	 */
 	if (tst_kvercmp2(2, 6, 25, kvers) >= 0) {
-		event_set[tst_count].mask = IN_ATTRIB;
-		strcpy(event_set[tst_count].name, "");
-		tst_count++;
-		TST_TOTAL++;
+		event_set[test_cnt].mask = IN_ATTRIB;
+		strcpy(event_set[test_cnt].name, "");
+		test_cnt++;
 	}
-	event_set[tst_count].mask = IN_DELETE_SELF;
-	strcpy(event_set[tst_count].name, TEST_FILE);
-	tst_count++;
-	event_set[tst_count].mask = IN_IGNORED;
-	strcpy(event_set[tst_count].name, "");
-	tst_count++;
 
-	if (tst_count != TST_TOTAL)
-		tst_brkm(TBROK, cleanup,
-			 "tst_count and TST_TOTAL are not equal");
-
-	tst_count = 0;
+	event_set[test_cnt].mask = IN_DELETE_SELF;
+	strcpy(event_set[test_cnt].name, TEST_FILE);
+	test_cnt++;
+	event_set[test_cnt].mask = IN_IGNORED;
+	strcpy(event_set[test_cnt].name, "");
+	test_cnt++;
 
 	len = read(fd_notify, event_buf, EVENT_BUF_LEN);
 	if (len == -1)
-		tst_brkm(TBROK | TERRNO, cleanup, "read failed");
-
-	reap_wd_dir = 0;
-	reap_wd_file = 0;
+		tst_brk(TBROK | TERRNO, "read failed");
 
 	while (i < len) {
 		struct inotify_event *event;
 		event = (struct inotify_event *)&event_buf[i];
-		if (test_num >= TST_TOTAL) {
+		if (test_num >= test_cnt) {
 			if (tst_kvercmp(2, 6, 25) < 0
-			    && event_set[TST_TOTAL - 1].mask == event->mask)
-				tst_resm(TWARN,
-					 "This may be kernel bug. "
-					 "Before kernel 2.6.25, a kernel bug "
-					 "meant that the kernel code that was "
-					 "intended to coalesce successive identical "
-					 "events (i.e., the two most recent "
-					 "events could potentially be coalesced "
-					 "if the older had not yet been read) "
-					 "instead checked if the most recent event "
-					 "could be coalesced with the oldest "
-					 "unread event. This has been fixed by commit"
-					 "1c17d18e3775485bf1e0ce79575eb637a94494a2.");
-			tst_resm(TFAIL,
-				 "got unnecessary event: "
-				 "wd=%d mask=%x cookie=%u len=%u "
-				 "name=\"%.*s\"", event->wd, event->mask,
-				 event->cookie, event->len, event->len, event->name);
+			    && event_set[test_cnt - 1].mask == event->mask)
+				tst_res(TWARN,
+					"This may be kernel bug. "
+					"Before kernel 2.6.25, a kernel bug "
+					"meant that the kernel code that was "
+					"intended to coalesce successive identical "
+					"events (i.e., the two most recent "
+					"events could potentially be coalesced "
+					"if the older had not yet been read) "
+					"instead checked if the most recent event "
+					"could be coalesced with the oldest "
+					"unread event. This has been fixed by commit"
+					"1c17d18e3775485bf1e0ce79575eb637a94494a2.");
+			tst_res(TFAIL,
+				"got unnecessary event: "
+				"wd=%d mask=%04x cookie=%u len=%u "
+				"name=\"%.*s\"", event->wd, event->mask,
+				event->cookie, event->len, event->len, event->name);
 
 		} else if ((event_set[test_num].mask == event->mask)
 			   &&
 			   (!strncmp
 			    (event_set[test_num].name, event->name,
 			     event->len))) {
-			tst_resm(TPASS,
-				 "got event: wd=%d mask=%x "
-				 "cookie=%u len=%u name=\"%.*s\"",
-				 event->wd, event->mask, event->cookie,
-				 event->len, event->len, event->name);
+			tst_res(TPASS,
+				"got event: wd=%d mask=%04x "
+				"cookie=%u len=%u name=\"%.*s\"",
+				event->wd, event->mask, event->cookie,
+				event->len, event->len, event->name);
 
 		} else {
-			tst_resm(TFAIL, "got event: wd=%d mask=%x "
-				 "(expected %x) cookie=%u len=%u "
-				 "name=\"%.*s\" (expected \"%s\") %d",
-				 event->wd, event->mask,
-				 event_set[test_num].mask,
-				 event->cookie, event->len,
-				 event->len, event->name,
-				 event_set[test_num].name,
-				 strncmp(event_set[test_num].name, event->name, event->len));
+			tst_res(TFAIL, "got event: wd=%d mask=%04x "
+				"(expected %x) cookie=%u len=%u "
+				"name=\"%.*s\" (expected \"%s\") %d",
+				event->wd, event->mask,
+				event_set[test_num].mask,
+				event->cookie, event->len,
+				event->len, event->name,
+				event_set[test_num].name,
+				strncmp(event_set[test_num].name, event->name, event->len));
 		}
 		test_num++;
 		i += EVENT_SIZE + event->len;
 	}
 
-	for (; test_num < TST_TOTAL; test_num++) {
-		tst_resm(TFAIL, "didn't get event: mask=%x ",
-			 event_set[test_num].mask);
+	for (; test_num < test_cnt; test_num++) {
+		tst_res(TFAIL, "didn't get event: mask=%04x ",
+			event_set[test_num].mask);
 	}
 
-	cleanup();
-	tst_exit();
 }
+
+static struct tst_test test = {
+	.needs_tmpdir = 1,
+	.setup = setup,
+	.cleanup = cleanup,
+	.test_all = verify_inotify,
+};
+
 #else
-int main(void)
-{
-	tst_brkm(TCONF, NULL, "system doesn't have required inotify support");
-}
+	TST_TEST_TCONF("system doesn't have required inotify support");
 #endif /* defined(HAVE_SYS_INOTIFY_H) */

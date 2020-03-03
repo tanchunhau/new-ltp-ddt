@@ -50,7 +50,7 @@ void mdelay(unsigned msecs)
 	nanosleep(&req, NULL);
 }
 
-void *barbers(void *unused)
+void *barbers(void *unused LTP_ATTRIBUTE_UNUSED)
 {
 	int i;
 	for (i = 0; i < LOOP_NUM; i++) {
@@ -135,7 +135,7 @@ void *customers(void *ID)
 	return NULL;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	pthread_t bar, cus[CUS_NUM];
 	int shared = 0;

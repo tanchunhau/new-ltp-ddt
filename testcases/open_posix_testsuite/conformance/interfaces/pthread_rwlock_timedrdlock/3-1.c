@@ -26,7 +26,6 @@
 
 /* Test for CLOCK_REALTIME */
 
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +50,7 @@ static pthread_rwlock_t rwlock;
 static int thread_state;
 static struct timeval currsec1, currsec2;
 
-static void *fn_rd(void *arg)
+static void *fn_rd(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 
 	thread_state = ENTERED_THREAD;

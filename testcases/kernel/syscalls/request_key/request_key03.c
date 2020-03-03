@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Google, Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program, if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -66,13 +54,13 @@ static void test_with_key_type(const char *type, const char *payload,
 	bool info_only;
 
 	TEST(keyctl(KEYCTL_JOIN_SESSION_KEYRING, NULL));
-	if (TEST_RETURN < 0)
+	if (TST_RET < 0)
 		tst_brk(TBROK | TTERRNO, "failed to join new session keyring");
 
 	TEST(add_key(type, "desc", payload, strlen(payload),
 		     KEY_SPEC_SESSION_KEYRING));
-	if (TEST_RETURN < 0 && TEST_ERRNO != EINVAL) {
-		if (TEST_ERRNO == ENODEV) {
+	if (TST_RET < 0 && TST_ERR != EINVAL) {
+		if (TST_ERR == ENODEV) {
 			tst_res(TCONF, "kernel doesn't support key type '%s'",
 				type);
 			return;
@@ -108,14 +96,14 @@ static void test_with_key_type(const char *type, const char *payload,
 			usleep(rand() % 1024);
 			TEST(add_key(type, "desc", payload, strlen(payload),
 				     KEY_SPEC_SESSION_KEYRING));
-			if (TEST_RETURN < 0 && TEST_ERRNO != EINVAL &&
-			    TEST_ERRNO != ENOKEY && TEST_ERRNO != EDQUOT) {
+			if (TST_RET < 0 && TST_ERR != EINVAL &&
+			    TST_ERR != ENOKEY && TST_ERR != EDQUOT) {
 				tst_brk(TBROK | TTERRNO,
 					"unexpected error adding key of type '%s'",
 					type);
 			}
 			TEST(keyctl(KEYCTL_CLEAR, KEY_SPEC_SESSION_KEYRING));
-			if (TEST_RETURN < 0) {
+			if (TST_RET < 0) {
 				tst_brk(TBROK | TTERRNO,
 					"unable to clear keyring");
 			}
@@ -128,8 +116,8 @@ static void test_with_key_type(const char *type, const char *payload,
 		for (i = 0; i < 5000 * effort; i++) {
 			TEST(request_key(type, "desc", "callout_info",
 					 KEY_SPEC_SESSION_KEYRING));
-			if (TEST_RETURN < 0 && TEST_ERRNO != ENOKEY &&
-			    TEST_ERRNO != ENOENT && TEST_ERRNO != EDQUOT) {
+			if (TST_RET < 0 && TST_ERR != ENOKEY &&
+			    TST_ERR != ENOENT && TST_ERR != EDQUOT) {
 				tst_brk(TBROK | TTERRNO,
 					"unexpected error requesting key of type '%s'",
 					type);
@@ -200,4 +188,11 @@ static struct tst_test test = {
 	.test_all = do_test,
 	.forks_child = 1,
 	.options = options,
+	.tags = (const struct tst_tag[]) {
+		{"CVE", "2017-15299"},
+		{"linux-git", "60ff5b2f547a"},
+		{"CVE", "2017-15951"},
+		{"linux-git", "363b02dab09b"},
+		{},
+	}
 };

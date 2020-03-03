@@ -27,14 +27,6 @@
  *   -> the cancelation handler will test if the thread owns the mutex.
  */
 
- /* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
-
- /* We need the XSI extention for the mutex attributes */
-#ifndef WITHOUT_XOPEN
-#define _XOPEN_SOURCE	600
-#endif
-
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -207,6 +199,7 @@ int main(void)
 	pthread_t th;
 
 	long altclk_ok, pshared_ok;
+	struct timespec processing_completion_ts = {0, 100000};
 
 	struct {
 		char altclk;	/* Want to use alternative clock */
@@ -389,9 +382,7 @@ int main(void)
 		}
 
 		sched_yield();
-#ifndef WITHOUT_XOPEN
-		usleep(100);
-#endif
+		nanosleep(&processing_completion_ts, NULL);
 
 		ret = pthread_mutex_unlock(&(data.mtx));
 		if (ret != 0) {

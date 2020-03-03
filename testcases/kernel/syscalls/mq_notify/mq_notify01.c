@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) Crackerjack Project., 2007-2008, Hitachi, Ltd
  * Copyright (c) 2017 Petr Vorel <pvorel@suse.cz>
@@ -6,19 +7,6 @@
  * Takahiro Yasui <takahiro.yasui.mp@hitachi.com>,
  * Yumiko Sugita <yumiko.sugita.yf@hitachi.com>,
  * Satoshi Fujiwara <sa-fuji@sdl.hitachi.co.jp>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <limits.h>
@@ -149,8 +137,8 @@ static void do_test(unsigned int i)
 
 	TEST(mq_notify(*tc->fd, &ev));
 
-	if (TEST_RETURN < 0) {
-		if (tc->err != TEST_ERRNO)
+	if (TST_RET < 0) {
+		if (tc->err != TST_ERR)
 			tst_res(TFAIL | TTERRNO,
 				"mq_notify failed unexpectedly, expected %s",
 				tst_strerrno(tc->err));
@@ -170,7 +158,7 @@ static void do_test(unsigned int i)
 	if (*tc->fd == fd)
 		cleanup_queue(fd);
 
-	if (TEST_RETURN < 0) {
+	if (TST_RET < 0) {
 		tst_res(TFAIL | TTERRNO, "mq_timedsend failed");
 		return;
 	}
@@ -191,8 +179,8 @@ static void do_test(unsigned int i)
 			info.si_uid, getuid());
 	}
 
-	if (TEST_RETURN < 0) {
-		if (tc->err != TEST_ERRNO)
+	if (TST_RET < 0) {
+		if (tc->err != TST_ERR)
 			tst_res(TFAIL | TTERRNO,
 				"mq_timedsend failed unexpectedly, expected %s",
 				tst_strerrno(tc->err));
@@ -201,9 +189,9 @@ static void do_test(unsigned int i)
 		return;
 	}
 
-	if (tc->ret != TEST_RETURN) {
+	if (tc->ret != TST_RET) {
 		tst_res(TFAIL, "mq_timedsend returned %ld, expected %d",
-			TEST_RETURN, tc->ret);
+			TST_RET, tc->ret);
 		return;
 	}
 

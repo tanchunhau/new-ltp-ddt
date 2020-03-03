@@ -27,11 +27,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "lapi/abisize.h"
 #include "mem.h"
 
 static void verify_oom(void)
 {
-#if __WORDSIZE == 32
+#ifdef TST_ABI32
 	tst_brk(TCONF, "test is not designed for 32-bit system.");
 #endif
 
@@ -55,7 +56,8 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	set_sys_tune("overcommit_memory", overcommit, 0);
+	if (overcommit != -1)
+		set_sys_tune("overcommit_memory", overcommit, 0);
 }
 
 static struct tst_test test = {

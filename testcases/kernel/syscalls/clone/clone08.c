@@ -1,18 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Oracle and/or its affiliates. All Rights Reserved.
  * Copyright (c) 2013 Fujitsu Ltd.
  * Author: Zeng Linggang <zenglg.jy@cn.fujitsu.com>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program.
  */
 
 #define _GNU_SOURCE
@@ -97,13 +87,13 @@ static long clone_child(const struct test_case *t)
 	TEST(ltp_clone7(t->flags, t->do_child, NULL, CHILD_STACK_SIZE,
 		child_stack, &ptid, NULL, &ctid));
 
-	if (TEST_RETURN == -1 && TTERRNO == ENOSYS)
+	if (TST_RET == -1 && TTERRNO == ENOSYS)
 		tst_brk(TCONF, "clone does not support 7 args");
 
-	if (TEST_RETURN == -1)
+	if (TST_RET == -1)
 		tst_brk(TBROK | TTERRNO, "%s clone() failed", t->name);
 
-	return TEST_RETURN;
+	return TST_RET;
 }
 
 static void test_clone_parent(int t)

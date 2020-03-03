@@ -1,21 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) International Business Machines  Corp., 2001
- *  07/2001 Ported by Wayne Boyer
+ * Copyright (c) International Business Machines Corp., 2001
+ * Ported to LTP: Wayne Boyer
  * Copyright (c) 2016 Cyril Hrubis <chrubis@suse.cz>
- *
- * This program is free software;  you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- * the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program;  if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /*
@@ -39,13 +26,13 @@ static void verify_nice(void)
 
 	TEST(nice(NICEINC));
 
-	if (TEST_RETURN != (orig_nice + NICEINC)) {
+	if (TST_RET != (orig_nice + NICEINC)) {
 		tst_res(TFAIL | TTERRNO, "nice(%d) returned %li, expected %i",
-		        NICEINC, TEST_RETURN, orig_nice + NICEINC);
+			NICEINC, TST_RET, orig_nice + NICEINC);
 		return;
 	}
 
-	if (TEST_ERRNO) {
+	if (TST_ERR) {
 		tst_res(TFAIL | TTERRNO, "nice(%d) failed", NICEINC);
 		return;
 	}
@@ -61,7 +48,7 @@ static void verify_nice(void)
 	tst_res(TPASS, "nice(%d) passed", NICEINC);
 
 	TEST(nice(-NICEINC));
-	if (TEST_ERRNO)
+	if (TST_ERR)
 		tst_brk(TBROK | TERRNO, "nice(-NICEINC) failed");
 }
 

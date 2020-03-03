@@ -1,20 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) International Business Machines  Corp., 2001
+ * Copyright (c) International Business Machines Corp., 2001
  *  07/2001 Ported by John George
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- * the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 /*
@@ -39,15 +26,15 @@ static void verify_umask(void)
 
 	for (mskval = 0000; mskval < 01000; mskval++) {
 		TEST(umask(mskval));
-		if (TEST_RETURN < 0 || TEST_RETURN > 0777) {
+		if (TST_RET < 0 || TST_RET > 0777) {
 			tst_brk(TFAIL, "umask(%o) result outside range %ld",
-				mskval, TEST_RETURN);
+				mskval, TST_RET);
 		}
 
-		if (mskval > 0000 && TEST_RETURN != mskval - 1) {
+		if (mskval > 0000 && TST_RET != mskval - 1) {
 			failflag = 1;
 			tst_res(TFAIL, "umask(%o) returned %ld, expected %d",
-				mskval, TEST_RETURN, mskval - 1);
+				mskval, TST_RET, mskval - 1);
 		}
 
 		fd = SAFE_CREAT("testfile", 0777);

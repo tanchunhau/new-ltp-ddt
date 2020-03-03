@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Google, Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program, if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -42,9 +30,6 @@
 
 #include "tst_test.h"
 #include "lapi/keyctl.h"
-
-#define KEY_POS_WRITE	0x04000000
-#define KEY_POS_ALL	0x3f000000
 
 /*
  * A valid payload for the "asymmetric" key type.  This is an x509 certificate
@@ -89,7 +74,7 @@ static const char x509_cert[] =
 static void new_session_keyring(void)
 {
 	TEST(keyctl(KEYCTL_JOIN_SESSION_KEYRING, NULL));
-	if (TEST_RETURN < 0)
+	if (TST_RET < 0)
 		tst_brk(TBROK | TTERRNO, "failed to join new session keyring");
 }
 
@@ -101,18 +86,18 @@ static void test_update_nonupdatable(const char *type,
 	new_session_keyring();
 
 	TEST(add_key(type, "desc", payload, plen, KEY_SPEC_SESSION_KEYRING));
-	if (TEST_RETURN < 0) {
-		if (TEST_ERRNO == ENODEV) {
+	if (TST_RET < 0) {
+		if (TST_ERR == ENODEV) {
 			tst_res(TCONF, "kernel doesn't support key type '%s'",
 				type);
 			return;
 		}
-		if (TEST_ERRNO == EBADMSG && !strcmp(type, "asymmetric")) {
+		if (TST_ERR == EBADMSG && !strcmp(type, "asymmetric")) {
 			tst_res(TCONF, "kernel is missing x509 cert parser "
 				"(CONFIG_X509_CERTIFICATE_PARSER)");
 			return;
 		}
-		if (TEST_ERRNO == ENOENT && !strcmp(type, "asymmetric")) {
+		if (TST_ERR == ENOENT && !strcmp(type, "asymmetric")) {
 			tst_res(TCONF, "kernel is missing crypto algorithms "
 				"needed to parse x509 cert (CONFIG_CRYPTO_RSA "
 				"and/or CONFIG_CRYPTO_SHA256)");
@@ -122,14 +107,14 @@ static void test_update_nonupdatable(const char *type,
 			type);
 		return;
 	}
-	keyid = TEST_RETURN;
+	keyid = TST_RET;
 
 	/*
 	 * Non-updatable keys don't start with write permission, so we must
 	 * explicitly grant it.
 	 */
 	TEST(keyctl(KEYCTL_SETPERM, keyid, KEY_POS_ALL));
-	if (TEST_RETURN != 0) {
+	if (TST_RET != 0) {
 		tst_res(TBROK | TTERRNO,
 			"failed to grant write permission to '%s' key", type);
 		return;
@@ -137,12 +122,12 @@ static void test_update_nonupdatable(const char *type,
 
 	tst_res(TINFO, "Try to update the '%s' key...", type);
 	TEST(keyctl(KEYCTL_UPDATE, keyid, payload, plen));
-	if (TEST_RETURN == 0) {
+	if (TST_RET == 0) {
 		tst_res(TBROK,
 			"updating '%s' key unexpectedly succeeded", type);
 		return;
 	}
-	if (TEST_ERRNO != EOPNOTSUPP) {
+	if (TST_ERR != EOPNOTSUPP) {
 		tst_res(TBROK | TTERRNO,
 			"updating '%s' key unexpectedly failed", type);
 		return;
@@ -165,11 +150,11 @@ static void test_update_setperm_race(void)
 
 	TEST(add_key("user", "desc", payload, sizeof(payload),
 		KEY_SPEC_SESSION_KEYRING));
-	if (TEST_RETURN < 0) {
+	if (TST_RET < 0) {
 		tst_res(TBROK | TTERRNO, "failed to add 'user' key");
 		return;
 	}
-	keyid = TEST_RETURN;
+	keyid = TST_RET;
 
 	if (SAFE_FORK() == 0) {
 		uint32_t perm = KEY_POS_ALL;
@@ -177,7 +162,7 @@ static void test_update_setperm_race(void)
 		for (i = 0; i < 10000; i++) {
 			perm ^= KEY_POS_WRITE;
 			TEST(keyctl(KEYCTL_SETPERM, keyid, perm));
-			if (TEST_RETURN != 0)
+			if (TST_RET != 0)
 				tst_brk(TBROK | TTERRNO, "setperm failed");
 		}
 		exit(0);
@@ -186,7 +171,7 @@ static void test_update_setperm_race(void)
 	tst_res(TINFO, "Try to update the 'user' key...");
 	for (i = 0; i < 10000; i++) {
 		TEST(keyctl(KEYCTL_UPDATE, keyid, payload, sizeof(payload)));
-		if (TEST_RETURN != 0 && TEST_ERRNO != EACCES) {
+		if (TST_RET != 0 && TST_ERR != EACCES) {
 			tst_res(TBROK | TTERRNO, "failed to update 'user' key");
 			return;
 		}
@@ -197,8 +182,11 @@ static void test_update_setperm_race(void)
 
 static void do_test(unsigned int i)
 {
-	/* two 0 bytes is accepted as a dns_resolver key payload */
-	static char zeroes[2];
+	/*
+	 * We need to pass check in dns_resolver_preparse(),
+	 * give it dummy server list request.
+	 */
+	static char dns_res_payload[] = { 0x00, 0x00, 0x01, 0xff, 0x00 };
 
 	switch (i) {
 	case 0:
@@ -206,8 +194,8 @@ static void do_test(unsigned int i)
 					 x509_cert, sizeof(x509_cert));
 		break;
 	case 1:
-		test_update_nonupdatable("dns_resolver",
-					 zeroes, sizeof(zeroes));
+		test_update_nonupdatable("dns_resolver", dns_res_payload,
+			sizeof(dns_res_payload));
 		break;
 	case 2:
 		test_update_setperm_race();
@@ -219,4 +207,8 @@ static struct tst_test test = {
 	.tcnt = 3,
 	.test = do_test,
 	.forks_child = 1,
+	.tags = (const struct tst_tag[]) {
+		{"linux-git", "63a0b0509e70"},
+		{}
+	}
 };

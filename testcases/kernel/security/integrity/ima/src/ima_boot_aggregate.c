@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "config.h"
 #include "test.h"
@@ -30,7 +31,7 @@ char *TCID = "ima_boot_aggregate";
 #if HAVE_LIBCRYPTO
 #include <openssl/sha.h>
 
-#define MAX_EVENT_SIZE 500
+#define MAX_EVENT_SIZE (1024*1024)
 #define EVENT_HEADER_SIZE 32
 #define MAX_EVENT_DATA_SIZE (MAX_EVENT_SIZE - EVENT_HEADER_SIZE)
 #define NUM_PCRS 8		/*  PCR registers 0-7 in boot aggregate */
@@ -41,7 +42,7 @@ static void display_sha1_digest(unsigned char *pcr)
 {
 	int i;
 
-	for (i = 0; i < 20; i++)
+	for (i = 0; i < SHA_DIGEST_LENGTH; i++)
 		printf("%02x", *(pcr + i) & 0xff);
 	printf("\n");
 }
@@ -52,11 +53,11 @@ int main(int argc, char *argv[])
 	struct {
 		struct {
 			u_int32_t pcr;
-			int type;
-			unsigned char digest[SHA_DIGEST_LENGTH];
-			u_int16_t len;
-		} header;
-		unsigned char data[MAX_EVENT_DATA_SIZE];
+			u_int32_t type;
+			u_int8_t digest[SHA_DIGEST_LENGTH];
+			u_int32_t len;
+		} header __attribute__ ((packed));
+		char *data;
 	} event;
 	struct {
 		unsigned char digest[SHA_DIGEST_LENGTH];
@@ -80,23 +81,38 @@ int main(int argc, char *argv[])
 	for (i = 0; i < NUM_PCRS; i++)
 		memset(&pcr[i].digest, 0, SHA_DIGEST_LENGTH);
 
+	event.data = malloc(MAX_EVENT_DATA_SIZE);
+	if (!event.data) {
+		printf("Cannot allocate memory\n");
+		return 1;
+	}
+
 	/* Extend the pseudo PCRs with the event digest */
 	while (fread(&event, sizeof(event.header), 1, fp)) {
 		if (debug) {
 			printf("%03u ", event.header.pcr);
 			display_sha1_digest(event.header.digest);
 		}
-		SHA1_Init(&c);
-		SHA1_Update(&c, pcr[event.header.pcr].digest, 20);
-		SHA1_Update(&c, event.header.digest, 20);
-		SHA1_Final(pcr[event.header.pcr].digest, &c);
+
+		if (event.header.pcr < NUM_PCRS) {
+			SHA1_Init(&c);
+			SHA1_Update(&c, pcr[event.header.pcr].digest,
+				    SHA_DIGEST_LENGTH);
+			SHA1_Update(&c, event.header.digest,
+				    SHA_DIGEST_LENGTH);
+			SHA1_Final(pcr[event.header.pcr].digest, &c);
+		}
+
+#if MAX_EVENT_DATA_SIZE < USHRT_MAX
 		if (event.header.len > MAX_EVENT_DATA_SIZE) {
-			printf("Error event too long");
+			printf("Error event too long\n");
 			break;
 		}
+#endif
 		fread(event.data, event.header.len, 1, fp);
 	}
 	fclose(fp);
+	free(event.data);
 
 	/* Extend the boot aggregate with the pseudo PCR digest values */
 	memset(&boot_aggregate, 0, SHA_DIGEST_LENGTH);
@@ -106,7 +122,7 @@ int main(int argc, char *argv[])
 			printf("PCR-%2.2x: ", i);
 			display_sha1_digest(pcr[i].digest);
 		}
-		SHA1_Update(&c, pcr[i].digest, 20);
+		SHA1_Update(&c, pcr[i].digest, SHA_DIGEST_LENGTH);
 	}
 	SHA1_Final(boot_aggregate, &c);
 

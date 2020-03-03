@@ -15,7 +15,6 @@
     4. Call sigwaitinfo() and verify that it returns the signal SIGTOTEST.
  */
 
-#define _XOPEN_SOURCE 600
 #define _XOPEN_REALTIME 1
 #define SIGTOTEST SIGUSR1
 
@@ -26,7 +25,7 @@
 #include <sys/wait.h>
 #include "posixtest.h"
 
-void myhandler(int signo)
+void myhandler(int signo LTP_ATTRIBUTE_UNUSED)
 {
 	printf("Inside handler\n");
 }

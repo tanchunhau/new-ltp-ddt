@@ -10,7 +10,6 @@
  * return error EINTR.
  */
 
-#define _XOPEN_SOURCE 600
 
 #include <stdio.h>
 #include <errno.h>
@@ -30,7 +29,7 @@
 #define CHILDPASS 1
 #define CHILDFAIL 0
 
-void handler(int signo)
+void handler(int signo LTP_ATTRIBUTE_UNUSED)
 {
 	printf("In handler\n");
 }
@@ -39,7 +38,7 @@ int main(void)
 {
 	sem_t mysemp;
 	struct timespec ts;
-	int pid, status;
+	pid_t pid;
 
 	if (sem_init(&mysemp, 0, 1) == -1) {
 		perror(ERROR_PREFIX "sem_init");
@@ -81,7 +80,7 @@ int main(void)
 	} else {		// parent to send a signal to child
 		int i;
 		sleep(1);
-		status = kill(pid, SIGABRT);	// send signal to child
+		(void)kill(pid, SIGABRT);	// send signal to child
 		if (wait(&i) == -1) {
 			perror("Error waiting for child to exit\n");
 			return PTS_UNRESOLVED;

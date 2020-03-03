@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Google, Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program, if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -36,18 +24,18 @@ static void do_test(void)
 	key_serial_t tid_keyring;
 
 	TEST(keyctl(KEYCTL_GET_KEYRING_ID, KEY_SPEC_THREAD_KEYRING, 1));
-	if (TEST_RETURN < 0)
+	if (TST_RET < 0)
 		tst_brk(TBROK | TTERRNO, "failed to create thread keyring");
-	tid_keyring = TEST_RETURN;
+	tid_keyring = TST_RET;
 
 	TEST(keyctl(KEYCTL_SET_REQKEY_KEYRING, KEY_REQKEY_DEFL_THREAD_KEYRING));
-	if (TEST_RETURN < 0)
+	if (TST_RET < 0)
 		tst_brk(TBROK | TTERRNO, "failed to set reqkey keyring");
 
 	TEST(keyctl(KEYCTL_GET_KEYRING_ID, KEY_SPEC_THREAD_KEYRING, 0));
-	if (TEST_RETURN < 0)
+	if (TST_RET < 0)
 		tst_brk(TBROK | TTERRNO, "failed to get thread keyring ID");
-	if (TEST_RETURN == tid_keyring)
+	if (TST_RET == tid_keyring)
 		tst_res(TPASS, "thread keyring was not leaked");
 	else
 		tst_res(TFAIL, "thread keyring was leaked!");
@@ -55,4 +43,9 @@ static void do_test(void)
 
 static struct tst_test test = {
 	.test_all = do_test,
+	.tags = (const struct tst_tag[]) {
+		{"CVE", "2017-7472"},
+		{"linux-git", "c9f838d104fe"},
+		{}
+	}
 };

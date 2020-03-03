@@ -1,24 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2013 SUSE.  All Rights Reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * Further, this software is distributed without any warranty that it is
- * free of the rightful claim of any third person regarding infringement
- * or the like.  Any license provided herein, whether implied or
- * otherwise, applies only to this software file.  Patent licenses, if
- * any, provided herein do not apply to combinations of this program with
- * other software, or any other product whatsoever.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * Started by Jan Kara <jack@suse.cz>
  *
@@ -50,26 +32,87 @@
 #define BUF_SIZE 256
 #define TST_TOTAL 12
 
+#define MOUNT_PATH "fs_mnt"
+
+static struct tcase {
+	const char *tname;
+	struct fanotify_mark_type mark;
+	unsigned int init_flags;
+} tcases[] = {
+	{
+		"inode mark events",
+		INIT_FANOTIFY_MARK_TYPE(INODE),
+		FAN_CLASS_NOTIF
+	},
+	{
+		"mount mark events",
+		INIT_FANOTIFY_MARK_TYPE(MOUNT),
+		FAN_CLASS_NOTIF
+	},
+	{
+		"filesystem mark events",
+		INIT_FANOTIFY_MARK_TYPE(FILESYSTEM),
+		FAN_CLASS_NOTIF
+	},
+	{
+		"inode mark events (FAN_REPORT_FID)",
+		INIT_FANOTIFY_MARK_TYPE(INODE),
+		FAN_CLASS_NOTIF|FAN_REPORT_FID
+	},
+	{
+		"mount mark events (FAN_REPORT_FID)",
+		INIT_FANOTIFY_MARK_TYPE(MOUNT),
+		FAN_CLASS_NOTIF|FAN_REPORT_FID
+	},
+	{
+		"filesystem mark events (FAN_REPORT_FID)",
+		INIT_FANOTIFY_MARK_TYPE(FILESYSTEM),
+		FAN_CLASS_NOTIF|FAN_REPORT_FID
+	},
+};
+
 static char fname[BUF_SIZE];
 static char buf[BUF_SIZE];
-static int fd, fd_notify;
+static int fd_notify;
 
 static unsigned long long event_set[EVENT_MAX];
 
 static char event_buf[EVENT_BUF_LEN];
 
-void test01(void)
+static void test_fanotify(unsigned int n)
 {
-	int ret, len, i = 0, test_num = 0;
-
+	struct tcase *tc = &tcases[n];
+	struct fanotify_mark_type *mark = &tc->mark;
+	int fd, ret, len, i = 0, test_num = 0;
 	int tst_count = 0;
 
-	if (fanotify_mark(fd_notify, FAN_MARK_ADD, FAN_ACCESS | FAN_MODIFY |
-			    FAN_CLOSE | FAN_OPEN, AT_FDCWD, fname) < 0) {
+	tst_res(TINFO, "Test #%d: %s", n, tc->tname);
+
+	fd_notify = fanotify_init(tc->init_flags, O_RDONLY);
+	if (fd_notify < 0) {
+		if (errno == EINVAL &&
+		    (tc->init_flags & FAN_REPORT_FID)) {
+			tst_res(TCONF,
+				"FAN_REPORT_FID not supported in kernel?");
+			return;
+		}
 		tst_brk(TBROK | TERRNO,
-		    "fanotify_mark (%d, FAN_MARK_ADD, FAN_ACCESS | "
-		    "FAN_MODIFY | FAN_CLOSE | FAN_OPEN, AT_FDCWD, %s) "
-		    "failed", fd_notify, fname);
+			"fanotify_init (0x%x, O_RDONLY) "
+			"failed", tc->init_flags);
+	}
+
+	if (fanotify_mark(fd_notify, FAN_MARK_ADD | mark->flag,
+			  FAN_ACCESS | FAN_MODIFY | FAN_CLOSE | FAN_OPEN,
+			  AT_FDCWD, fname) < 0) {
+		if (errno == EINVAL && mark->flag == FAN_MARK_FILESYSTEM) {
+			tst_res(TCONF,
+				"FAN_MARK_FILESYSTEM not supported in kernel?");
+			return;
+		}
+		tst_brk(TBROK | TERRNO,
+			"fanotify_mark (%d, FAN_MARK_ADD, FAN_ACCESS | %s | "
+			"FAN_MODIFY | FAN_CLOSE | FAN_OPEN, AT_FDCWD, %s) "
+			"failed", fd_notify, mark->name, fname);
 	}
 
 	/*
@@ -119,12 +162,12 @@ void test01(void)
 
 	/* Ignore access events */
 	if (fanotify_mark(fd_notify,
-			    FAN_MARK_ADD | FAN_MARK_IGNORED_MASK,
-			    FAN_ACCESS, AT_FDCWD, fname) < 0) {
+			  FAN_MARK_ADD | mark->flag | FAN_MARK_IGNORED_MASK,
+			  FAN_ACCESS, AT_FDCWD, fname) < 0) {
 		tst_brk(TBROK | TERRNO,
-		     "fanotify_mark (%d, FAN_MARK_ADD | "
-		     "FAN_MARK_IGNORED_MASK, FAN_ACCESS, "
-		     "AT_FDCWD, %s) failed", fd_notify, fname);
+			"fanotify_mark (%d, FAN_MARK_ADD | %s | "
+			"FAN_MARK_IGNORED_MASK, FAN_ACCESS, AT_FDCWD, %s) "
+			"failed", fd_notify, mark->name, fname);
 	}
 
 	fd = SAFE_OPEN(fname, O_RDWR);
@@ -168,15 +211,14 @@ void test01(void)
 	 * Now ignore open & close events regardless of file
 	 * modifications
 	 */
-	if (fanotify_mark(fd_notify,
-			    FAN_MARK_ADD | FAN_MARK_IGNORED_MASK | FAN_MARK_IGNORED_SURV_MODIFY,
-			    FAN_OPEN | FAN_CLOSE, AT_FDCWD, fname) < 0) {
+	if (fanotify_mark(fd_notify, FAN_MARK_ADD | mark->flag |
+			  FAN_MARK_IGNORED_MASK | FAN_MARK_IGNORED_SURV_MODIFY,
+			  FAN_OPEN | FAN_CLOSE, AT_FDCWD, fname) < 0) {
 		tst_brk(TBROK | TERRNO,
-		     "fanotify_mark (%d, FAN_MARK_ADD | "
-		     "FAN_MARK_IGNORED_MASK | "
-		     "FAN_MARK_IGNORED_SURV_MODIFY, FAN_OPEN | "
-		     "FAN_CLOSE, AT_FDCWD, %s) failed", fd_notify,
-		     fname);
+			"fanotify_mark (%d, FAN_MARK_ADD | %s | "
+			"FAN_MARK_IGNORED_MASK | FAN_MARK_IGNORED_SURV_MODIFY, "
+			"FAN_OPEN | FAN_CLOSE, AT_FDCWD, %s) failed",
+			fd_notify, mark->name, fname);
 	}
 
 	/* This event should be ignored */
@@ -199,13 +241,13 @@ void test01(void)
 
 	/* Now remove open and close from ignored mask */
 	if (fanotify_mark(fd_notify,
-			    FAN_MARK_REMOVE | FAN_MARK_IGNORED_MASK,
-			    FAN_OPEN | FAN_CLOSE, AT_FDCWD, fname) < 0) {
+			  FAN_MARK_REMOVE | mark->flag | FAN_MARK_IGNORED_MASK,
+			  FAN_OPEN | FAN_CLOSE, AT_FDCWD, fname) < 0) {
 		tst_brk(TBROK | TERRNO,
-		     "fanotify_mark (%d, FAN_MARK_REMOVE | "
-		     "FAN_MARK_IGNORED_MASK, FAN_OPEN | "
-		     "FAN_CLOSE, AT_FDCWD, %s) failed", fd_notify,
-		     fname);
+			"fanotify_mark (%d, FAN_MARK_REMOVE | %s | "
+			"FAN_MARK_IGNORED_MASK, FAN_OPEN | FAN_CLOSE, "
+			"AT_FDCWD, %s) failed", fd_notify,
+			mark->name, fname);
 	}
 
 	SAFE_CLOSE(fd);
@@ -219,8 +261,8 @@ void test01(void)
 
 	if (TST_TOTAL != tst_count) {
 		tst_brk(TBROK,
-			 "TST_TOTAL (%d) and tst_count (%d) are not "
-			 "equal", TST_TOTAL, tst_count);
+			"TST_TOTAL (%d) and tst_count (%d) are not "
+			"equal", TST_TOTAL, tst_count);
 	}
 	tst_count = 0;
 
@@ -233,51 +275,52 @@ void test01(void)
 		event = (struct fanotify_event_metadata *)&event_buf[i];
 		if (test_num >= TST_TOTAL) {
 			tst_res(TFAIL,
-				 "get unnecessary event: mask=%llx "
-				 "pid=%u fd=%u",
-				 (unsigned long long)event->mask,
-				 (unsigned)event->pid, event->fd);
+				"got unnecessary event: mask=%llx "
+				"pid=%u fd=%d",
+				(unsigned long long)event->mask,
+				(unsigned)event->pid, event->fd);
 		} else if (!(event->mask & event_set[test_num])) {
 			tst_res(TFAIL,
-				 "get event: mask=%llx (expected %llx) "
-				 "pid=%u fd=%u",
-				 (unsigned long long)event->mask,
-				 event_set[test_num],
-				 (unsigned)event->pid, event->fd);
+				"got event: mask=%llx (expected %llx) "
+				"pid=%u fd=%d",
+				(unsigned long long)event->mask,
+				event_set[test_num],
+				(unsigned)event->pid, event->fd);
 		} else if (event->pid != getpid()) {
 			tst_res(TFAIL,
-				 "get event: mask=%llx pid=%u "
-				 "(expected %u) fd=%u",
-				 (unsigned long long)event->mask,
-				 (unsigned)event->pid,
-				 (unsigned)getpid(),
-				 event->fd);
+				"got event: mask=%llx pid=%u "
+				"(expected %u) fd=%d",
+				(unsigned long long)event->mask,
+				(unsigned)event->pid,
+				(unsigned)getpid(),
+				event->fd);
 		} else {
-			if (event->fd == -2)
+			if (event->fd == -2 || (event->fd == FAN_NOFD &&
+			    (tc->init_flags & FAN_REPORT_FID)))
 				goto pass;
 			ret = read(event->fd, buf, BUF_SIZE);
 			if (ret != (int)strlen(fname)) {
 				tst_res(TFAIL,
-					 "cannot read from returned fd "
-					 "of event: mask=%llx pid=%u "
-					 "fd=%u ret=%d (errno=%d)",
-					 (unsigned long long)event->mask,
-					 (unsigned)event->pid,
-					 event->fd, ret, errno);
+					"cannot read from returned fd "
+					"of event: mask=%llx pid=%u "
+					"fd=%d ret=%d (errno=%d)",
+					(unsigned long long)event->mask,
+					(unsigned)event->pid,
+					event->fd, ret, errno);
 			} else if (memcmp(buf, fname, strlen(fname))) {
 				tst_res(TFAIL,
-					 "wrong data read from returned fd "
-					 "of event: mask=%llx pid=%u "
-					 "fd=%u",
-					 (unsigned long long)event->mask,
-					 (unsigned)event->pid,
-					 event->fd);
+					"wrong data read from returned fd "
+					"of event: mask=%llx pid=%u "
+					"fd=%d",
+					(unsigned long long)event->mask,
+					(unsigned)event->pid,
+					event->fd);
 			} else {
 pass:
 				tst_res(TPASS,
-				    "get event: mask=%llx pid=%u fd=%u",
-				    (unsigned long long)event->mask,
-				    (unsigned)event->pid, event->fd);
+					"got event: mask=%llx pid=%u fd=%d",
+					(unsigned long long)event->mask,
+					(unsigned)event->pid, event->fd);
 			}
 		}
 		/*
@@ -285,7 +328,8 @@ pass:
 		 * invalidate it so that we don't check it again
 		 * unnecessarily
 		 */
-		close(event->fd);
+		if (event->fd >= 0)
+			SAFE_CLOSE(event->fd);
 		event->fd = -2;
 		event->mask &= ~event_set[test_num];
 		/* No events left in current mask? Go for next event */
@@ -296,28 +340,32 @@ pass:
 	}
 	for (; test_num < TST_TOTAL; test_num++) {
 		tst_res(TFAIL, "didn't get event: mask=%llx",
-			 event_set[test_num]);
+			event_set[test_num]);
 
 	}
 	/* Remove mark to clear FAN_MARK_IGNORED_SURV_MODIFY */
-	if (fanotify_mark(fd_notify, FAN_MARK_REMOVE, FAN_ACCESS | FAN_MODIFY |
-			    FAN_CLOSE | FAN_OPEN, AT_FDCWD, fname) < 0) {
+	if (fanotify_mark(fd_notify, FAN_MARK_REMOVE | mark->flag,
+			  FAN_ACCESS | FAN_MODIFY | FAN_CLOSE | FAN_OPEN,
+			  AT_FDCWD, fname) < 0) {
 		tst_brk(TBROK | TERRNO,
-		    "fanotify_mark (%d, FAN_MARK_REMOVE, FAN_ACCESS | "
-		    "FAN_MODIFY | FAN_CLOSE | FAN_OPEN, AT_FDCWD, %s) "
-		    "failed", fd_notify, fname);
+			"fanotify_mark (%d, FAN_MARK_REMOVE | %s, FAN_ACCESS | "
+			"FAN_MODIFY | FAN_CLOSE | FAN_OPEN, AT_FDCWD, %s) "
+			"failed", fd_notify, mark->name, fname);
 	}
+
+	SAFE_CLOSE(fd_notify);
 }
 
 static void setup(void)
 {
-	sprintf(fname, "tfile_%d", getpid());
-	fd = SAFE_OPEN(fname, O_RDWR | O_CREAT, 0700);
-	SAFE_WRITE(1, fd, fname, 1);
-	/* close the file we have open */
+	int fd;
+
+	/* Check for kernel fanotify support */
+	fd = SAFE_FANOTIFY_INIT(FAN_CLASS_NOTIF, O_RDONLY);
 	SAFE_CLOSE(fd);
 
-	fd_notify = SAFE_FANOTIFY_INIT(FAN_CLASS_NOTIF, O_RDONLY);
+	sprintf(fname, MOUNT_PATH"/tfile_%d", getpid());
+	SAFE_FILE_PRINTF(fname, "1");
 }
 
 static void cleanup(void)
@@ -327,11 +375,13 @@ static void cleanup(void)
 }
 
 static struct tst_test test = {
-	.test_all = test01,
+	.test = test_fanotify,
+	.tcnt = ARRAY_SIZE(tcases),
 	.setup = setup,
 	.cleanup = cleanup,
-	.needs_tmpdir = 1,
-	.needs_root = 1
+	.needs_root = 1,
+	.mount_device = 1,
+	.mntpoint = MOUNT_PATH,
 };
 
 #else
