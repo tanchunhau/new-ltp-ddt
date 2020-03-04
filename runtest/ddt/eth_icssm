@@ -1,0 +1,19 @@
+# @name ICSSM Driver Functional Tests
+# @desc This file contains functional tests for ICSSM ethernet driver 
+# @requires net
+# @setup_requires icssm
+
+### Ping tests ###
+ETH-ICSSM_XS_FUNC_PING_ALL source 'common.sh'; eth_multi_ping.sh -i 2 -d "icssm" -a 
+
+ETH-ICSSM_S_FUNC_PING_300S_ALL source 'common.sh'; eth_multi_ping.sh -i 1 -t 300 -d "icssm" -a 
+
+ETH-ICSSM_M_FUNC_PING_1800S_ALL source 'common.sh'; eth_multi_ping.sh -i 1 -t 1800 -d "icssm" -a 
+
+ETH-ICSSM_M_STRESS_PING_MULTI_PKT_SIZES_ALL source 'common.sh'; for size in 128 512 1024 4096 8192 16384; do eth_multi_ping.sh -i 2 -p $size -d "icssm" -a; done 
+
+### MAC Config test ###
+ETH-ICSSM_XS_FUNC_MAC_CONFIG_ALL source 'common.sh'; eth_multi_mac_config.sh -i 1 -d "icssm" -a
+
+### MTU Test ###
+ETH-ICSSM_XS_FUNC_MTU_CONFIG source 'common.sh'; iface=`get_test_iface_by_driver.sh -d "icssm"` || die "error getting eth interface name"; do_cmd "ifconfig ${iface} mtu 512"; test_mtu=`ifconfig ${iface} | grep 512`; echo test_mtu: ${test_mtu}; do_cmd "ifconfig ${iface} mtu 1500"; if [ -z "${test_mtu}" ]; then die "MTU was not changed!"; fi; 

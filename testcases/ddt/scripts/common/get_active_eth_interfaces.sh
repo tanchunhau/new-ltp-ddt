@@ -29,7 +29,7 @@ j=0
 for device in `find /sys/class/net/*eth*`                                       
 do                                                                              
   interface=`echo $device | cut -c16-`                                          
-  if [[ "`cat /sys/class/net/$interface/operstate`" == "up" ]]
+  if [[ "`cat /sys/class/net/$interface/operstate`" != "down" ]]
   then
     int_name[j]=$interface                                                        
     j+=1
