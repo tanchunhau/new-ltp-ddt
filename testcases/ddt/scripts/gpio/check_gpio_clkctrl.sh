@@ -63,11 +63,11 @@ case $MACHINE in
   ;;
   dra7xx-evm|dra72x-evm) 
     #gpio_banks="0:0x4AE07838 1:0x4A009760" # 0=>CM_WKUPAON_GPIO1_CLKCTRL; 1=>CM_L4PER_GPIO2_CLKCTRL
-    gpio_banks="1:0x4A009760" # 0=>CM_WKUPAON_GPIO1_CLKCTRL; 1=>CM_L4PER_GPIO2_CLKCTRL
+    gpio_banks="2:0x4A009818" # 0=>CM_WKUPAON_GPIO1_CLKCTRL; 1=>CM_L4PER_GPIO2_CLKCTRL
   ;;
   am57xx-evm)
     #gpio_banks="0:0x4AE07838 2:0x4A009768"
-    gpio_banks="2:0x4A009768"
+    gpio_banks="2:0x4A009818"
   ;;
   am574x-idk|am572x-idk)
     #gpio_banks="0:0x4AE07838 2:0x4A009768"
