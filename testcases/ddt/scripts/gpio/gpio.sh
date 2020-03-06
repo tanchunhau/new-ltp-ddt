@@ -102,35 +102,27 @@ test_print_trc "SYSFS_TESTCASE:${SYSFS_TESTCASE}"
 
 do_cmd "cat /sys/kernel/debug/gpio"
 
-# GPIO_NUM_IN_BANKS is gpio_num_in_bank collection. The numbers corresponds to 
-# bank number. Ex, GPIO_NUM_IN_BANKS="0,15,10,8" means gpio pins to be tested 
-# are pin0 for bank 0; pin 15 for bank 1; pin 10 for bank 2 and so on.
-# You may also skip gpio banks. Ex, you may specify GPIO_NUM_IN_BANKS="0,,10,8"
-# to skip testing gpio bank 1.
 case $MACHINE in
   am180x-evm|omapl138-lcdk) 
-    GPIO_NUM_IN_BANKS="0,15,10,8,8,8,8,4,12"
+    gpio_nums="368,399,426,484,511"
   ;;
   am335x-*|beaglebone|beaglebone-black)
-    GPIO_NUM_IN_BANKS="31,8,0,2"
+    gpio_nums="31,40,64,98"
   ;;
   am335x-sk)
-    GPIO_NUM_IN_BANKS="3,8,1,15"
-  ;;
-  omap5-evm)
-    GPIO_NUM_IN_BANKS="0,15,10,8,8,8,8,4"
+    gpio_nums="3,40,65,101"
   ;;
   beagleboard)
-    GPIO_NUM_IN_BANKS="26,6,6,19,0,1"
+    gpio_nums="26,38,70,115"
   ;;
   k2hk-evm|k2e-evm|k2l-evm)
-    GPIO_NUM_IN_BANKS="6,8"
+    gpio_nums="448,480"
   ;;
   am654x-evm|am654x-idk|j7*)
-    GPIO_NUM_IN_BANKS="0,0,0"
+    gpio_nums="254,344,440"
   ;;
   k2g-evm)
-    GPIO_NUM_IN_BANKS="6,9,1,0"
+    gpio_nums="346,281,484"
     if [[ "$MACHINE" == "k2g-evm" ]]; then
       # Based on k2g datasheet
       # gpio0_6
@@ -160,15 +152,13 @@ case $MACHINE in
     fi
   ;;
   dra7xx-evm|am572x-idk|am571x-idk|am574x-idk) 
-    # bank number starts from 1 and total 8 banks
-    GPIO_NUM_IN_BANKS="22,29,0,1,0,17,0,0"
+    gpio_nums="22,29,0,1,0,17,0,0"
   ;;
   am57xx-evm)
-    # bank number starts from 1 and total 8 banks
-    GPIO_NUM_IN_BANKS="22,29,0,0,0,14,0,0"
+    gpio_nums="22,29,0,0,0,14,0,0"
   ;;
   am43xx-epos|am43xx-gpevm|am437x-idk)
-    GPIO_NUM_IN_BANKS="0,0,31"
+    gpio_nums="0,32,95"
   ;;
   *)
     die "The gpio numbers are not specified for this platform $MACHINE"
@@ -177,28 +167,10 @@ esac
 
 OIFS=$IFS
 IFS=","
-BANK_NUM=0
-for GPIO_NUM_IN_BANK in $GPIO_NUM_IN_BANKS; do
-  if [ -n "$GPIO_NUM_IN_BANK" ]; then
+for gpio_num in $gpio_nums; do
 
-    # get gpio number based on bank number and gpio number in bank
-    GPIO_NUM=$((${BANK_NUM}*32+${GPIO_NUM_IN_BANK}))
     EXTRA_PARAMS=""
-    case $MACHINE in
-      am180x-evm|omapl138-lcdk)  
-        GPIO_NUM=$((${BANK_NUM}*16+${GPIO_NUM_IN_BANK}))
-        GPIO_PIN_STRING="DA850_GPIO${BANK_NUM}_${GPIO_NUM_IN_BANK}"
-        EXTRA_PARAMS="gpio_pin_string=${GPIO_PIN_STRING}"
-      ;;
-      k2*-evm)
-        GPIO_NUM=$((${BANK_NUM}*16+${GPIO_NUM_IN_BANK})) 
-      ;;
-    esac
-
-    test_print_trc "BANK_NUM:${BANK_NUM}"
-    test_print_trc "GPIO_NUM_in_Bank:${GPIO_NUM_IN_BANK}"
-    test_print_trc "GPIO_NUM:${GPIO_NUM}"
-    test_print_trc "GPIO_PIN_STRING:${GPIO_PIN_STRING}"
+    test_print_trc "gpio_num:${gpio_num}"
 
     if [ "$TEST_INTERRUPT" = "1" ]; then
       do_cmd lsmod | grep gpio_test
@@ -210,8 +182,8 @@ for GPIO_NUM_IN_BANK in $GPIO_NUM_IN_BANKS; do
     fi
 
     if [ -n "$SYSFS_TESTCASE" ]; then
-      if [ -e /sys/class/gpio/gpio"$GPIO_NUM" ]; then
-        do_cmd "echo ${GPIO_NUM} > /sys/class/gpio/unexport"
+      if [ -e /sys/class/gpio/gpio"$gpio_num" ]; then
+        do_cmd "echo ${gpio_num} > /sys/class/gpio/unexport"
         do_cmd ls /sys/class/gpio
         sleep 1
       fi
@@ -222,8 +194,8 @@ for GPIO_NUM_IN_BANK in $GPIO_NUM_IN_BANKS; do
       do_cmd "cat /proc/interrupts"
       # wait TIMEOUT for app to finish; if not finished by TIMEOUT, kill it
       # gpio_test module return sucessfully only after the interrupt complete.
-      # do_cmd "timeout 30 insmod ddt/gpio_test.ko gpio_num=${GPIO_NUM} test_loop=${TEST_LOOP} ${EXTRA_PARAMS}"
-      ( do_cmd insmod ddt/gpio_test.ko gpio_num=${GPIO_NUM} test_loop=${TEST_LOOP} ${EXTRA_PARAMS} ) & pid=$!
+      # do_cmd "timeout 30 insmod ddt/gpio_test.ko gpio_num=${gpio_num} test_loop=${TEST_LOOP} ${EXTRA_PARAMS}"
+      ( do_cmd insmod ddt/gpio_test.ko gpio_num=${gpio_num} test_loop=${TEST_LOOP} ${EXTRA_PARAMS} ) & pid=$!
       sleep 5; kill -9 $pid
       wait $pid
       if [ $? -ne 0 ]; then
@@ -246,87 +218,83 @@ for GPIO_NUM_IN_BANK in $GPIO_NUM_IN_BANKS; do
       i=0
       while [ $i -lt $TEST_LOOP ]; do 
         test_print_trc "===LOOP: $i==="
-        do_cmd "echo ${GPIO_NUM} > /sys/class/gpio/export"
+        do_cmd "echo ${gpio_num} > /sys/class/gpio/export"
         do_cmd ls /sys/class/gpio
-        if [ -e /sys/class/gpio/gpio"$GPIO_NUM" ]; then
+        if [ -e /sys/class/gpio/gpio"$gpio_num" ]; then
           case "$SYSFS_TESTCASE" in
           neg_reserve)
             test_print_trc "Try to reserve the same gpio again"
-            test_print_trc "echo ${GPIO_NUM} > /sys/class/gpio/export"
-            echo ${GPIO_NUM} > /sys/class/gpio/export
+            test_print_trc "echo ${gpio_num} > /sys/class/gpio/export"
+            echo ${gpio_num} > /sys/class/gpio/export
             if [ $? -eq 0 ]; then
-              die "gpio should not be able to reserve gpio ${GPIO_NUM} which is already being reserved"
+              die "gpio should not be able to reserve gpio ${gpio_num} which is already being reserved"
             fi
             ;;
           out)
-            gpio_sysentry_set_item "$GPIO_NUM" "direction" "out"  
+            gpio_sysentry_set_item "$gpio_num" "direction" "out"  
             if [ $? -ne 0 ]; then
-              die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to out"
+              die "gpio_sysentry_set_item failed to set ${gpio_num} to out"
             fi
-            gpio_sysentry_set_item "$GPIO_NUM" "value" "0"
+            gpio_sysentry_set_item "$gpio_num" "value" "0"
             if [ $? -ne 0 ]; then
-              die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to 0"
+              die "gpio_sysentry_set_item failed to set ${gpio_num} to 0"
             fi
-            gpio_sysentry_set_item "$GPIO_NUM" "value" "1"
+            gpio_sysentry_set_item "$gpio_num" "value" "1"
             if [ $? -ne 0 ]; then
-              die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to 1"
+              die "gpio_sysentry_set_item failed to set ${gpio_num} to 1"
             fi
             ;;
           in)
-            gpio_sysentry_set_item "$GPIO_NUM" "direction" "in" || die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to in"
-            VAL=`gpio_sysentry_get_item "$GPIO_NUM" "value"` || die "gpio_sysentry_set_item failed to get the value of ${GPIO_NUM} " 
-            test_print_trc "The value is ${VAL} for $GPIO_NUM" 
+            gpio_sysentry_set_item "$gpio_num" "direction" "in" || die "gpio_sysentry_set_item failed to set ${gpio_num} to in"
+            VAL=`gpio_sysentry_get_item "$gpio_num" "value"` || die "gpio_sysentry_set_item failed to get the value of ${gpio_num} " 
+            test_print_trc "The value is ${VAL} for $gpio_num" 
             ;;
           edge)
-            gpio_sysentry_set_item "$GPIO_NUM" "direction" "in" || die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to in"
-            gpio_sysentry_set_item "$GPIO_NUM" "edge" "falling"
+            gpio_sysentry_set_item "$gpio_num" "direction" "in" || die "gpio_sysentry_set_item failed to set ${gpio_num} to in"
+            gpio_sysentry_set_item "$gpio_num" "edge" "falling"
             if [ $? -ne 0 ]; then
-              die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to falling"
+              die "gpio_sysentry_set_item failed to set ${gpio_num} to falling"
             fi
-            gpio_sysentry_set_item "$GPIO_NUM" "edge" "rising"
+            gpio_sysentry_set_item "$gpio_num" "edge" "rising"
             if [ $? -ne 0 ]; then
-              die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to rising"
+              die "gpio_sysentry_set_item failed to set ${gpio_num} to rising"
             fi
-            gpio_sysentry_set_item "$GPIO_NUM" "edge" "both"
+            gpio_sysentry_set_item "$gpio_num" "edge" "both"
             if [ $? -ne 0 ]; then
-              die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to both"
+              die "gpio_sysentry_set_item failed to set ${gpio_num} to both"
             fi
             ;;
           pm_context_restore)
-            gpio_sysentry_set_item "$GPIO_NUM" "direction" "out" || die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to out"
-            gpio_sysentry_set_item "$GPIO_NUM" "value" "1" || die "gpio_sysentry_set_item failed to set ${GPIO_NUM} to 1"
-            VAL_BEFORE=`gpio_sysentry_get_item "$GPIO_NUM" "value"` || die "gpio_sysentry_set_item failed to get the value of ${GPIO_NUM} " 
-            test_print_trc "The value was ${VAL_BEFORE} for $GPIO_NUM before suspend" 
+            gpio_sysentry_set_item "$gpio_num" "direction" "out" || die "gpio_sysentry_set_item failed to set ${gpio_num} to out"
+            gpio_sysentry_set_item "$gpio_num" "value" "1" || die "gpio_sysentry_set_item failed to set ${gpio_num} to 1"
+            VAL_BEFORE=`gpio_sysentry_get_item "$gpio_num" "value"` || die "gpio_sysentry_set_item failed to get the value of ${gpio_num} " 
+            test_print_trc "The value was ${VAL_BEFORE} for $gpio_num before suspend" 
     
             simple_suspend_w_stats 'mem' 10 2
             
             # check if the value is still the same as the one before suspend
-            VAL_AFTER=`gpio_sysentry_get_item "$GPIO_NUM" "value"` || die "gpio_sysentry_set_item failed to get the value of ${GPIO_NUM} " 
-            test_print_trc "The value was ${VAL_AFTER} for $GPIO_NUM after suspend" 
+            VAL_AFTER=`gpio_sysentry_get_item "$gpio_num" "value"` || die "gpio_sysentry_set_item failed to get the value of ${gpio_num} " 
+            test_print_trc "The value was ${VAL_AFTER} for $gpio_num after suspend" 
 
             # compare 
             if [ $VAL_BEFORE -ne $VAL_AFTER ]; then
-              die "The value for gpio $GPIO_NUM is different before and after suspend"
+              die "The value for gpio $gpio_num is different before and after suspend"
             else
               test_print_trc "The values are the same before and after"
             fi
             ;;
           esac
         else
-          die "/sys/class/gpio/gpio${GPIO_NUM} does not exist!"
+          die "/sys/class/gpio/gpio${gpio_num} does not exist!"
         fi
 
         # remove gpio sys entry
-        do_cmd "echo ${GPIO_NUM} > /sys/class/gpio/unexport" 
+        do_cmd "echo ${gpio_num} > /sys/class/gpio/unexport" 
         do_cmd "ls /sys/class/gpio/"
 
         i=`expr $i + 1`
       done  # while loop
     fi
 
-  else
-    test_print_trc "Skip gpio bank: $BANK_NUM"
-  fi # [ -n "$GPIO_NUM_IN_BANK" ]
-  BANK_NUM=`expr $BANK_NUM + 1`
 done
 IFS=$OIFS
