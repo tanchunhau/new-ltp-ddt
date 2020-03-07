@@ -69,7 +69,6 @@ endif
 endef
 
 COMMON_TARGETS    += tools testcases/ddt 
-COMMON_TARGETS    += testcases/kernel/timers
 COMMON_TARGETS    += testcases/kernel/ipc
 COMMON_TARGETS    += testcases/kernel/mem
 COMMON_TARGETS    += testcases/kernel/lib
