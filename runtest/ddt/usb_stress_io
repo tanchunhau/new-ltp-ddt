@@ -16,5 +16,5 @@ USB_L_STRESS_ISO_IN source 'common.sh' ; do_cmd install_modules.sh 'usb'; check_
 
 USB_L_STRESS_HALT source 'common.sh' ; do_cmd install_modules.sh 'usb'; check_config_options "m" CONFIG_USB_TEST; check_config_options "m" CONFIG_USB_ZERO; do_cmd modprobe -r g_zero; do_cmd modprobe -r usbtest; do_cmd modprobe usbtest; do_cmd modprobe g_zero; do_cmd sleep 2; do_cmd usb_test.sh -t halt
 
-USB_L_STRESS_UNLINK source 'common.sh' ; do_cmd install_modules.sh 'usb'; check_config_options "m" CONFIG_USB_TEST; check_config_options "m" CONFIG_USB_ZERO; do_cmd modprobe -r g_zero; do_cmd modprobe -r usbtest; do_cmd modprobe usbtest; do_cmd modprobe g_zero; do_cmd sleep 2; do_cmd "timeout -t 200 usb_test.sh -t unlink"
+USB_L_STRESS_UNLINK source 'common.sh' ; do_cmd install_modules.sh 'usb'; check_config_options "m" CONFIG_USB_TEST; check_config_options "m" CONFIG_USB_ZERO; do_cmd modprobe -r g_zero; do_cmd modprobe -r usbtest; do_cmd modprobe usbtest; do_cmd modprobe g_zero; do_cmd sleep 2; do_cmd "timeout 200 usb_test.sh -t unlink"
 

@@ -2,4 +2,4 @@
 # @desc RTC Alarm set,get, enable and disable ioctl test
 # @requires rtc 
 
-RTC_S_FUNC_ALARM_0001 source 'common.sh'; do_cmd install_modules.sh 'rtc' ; DEV_NODE=`get_devnode.sh "rtc"` || die "error getting devnode for rtc"; FAIL_STRING="FAIL FOR "; FAIL_COUNT=0; for rtc_node in ${DEV_NODE[@]}; do cmd=`timeout -t 40 rtc_tests -device $rtc_node -ioctltest alarm -ioctltestarg 30`; OUT=$cmd; if [[ "$OUT" =~ "|TEST RESULT|PASS" ]]; then echo "PASSED TEST for $rtc_node"; else FAIL_COUNT=$FAIL_COUNT+1; FAIL_STRING="$FAIL_STRING$rtc_node "; fi; done; if [[ $FAIL_COUNT > 0 ]]; then die ""$FAIL_STRING""; fi 
+RTC_S_FUNC_ALARM_0001 source 'common.sh'; do_cmd install_modules.sh 'rtc' ; DEV_NODE=`get_devnode.sh "rtc"` || die "error getting devnode for rtc"; FAIL_STRING="FAIL FOR "; FAIL_COUNT=0; for rtc_node in ${DEV_NODE[@]}; do cmd=`timeout 40 rtc_tests -device $rtc_node -ioctltest alarm -ioctltestarg 30`; OUT=$cmd; if [[ "$OUT" =~ "|TEST RESULT|PASS" ]]; then echo "PASSED TEST for $rtc_node"; else FAIL_COUNT=$FAIL_COUNT+1; FAIL_STRING="$FAIL_STRING$rtc_node "; fi; done; if [[ $FAIL_COUNT > 0 ]]; then die ""$FAIL_STRING""; fi

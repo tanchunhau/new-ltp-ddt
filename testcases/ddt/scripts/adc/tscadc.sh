@@ -31,5 +31,5 @@ test_continous_mode() {
         sleep $((buffer/10 + 1))
         echo 0 > /sys/bus/iio/devices/iio\:device0/buffer/enable || die "Error stopping continuous mode"
         total=$((buffer * n * 2))
-        timeout -t $((buffer/10 + 2)) hexdump -n $total -C /dev/iio:device0 || die "Timeout waiting for expected number of samples to be read"
+        timeout $((buffer/10 + 2)) hexdump -n $total -C /dev/iio:device0 || die "Timeout waiting for expected number of samples to be read"
 }
