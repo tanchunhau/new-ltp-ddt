@@ -27,9 +27,6 @@
 * The test fails if the priority is changed and an error returned.
 */
 
-/* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
-
 /******************************************************************************/
 /*********************** standard includes ************************************/
 /******************************************************************************/
@@ -110,7 +107,7 @@ void check_param(pthread_t thread, int policy, int priority)
 }
 
 /* thread function */
-void *threaded(void *arg)
+void *threaded(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int ret = 0;
 

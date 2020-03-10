@@ -16,7 +16,6 @@
         of sigaltstack.
 */
 
-#define _XOPEN_SOURCE 600
 
 #include <signal.h>
 #include <stdio.h>
@@ -25,7 +24,7 @@
 
 stack_t alt_ss;
 
-void handler(int signo)
+void handler(int signo LTP_ATTRIBUTE_UNUSED)
 {
 	stack_t ss;
 

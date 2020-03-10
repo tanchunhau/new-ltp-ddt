@@ -28,7 +28,6 @@
 
 /* Test with CLOCK_REALTIME */
 
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +53,7 @@ static int expired;
 #define ENTERED_THREAD 2
 #define EXITING_THREAD 3
 
-static void *fn_wr(void *arg)
+static void *fn_wr(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	struct timespec timeout, ts;
 	int rc;

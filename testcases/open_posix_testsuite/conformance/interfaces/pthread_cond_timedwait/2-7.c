@@ -32,15 +32,6 @@
  * -> The child checks that it owns the mutex; then it leaves.
  */
 
- /* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
-
- /* We need the XSI extention for the mutex attributes
-    and the mkstemp() routine */
-#ifndef WITHOUT_XOPEN
-#define _XOPEN_SOURCE	600
-#endif
-
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -252,6 +243,7 @@ void *tf(void *arg)
 
 int main(void)
 {
+	struct timespec wait_ts;
 	int ret;
 	unsigned int i;
 	pthread_mutexattr_t ma;
@@ -267,6 +259,9 @@ int main(void)
 	pthread_t child_th;
 
 	long pshared, monotonic, cs, mf;
+
+	wait_ts.tv_sec = 0;
+	wait_ts.tv_nsec = TIMEOUT * 1000;
 
 	output_init();
 	pshared = sysconf(_SC_THREAD_PROCESS_SHARED);
@@ -552,7 +547,7 @@ int main(void)
 #endif
 
 			/* Let the child leave the wait function if something is broken */
-			usleep(TIMEOUT);
+			nanosleep(&wait_ts, NULL);
 
 			if (td->ctrl != 1) {
 				FAILED

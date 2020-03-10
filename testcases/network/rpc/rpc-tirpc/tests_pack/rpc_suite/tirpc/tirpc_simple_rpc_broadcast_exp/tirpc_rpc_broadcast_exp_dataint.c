@@ -26,9 +26,10 @@
 */
 
 #include <stdio.h>
-#include <tirpc/rpc/rpc.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include "lapi/rpc.h"
 
 //Standard define
 #define INTPROCNUM 10

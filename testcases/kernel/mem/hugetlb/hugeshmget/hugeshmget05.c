@@ -63,11 +63,11 @@ static void test_hugeshmget(void)
 static void do_child(void)
 {
 	TEST(shmget(shmkey, shm_size, SHM_HUGETLB | SHM_RW));
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL, "shmget succeeded unexpectedly");
 		return;
 	}
-	if (TEST_ERRNO == EACCES)
+	if (TST_ERR == EACCES)
 		tst_res(TPASS | TTERRNO, "shmget failed as expected");
 	else
 		tst_res(TFAIL | TTERRNO, "shmget failed unexpectedly "
@@ -82,6 +82,7 @@ void setup(void)
 	if (nr_opt)
 		hugepages = SAFE_STRTOL(nr_opt, 0, LONG_MAX);
 
+	limit_hugepages(&hugepages);
 	set_sys_tune("nr_hugepages", hugepages, 1);
 	hpage_size = SAFE_READ_MEMINFO("Hugepagesize:") * 1024;
 

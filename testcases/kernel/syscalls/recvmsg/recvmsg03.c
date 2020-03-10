@@ -1,17 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright(c) 2016 Fujitsu Ltd.
  * Author: Xiao Yang <yangx.jy@cn.fujitsu.com>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * You should have received a copy of the GNU General Public License
- * alone with this program.
  */
 
 /*
@@ -30,6 +20,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include "tst_safe_net.h"
 
 #include "tst_test.h"
 
@@ -125,12 +116,7 @@ static void server(void)
 
 	TST_CHECKPOINT_WAKE(0);
 
-	TEST(recvmsg(sock_fd2, &msg, 0));
-	if (TEST_RETURN == -1) {
-		tst_brk(TBROK | TTERRNO,
-		"recvmsg() failed to recvice data from client");
-	}
-
+	SAFE_RECVMSG(0, sock_fd2, &msg, 0);
 	if (msg.msg_namelen != sizeof(from_addr)) {
 		tst_res(TFAIL, "msg_namelen was set to %u incorrectly, "
 			"expected %lu", msg.msg_namelen, sizeof(from_addr));
@@ -162,5 +148,9 @@ static struct tst_test test = {
 	.forks_child = 1,
 	.needs_checkpoints = 1,
 	.setup = setup,
-	.test_all = verify_recvmsg
+	.test_all = verify_recvmsg,
+	.tags = (const struct tst_tag[]) {
+		{"linux-git", "06b6a1cf6e77"},
+		{}
+	}
 };

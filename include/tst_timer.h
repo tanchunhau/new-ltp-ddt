@@ -34,6 +34,11 @@
 #include <sys/time.h>
 #include <time.h>
 
+static inline long long tst_timespec_to_ns(struct timespec t)
+{
+	return t.tv_sec * 1000000000 + t.tv_nsec;
+}
+
 /*
  * Converts timespec to microseconds.
  */
@@ -43,7 +48,7 @@ static inline long long tst_timespec_to_us(struct timespec t)
 }
 
 /*
- * Converts timespec to miliseconds.
+ * Converts timespec to milliseconds.
  */
 static inline long long tst_timespec_to_ms(struct timespec t)
 {
@@ -59,7 +64,7 @@ static inline long long tst_timeval_to_us(struct timeval t)
 }
 
 /*
- * Converts timeval to miliseconds.
+ * Converts timeval to milliseconds.
  */
 static inline long long tst_timeval_to_ms(struct timeval t)
 {
@@ -147,6 +152,42 @@ static inline struct timespec tst_timespec_add_us(struct timespec t,
 }
 
 /*
+ * Adds two timespec structures.
+ */
+static inline struct timespec tst_timespec_add(struct timespec t1,
+                                               struct timespec t2)
+{
+	struct timespec res;
+
+	res.tv_sec = t1.tv_sec + t2.tv_sec;
+	res.tv_nsec = t1.tv_nsec + t2.tv_nsec;
+
+	if (res.tv_nsec >= 1000000000) {
+		res.tv_sec++;
+		res.tv_nsec -= 1000000000;
+	}
+
+	return res;
+}
+
+/*
+ * Subtracts us microseconds from t.
+ */
+static inline struct timespec tst_timespec_sub_us(struct timespec t,
+                                                  long long us)
+{
+	t.tv_sec -= us / 1000000;
+	t.tv_nsec -= (us % 1000000) * 1000;
+
+	if (t.tv_nsec < 0) {
+		t.tv_sec--;
+		t.tv_nsec += 1000000000;
+	}
+
+	return t;
+}
+
+/*
  * Returns difference between two timespec structures.
  */
 static inline struct timespec tst_timespec_diff(struct timespec t1,
@@ -164,6 +205,12 @@ static inline struct timespec tst_timespec_diff(struct timespec t1,
 	}
 
 	return res;
+}
+
+static inline long long tst_timespec_diff_ns(struct timespec t1,
+					     struct timespec t2)
+{
+	return t1.tv_nsec - t2.tv_nsec + 1000000000LL * (t1.tv_sec - t2.tv_sec);
 }
 
 static inline long long tst_timespec_diff_us(struct timespec t1,
@@ -252,6 +299,14 @@ void tst_timer_check(clockid_t clk_id);
 void tst_timer_start(clockid_t clk_id);
 
 /*
+ * Returns true if timer started by tst_timer_start() has been running for
+ * longer than ms seconds.
+ *
+ * @ms: Time interval in milliseconds.
+ */
+int tst_timer_expired_ms(long long ms);
+
+/*
  * Marks timer end time.
  */
 void tst_timer_stop(void);
@@ -262,7 +317,7 @@ void tst_timer_stop(void);
 struct timespec tst_timer_elapsed(void);
 
 /*
- * Returns elapsed time in miliseconds.
+ * Returns elapsed time in milliseconds.
  */
 static inline long long tst_timer_elapsed_ms(void)
 {
@@ -276,5 +331,10 @@ static inline long long tst_timer_elapsed_us(void)
 {
 	return tst_timespec_to_us(tst_timer_elapsed());
 }
+
+/*
+ * Returns a string containing given clock type name
+ */
+const char *tst_clock_name(clockid_t);
 
 #endif /* TST_TIMER */

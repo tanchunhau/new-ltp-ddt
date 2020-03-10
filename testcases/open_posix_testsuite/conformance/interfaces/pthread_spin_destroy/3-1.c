@@ -20,7 +20,6 @@
  * 3.  Create a child thread. The thread call pthread_spin_destroy()
  */
 
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +31,7 @@
 
 static pthread_spinlock_t spinlock;
 
-static void *fn_chld(void *arg)
+static void *fn_chld(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int rc = 0;
 

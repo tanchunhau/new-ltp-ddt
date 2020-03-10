@@ -21,7 +21,6 @@
  *    sure that SIGCHLD is still handled by myhandler.
  */
 
-#define _XOPEN_SOURCE 600
 
 #include <signal.h>
 #include <stdio.h>
@@ -35,7 +34,7 @@
 
 static int handler_called;
 
-static void myhandler(int signo)
+static void myhandler(int signo LTP_ATTRIBUTE_UNUSED)
 {
 	handler_called = 1;
 }

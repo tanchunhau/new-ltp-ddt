@@ -1,16 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017  Red Hat, Inc.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
  */
 
  /*
@@ -88,13 +78,13 @@ static void verify_memfd_create_errno(unsigned int n)
 	}
 
 	TEST(sys_memfd_create(tc->memfd_name, tc->flags));
-	if (TEST_ERRNO != tc->memfd_create_exp_err)
+	if (TST_ERR != tc->memfd_create_exp_err)
 		tst_brk(TFAIL, "test '%s'", tc->descr);
 	else
 		tst_res(TPASS, "test '%s'", tc->descr);
 
-	if (TEST_RETURN > 0)
-		SAFE_CLOSE(TEST_RETURN);
+	if (TST_RET > 0)
+		SAFE_CLOSE(TST_RET);
 }
 
 static struct tst_test test = {

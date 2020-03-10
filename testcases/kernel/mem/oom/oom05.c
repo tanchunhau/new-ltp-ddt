@@ -30,16 +30,20 @@
 #include <numa.h>
 #endif
 
+#include "lapi/abisize.h"
 #include "numa_helper.h"
 #include "mem.h"
 
 #ifdef HAVE_NUMA_V2
 
+static int memcg_mounted;
+static int cpuset_mounted;
+
 static void verify_oom(void)
 {
 	int swap_acc_on = 1;
 
-#if __WORDSIZE == 32
+#ifdef TST_ABI32
 	tst_brk(TCONF, "test is not designed for 32-bit system.");
 #endif
 
@@ -90,7 +94,9 @@ void setup(void)
 	set_sys_tune("overcommit_memory", 1, 1);
 
 	mount_mem("memcg", "cgroup", "memory", MEMCG_PATH, MEMCG_PATH_NEW);
+	memcg_mounted = 1;
 	mount_mem("cpuset", "cpuset", NULL, CPATH, CPATH_NEW);
+	cpuset_mounted = 1;
 	write_memcg();
 
 	/*
@@ -108,9 +114,12 @@ void setup(void)
 
 void cleanup(void)
 {
-	set_sys_tune("overcommit_memory", overcommit, 0);
-	umount_mem(CPATH, CPATH_NEW);
-	umount_mem(MEMCG_PATH, MEMCG_PATH_NEW);
+	if (overcommit != -1)
+		set_sys_tune("overcommit_memory", overcommit, 0);
+	if (cpuset_mounted)
+		umount_mem(CPATH, CPATH_NEW);
+	if (memcg_mounted)
+		umount_mem(MEMCG_PATH, MEMCG_PATH_NEW);
 }
 
 static struct tst_test test = {
@@ -123,5 +132,5 @@ static struct tst_test test = {
 };
 
 #else
-	TST_TEST_TCONF("test requires libnuma >= 2 and it's development packages");
+	TST_TEST_TCONF(NUMA_ERROR_MSG);
 #endif

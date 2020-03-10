@@ -1,25 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011 Red Hat, Inc.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
- * License as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * Further, this software is distributed without any warranty that it
- * is free of the rightful claim of any third person regarding
- * infringement or the like.  Any license provided herein, whether
- * implied or otherwise, applies only to this software file.  Patent
- * licenses, if any, provided herein do not apply to combinations of
- * this program with other software, or any other product whatsoever.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
  */
 
 /*
@@ -64,6 +45,7 @@
 #define XATTR_TEST_VALUE "this is a test value"
 #define XATTR_TEST_VALUE_SIZE 20
 
+#define OFFSET    10
 #define FILENAME "setxattr02testfile"
 #define DIRNAME  "setxattr02testdir"
 #define SYMLINK  "setxattr02symlink"
@@ -79,6 +61,7 @@ struct test_case {
 	size_t size;
 	int flags;
 	int exp_err;
+	int needskeyset;
 };
 static struct test_case tc[] = {
 	{			/* case 00, set attr to reg */
@@ -104,6 +87,7 @@ static struct test_case tc[] = {
 	 .size = XATTR_TEST_VALUE_SIZE,
 	 .flags = XATTR_CREATE,
 	 .exp_err = EEXIST,
+	 .needskeyset = 1,
 	 },
 	{			/* case 03, set attr to fifo */
 	 .fname = FIFO,
@@ -141,34 +125,58 @@ static struct test_case tc[] = {
 
 static void verify_setxattr(unsigned int i)
 {
-	TEST(setxattr(tc[i].fname, tc[i].key, tc[i].value, tc[i].size, tc[i].flags));
+	/* some tests might require existing keys for each iteration */
+	if (tc[i].needskeyset) {
+		SAFE_SETXATTR(tc[i].fname, tc[i].key, tc[i].value, tc[i].size,
+				XATTR_CREATE);
+	}
 
-	if (TEST_RETURN == -1 && TEST_ERRNO == EOPNOTSUPP)
-		tst_brk(TCONF, "setxattr() not supported");
+	TEST(setxattr(tc[i].fname, tc[i].key, tc[i].value, tc[i].size,
+			tc[i].flags));
+
+	if (TST_RET == -1 && TST_ERR == EOPNOTSUPP)
+		tst_brk(TCONF, "setxattr(2) not supported");
+
+	/* success */
 
 	if (!tc[i].exp_err) {
-		if (TEST_RETURN) {
+		if (TST_RET) {
 			tst_res(TFAIL | TTERRNO,
-				"setxattr() failed with %li", TEST_RETURN);
+				"setxattr(2) on %s failed with %li",
+				tc[i].fname + OFFSET, TST_RET);
 			return;
 		}
 
-		tst_res(TPASS, "setxattr() passed");
+		/* this is needed for subsequent iterations */
+		SAFE_REMOVEXATTR(tc[i].fname, tc[i].key);
+
+		tst_res(TPASS, "setxattr(2) on %s passed",
+				tc[i].fname + OFFSET);
 		return;
 	}
 
-	if (TEST_RETURN == 0) {
-		tst_res(TFAIL, "setxattr() passed unexpectedly");
+	if (TST_RET == 0) {
+		tst_res(TFAIL, "setxattr(2) on %s passed unexpectedly",
+				tc[i].fname + OFFSET);
 		return;
 	}
 
-	if (TEST_ERRNO != tc[i].exp_err) {
-		tst_res(TFAIL | TTERRNO, "setxattr() should fail with %s",
-			tst_strerrno(tc[i].exp_err));
+	/* fail */
+
+	if (tc[i].exp_err != TST_ERR) {
+		tst_res(TFAIL | TTERRNO,
+				"setxattr(2) on %s should have failed with %s",
+				tc[i].fname + OFFSET,
+				tst_strerrno(tc[i].exp_err));
 		return;
 	}
 
-	tst_res(TPASS | TTERRNO, "setxattr() failed");
+	/* key might have been added AND test might have failed, remove it */
+	if (tc[i].needskeyset)
+		SAFE_REMOVEXATTR(tc[i].fname, tc[i].key);
+
+	tst_res(TPASS | TTERRNO, "setxattr(2) on %s failed",
+			tc[i].fname + OFFSET);
 }
 
 static void setup(void)

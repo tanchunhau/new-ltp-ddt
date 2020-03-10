@@ -116,6 +116,24 @@ int TST_TOTAL = sizeof(tdat) / sizeof(tdat[0]);
 static char *argv0;
 #endif
 
+/**
+ * bionic's connect() implementation calls netdClientInitConnect() before
+ * sending the request to the kernel.  We need to bypass this, or the test will
+ * segfault during the addr = (struct sockaddr *)-1 testcase. We had cases where
+ * tests started to segfault on glibc upgrade or in special conditions where
+ * libc had to convert structure layouts between 32bit/64bit userspace/kernel =>
+ * safer to call the raw syscall regardless of the libc implementation.
+ */
+#include "lapi/syscalls.h"
+
+static int sys_connect(int sockfd, const struct sockaddr *addr,
+		socklen_t addrlen)
+{
+	return ltp_syscall(__NR_connect, sockfd, addr, addrlen);
+}
+
+#define connect(sockfd, addr, addrlen) sys_connect(sockfd, addr, addrlen)
+
 int main(int argc, char *argv[])
 {
 	int lc;
@@ -166,7 +184,7 @@ void setup(void)
 
 	sin2.sin_family = AF_INET;
 	/* this port must be unused! */
-	sin2.sin_port = tst_get_unused_port(NULL, AF_INET, SOCK_STREAM);
+	sin2.sin_port = TST_GET_UNUSED_PORT(NULL, AF_INET, SOCK_STREAM);
 	sin2.sin_addr.s_addr = INADDR_ANY;
 
 	sin3.sin_family = AF_INET;

@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
-* Copyright (c) International Business Machines  Corp., 2001
-*
-* This program is free software;  you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY;  without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
-* the GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.
+* Copyright (c) International Business Machines Corp., 2001
 */
 
 /*
@@ -57,19 +45,19 @@ static void verify_socket(unsigned int n)
 	struct test_case_t *tc = &tdat[n];
 
 	TEST(fd = socket(tc->domain, tc->type, tc->proto));
-	if (TEST_RETURN >= 0)
-		TEST_RETURN = 0;
+	if (TST_RET >= 0)
+		TST_RET = 0;
 
 	if (fd > 0)
 		SAFE_CLOSE(fd);
 
-	if (TEST_RETURN != tc->retval) {
+	if (TST_RET != tc->retval) {
 		tst_res(TFAIL, "%s returned %d (expected %d)",
 			tc->desc, fd, tc->retval);
 		return;
 	}
 
-	if (TEST_ERRNO != tc->experrno) {
+	if (TST_ERR != tc->experrno) {
 		tst_res(TFAIL | TTERRNO, "expected %s(%d)",
 		        tst_strerrno(tc->experrno), tc->experrno);
 		return;

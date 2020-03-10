@@ -1,23 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) Crackerjack Project., 2007-2008 ,Hitachi, Ltd
  *          Author(s): Takahiro Yasui <takahiro.yasui.mp@hitachi.com>,
  *		       Yumiko Sugita <yumiko.sugita.yf@hitachi.com>,
  *		       Satoshi Fujiwara <sa-fuji@sdl.hitachi.co.jp>
  * Copyright (c) 2016 Linux Test Project
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write the Free Software Foundation,
- * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <errno.h>
@@ -261,36 +248,36 @@ static void do_test(unsigned int i)
 	}
 
 	if (tc->ret == 0) {
-		if (TEST_RETURN < 0) {
+		if (TST_RET < 0) {
 			tst_res(TFAIL | TTERRNO, "%s wrong return code: %ld",
-				tc->desc, TEST_RETURN);
+				tc->desc, TST_RET);
 		} else {
 			tst_res(TPASS | TTERRNO, "%s returned: %ld",
-				tc->desc, TEST_RETURN);
+				tc->desc, TST_RET);
 		}
 
 		goto CLEANUP;
 	}
 
-	if (TEST_ERRNO != tc->err) {
+	if (TST_ERR != tc->err) {
 		tst_res(TFAIL | TTERRNO, "%s expected errno: %d",
-			tc->desc, TEST_ERRNO);
+			tc->desc, TST_ERR);
 		goto CLEANUP;
 	}
 
-	if (TEST_RETURN != tc->ret) {
+	if (TST_RET != tc->ret) {
 		tst_res(TFAIL | TTERRNO, "%s wrong return code: %ld",
-			tc->desc, TEST_RETURN);
+			tc->desc, TST_RET);
 	} else {
 		tst_res(TPASS | TTERRNO, "%s returned: %ld",
-			tc->desc, TEST_RETURN);
+			tc->desc, TST_RET);
 	}
 
 CLEANUP:
 	if (tc->cleanup)
 		tc->cleanup();
 
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		if (fd > 0)
 			SAFE_CLOSE(fd);
 		mq_unlink(qname);

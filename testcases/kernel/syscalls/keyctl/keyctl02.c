@@ -1,19 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Fujitsu Ltd.
  *  Ported: Guangwen Feng <fenggw-fnst@cn.fujitsu.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program, if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -44,6 +32,7 @@
 #include "lapi/keyctl.h"
 
 #define LOOPS	20000
+#define MAX_WAIT_FOR_GC_MS 5000
 #define PATH_KEY_COUNT_QUOTA	"/proc/sys/kernel/keys/root_maxkeys"
 
 static int orig_maxkeys;
@@ -69,8 +58,8 @@ static void *do_revoke(void *arg)
 
 static void do_test(void)
 {
-	int i;
-	key_serial_t key;
+	int i, ret;
+	key_serial_t key, key_inv;
 	pthread_t pth[4];
 
 	for (i = 0; i < LOOPS; i++) {
@@ -94,13 +83,46 @@ static void do_test(void)
 		SAFE_PTHREAD_JOIN(pth[3], NULL);
 	}
 
+	/*
+	 * Kernel should start garbage collect when last reference to key
+	 * is removed (see key_put()). Since we are adding keys with identical
+	 * description and type, each replacement should schedule a gc run,
+	 * see comment at __key_link().
+	 *
+	 * We create extra key here, to remove reference to last revoked key.
+	 */
+	key_inv = add_key("user", "ltptestkey", "foo", 3,
+		KEY_SPEC_PROCESS_KEYRING);
+	if (key_inv == -1)
+		tst_brk(TBROK | TERRNO, "Failed to add key");
+
+	/*
+	 * If we have invalidate, we can drop extra key immediately as well,
+	 * which also schedules gc.
+	 */
+	if (keyctl(KEYCTL_INVALIDATE, key_inv) == -1 && errno != EOPNOTSUPP)
+		tst_brk(TBROK | TERRNO, "Failed to invalidate key");
+
+	/*
+	 * At this point we are quite confident that gc has been scheduled,
+	 * so we wait and periodically check for last test key to be removed.
+	 */
+	for (i = 0; i < MAX_WAIT_FOR_GC_MS; i += 100) {
+		ret = keyctl(KEYCTL_REVOKE, key);
+		if (ret == -1 && errno == ENOKEY)
+			break;
+		usleep(100*1000);
+	}
+
+	if (i)
+		tst_res(TINFO, "waiting for key gc took: %d ms", i);
 	tst_res(TPASS, "Bug not reproduced");
 }
 
 static void setup(void)
 {
 	SAFE_FILE_SCANF(PATH_KEY_COUNT_QUOTA, "%d", &orig_maxkeys);
-	SAFE_FILE_PRINTF(PATH_KEY_COUNT_QUOTA, "%d", orig_maxkeys + LOOPS);
+	SAFE_FILE_PRINTF(PATH_KEY_COUNT_QUOTA, "%d", orig_maxkeys + LOOPS + 1);
 }
 
 static void cleanup(void)
@@ -114,4 +136,8 @@ static struct tst_test test = {
 	.setup = setup,
 	.cleanup = cleanup,
 	.test_all = do_test,
+	.tags = (const struct tst_tag[]) {
+		{"linux-git", "b4a1b4f5047e"},
+		{}
+	}
 };

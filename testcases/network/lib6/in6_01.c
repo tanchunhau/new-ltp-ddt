@@ -1,25 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) International Business Machines Corp., 2001
  * Copyright (c) 2017 Petr Vorel <pvorel@suse.cz>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
  * Author: David L Stevens
- */
-
-/*
- * Description: Verify that in6 and sockaddr fields are present.
+ *
+ * Verify that in6 and sockaddr fields are present.
  */
 
 #include <errno.h>
@@ -147,12 +132,12 @@ static void test_in6_is_addr_v4mapped(void)
 				"\"%s\" is not a valid IPv6 address",
 				maptab[i].addr);
 		TEST(IN6_IS_ADDR_V4MAPPED(in6.s6_addr));
-		if (maptab[i].ismap == TEST_RETURN)
+		if (maptab[i].ismap == TST_RET)
 			tst_res(TINFO, "IN6_IS_ADDR_V4MAPPED(\"%s\") %ld",
-				maptab[i].addr, TEST_RETURN);
+				maptab[i].addr, TST_RET);
 		else {
 			tst_res(TFAIL, "IN6_IS_ADDR_V4MAPPED(\"%s\") %ld",
-				maptab[i].addr, TEST_RETURN);
+				maptab[i].addr, TST_RET);
 			return;
 		}
 	}

@@ -28,14 +28,6 @@
 
   */
 
- /* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
-
- /* Some routines are part of the XSI Extensions */
-#ifndef WITHOUT_XOPEN
-#define _XOPEN_SOURCE	600
-#endif
-
 /********************************************************************************************/
 /****************************** standard includes *****************************************/
 /********************************************************************************************/
@@ -110,7 +102,7 @@ CLEANUP(1)
     CLEANUP(2)
     CLEANUP(3)
 
-void *threaded(void *arg)
+void *threaded(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	pthread_cleanup_push(clnp3, NULL);
 	pthread_cleanup_push(clnp2, NULL);

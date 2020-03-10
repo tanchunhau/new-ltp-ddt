@@ -1,17 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 * Copyright (c) 2015-2016 Fujitsu Ltd.
 * Author: Xiao Yang <yangx.jy@cn.fujitsu.com>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of version 2 of the GNU General Public License as
-* published by the Free Software Foundation.
-*
-* This program is distributed in the hope that it would be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*
-* You should have received a copy of the GNU General Public License
-* alone with this program.
 */
 
 /*
@@ -35,6 +25,8 @@
 * 6) pwritev(2) should return -1 and set errno to EBADF.
 * 7) pwritev(2) should return -1 and set errno to ESPIPE.
 */
+
+#define _GNU_SOURCE
 
 #include <sys/uio.h>
 #include <unistd.h>
@@ -83,12 +75,12 @@ static void verify_pwritev(unsigned int n)
 	struct tcase *tc = &tcases[n];
 
 	TEST(pwritev(*tc->fd, tc->name, tc->count, tc->offset));
-	if (TEST_RETURN == 0) {
+	if (TST_RET == 0) {
 		tst_res(TFAIL, "pwritev() succeeded unexpectedly");
 		return;
 	}
 
-	if (TEST_ERRNO == tc->exp_err) {
+	if (TST_ERR == tc->exp_err) {
 		tst_res(TPASS | TTERRNO, "pwritev() failed as expected");
 		return;
 	}

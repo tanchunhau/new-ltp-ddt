@@ -17,7 +17,6 @@
  *    mapped file, test whether SIGSEGV is triggered.
  */
 
-#define _XOPEN_SOURCE 600
 
 #include <sys/mman.h>
 #include <sys/types.h>
@@ -35,7 +34,7 @@
 
 #define TNAME "munmap/1-1.c"
 
-void sigsegv_handler(int signum)
+void sigsegv_handler(int signum LTP_ATTRIBUTE_UNUSED)
 {
 	printf("Got SIGSEGV\n");
 	printf("Test PASSED\n");

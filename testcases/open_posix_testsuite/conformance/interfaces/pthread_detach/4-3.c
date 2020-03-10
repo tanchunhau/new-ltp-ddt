@@ -24,13 +24,6 @@
  *
  */
 
-#define _POSIX_C_SOURCE 200112L
-
-/* Some routines are part of the XSI Extensions */
-#ifndef WITHOUT_XOPEN
-#define _XOPEN_SOURCE	600
-#endif
-
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -66,7 +59,7 @@ static sem_t semsig1;
 #endif
 
 static unsigned long count_sig;
-static unsigned long sleep_time;
+static long sleep_time;
 static sigset_t usersigs;
 
 struct thestruct {
@@ -89,6 +82,9 @@ static void *sendsig(void *arg)
 	struct thestruct *thearg = (struct thestruct *)arg;
 	int ret;
 	pid_t process;
+	struct timespec time_between_signals_ts;
+
+	time_between_signals_ts.tv_sec = 0;
 
 	process = getpid();
 
@@ -112,8 +108,11 @@ static void *sendsig(void *arg)
 		 * then start increasing sleep_time to make sure all threads
 		 * can progress */
 		sleep_time++;
-		if (sleep_time / SIGNALS_WITHOUT_DELAY > 0)
-			usleep(sleep_time / SIGNALS_WITHOUT_DELAY);
+		if (sleep_time / SIGNALS_WITHOUT_DELAY > 0) {
+			time_between_signals_ts.tv_nsec =
+			    (sleep_time * 1000) / SIGNALS_WITHOUT_DELAY;
+			nanosleep(&time_between_signals_ts, NULL);
+		}
 
 		ret = kill(process, thearg->sig);
 		if (ret != 0)

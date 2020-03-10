@@ -1,20 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) International Business Machines  Corp., 2001
+ * Copyright (c) International Business Machines Corp., 2001
  *  03/2001 Written by Wayne Boyer
  *  11/2016 Modified by Guangwen Feng <fenggw-fnst@cn.fujitsu.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -64,7 +52,7 @@ static void setpriority_test(struct tcase *tc)
 	for (new_prio = -20; new_prio < 20; new_prio++) {
 		TEST(setpriority(tc->which, *tc->who, new_prio));
 
-		if (TEST_RETURN != 0) {
+		if (TST_RET != 0) {
 			tst_res(TFAIL | TTERRNO,
 				"setpriority(%d, %d, %d) failed",
 				tc->which, *tc->who, new_prio);
@@ -92,9 +80,16 @@ static void verify_setpriority(unsigned int n)
 {
 	struct tcase *tc = &tcases[n];
 
+	if (tc->which == PRIO_USER && !user_added) {
+		tst_res(TCONF, "setpriority(%s(%d), %d, -20..19) skipped - Can't add user",
+			str_which(tc->which), tc->which, *tc->who);
+		return;
+	}
+
 	pid = SAFE_FORK();
 	if (pid == 0) {
-		SAFE_SETUID(uid);
+		if (user_added)
+			SAFE_SETUID(uid);
 		SAFE_SETPGID(0, 0);
 
 		TST_CHECKPOINT_WAKE_AND_WAIT(0);
@@ -115,15 +110,20 @@ static void setup(void)
 {
 	const char *const cmd_useradd[] = {"useradd", username, NULL};
 	struct passwd *ltpuser;
+	int rc;
 
-	if (eaccess("/etc/passwd", W_OK))
-		tst_brk(TCONF, "/etc/passwd is not accessible");
-
-	tst_run_cmd(cmd_useradd, NULL, NULL, 0);
-	user_added = 1;
-
-	ltpuser = SAFE_GETPWNAM(username);
-	uid = ltpuser->pw_uid;
+	switch ((rc = tst_run_cmd(cmd_useradd, NULL, NULL, 1))) {
+	case 0:
+		user_added = 1;
+		ltpuser = SAFE_GETPWNAM(username);
+		uid = ltpuser->pw_uid;
+		return;
+	case 1:
+	case 255:
+		return;
+	default:
+		tst_brk(TBROK, "Useradd failed (%d)", rc);
+	}
 }
 
 static void cleanup(void)

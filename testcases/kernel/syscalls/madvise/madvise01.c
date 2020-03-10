@@ -1,16 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Copyright (c) International Business Machines  Corp., 2004
+ *  Copyright (c) International Business Machines Corp., 2004
  *  Copyright (c) Linux Test Project, 2013-2016
- *
- * This program is free software;  you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- * the GNU General Public License for more details.
  */
 
 /*
@@ -62,6 +53,9 @@ static struct tcase {
 	{MADV_DONTDUMP,    "MADV_DONTDUMP",    &sfile}, /* since Linux 3.4 */
 	{MADV_DODUMP,      "MADV_DODUMP",      &sfile}, /* since Linux 3.4 */
 	{MADV_FREE,        "MADV_FREE",        &amem},  /* since Linux 4.5 */
+	{MADV_WIPEONFORK,  "MADV_WIPEONFORK",  &amem},  /* since Linux 4.14 */
+	{MADV_KEEPONFORK,  "MADV_KEEPONFORK",  &amem},  /* since Linux 4.14 */
+
 };
 
 static void setup(void)
@@ -105,13 +99,13 @@ static void verify_madvise(unsigned int i)
 
 	TEST(madvise(*(tc->addr), st.st_size, tc->advice));
 
-	if (TEST_RETURN == -1) {
-		if (TEST_ERRNO == EINVAL) {
+	if (TST_RET == -1) {
+		if (TST_ERR == EINVAL) {
 			tst_res(TCONF, "%s is not supported", tc->name);
 		} else {
 			tst_res(TFAIL, "madvise test for %s failed with "
 					"return = %ld, errno = %d : %s",
-					tc->name, TEST_RETURN, TEST_ERRNO,
+					tc->name, TST_RET, TST_ERR,
 					tst_strerrno(TFAIL | TTERRNO));
 		}
 	} else {

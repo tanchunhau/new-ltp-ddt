@@ -30,6 +30,7 @@
 #include <numa.h>
 #endif
 
+#include "lapi/abisize.h"
 #include "numa_helper.h"
 #include "mem.h"
 
@@ -37,7 +38,7 @@
 
 static void verify_oom(void)
 {
-#if __WORDSIZE == 32
+#ifdef TST_ABI32
 	tst_brk(TCONF, "test is not designed for 32-bit system.");
 #endif
 
@@ -62,7 +63,8 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	set_sys_tune("overcommit_memory", overcommit, 0);
+	if (overcommit != -1)
+		set_sys_tune("overcommit_memory", overcommit, 0);
 }
 
 static struct tst_test test = {
@@ -75,5 +77,5 @@ static struct tst_test test = {
 };
 
 #else
-	TST_TEST_TCONF("test requires libnuma >= 2 and it's development packages");
+	TST_TEST_TCONF(NUMA_ERROR_MSG);
 #endif

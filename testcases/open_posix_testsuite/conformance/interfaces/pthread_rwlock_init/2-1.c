@@ -15,7 +15,6 @@
  *     set 'attr' as NULL.
  * 2.  Create a child thread, the thread lock 'rwlock' for reading, shall not block.
  */
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,7 +25,7 @@
 static pthread_rwlock_t rwlock;
 static int thread_state;
 
-static void *fn_rd(void *arg)
+static void *fn_rd(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 
 	thread_state = 2;

@@ -11,7 +11,6 @@
  * After sighold is called on an invalid signal, sigignore() should
  * return -1 and set errno to EINVAL
  */
-#define _XOPEN_SOURCE 600
 
 #include <stdio.h>
 #include <signal.h>
@@ -21,11 +20,13 @@
 
 static const int sigs[] = {-1, -10000, INT32_MIN, INT32_MIN + 1};
 
+#define	NUMSIGNALS	(sizeof(sigs) / sizeof(sigs[0]))
+
 int main(void)
 {
 	int i, ret, err = 0;
 
-	for (i = 0; i < sizeof(sigs) / sizeof(int); i++) {
+	for (i = 0; i < (int)NUMSIGNALS; i++) {
 		ret = sigignore(sigs[i]);
 
 		if (ret != -1 || errno != EINVAL) {
