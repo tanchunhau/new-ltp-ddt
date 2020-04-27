@@ -76,5 +76,5 @@ esac
 
 test_print_trc "Starting timestamping test"
 
-do_cmd "timeout -t ${DURATION} timestamping ${INTERFACE} $*"
+do_cmd "timeout ${DURATION} timestamping ${INTERFACE} $*"
 

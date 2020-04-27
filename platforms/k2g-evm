@@ -21,6 +21,7 @@ spi_master/mtd/spi_davinci
 ubifs
 usb/host/msc/xhci-hcd
 usb/host/iso
+usb/slave
 watchdog
 hdmi/audio/playback
 audio
