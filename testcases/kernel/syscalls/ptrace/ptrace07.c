@@ -1,18 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Google, Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program, if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -113,19 +101,19 @@ static void do_test(void)
 	sched_yield();
 
 	TEST(ptrace(PTRACE_ATTACH, pid, 0, 0));
-	if (TEST_RETURN != 0)
+	if (TST_RET != 0)
 		tst_brk(TBROK | TTERRNO, "PTRACE_ATTACH failed");
 
 	SAFE_WAITPID(pid, NULL, 0);
 	TEST(ptrace(PTRACE_GETREGSET, pid, NT_X86_XSTATE, &iov));
-	if (TEST_RETURN != 0) {
-		if (TEST_ERRNO == EIO)
+	if (TST_RET != 0) {
+		if (TST_ERR == EIO)
 			tst_brk(TCONF, "GETREGSET/SETREGSET is unsupported");
 
-		if (TEST_ERRNO == EINVAL)
+		if (TST_ERR == EINVAL)
 			tst_brk(TCONF, "NT_X86_XSTATE is unsupported");
 
-		if (TEST_ERRNO == ENODEV)
+		if (TST_ERR == ENODEV)
 			tst_brk(TCONF, "CPU doesn't support XSAVE instruction");
 
 		tst_brk(TBROK | TTERRNO,
@@ -143,9 +131,9 @@ static void do_test(void)
 	 * below in either case) is present.
 	 */
 	TEST(ptrace(PTRACE_SETREGSET, pid, NT_X86_XSTATE, &iov));
-	if (TEST_RETURN == 0) {
+	if (TST_RET == 0) {
 		tst_res(TINFO, "PTRACE_SETREGSET with reserved bits succeeded");
-	} else if (TEST_ERRNO == EINVAL) {
+	} else if (TST_ERR == EINVAL) {
 		tst_res(TINFO,
 			"PTRACE_SETREGSET with reserved bits failed with EINVAL");
 	} else {
@@ -153,12 +141,32 @@ static void do_test(void)
 			"PTRACE_SETREGSET failed with unexpected error");
 	}
 
-	TEST(ptrace(PTRACE_CONT, pid, 0, 0));
-	if (TEST_RETURN != 0)
-		tst_brk(TBROK | TTERRNO, "PTRACE_CONT failed");
+	/*
+	 * It is possible for test child 'pid' to crash on AMD
+	 * systems (e.g. AMD Opteron(TM) Processor 6234) with
+	 * older kernels. This causes tracee to stop and sleep
+	 * in ptrace_stop(). Without resuming the tracee, the
+	 * test hangs at do_test()->tst_reap_children() called
+	 * by the library. Use detach here, so we don't need to
+	 * worry about potential stops after this point.
+	 */
+	TEST(ptrace(PTRACE_DETACH, pid, 0, 0));
+	if (TST_RET != 0)
+		tst_brk(TBROK | TTERRNO, "PTRACE_DETACH failed");
+
+	/* If child 'pid' crashes, only report it as info. */
+	SAFE_WAITPID(pid, &status, 0);
+	if (WIFEXITED(status)) {
+		tst_res(TINFO, "test child %d exited, retcode: %d",
+			pid, WEXITSTATUS(status));
+	}
+	if (WIFSIGNALED(status)) {
+		tst_res(TINFO, "test child %d exited, termsig: %d",
+			pid, WTERMSIG(status));
+	}
 
 	okay = true;
-	for (i = 0; i < num_cpus + 1; i++) {
+	for (i = 0; i < num_cpus; i++) {
 		SAFE_WAIT(&status);
 		okay &= (WIFEXITED(status) && WEXITSTATUS(status) == 0);
 	}
@@ -170,6 +178,12 @@ static struct tst_test test = {
 	.test_all = do_test,
 	.forks_child = 1,
 	.needs_checkpoints = 1,
+	.tags = (const struct tst_tag[]) {
+		{"linux-git", "814fb7bb7db5"},
+		{"CVE", "2017-15537"},
+		{}
+	}
+
 };
 
 #else /* !__x86_64__ */

@@ -23,7 +23,6 @@
    has been called.
  */
 
-#define _XOPEN_SOURCE 600
 #define _XOPEN_REALTIME 1
 #define SIGTOTEST SIGRTMIN
 #define NUMCALLS 5
@@ -35,10 +34,12 @@
 #include <errno.h>
 #include "posixtest.h"
 
-int return_val = 1;
-int handler_called = 0;
+static int return_val = 1;
+static volatile int handler_called;
 
-void myhandler(int signo, siginfo_t * info, void *context)
+void myhandler(int signo LTP_ATTRIBUTE_UNUSED,
+	siginfo_t *info LTP_ATTRIBUTE_UNUSED,
+	void *context LTP_ATTRIBUTE_UNUSED)
 {
 	handler_called = 1;
 	if (return_val != 1) {

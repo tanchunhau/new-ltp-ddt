@@ -1,19 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) International Business Machines  Corp., 2001
+ * Copyright (c) International Business Machines Corp., 2001
  * 06/2017 modified by Xiao Yang <yangx.jy@cn.fujitsu.com>
- *
- * This program is free software;  you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- * the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program;  if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -57,15 +45,15 @@ static void verify_lseek(unsigned int n)
 	memset(read_buf, 0, sizeof(read_buf));
 
 	TEST(lseek(fd, tc->off, tc->whence));
-	if (TEST_RETURN == (off_t) -1) {
+	if (TST_RET == (off_t) -1) {
 		tst_res(TFAIL | TTERRNO, "lseek(%s, %ld, %s) failed", TFILE,
 			tc->off, tc->wname);
 		return;
 	}
 
-	if (TEST_RETURN != tc->exp_off) {
+	if (TST_RET != tc->exp_off) {
 		tst_res(TFAIL, "lseek(%s, %ld, %s) returned %ld, expected %ld",
-			TFILE, tc->off, tc->wname, TEST_RETURN, tc->exp_off);
+			TFILE, tc->off, tc->wname, TST_RET, tc->exp_off);
 		return;
 	}
 

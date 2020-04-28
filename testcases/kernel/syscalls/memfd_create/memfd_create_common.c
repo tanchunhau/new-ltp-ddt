@@ -1,16 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017  Red Hat, Inc.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
  */
 
 #define _GNU_SOURCE
@@ -129,8 +119,8 @@ int mfd_flags_available(const char *filename, const int lineno,
 		unsigned int flags)
 {
 	TEST(sys_memfd_create("dummy_call", flags));
-	if (TEST_RETURN < 0) {
-		if (TEST_ERRNO != EINVAL) {
+	if (TST_RET < 0) {
+		if (TST_ERR != EINVAL) {
 			tst_brk_(filename, lineno, TBROK | TTERRNO,
 					"memfd_create() failed");
 		}
@@ -138,7 +128,7 @@ int mfd_flags_available(const char *filename, const int lineno,
 		return 0;
 	}
 
-	SAFE_CLOSE(TEST_RETURN);
+	SAFE_CLOSE(TST_RET);
 
 	return 1;
 }
@@ -377,8 +367,8 @@ void check_mfd_non_writeable(const char *filename, const int lineno,
 
 	/* verify write() fails */
 	TEST(write(fd, "data", 4));
-	if (TEST_RETURN < 0) {
-		if (TEST_ERRNO != EPERM) {
+	if (TST_RET < 0) {
+		if (TST_ERR != EPERM) {
 			tst_brk_(filename, lineno, TFAIL | TTERRNO,
 				"write() didn't fail as expected");
 		}

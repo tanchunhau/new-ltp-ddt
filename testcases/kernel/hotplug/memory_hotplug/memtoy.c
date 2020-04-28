@@ -26,9 +26,6 @@
 
 #include "config.h"
 #include "tst_res_flags.h"
-#if HAVE_NUMA_H
-#include <numa.h>
-#endif
 
 #ifdef HAVE_NUMA_V2
 
@@ -370,7 +367,7 @@ void touch_memory(bool rw, unsigned long *memp, size_t memlen)
 void init_glctx(glctx_t * gcp)
 {
 
-	bzero(gcp, sizeof(glctx_t));
+	memset(gcp, 0, sizeof(glctx_t));
 
 	gcp->pagesize = (size_t) sysconf(_SC_PAGESIZE);
 
@@ -500,7 +497,7 @@ int main(int argc, char *argv[])
 #else
 int main(void)
 {
-	fprintf(stderr, "test requires libnuma >= 2 and it's development packages\n");
+	fprintf(stderr, NUMA_ERROR_MSG "\n");
 	return TCONF;
 }
 #endif

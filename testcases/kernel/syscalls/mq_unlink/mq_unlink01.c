@@ -1,23 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) Crackerjack Project., 2007-2008 ,Hitachi, Ltd
  *          Author(s): Takahiro Yasui <takahiro.yasui.mp@hitachi.com>,
  *		       Yumiko Sugita <yumiko.sugita.yf@hitachi.com>,
  *		       Satoshi Fujiwara <sa-fuji@sdl.hitachi.co.jp>
  * Copyright (c) 2016 Linux Test Project
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write the Free Software Foundation,
- * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <errno.h>
@@ -104,12 +91,12 @@ static void do_test(unsigned int i)
 
 	/* test */
 	TEST(mq_unlink(tc->qname));
-	if (TEST_ERRNO != tc->err || TEST_RETURN != tc->ret) {
+	if (TST_ERR != tc->err || TST_RET != tc->ret) {
 		tst_res(TFAIL | TTERRNO, "mq_unlink returned %ld, expected %d,"
-			" expected errno %s (%d)", TEST_RETURN,
+			" expected errno %s (%d)", TST_RET,
 			tc->ret, tst_strerrno(tc->err), tc->err);
 	} else {
-		tst_res(TPASS | TTERRNO, "mq_unlink returned %ld", TEST_RETURN);
+		tst_res(TPASS | TTERRNO, "mq_unlink returned %ld", TST_RET);
 	}
 
 EXIT:

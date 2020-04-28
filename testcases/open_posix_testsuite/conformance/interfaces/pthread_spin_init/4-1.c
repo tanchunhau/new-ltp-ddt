@@ -21,7 +21,6 @@
  * 4.  Child thread initialize the spin lock when main holds the lock
  */
 
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +33,7 @@
 static pthread_spinlock_t spinlock;
 static int pshared;
 
-static void *fn_chld(void *arg)
+static void *fn_chld(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int rc;
 	/* child: initialize a spin lock being locked by main thread */

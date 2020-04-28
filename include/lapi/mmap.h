@@ -19,6 +19,8 @@
 #ifndef LAPI_MMAP_H__
 #define LAPI_MMAP_H__
 
+#include "config.h"
+
 #ifndef MAP_HUGETLB
 # define MAP_HUGETLB 0x40000
 #endif
@@ -69,6 +71,11 @@
 
 #ifndef MADV_FREE
 # define MADV_FREE	8
+#endif
+
+#ifndef MADV_WIPEONFORK
+# define MADV_WIPEONFORK 18
+# define MADV_KEEPONFORK 19
 #endif
 
 #ifdef HAVE_SYS_SHM_H

@@ -19,7 +19,6 @@
  * 7. main thread unlock 'rwlock', sig_thread should get the lock
  */
 
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,7 +54,7 @@ static void sig_handler()
 	}
 }
 
-static void *th_fn(void *arg)
+static void *th_fn(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	struct sigaction act;
 	int rc = 0;

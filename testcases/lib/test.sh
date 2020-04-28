@@ -23,6 +23,7 @@
 
 export LTP_RET_VAL=0
 export TST_COUNT=1
+export TST_PASS_COUNT=0
 export TST_LIB_LOADED=1
 export TST_TMPDIR_RHOST=0
 
@@ -58,9 +59,12 @@ tst_resm()
 	echo " $@"
 
 	case "$ret" in
-	TPASS|TFAIL)
-	TST_COUNT=$((TST_COUNT+1));;
+	TPASS|TFAIL|TCONF) TST_COUNT=$((TST_COUNT+1));;
 	esac
+
+	if [ "$ret" = TPASS ]; then
+		TST_PASS_COUNT=$((TST_PASS_COUNT+1))
+	fi
 }
 
 tst_brkm()
@@ -112,6 +116,10 @@ tst_exit()
 		rm -f "$LTP_IPC_PATH"
 	fi
 
+	# Mask out TCONF if no TFAIL/TBROK/TWARN but has TPASS
+	if [ $((LTP_RET_VAL & 7)) -eq 0 -a $TST_PASS_COUNT -gt 0 ]; then
+		LTP_RET_VAL=$((LTP_RET_VAL & ~32))
+	fi
 	# Mask out TINFO
 	exit $((LTP_RET_VAL & ~16))
 }
@@ -143,7 +151,7 @@ tst_rmdir()
 #
 # Checks if commands passed as arguments exists
 #
-tst_check_cmds()
+tst_require_cmds()
 {
 	local cmd
 	for cmd in $*; do
@@ -225,8 +233,9 @@ tst_timeout()
 
 ROD_SILENT()
 {
-	$@ > /dev/null 2>&1
+	local tst_out="$($@ 2>&1)"
 	if [ $? -ne 0 ]; then
+		echo "$tst_out"
 		tst_brkm TBROK "$@ failed"
 	fi
 }
@@ -367,15 +376,6 @@ tst_module_exists()
 	tst_brkm TCONF "Failed to find module '$mod_name'"
 }
 
-# Appends LTP path when doing su
-tst_su()
-{
-	local usr="$1"
-	shift
-
-	su "$usr" -c "PATH=\$PATH:$LTPROOT/testcases/bin/ $@"
-}
-
 TST_CHECKPOINT_WAIT()
 {
 	ROD tst_checkpoint wait 10000 "$1"
@@ -420,9 +420,9 @@ fi
 if [ "$TST_NEEDS_CHECKPOINTS" = "1" ]; then
 	LTP_IPC_PATH="/dev/shm/ltp_${TCID}_$$"
 
-	LTP_IPC_SIZE=$(getconf PAGESIZE)
+	LTP_IPC_SIZE=$(tst_getconf PAGESIZE)
 	if [ $? -ne 0 ]; then
-		tst_brkm TBROK "getconf PAGESIZE failed"
+		tst_brkm TBROK "tst_getconf PAGESIZE failed"
 	fi
 
 	ROD_SILENT dd if=/dev/zero of="$LTP_IPC_PATH" bs="$LTP_IPC_SIZE" count=1

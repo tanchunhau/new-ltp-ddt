@@ -23,7 +23,6 @@
  * 6.  Create child thread to read lock 'rwlock', should block
  * 7.  Main thread unlock 'rwlock'
  */
-#define _XOPEN_SOURCE 600
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +42,7 @@ static int thread_state;
 #define ENTERED_THREAD 2
 #define EXITING_THREAD 3
 
-static void *fn_rd(void *arg)
+static void *fn_rd(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int rc = 0;
 	thread_state = ENTERED_THREAD;

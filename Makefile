@@ -27,11 +27,6 @@
 #       Include only testcases/ddt tests
 #
 
-# Force IDcheck.sh to fix any issues found with $(DESTDIR)/etc/group and
-# $(DESTDIR)/etc/passwd automatically when after running the top-level
-# install target.
-CREATE_ENTRIES		?= 0
-
 top_srcdir		?= $(CURDIR)
 
 include $(top_srcdir)/include/mk/env_pre.mk
@@ -47,9 +42,6 @@ vpath %.h		$(top_srcdir)/include:$(top_builddir)/include
 vpath %.in		$(top_srcdir)/include
 vpath %.m4		$(top_srcdir)/m4
 vpath %.mk		$(top_srcdir)/mk:$(top_srcdir)/mk/include
-
-# Skip running IDcheck.sh at the end of install?
-SKIP_IDCHECK		?= 0
 
 # User wants uclinux binaries?
 UCLINUX			?= 0
@@ -77,7 +69,6 @@ endif
 endef
 
 COMMON_TARGETS    += tools testcases/ddt 
-COMMON_TARGETS    += testcases/kernel/timers
 COMMON_TARGETS    += testcases/kernel/ipc
 COMMON_TARGETS    += testcases/kernel/mem
 COMMON_TARGETS    += testcases/kernel/lib
@@ -96,7 +87,7 @@ INSTALL_TARGETS		+= runtest scenario_groups testscripts platforms skips
 CLEAN_TARGETS		+= include runtest scenario_groups testscripts
 endif
 INSTALL_TARGETS		+= $(COMMON_TARGETS)
-CLEAN_TARGETS		+= $(COMMON_TARGETS) lib
+CLEAN_TARGETS		+= $(COMMON_TARGETS) lib libs
 BOOTSTRAP_TARGETS	:= $(sort $(COMMON_TARGETS) $(CLEAN_TARGETS) $(INSTALL_TARGETS))
 
 CLEAN_TARGETS		:= $(addsuffix -clean,$(CLEAN_TARGETS))
@@ -108,7 +99,7 @@ MAKE_TARGETS		:= $(addsuffix -all,$(filter-out lib,$(COMMON_TARGETS)))
 # overtaxed one, or one where -j => 1 was specified.
 all: $(addsuffix -all,$(COMMON_TARGETS)) Version
 
-$(MAKE_TARGETS): lib-all
+$(MAKE_TARGETS): lib-all libs-all
 
 .PHONY: include-all include-install
 include-install: $(top_builddir)/include/config.h include/mk/config.mk include-all
@@ -129,7 +120,9 @@ $(sort $(addprefix $(abs_top_builddir)/,$(BOOTSTRAP_TARGETS)) $(INSTALL_DIR) $(D
 ## Pattern based subtarget rules.
 lib-install: lib-all
 
-$(MAKE_TARGETS) include-all lib-all:
+libs-all: $(abs_top_builddir)/libs
+
+$(MAKE_TARGETS) include-all lib-all libs-all:
 	$(MAKE) -C "$(subst -all,,$@)" \
 		-f "$(abs_top_srcdir)/$(subst -all,,$@)/Makefile" all
 
@@ -182,7 +175,7 @@ clean:: $(CLEAN_TARGETS)
 $(foreach tgt,$(MAKE_TARGETS) include-all lib-all $(filter-out clean_install_dir,$(CLEAN_TARGETS)) $(INSTALL_TARGETS) include-install lib-install,$(eval $(call target_to_dir_dep_mapping,$(tgt))))
 
 BINDIR_INSTALL_SCRIPTS	:= execltp
-SRCDIR_INSTALL_SCRIPTS	:= IDcheck.sh runltp runltplite.sh ver_linux
+SRCDIR_INSTALL_SCRIPTS	:= IDcheck.sh runltp ver_linux
 SRCDIR_INSTALL_READONLY	:= Version
 SRCDIR_INSTALL_TARGETS	:= $(SRCDIR_INSTALL_SCRIPTS) $(SRCDIR_INSTALL_READONLY)
 
@@ -216,17 +209,6 @@ $(INSTALL_TARGETS): $(INSTALL_DIR) $(DESTDIR)/$(bindir)
 
 ## Install
 install: $(INSTALL_TARGETS)
-ifeq ($(SKIP_IDCHECK),0)
-	-@CREATE_ENTRIES=$(CREATE_ENTRIES) \
-	 DESTDIR="$(DESTDIR)" \
-	 "$(top_srcdir)/IDcheck.sh"
-else
-	@echo "*******************************************************"
-	@echo "** Will not run IDcheck.sh (SKIP_IDCHECK set to 1).  **"
-	@echo "*******************************************************"
-endif
-
-## Misc targets.
 
 ## Help
 .PHONY: help

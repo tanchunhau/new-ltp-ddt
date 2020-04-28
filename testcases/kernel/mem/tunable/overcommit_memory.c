@@ -36,11 +36,10 @@
  *
  * The program is designed to test the two tunables:
  *
- * When overcommit_memory = 0, allocatable memory can't overextends
- * the amount of free memory. I choose the three cases:
+ * When overcommit_memory = 0, allocatable memory can't overextend
+ * the amount of total memory:
  * a. less than free_total:    free_total / 2, alloc should pass.
- * b. greater than free_total: free_total * 2, alloc should fail.
- * c. equal to sum_total:      sum_tatal,      alloc should fail
+ * b. greater than sum_total:   sum_total * 2, alloc should fail.
  *
  * When overcommit_memory = 1, it can alloc enough much memory, I
  * choose the three cases:
@@ -69,6 +68,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include "lapi/abisize.h"
 #include "mem.h"
 
 #define DEFAULT_OVER_RATIO	50L
@@ -81,8 +81,8 @@ static struct tst_option options[] = {
 	{NULL, NULL, NULL}
 };
 
-static long old_overcommit_memory;
-static long old_overcommit_ratio;
+static long old_overcommit_memory = -1;
+static long old_overcommit_ratio = -1;
 static long overcommit_ratio;
 static long sum_total;
 static long free_total;
@@ -92,6 +92,7 @@ static long commit_left;
 static int heavy_malloc(long size);
 static void alloc_and_check(long size, int expect_result);
 static void update_mem(void);
+static void update_mem_commit(void);
 
 static void setup(void)
 {
@@ -136,23 +137,25 @@ static void setup(void)
 
 static void cleanup(void)
 {
-	set_sys_tune("overcommit_memory", old_overcommit_memory, 0);
-	set_sys_tune("overcommit_ratio", old_overcommit_ratio, 0);
+	if (old_overcommit_memory != -1)
+		set_sys_tune("overcommit_memory", old_overcommit_memory, 0);
+	if (old_overcommit_ratio != -1)
+		set_sys_tune("overcommit_ratio", old_overcommit_ratio, 0);
 }
 
 static void overcommit_memory_test(void)
 {
 
-#if __WORDSIZE == 32
+#ifdef TST_ABI32
 	tst_brk(TCONF, "test is not designed for 32-bit system.");
 #endif
 	/* start to test overcommit_memory=2 */
 	set_sys_tune("overcommit_memory", 2, 1);
 
-	update_mem();
+	update_mem_commit();
 	alloc_and_check(commit_left * 2, EXPECT_FAIL);
 	alloc_and_check(commit_limit, EXPECT_FAIL);
-	update_mem();
+	update_mem_commit();
 	alloc_and_check(commit_left / 2, EXPECT_PASS);
 
 	/* start to test overcommit_memory=0 */
@@ -160,9 +163,7 @@ static void overcommit_memory_test(void)
 
 	update_mem();
 	alloc_and_check(free_total / 2, EXPECT_PASS);
-	update_mem();
-	alloc_and_check(free_total * 2, EXPECT_FAIL);
-	alloc_and_check(sum_total, EXPECT_FAIL);
+	alloc_and_check(sum_total * 2, EXPECT_FAIL);
 
 	/* start to test overcommit_memory=1 */
 	set_sys_tune("overcommit_memory", 1, 1);
@@ -217,23 +218,32 @@ static void alloc_and_check(long size, int expect_result)
 static void update_mem(void)
 {
 	long mem_free, swap_free;
-	long committed;
 
 	mem_free = SAFE_READ_MEMINFO("MemFree:");
 	swap_free = SAFE_READ_MEMINFO("SwapFree:");
 	free_total = mem_free + swap_free;
+}
+
+static void update_mem_commit(void)
+{
+	long committed;
+
 	commit_limit = SAFE_READ_MEMINFO("CommitLimit:");
+	committed = SAFE_READ_MEMINFO("Committed_AS:");
+	commit_left = commit_limit - committed;
 
-	if (get_sys_tune("overcommit_memory") == 2) {
-		committed = SAFE_READ_MEMINFO("Committed_AS:");
-		commit_left = commit_limit - committed;
+	if (commit_left < 0) {
+		tst_res(TINFO, "CommitLimit is %ld, Committed_AS is %ld",
+			commit_limit, committed);
 
-		if (commit_left < 0) {
-			tst_res(TINFO, "CommitLimit is %ld, Committed_AS"
-				 " is %ld", commit_limit, committed);
+		if (overcommit_ratio > old_overcommit_ratio) {
 			tst_brk(TBROK, "Unexpected error: "
-				 "CommitLimit < Committed_AS");
+				"CommitLimit < Committed_AS");
 		}
+
+		tst_brk(TCONF, "Specified overcommit_ratio %ld <= default %ld, "
+			"so it's possible for CommitLimit < Committed_AS and skip test",
+			overcommit_ratio, old_overcommit_ratio);
 	}
 }
 

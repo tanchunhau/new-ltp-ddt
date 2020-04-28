@@ -1,17 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 * Copyright (c) 2016 Fujitsu Ltd.
 * Author: Xiao Yang <yangx.jy@cn.fujitsu.com>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of version 2 of the GNU General Public License as
-* published by the Free Software Foundation.
-*
-* This program is distributed in the hope that it would be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*
-* You should have received a copy of the GNU General Public License
-* alone with this program.
 */
 
 /*
@@ -68,14 +58,14 @@ static void verify_llistxattr(unsigned int n)
 	char buf[t->size];
 
 	TEST(llistxattr(t->path, buf, sizeof(buf)));
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL,
 			"llistxattr() succeeded unexpectedly (returned %ld)",
-			TEST_RETURN);
+			TST_RET);
 		return;
 	}
 
-	if (TEST_ERRNO != t->exp_err) {
+	if (TST_ERR != t->exp_err) {
 		tst_res(TFAIL | TTERRNO, "llistxattr() failed "
 			 "unexpectedlly, expected %s",
 			 tst_strerrno(t->exp_err));

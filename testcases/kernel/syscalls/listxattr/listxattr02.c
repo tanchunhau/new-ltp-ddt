@@ -1,19 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 *  Copyright (c) 2016 RT-RK Institute for Computer Based Systems
 *  Author: Dejan Jovicevic <dejan.jovicevic@rt-rk.com>
-*
-*  This program is free software;  you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation; either version 2 of the License, or
-*  (at your option) any later version.
-*
-*  This program is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY;  without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
-*  the GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  along with this program.
 */
 
 /*
@@ -69,14 +57,14 @@ static void verify_listxattr(unsigned int n)
 	char buf[t->size];
 
 	TEST(listxattr(t->path, buf, sizeof(buf)));
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL,
 			"listxattr() succeeded unexpectedly (returned %ld)",
-			TEST_RETURN);
+			TST_RET);
 		return;
 	}
 
-	if (t->exp_err != TEST_ERRNO) {
+	if (t->exp_err != TST_ERR) {
 		tst_res(TFAIL | TTERRNO, "listxattr() failed "
 			 "unexpectedlly, expected %s",
 			 tst_strerrno(t->exp_err));

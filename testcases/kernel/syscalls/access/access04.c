@@ -1,19 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) International Business Machines  Corp., 2001
+ * Copyright (c) International Business Machines Corp., 2001
  * Copyright (c) 2013 Fujitsu Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -31,7 +19,7 @@
  *  6) access() fails with -1 return value and sets errno to EROFS
  *     if write permission was requested for files on a read-only file system.
  *
- *  07/2001 Ported by Wayne Boyer
+ * Ported to LTP: Wayne Boyer
  *  11/2013 Ported by Xiaoguang Wang <wangxg.fnst@cn.fujitsu.com>
  *  11/2016 Modified by Guangwen Feng <fenggw-fnst@cn.fujitsu.com>
  */
@@ -72,12 +60,12 @@ static void access_test(struct tcase *tc, const char *user)
 {
 	TEST(access(tc->pathname, tc->mode));
 
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL, "access as %s succeeded unexpectedly", user);
 		return;
 	}
 
-	if (tc->exp_errno != TEST_ERRNO) {
+	if (tc->exp_errno != TST_ERR) {
 		tst_res(TFAIL | TTERRNO,
 			"access as %s should fail with %s",
 			user, tst_strerrno(tc->exp_errno));
@@ -122,7 +110,6 @@ static void setup(void)
 
 static struct tst_test test = {
 	.tcnt = ARRAY_SIZE(tcases),
-	.needs_tmpdir = 1,
 	.needs_root = 1,
 	.forks_child = 1,
 	.needs_rofs = 1,

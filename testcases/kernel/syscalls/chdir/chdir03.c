@@ -1,20 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) International Business Machines  Corp., 2001
+ * Copyright (c) International Business Machines Corp., 2001
  * Copyright (c) 2017 Cyril Hrubis <chrubis@suse.cz>
- *
- * This program is free software;  you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- * the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program;  if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /*
@@ -22,10 +9,9 @@
  *	Testcase for testing that chdir(2) sets EACCES errno
  *
  * ALGORITHM
- *	1.	create a child process, sets its uid to ltpuser1
- *	2.	this child creates a directory with perm 700, and exits
- *	3.	create another child process, sets its uid to ltpuser2
- *	4.	this child attempts to chdir(2) to the directory created in 2.
+ *	1.	running as root, create a directory with perm 700
+ *	2.	create a child process, sets its uid to nobody
+ *	3.	this child attempts to chdir(2) to the directory created in 1
  *		and expects to get an EACCES.
  */
 
@@ -36,7 +22,7 @@
 
 #define DIRNAME "chdir03_dir"
 
-static uid_t nobody_uid, bin_uid;
+static uid_t nobody_uid;
 
 void verify_chdir(void)
 {
@@ -44,16 +30,16 @@ void verify_chdir(void)
 
 	pid = SAFE_FORK();
 	if (!pid) {
-		SAFE_SETUID(bin_uid);
+		SAFE_SETUID(nobody_uid);
 
 		TEST(chdir(DIRNAME));
 
-		if (TEST_RETURN != -1) {
+		if (TST_RET != -1) {
 			tst_res(TFAIL, "chdir() succeeded unexpectedly");
 			return;
 		}
 
-		if (TEST_ERRNO != EACCES) {
+		if (TST_ERR != EACCES) {
 			tst_res(TFAIL | TTERRNO,
 				"chdir() should fail with EACCES");
 			return;
@@ -66,20 +52,11 @@ void verify_chdir(void)
 void setup(void)
 {
 	struct passwd *pw;
-	pid_t pid;
 
 	pw = SAFE_GETPWNAM("nobody");
 	nobody_uid = pw->pw_uid;
-	pw = SAFE_GETPWNAM("bin");
-	bin_uid = pw->pw_uid;
 
-	pid = SAFE_FORK();
-	if (!pid) {
-		SAFE_SETEUID(nobody_uid);
-		SAFE_MKDIR(DIRNAME, 0700);
-		exit(0);
-	}
-	tst_reap_children();
+	SAFE_MKDIR(DIRNAME, 0700);
 }
 
 static struct tst_test test = {

@@ -11,7 +11,6 @@
  *   own the mutex with which it called pthread_cond_timedwait().
  */
 
-#define _XOPEN_SOURCE 600
 
 #include <pthread.h>
 #include <stdio.h>
@@ -32,7 +31,7 @@ struct testdata {
 int start_num = 0;
 int waken_num = 0;
 
-void *thr_func(void *arg)
+void *thr_func(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int rc;
 	struct timespec timeout;
@@ -96,6 +95,7 @@ void *thr_func(void *arg)
 
 int main(void)
 {
+	struct timespec completion_wait_ts = {0, 100000};
 	int i;
 	pthread_t thread[THREAD_NUM];
 	pthread_mutexattr_t ma;
@@ -125,7 +125,7 @@ int main(void)
 		}
 	}
 	while (start_num < THREAD_NUM)	/* waiting for all threads started */
-		usleep(100);
+		nanosleep(&completion_wait_ts, NULL);
 
 	sleep(1);
 

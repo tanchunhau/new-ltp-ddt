@@ -1,19 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2015 Cedric Hnyda <chnyda@suse.com>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write the Free Software Foundation,
- * Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
  /* Description:
@@ -84,15 +71,15 @@ static void do_child(const struct test_case *test)
 	SAFE_CLOSE(fd2);
 	SAFE_CLOSE(fd3);
 
-	if (TEST_RETURN == -1) {
+	if (TST_RET == -1) {
 		tst_res(TFAIL | TTERRNO, "kcmp() failed unexpectedly");
 		return;
 	}
 
-	if ((test->exp_different && TEST_RETURN == 0)
-		|| (test->exp_different == 0 && TEST_RETURN)) {
+	if ((test->exp_different && TST_RET == 0)
+		|| (test->exp_different == 0 && TST_RET)) {
 		tst_res(TFAIL, "kcmp() returned %lu instead of %d",
-			TEST_RETURN, test->exp_different);
+			TST_RET, test->exp_different);
 		return;
 	}
 

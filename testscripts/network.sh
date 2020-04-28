@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (c) Linux Test Project, 2013-2019
 
 cd $(dirname $0)
 export LTPROOT=${LTPROOT:-"$PWD"}
@@ -84,16 +86,14 @@ if [ "$OPTIND" -eq 1 ]; then
 	usage
 	exit 1
 fi
+shift $(($OPTIND - 1))
 
-TST_TOTAL=1
-TCID="network_settings"
-
-. test_net.sh
+TST_NO_DEFAULT_RUN=1
+. tst_net.sh
 
 # Reset variables.
 # Don't break the tests which are using 'testcases/lib/cmdlib.sh'
-export TCID=
-export TST_LIB_LOADED=
+unset TST_ID TST_LIB_LOADED TST_NO_DEFAULT_RUN
 
 rm -f $CMDFILE
 
@@ -123,3 +123,5 @@ if [ $? -eq "0" ]; then
 else
 	echo ltp-pan reported FAIL
 fi
+
+rm -rf $TMPDIR

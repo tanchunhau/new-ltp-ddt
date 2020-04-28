@@ -32,8 +32,6 @@
 
 */
 
-/* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -69,7 +67,7 @@ int main(void)
 	mq = mq_open(queue_name, O_RDWR | O_CREAT | O_NONBLOCK,
 		     S_IRUSR | S_IWUSR, &mqa);
 
-	if (mq == -1) {
+	if (mq == (mqd_t)-1) {
 		perror("Failed to create the message queue descriptor");
 		return PTS_UNRESOLVED;
 	}

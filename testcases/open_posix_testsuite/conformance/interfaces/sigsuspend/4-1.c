@@ -20,7 +20,7 @@
     the child return to the parent process with:
     - a return value of 1 if the original signal mask was not restored, or
     - a return value of 0 if the original signal mask was successfully restored.
- 4. Finally from the parent, return a PTS_PASS if recieved the return value of the child was not
+ 4. Finally from the parent, return a PTS_PASS if received the return value of the child was not
     a 1.
 
 */
@@ -35,7 +35,7 @@
 
 #define NUMSIGNALS (sizeof(siglist) / sizeof(siglist[0]))
 
-void handler(int signo)
+void handler(int signo LTP_ATTRIBUTE_UNUSED)
 {
 }
 
@@ -61,7 +61,7 @@ int is_changed(sigset_t set, int sig)
 	if (sigismember(&set, sig) != 1) {
 		return 1;
 	}
-	for (i = 0; i < NUMSIGNALS; i++) {
+	for (i = 0; i < (int)NUMSIGNALS; i++) {
 		if ((siglist[i] != sig)) {
 			if (sigismember(&set, siglist[i]) != 0) {
 				return 1;

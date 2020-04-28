@@ -1,15 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011-2017  Red Hat, Inc.
- *
- * This program is free software;  you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- * the GNU General Public License for more details.
  *
  * KSM - NULL pointer dereference in ksm_do_scan() (CVE-2011-2183)
  *
@@ -52,7 +43,7 @@
 
 #ifdef HAVE_MADV_MERGEABLE
 
-static int ksm_run_orig;
+static int ksm_run_orig = -1;
 static void sighandler(int sig);
 
 static void test_ksm(void)
@@ -67,7 +58,7 @@ static void test_ksm(void)
 	sa.sa_handler = sighandler;
 	sa.sa_flags = 0;
 	TEST(sigaction(SIGSEGV, &sa, NULL));
-	if (TEST_RETURN == -1)
+	if (TST_RET == -1)
 		tst_brk(TBROK | TRERRNO,
 				"SIGSEGV signal setup failed");
 
@@ -78,7 +69,7 @@ static void test_ksm(void)
 		ptr = SAFE_MEMALIGN(ps, ps);
 		if (madvise(ptr, ps, MADV_MERGEABLE) < 0)
 			tst_brk(TBROK | TERRNO, "madvise");
-		*(char *)NULL = 0;	/* SIGSEGV occurs as expected. */
+		*(volatile char *)NULL = 0; /* SIGSEGV occurs as expected. */
 	}
 	SAFE_WAITPID(pid, &status, WUNTRACED | WCONTINUED);
 	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
@@ -107,7 +98,8 @@ static void setup(void)
 static void cleanup(void)
 {
 	/* restore /sys/kernel/mm/ksm/run value */
-	FILE_PRINTF(PATH_KSM "run", "%d", ksm_run_orig);
+	if (ksm_run_orig > 0)
+		FILE_PRINTF(PATH_KSM "run", "%d", ksm_run_orig);
 }
 
 static struct tst_test test = {

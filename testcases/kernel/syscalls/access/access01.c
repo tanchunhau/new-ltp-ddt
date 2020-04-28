@@ -1,26 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2000 Silicon Graphics, Inc.  All Rights Reserved.
  *   AUTHOR		: William Roske
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * Further, this software is distributed without any warranty that it is
- * free of the rightful claim of any third person regarding infringement
- * or the like.  Any license provided herein, whether implied or
- * otherwise, applies only to this software file.  Patent licenses, if
- * any, provided herein do not apply to combinations of this program with
- * other software, or any other product whatsoever.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
  */
 /*
  * Basic test for access(2) using F_OK, R_OK, W_OK and X_OK
@@ -252,7 +233,7 @@ static struct tcase {
 
 static void verify_success(struct tcase *tc, const char *user)
 {
-	if (TEST_RETURN == -1) {
+	if (TST_RET == -1) {
 		tst_res(TFAIL | TTERRNO,
 		        "access(%s, %s) as %s failed unexpectedly",
 		        tc->fname, tc->name, user);
@@ -264,13 +245,13 @@ static void verify_success(struct tcase *tc, const char *user)
 
 static void verify_failure(struct tcase *tc, const char *user)
 {
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL, "access(%s, %s) as %s succeded unexpectedly",
 		        tc->fname, tc->name, user);
 		return;
 	}
 
-	if (TEST_ERRNO != tc->exp_errno) {
+	if (TST_ERR != tc->exp_errno) {
 		tst_res(TFAIL | TTERRNO,
 		        "access(%s, %s) as %s should fail with %s",
 		        tc->fname, tc->name, user,

@@ -1,19 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2017 Red Hat Inc. All Rights Reserved.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
  * Author: Xiong Zhou <xzhou@redhat.com>
  *
  * This is testing OFD locks racing with POSIX locks:
@@ -29,19 +16,17 @@
  *
  * For example:
  *
- *	Init an file with preset values.
+ * Init an file with preset values.
  *
- *	Threads acquire OFD READ  locks to read  a 4k section start from 0;
- *		checking data read back, there should not be any surprise
- *		values and data should be consistent in a 1k block.
+ * Threads acquire OFD READ  locks to read  a 4k section start from 0;
+ * checking data read back, there should not be any surprise
+ * values and data should be consistent in a 1k block.
  *
- *	Threads acquire OFD WRITE locks to write a 4k section start from 1k,
- *		writing different values in different threads.
+ * Threads acquire OFD WRITE locks to write a 4k section start from 1k,
+ * writing different values in different threads.
  *
- *	Check file data after racing, there should not be any surprise values
- *		and data should be consistent in a 1k block.
- *
- *
+ * Check file data after racing, there should not be any surprise values
+ * and data should be consistent in a 1k block.
  */
 
 #include <sys/types.h>
@@ -57,6 +42,7 @@
 #include "lapi/fcntl.h"
 #include "tst_safe_pthread.h"
 #include "tst_test.h"
+#include "fcntl_common.h"
 
 static int thread_cnt;
 static int fail_flag = 0;
@@ -94,25 +80,25 @@ static void *fn_ofd_w(void *arg)
 		.l_pid    = 0,
 	};
 
-	while (loop_flag) {
+	do {
 
 		memset(buf, wt, pa->length);
 
 		lck.l_type = F_WRLCK;
-		SAFE_FCNTL(fd, F_OFD_SETLKW, &lck);
+		my_fcntl(fd, F_OFD_SETLKW, &lck);
 
 		SAFE_LSEEK(fd, pa->offset, SEEK_SET);
 		SAFE_WRITE(1, fd, buf, pa->length);
 
 		lck.l_type = F_UNLCK;
-		SAFE_FCNTL(fd, F_OFD_SETLKW, &lck);
+		my_fcntl(fd, F_OFD_SETLKW, &lck);
 
 		wt++;
 		if (wt >= 255)
 			wt = pa->cnt;
 
 		sched_yield();
-	}
+	} while (loop_flag);
 
 	pthread_barrier_wait(&barrier);
 	SAFE_CLOSE(fd);
@@ -127,13 +113,13 @@ static void *fn_posix_w(void *arg)
 	int fd = SAFE_OPEN(fname, O_RDWR);
 	long wt = pa->cnt;
 
-	struct flock64 lck = {
+	struct flock lck = {
 		.l_whence = SEEK_SET,
 		.l_start  = pa->offset,
 		.l_len    = pa->length,
 	};
 
-	while (loop_flag) {
+	do {
 
 		memset(buf, wt, pa->length);
 
@@ -151,7 +137,7 @@ static void *fn_posix_w(void *arg)
 			wt = pa->cnt;
 
 		sched_yield();
-	}
+	} while (loop_flag);
 
 	pthread_barrier_wait(&barrier);
 	SAFE_CLOSE(fd);
@@ -178,7 +164,7 @@ static void *fn_ofd_r(void *arg)
 		memset(buf, 0, pa->length);
 
 		lck.l_type = F_RDLCK;
-		SAFE_FCNTL(fd, F_OFD_SETLKW, &lck);
+		my_fcntl(fd, F_OFD_SETLKW, &lck);
 
 		/* rlock acquired */
 		SAFE_LSEEK(fd, pa->offset, SEEK_SET);
@@ -209,7 +195,7 @@ static void *fn_ofd_r(void *arg)
 		}
 
 		lck.l_type = F_UNLCK;
-		SAFE_FCNTL(fd, F_OFD_SETLK, &lck);
+		my_fcntl(fd, F_OFD_SETLK, &lck);
 
 		sched_yield();
 	}
@@ -227,7 +213,7 @@ static void *fn_posix_r(void *arg)
 	int i;
 	int fd = SAFE_OPEN(fname, O_RDWR);
 
-	struct flock64 lck = {
+	struct flock lck = {
 		.l_whence = SEEK_SET,
 		.l_start  = pa->offset,
 		.l_len    = pa->length,

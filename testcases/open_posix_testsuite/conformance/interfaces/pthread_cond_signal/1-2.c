@@ -27,13 +27,6 @@
  *
  */
 
- /* We are testing conformance to IEEE Std 1003.1, 2003 Edition */
-#define _POSIX_C_SOURCE 200112L
-
- /* We need the XSI extention for the mutex attributes */
-#ifndef WITHOUT_XOPEN
-#define _XOPEN_SOURCE	600
-#endif
 /********************************************************************************************/
 /****************************** standard includes *****************************************/
 /********************************************************************************************/
@@ -212,7 +205,7 @@ typedef struct {
 testdata_t *td;
 
 /* Child function (either in a thread or in a process) */
-void *child(void *arg)
+void *child(void *arg LTP_ATTRIBUTE_UNUSED)
 {
 	int ret = 0;
 	struct timespec ts;
@@ -402,7 +395,7 @@ int main(void)
 	}
 
 	/* Do the test for each test scenario */
-	for (scenar = 0; scenar < NSCENAR; scenar++) {
+	for (scenar = 0; scenar < (int)NSCENAR; scenar++) {
 		/* set / reset everything */
 		td->fork = 0;
 		ret = pthread_mutexattr_init(&ma);

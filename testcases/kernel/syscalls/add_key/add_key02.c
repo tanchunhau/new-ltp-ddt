@@ -1,24 +1,8 @@
-/******************************************************************************
- * Copyright (c) Crackerjack Project., 2007				      *
- * Copyright (c) 2017 Google, Inc.                                            *
- *									      *
- * This program is free software;  you can redistribute it and/or modify      *
- * it under the terms of the GNU General Public License as published by       *
- * the Free Software Foundation; either version 2 of the License, or	      *
- * (at your option) any later version.					      *
- *									      *
- * This program is distributed in the hope that it will be useful,	      *
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of	      *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See		      *
- * the GNU General Public License for more details.			      *
- *									      *
- * You should have received a copy of the GNU General Public License	      *
- * along with this program;  if not, write to the Free Software	Foundation,   *
- * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA           *
- *									      *
- ******************************************************************************/
-
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
+ * Copyright (c) Crackerjack Project., 2007
+ * Copyright (c) 2017 Google, Inc.
+ *
  * Test that the add_key() syscall correctly handles a NULL payload with nonzero
  * length.  Specifically, it should fail with EFAULT rather than oopsing the
  * kernel with a NULL pointer dereference or failing with EINVAL, as it did
@@ -63,20 +47,20 @@ static void verify_add_key(unsigned int i)
 	TEST(add_key(tcases[i].type,
 		"abc:def", NULL, tcases[i].plen, KEY_SPEC_PROCESS_KEYRING));
 
-	if (TEST_RETURN != -1) {
+	if (TST_RET != -1) {
 		tst_res(TFAIL,
 			"add_key() with key type '%s' unexpectedly succeeded",
 			tcases[i].type);
 		return;
 	}
 
-	if (TEST_ERRNO == EFAULT) {
+	if (TST_ERR == EFAULT) {
 		tst_res(TPASS, "received expected EFAULT with key type '%s'",
 			tcases[i].type);
 		return;
 	}
 
-	if (TEST_ERRNO == ENODEV) {
+	if (TST_ERR == ENODEV) {
 		tst_res(TCONF, "kernel doesn't support key type '%s'",
 			tcases[i].type);
 		return;
@@ -87,7 +71,7 @@ static void verify_add_key(unsigned int i)
 	 * no asymmetric key parsers registered.  In that case, attempting to
 	 * add a key of type asymmetric will fail with EBADMSG.
 	 */
-	if (TEST_ERRNO == EBADMSG && !strcmp(tcases[i].type, "asymmetric")) {
+	if (TST_ERR == EBADMSG && !strcmp(tcases[i].type, "asymmetric")) {
 		tst_res(TCONF, "no asymmetric key parsers are registered");
 		return;
 	}
@@ -99,4 +83,9 @@ static void verify_add_key(unsigned int i)
 static struct tst_test test = {
 	.tcnt = ARRAY_SIZE(tcases),
 	.test = verify_add_key,
+	.tags = (const struct tst_tag[]) {
+		{"linux-git", "5649645d725c"},
+		{"CVE", "2017-15274"},
+		{}
+	}
 };

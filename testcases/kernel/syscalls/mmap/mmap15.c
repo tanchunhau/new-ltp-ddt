@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include "test.h"
 #include "safe_macros.h"
+#include "lapi/abisize.h"
 
 char *TCID = "mmap15";
 int TST_TOTAL = 1;
@@ -56,7 +57,7 @@ int main(int ac, char **av)
 	int lc, fd;
 	void *addr;
 
-#if __WORDSIZE == 32
+#ifdef TST_ABI32
 	tst_brkm(TCONF, NULL, "This test is only for 64bit");
 #endif
 
@@ -80,10 +81,9 @@ int main(int ac, char **av)
 			continue;
 		}
 
-		if (errno != ENOMEM) {
+		if (errno != ENOMEM && errno != EINVAL) {
 			tst_resm(TFAIL | TERRNO, "mmap into high region "
-				 "failed unexpectedly - expect "
-				 "errno=ENOMEM, got");
+				 "failed unexpectedly");
 		} else {
 			tst_resm(TPASS | TERRNO, "mmap into high region "
 				 "failed as expected");

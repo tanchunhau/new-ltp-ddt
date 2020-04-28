@@ -29,12 +29,9 @@
  * SPECIAL CASE:
  * $ ./t0 0
  *  Here another arg is not required. This special case will return immediatly
- *  as if it has been timedout. This is usefull to check a timeout return code value.
+ *  as if it has been timedout. This is useful to check a timeout return code value.
  *
  */
-
-/* This utility should compile on any POSIX-conformant implementation. */
-#define _POSIX_C_SOURCE 200112L
 
 #include <sys/types.h>
 #include <sys/wait.h>

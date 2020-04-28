@@ -1,20 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) International Business Machines  Corp., 2001
+ * Copyright (c) International Business Machines Corp., 2001
  * Copyright (C) 2017 Cyril Hrubis <chrubis@suse.cz>
- *
- * This program is free software;  you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY;  without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- * the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program;  if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 /*
  * DESCRIPTION
@@ -96,15 +83,15 @@ static void verify_times(void)
 	if (times(&buf1) == -1)
 		tst_brk(TBROK | TERRNO, "times()");
 
-	if (buf1.tms_utime != 0)
+	if (buf1.tms_utime > 5)
 		tst_res(TFAIL, "buf1.tms_utime = %li", buf1.tms_utime);
 	else
-		tst_res(TPASS, "buf1.tms_utime = 0");
+		tst_res(TPASS, "buf1.tms_utime <= 5");
 
-	if (buf1.tms_stime != 0)
+	if (buf1.tms_stime > 5)
 		tst_res(TFAIL, "buf1.tms_stime = %li", buf1.tms_stime);
 	else
-		tst_res(TPASS, "buf1.tms_stime = 0");
+		tst_res(TPASS, "buf1.tms_stime <= 5");
 
 	generate_utime();
 	generate_stime();

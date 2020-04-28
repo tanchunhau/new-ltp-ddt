@@ -1,19 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *   Copyright (c) International Business Machines  Corp., 2001
+ *   Copyright (c) International Business Machines Corp., 2001
  *                 Linux Test Project, 2016
- *
- *   This program is free software;  you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program;
  */
 
 /*
@@ -130,17 +118,17 @@ static void test_writev(unsigned int i)
 
 	TEST(writev(*(tcase->pfd), *(tcase->piovec), tcase->iovcnt));
 
-	ret = (TEST_RETURN == tcase->exp_ret);
-	if (TEST_RETURN < 0 || tcase->exp_ret < 0) {
-		ret &= (TEST_ERRNO == tcase->exp_errno);
+	ret = (TST_RET == tcase->exp_ret);
+	if (TST_RET < 0 || tcase->exp_ret < 0) {
+		ret &= (TST_ERR == tcase->exp_errno);
 		tst_res((ret ? TPASS : TFAIL),
 			"%s, expected: %d (%s), got: %ld (%s)", tcase->desc,
 			tcase->exp_ret, tst_strerrno(tcase->exp_errno),
-			TEST_RETURN, tst_strerrno(TEST_ERRNO));
+			TST_RET, tst_strerrno(TST_ERR));
 	} else {
 		tst_res((ret ? TPASS : TFAIL),
 			"%s, expected: %d, got: %ld", tcase->desc,
-			tcase->exp_ret, TEST_RETURN);
+			tcase->exp_ret, TST_RET);
 	}
 }
 

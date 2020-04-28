@@ -1,17 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2016 Linux Test Project
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it would be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * Check that pause() returns on signal with errno == EINTR.
  */
 #include <errno.h>
 #include <signal.h>
@@ -29,9 +18,9 @@ static void do_child(void)
 	TST_CHECKPOINT_WAKE(0);
 
 	TEST(pause());
-	if (TEST_RETURN != -1)
+	if (TST_RET != -1)
 		tst_res(TFAIL, "pause() succeeded unexpectedly");
-	else if (TEST_ERRNO == EINTR)
+	else if (TST_ERR == EINTR)
 		tst_res(TPASS, "pause() interrupted with EINTR");
 	else
 		tst_res(TFAIL | TTERRNO, "pause() unexpected errno");

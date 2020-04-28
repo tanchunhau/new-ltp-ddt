@@ -128,9 +128,8 @@ static int my_sigtimedwait(const sigset_t * set, siginfo_t * info,
 static int my_rt_sigtimedwait(const sigset_t * set, siginfo_t * info,
 			      struct timespec *timeout)
 {
-
-	/* The last argument is (number_of_signals)/(bits_per_byte), which are 64 and 8, resp. */
-	return ltp_syscall(__NR_rt_sigtimedwait, set, info, timeout, 8);
+	/* _NSIG is always the right number of bits of signal map for all arches */
+	return ltp_syscall(__NR_rt_sigtimedwait, set, info, timeout, _NSIG/8);
 }
 #endif
 
@@ -371,19 +370,40 @@ void test_bad_address2(swi_func sigwaitinfo, int signo)
 		tst_brkm(TBROK | TERRNO, NULL, "fork() failed");
 	case 0:
 		signal(SIGSEGV, SIG_DFL);
+
+		/*
+		 * depending on glibc implementation we should
+		 * either crash or get EFAULT
+		 */
 		TEST(sigwaitinfo((void *)1, NULL, NULL));
 
-		_exit(0);
+		if (TEST_RETURN == -1 && TEST_ERRNO == EFAULT)
+			_exit(0);
+
+		tst_resm(TINFO | TTERRNO, "swi_func returned: %ld",
+			TEST_RETURN);
+		_exit(1);
 		break;
 	default:
 		break;
 	}
 
 	SUCCEED_OR_DIE(waitpid, "waitpid failed", pid, &status, 0);
-	if (WIFSIGNALED(status) && WTERMSIG(status) == SIGSEGV)
+
+	if ((WIFSIGNALED(status) && WTERMSIG(status) == SIGSEGV)
+		|| (WIFEXITED(status) && WEXITSTATUS(status) == 0)) {
 		tst_resm(TPASS, "Test passed");
-	else
-		tst_resm(TFAIL, "Unrecognised child exit code");
+		return;
+	}
+
+	if (WIFEXITED(status)) {
+		tst_resm(TFAIL, "Unrecognised child exit code: %d",
+			WEXITSTATUS(status));
+	}
+	if (WIFSIGNALED(status)) {
+		tst_resm(TFAIL, "Unrecognised child termsig: %d",
+			WTERMSIG(status));
+	}
 }
 
 void test_bad_address3(swi_func sigwaitinfo, int signo)

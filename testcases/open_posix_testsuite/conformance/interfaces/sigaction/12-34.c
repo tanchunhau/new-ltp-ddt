@@ -14,7 +14,6 @@
   NOTE: This test case does not attempt to verify the proper operation
         of sigaltstack.
 */
-#define _XOPEN_SOURCE 600
 
 #include <signal.h>
 #include <stdio.h>
@@ -23,7 +22,7 @@
 
 stack_t current;
 
-void handler(int signo)
+void handler(int signo LTP_ATTRIBUTE_UNUSED)
 {
 	stack_t oss;
 

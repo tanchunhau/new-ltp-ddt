@@ -18,7 +18,6 @@
    is unblocked.
  */
 
-#define _XOPEN_SOURCE 600
 #define _XOPEN_REALTIME 1
 #define SIGTOTEST SIGRTMIN
 #define NUMCALLS 5
@@ -32,7 +31,7 @@
 
 int counter = 0;
 
-void myhandler(int signo)
+void myhandler(int signo LTP_ATTRIBUTE_UNUSED)
 {
 	counter++;
 }
