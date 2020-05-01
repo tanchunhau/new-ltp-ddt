@@ -26,7 +26,7 @@ source "blk_device_common.sh"
 usage()
 {
 cat <<-EOF >&2
-  usage: ./${0##*/} [-f FS_TYPE] [-n DEV_NODE] [-m MOUNT POINT] [-B BUFFER SIZES] [-s FILE SIZE] [-d DEVICE TYPE] [-o SYNC or ASYNC] [-t TIME_OUT]
+  usage: ./${0##*/} [-f FS_TYPE] [-n DEV_NODE] [-m MOUNT POINT] [-B BUFFER SIZES] [-s FILE SIZE] [-d DEVICE TYPE] [-o SYNC or ASYNC] [-t TIME_OUT] [-p PERF_METHOD]
   -f FS_TYPE	filesystem type like jffs2, ext2, etc
   -n DEV_NODE	optional param, block device node like /dev/mtdblock4, /dev/sda1
   -m MNT_POINT	optional param, mount point like /mnt/mmc
@@ -37,6 +37,7 @@ cat <<-EOF >&2
   -d DEVICE_TYPE	device type like 'nand', 'mmc', 'usb' etc
   -o MNT_MODE     mount mode: sync or async. default is async
   -t TIME_OUT  time out duratiopn for copying
+  -p PERF_METHOD the method used to measure perf; like 'fio'
   -h Help 	print this usage
 EOF
 exit 0
@@ -51,7 +52,7 @@ if [ $# == 0 ]; then
 	exit 1
 fi
 
-while getopts  :f:n:m:B:s:c:d:o:t:e:h arg
+while getopts  :f:n:m:B:s:c:d:o:t:e:p:h arg
 do case $arg in
   f)  FS_TYPE="$OPTARG";;
   n)  DEV_NODE="$OPTARG";;
@@ -63,6 +64,7 @@ do case $arg in
   o)  MNT_MODE="$OPTARG";;
   t)  TIME_OUT="$OPTARG";;
   e)  EXTRA_PARAM="$OPTARG";;
+  p)  PERF_METHOD="$OPTARG";;
   h)  usage;;
   :)  test_print_trc "$0: Must supply an argument to -$OPTARG." >&2
   exit 1 
@@ -82,6 +84,10 @@ done
 : ${MNT_MODE:='async'}
 : ${TIME_OUT:='30'}
 : ${MNT_POINT:=/mnt/partition_$DEVICE_TYPE}
+: ${FIO_LOOP_CNT:=5}
+: ${FIO_IOENGINE:='libaio'}
+: ${FIO_IODEPTH:=4}
+: ${FIO_NUMJOBS:=1}
 
 echo "ls -al /dev/disk/by-path"
 ls -al /dev/disk/by-id
@@ -139,55 +145,63 @@ else
 fi
 for BUFFER_SIZE in $BUFFER_SIZES; do
 	test_print_trc "BUFFER SIZE = $BUFFER_SIZE"
-	test_print_trc "Checking if Buffer Size is valid"
-	[ $BUFFER_SIZE -gt $(( $FILE_SIZE * $MB )) ] && die "Buffer size provided: $BUFFER_SIZE is not less than or equal to File size $FILE_SIZE MB"
 
-	#test_print_trc "Erasing or Formatting this partition"
-	#do_cmd blk_device_erase_format_part.sh -d $DEVICE_TYPE -n $DEV_NODE -f $FS_TYPE
-	#test_print_trc "Mounting the partition"
-	#do_cmd blk_device_do_mount.sh -n "$DEV_NODE" -f "$FS_TYPE" -d "$DEVICE_TYPE" -m "$MNT_POINT"
 	# find out what is FS in the device
 	if [ -z "$FS_TYPE" ]; then
 		FS_TYPE=`mount | grep $DEV_NODE | cut -d' ' -f5 |head -1`
 		test_print_trc "existing FS_TYPE: ${FS_TYPE}"
 	fi
 
-	test_print_trc "Creating src test file..."
-	TMP_FILE="/dev/shm/srctest_file_${DEVICE_TYPE}_$$"
-	do_cmd "dd if=/dev/urandom of=$TMP_FILE bs=1M count=$SRCFILE_SIZE"
+  case $PERF_METHOD in
+    fio)
+      # call fio
+      # fio --name TEST --directory=/run/media/nvme0n1p3/ --size=10g --rw=write --blocksize=4m --ioengine=libaio --iodepth=4 --direct=1 --group_reporting --runtime=30 --time_base --eta=never
+      do_cmd fio --name ${DEVICE_TYPE}_TEST --directory=$MNT_POINT --size=$FILE_SIZE --rw=write --blocksize=$BUFFER_SIZE --ioengine=$FIO_IOENGINE --iodepth=$FIO_IODEPTH --numjobs=${FIO_NUMJOBS} --direct=1 --group_reporting --loop=$FIO_LOOP_CNT --eta=never
+      sleep 1
+      do_cmd fio --name ${DEVICE_TYPE}_TEST --directory=$MNT_POINT --size=$FILE_SIZE --rw=read --blocksize=$BUFFER_SIZE --ioengine=$FIO_IOENGINE --iodepth=$FIO_IODEPTH --numjobs=${FIO_NUMJOBS} --direct=1 --group_reporting --loop=$FIO_LOOP_CNT --eta=never
+      ;;
+    *) 
+      test_print_trc "Checking if Buffer Size is valid"
+      [ $BUFFER_SIZE -gt $(( $FILE_SIZE * $MB )) ] && die "Buffer size provided: $BUFFER_SIZE is not less than or equal to File size $FILE_SIZE MB"
+      test_print_trc "Creating src test file..."
+      TMP_FILE="/dev/shm/srctest_file_${DEVICE_TYPE}_$$"
+      do_cmd "dd if=/dev/urandom of=$TMP_FILE bs=1M count=$SRCFILE_SIZE"
 
-  TEST_FILE="${MNT_POINT}/test_file_$$"
+      TEST_FILE="${MNT_POINT}/test_file_$$"
 
-  for i in {1..5};do
-    do_cmd filesystem_tests -write -src_file $TMP_FILE -srcfile_size $SRCFILE_SIZE -file ${TEST_FILE} -buffer_size $BUFFER_SIZE -file_size $FILE_SIZE -performance 
-  done
-	do_cmd "rm -f $TMP_FILE"
-	do_cmd "sync"
-	# should do umount and mount before read to force to write to device
-	#do_cmd "umount $DEV_NODE"
-  #do_cmd blk_device_umount.sh -n "$DEV_NODE" -d "$DEVICE_TYPE" -f "$FS_TYPE" 
-  do_cmd blk_device_umount.sh -m "$MNT_POINT" 
-	do_cmd "echo 3 > /proc/sys/vm/drop_caches"
+      for i in {1..5};do
+        do_cmd filesystem_tests -write -src_file $TMP_FILE -srcfile_size $SRCFILE_SIZE -file ${TEST_FILE} -buffer_size $BUFFER_SIZE -file_size $FILE_SIZE -performance 
+      done
+      do_cmd "rm -f $TMP_FILE"
+      do_cmd "sync"
+      # should do umount and mount before read to force to write to device
+      #do_cmd "umount $DEV_NODE"
+      #do_cmd blk_device_umount.sh -n "$DEV_NODE" -d "$DEVICE_TYPE" -f "$FS_TYPE" 
+      do_cmd blk_device_umount.sh -m "$MNT_POINT" 
+      do_cmd "echo 3 > /proc/sys/vm/drop_caches"
 
-	#do_cmd "mount -t $FS_TYPE -o $MNT_MODE $DEV_NODE $MNT_POINT"
-  do_cmd blk_device_do_mount.sh -n "$DEV_NODE" -f "$FS_TYPE" -d "$DEVICE_TYPE" -o "$MNT_MODE" -m "$MNT_POINT"
-	do_cmd filesystem_tests -read -file ${TEST_FILE} -buffer_size $BUFFER_SIZE -file_size $FILE_SIZE -performance 
-	do_cmd "sync"
-	do_cmd "echo 3 > /proc/sys/vm/drop_caches"
+      #do_cmd "mount -t $FS_TYPE -o $MNT_MODE $DEV_NODE $MNT_POINT"
+      do_cmd blk_device_do_mount.sh -n "$DEV_NODE" -f "$FS_TYPE" -d "$DEVICE_TYPE" -o "$MNT_MODE" -m "$MNT_POINT"
+      do_cmd filesystem_tests -read -file ${TEST_FILE} -buffer_size $BUFFER_SIZE -file_size $FILE_SIZE -performance 
+      do_cmd "sync"
+      do_cmd "echo 3 > /proc/sys/vm/drop_caches"
 
-  # For copy test, only do half of file size to avoid out of space problem.
-	test_print_trc "Creating file which is half size of $FILE_SIZE on $MNT_POINT to test copyfile"
-	# TMP_FILE='/test_file'
-	#HALF_FILE_SIZE=`expr $FILE_SIZE / 2`
-	HALF_FILE_SIZE=$(echo "scale=2; $FILE_SIZE/2" | bc)
-  TEST_FILE="${MNT_POINT}/test_file_$$"
-  DST_TEST_FILE="${MNT_POINT}/dst_test_file_$$"
-	do_cmd "dd if=/dev/urandom of=${TEST_FILE} bs=512K count=$FILE_SIZE"
-	do_cmd filesystem_tests -copy -src_file ${TEST_FILE} -dst_file ${DST_TEST_FILE} -duration ${TIME_OUT} -buffer_size $BUFFER_SIZE -file_size $HALF_FILE_SIZE -performance 
-	do_cmd "rm -f ${TEST_FILE}"
-	do_cmd "rm -f ${DST_TEST_FILE}"
-	test_print_trc "Unmount the device"
-	#do_cmd "umount $DEV_NODE"
+      # For copy test, only do half of file size to avoid out of space problem.
+      test_print_trc "Creating file which is half size of $FILE_SIZE on $MNT_POINT to test copyfile"
+      # TMP_FILE='/test_file'
+      #HALF_FILE_SIZE=`expr $FILE_SIZE / 2`
+      HALF_FILE_SIZE=$(echo "scale=2; $FILE_SIZE/2" | bc)
+      TEST_FILE="${MNT_POINT}/test_file_$$"
+      DST_TEST_FILE="${MNT_POINT}/dst_test_file_$$"
+      do_cmd "dd if=/dev/urandom of=${TEST_FILE} bs=512K count=$FILE_SIZE"
+      do_cmd filesystem_tests -copy -src_file ${TEST_FILE} -dst_file ${DST_TEST_FILE} -duration ${TIME_OUT} -buffer_size $BUFFER_SIZE -file_size $HALF_FILE_SIZE -performance 
+      do_cmd "rm -f ${TEST_FILE}"
+      do_cmd "rm -f ${DST_TEST_FILE}"
+      test_print_trc "Unmount the device"
+      #do_cmd "umount $DEV_NODE"
+      ;;
+  esac
+
 done
 do_cmd blk_device_unprepare.sh -n "$DEV_NODE" -d "$DEVICE_TYPE" -f "$FS_TYPE" -m "$MNT_POINT"
 
