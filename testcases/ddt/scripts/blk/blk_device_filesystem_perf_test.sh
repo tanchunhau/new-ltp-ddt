@@ -26,7 +26,7 @@ source "blk_device_common.sh"
 usage()
 {
 cat <<-EOF >&2
-  usage: ./${0##*/} [-f FS_TYPE] [-n DEV_NODE] [-m MOUNT POINT] [-B BUFFER SIZES] [-s FILE SIZE] [-d DEVICE TYPE] [-o SYNC or ASYNC] [-t TIME_OUT] [-p PERF_METHOD]
+  usage: ./${0##*/} [-f FS_TYPE] [-n DEV_NODE] [-m MOUNT POINT] [-B BUFFER SIZES] [-s FILE SIZE] [-d DEVICE TYPE] [-o SYNC or ASYNC] [-t TIME_OUT] [-p PERF_METHOD] [-w FIO_W_RUNTIME] [-r FIO_R_RUNTIME]
   -f FS_TYPE	filesystem type like jffs2, ext2, etc
   -n DEV_NODE	optional param, block device node like /dev/mtdblock4, /dev/sda1
   -m MNT_POINT	optional param, mount point like /mnt/mmc
@@ -38,12 +38,28 @@ cat <<-EOF >&2
   -o MNT_MODE     mount mode: sync or async. default is async
   -t TIME_OUT  time out duratiopn for copying
   -p PERF_METHOD the method used to measure perf; like 'fio'
+  -w FIO_W_RUNTIME run time duration for FIO write in seconds; default is 60s 
+  -r FIO_R_RUNTIME run time duration for FIO read in seconds; default is 60s 
   -h Help 	print this usage
 EOF
 exit 0
 }
 
-
+do_fio()
+{
+  IO_OP=$1
+  RUNTIME=$2
+  do_cmd "fio --name ${DEVICE_TYPE}_TEST --directory=$MNT_POINT --size=$FILE_SIZE --rw=$IO_OP --blocksize=$BUFFER_SIZE --ioengine=$FIO_IOENGINE --iodepth=$FIO_IODEPTH --numjobs=${FIO_NUMJOBS} --direct=1 --group_reporting --runtime=${RUNTIME} --time_based --eta=never &"
+  do_cmd sleep 5
+  do_cmd mpstat -P ALL $(( $RUNTIME - 5 )) 1 2>&1 > mpstat.out
+  do_cmd wait
+  cat mpstat.out
+  iowait=`cat mpstat.out|grep -i 'average:\s*all\s*'|awk '{print $6}' `
+  idle=`cat mpstat.out|grep -i 'average:\s*all\s*'|awk '{print $11}' `
+  cpuload=`echo "100 - $iowait - $idle" |bc -l`
+  echo "CPUload for rw:$IO_OP with blocksize:$BUFFER_SIZE is: ${cpuload}%"
+  rm mpstat.out
+}
 
 ############################### CLI Params ###################################
 if [ $# == 0 ]; then
@@ -52,7 +68,7 @@ if [ $# == 0 ]; then
 	exit 1
 fi
 
-while getopts  :f:n:m:B:s:c:d:o:t:e:p:h arg
+while getopts  :f:n:m:B:s:c:d:o:t:e:p:r:w:h arg
 do case $arg in
   f)  FS_TYPE="$OPTARG";;
   n)  DEV_NODE="$OPTARG";;
@@ -65,6 +81,8 @@ do case $arg in
   t)  TIME_OUT="$OPTARG";;
   e)  EXTRA_PARAM="$OPTARG";;
   p)  PERF_METHOD="$OPTARG";;
+  w)  FIO_W_RUNTIME="$OPTARG";;
+  r)  FIO_R_RUNTIME="$OPTARG";;
   h)  usage;;
   :)  test_print_trc "$0: Must supply an argument to -$OPTARG." >&2
   exit 1 
@@ -84,10 +102,11 @@ done
 : ${MNT_MODE:='async'}
 : ${TIME_OUT:='30'}
 : ${MNT_POINT:=/mnt/partition_$DEVICE_TYPE}
-: ${FIO_LOOP_CNT:=5}
 : ${FIO_IOENGINE:='libaio'}
 : ${FIO_IODEPTH:=4}
 : ${FIO_NUMJOBS:=1}
+: ${FIO_W_RUNTIME:=60}
+: ${FIO_R_RUNTIME:=60}
 
 echo "ls -al /dev/disk/by-path"
 ls -al /dev/disk/by-id
@@ -156,9 +175,9 @@ for BUFFER_SIZE in $BUFFER_SIZES; do
     fio)
       # call fio
       # fio --name TEST --directory=/run/media/nvme0n1p3/ --size=10g --rw=write --blocksize=4m --ioengine=libaio --iodepth=4 --direct=1 --group_reporting --runtime=30 --time_base --eta=never
-      do_cmd fio --name ${DEVICE_TYPE}_TEST --directory=$MNT_POINT --size=$FILE_SIZE --rw=write --blocksize=$BUFFER_SIZE --ioengine=$FIO_IOENGINE --iodepth=$FIO_IODEPTH --numjobs=${FIO_NUMJOBS} --direct=1 --group_reporting --loop=$FIO_LOOP_CNT --eta=never
+      do_fio 'write' $FIO_W_RUNTIME 
       sleep 1
-      do_cmd fio --name ${DEVICE_TYPE}_TEST --directory=$MNT_POINT --size=$FILE_SIZE --rw=read --blocksize=$BUFFER_SIZE --ioengine=$FIO_IOENGINE --iodepth=$FIO_IODEPTH --numjobs=${FIO_NUMJOBS} --direct=1 --group_reporting --loop=$FIO_LOOP_CNT --eta=never
+      do_fio 'read' $FIO_R_RUNTIME 
       ;;
     *) 
       test_print_trc "Checking if Buffer Size is valid"
