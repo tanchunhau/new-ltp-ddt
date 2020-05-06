@@ -18,7 +18,8 @@ source "common.sh"  # Import do_cmd(), die() and other functions
 ########################### REUSABLE TEST LOGIC ###############################
 # Usage information: get_active_eth_interfaces.sh
 # Parameters: none
-# Returns an array of active (operational state of up) eth interface names
+# Attempts to bring up all interfaces 
+# Returns an array of active (operational state != down) eth interface names
 ################################################################################
 ################################################################################
 # Cleanup function for use before the test exits                               
@@ -28,8 +29,10 @@ set +x
 j=0                                                                             
 for device in `find /sys/class/net/*eth*`                                       
 do                                                                              
-  interface=`echo $device | cut -c16-`                                          
-  if [[ "`cat /sys/class/net/$interface/operstate`" == "up" ]]
+  interface=`echo $device | cut -c16-`
+  do_cmd "timeout 10 ifup $interface"
+
+  if [[ "`cat /sys/class/net/$interface/operstate`" != "down" ]]
   then
     int_name[j]=$interface                                                        
     j+=1
