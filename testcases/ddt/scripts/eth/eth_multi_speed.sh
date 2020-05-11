@@ -59,15 +59,16 @@ fi
 
 for iface in $interfaces
 do
-  speed_string="${p_speed}Mb/s"
   duplex=`cat /sys/class/net/$iface/duplex`
-  do_cmd "ethtool -s $iface speed $p_speed duplex $duplex"
-  final_speed=`get_eth_link_speed.sh $iface`
+  
+  # Sleep 5 seconds to allow speed change to take place
+  do_cmd "ethtool -s $iface speed $p_speed duplex $duplex && sleep 5"
+  final_speed=`cat /sys/class/net/$iface/speed`
+  
+  # Re-enable autonegotiation after test
   do_cmd "ethtool -s $iface autoneg on"
-  if [ "$final_speed" == "$speed_string" ]
+  if [ "$final_speed" != "$p_speed" ]
   then 
-    echo "Test Passed for $iface"
-  else
     die "Observed and expected ethernet link speeds do not match"
   fi
 done
