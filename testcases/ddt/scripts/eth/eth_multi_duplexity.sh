@@ -60,14 +60,15 @@ fi
 for iface in $interfaces
 do
   speed=`cat /sys/class/net/$iface/speed`
-  do_cmd "ethtool -s $iface speed $speed duplex $p_duplex" 
-  final_duplex=`get_eth_link_duplexity.sh $iface`
+
+  # Sleep 5 seconds to allow speed change to take place
+  do_cmd "ethtool -s $iface speed $speed duplex $p_duplex && sleep 5" 
+  final_duplex=`cat /sys/class/net/$iface/duplex`
+  
+  # Re-enable autonegotiation after test
   do_cmd "ethtool -s $iface autoneg on"
-  echo "DUPLEX is $p_duplex and FINAL_DUPLEX is $final_duplex"
-  if [ `echo $p_duplex | tr [:upper:] [:lower:]` = `echo $final_duplex | tr [:upper:] [:lower:]` ]
+  if [ "$p_duplex" != "$final_duplex" ]
   then 
-    echo "Test Passed for $iface"
-  else 
     die "Observed and expected ethernet link duplex settings do not match"
   fi
 done

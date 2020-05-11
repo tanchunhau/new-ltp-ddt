@@ -30,7 +30,9 @@ j=0
 for device in `find /sys/class/net/*eth*`                                       
 do                                                                              
   interface=`echo $device | cut -c16-`
-  do_cmd "timeout 10 ifup $interface"
+
+  # Try to bring each interface up
+  timeout 15 ifup $interface > /dev/null
 
   if [[ "`cat /sys/class/net/$interface/operstate`" != "down" ]]
   then
