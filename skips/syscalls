@@ -29,6 +29,11 @@ open10
 open11
 readahead02
 perf_event_open02
+pkey01
+msgstress03
+msgstress04
+preadv203
+preadv203_64
 
 # Skipping to avoid false negatives due to limited memory in
 # embedded devices (i.e. no space left in device errors)

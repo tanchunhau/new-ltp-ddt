@@ -55,7 +55,7 @@ fi
 for iface in $interfaces
 do
   test_mac=`hexchars="0123456789ABCDEF"; end=$( for i in {1..10} ; do echo -n ${hexchars:$(( $RANDOM % 16 )):1} ; done | sed -e 's/\(..\)/:\1/g' ); echo 80$end`
-  nfs=`cat /proc/cmdline|grep nfs`
+  nfs=`cat /proc/cmdline|grep nfs|grep $iface`
   echo "NFS is $nfs"
   if [ -n "$nfs" ]
   then 

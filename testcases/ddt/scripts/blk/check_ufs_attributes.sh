@@ -49,11 +49,11 @@ do case $arg in
 esac
 done
 
-do_cmd 'which ufs-tool' || die "ufs-tool is not in the filesystem"
+do_cmd 'which ufs-utils' || die "ufs-utils is not in the filesystem"
 
-do_cmd "ufs-tool uic -h"
-do_cmd "ufs-tool uic -t 1 -i ${attr_number} -p /dev/bsg/ufs-bsg0"
-attribute_dump=`do_cmd "ufs-tool uic -t 1 -i ${attr_number} -p /dev/bsg/ufs-bsg0" `
+do_cmd "ufs-utils uic -h"
+do_cmd "ufs-utils uic -t 1 -i ${attr_number} -p /dev/bsg/ufs-bsg0"
+attribute_dump=`do_cmd "ufs-utils uic -t 1 -i ${attr_number} -p /dev/bsg/ufs-bsg0" `
 this_attr_hex=`echo ${attribute_dump} |grep -Eo 'local\s*=\s*[0-9x]+' |cut -d'=' -f2 |sed 's/0x//g' `
 this_attr=`echo "ibase=16; $this_attr_hex" |bc` 
 if [[ "$this_attr" = $expected ]]; then
