@@ -1,0 +1,4 @@
+# @name DMA heap
+# @desc DMA heap unit tests
+
+DMA_S_FUNC_HEAP_UNIT_TESTS source "common.sh"; if [[ `dma-heap-unit-tests | grep -E "\[\s+FAILED\s+\]"` ]]; then die "One or more DMA heap tests failed"; fi
