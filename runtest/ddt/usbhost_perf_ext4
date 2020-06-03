@@ -1,0 +1,12 @@
+# @name USB Host Write/Read Performance test
+# @desc format usb device first and then mount it and do read write perf test
+# @requires usb/host
+# @setup_requires usbhostmscperf
+
+USBHOST_L_PERF_EXT4_0001 source 'common.sh' ; do_cmd install_modules.sh 'usb' ; blk_device_filesystem_perf_test.sh -f ext2 -s 100 -B "102400 262144 524288 1048576 5242880" -d "usb" -t "60"
+
+USBHOST_S_PERF_EXT4_FIO_QUICK source 'common.sh'; install_modules.sh "usb"; do_cmd 'blk_device_filesystem_perf_test.sh -p "fio" -f "ext4" -s 1g -B "4m" -d "usb" '
+USBHOST_L_PERF_EXT4_FIO_1G source 'common.sh'; install_modules.sh "usb"; do_cmd 'blk_device_filesystem_perf_test.sh -p "fio" -f "ext4" -s 1g -B "4m 1m 256k 4k" -d "usb" '
+
+
+
