@@ -1,0 +1,8 @@
+# @name UFS Host Write/Read Performance test using FIO
+# @desc format ufs device first and then mount it and do read write perf test
+# @requires ufs
+# @setup_requires ufs
+
+UFS_S_PERF_EXT4_FIO_QUICK source 'common.sh' ; do_cmd install_modules.sh 'ufs' ; do_cmd 'blk_device_filesystem_perf_test.sh -p "fio" -f "ext4" -s 1g -B "4m" -d "ufs" '
+
+UFS_S_PERF_EXT4_FIO_10G source 'common.sh' ; do_cmd install_modules.sh 'ufs' ; do_cmd 'blk_device_filesystem_perf_test.sh -p "fio" -f "ext4" -s 10g -B "4m 1m 256k 4k" -d "ufs" '
