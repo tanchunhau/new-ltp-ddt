@@ -1,0 +1,9 @@
+# @name OSPI raw read test
+# @desc Read from OSPI flash directly
+# @requires ospi_master/mtd
+# @setup_requires ospi
+OSPI_S_PERF_MTD_RAW_READ_B50M_C1 source "common.sh"; install_modules.sh "ospi"; part=`get_mtd_partition_number.sh "ospi"` || die "error getting mtd part number: $part"; do_cmd raw_perf.sh /dev/mtd"$part" 52428800 1 'read' 
+OSPI_S_PERF_MTD_RAW_READ_B10M_C5 source "common.sh"; install_modules.sh "ospi"; part=`get_mtd_partition_number.sh "ospi"` || die "error getting mtd part number: $part"; do_cmd raw_perf.sh /dev/mtd"$part" 10485760 5 'read'
+
+
+
