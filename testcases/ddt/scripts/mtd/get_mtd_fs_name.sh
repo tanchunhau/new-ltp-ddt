@@ -45,7 +45,7 @@ case $MACHINE in
           nand)
             FS_PART_NAME="File System"
             ;;
-          spi|qspi)
+          spi|qspi|ospi)
             FS_PART_NAME="File System"
             ;;
           *)
