@@ -119,9 +119,8 @@ get_dut_max_width()
 
 
 #########################################################################
-#echo "::::::::PCIe numeric IDs::::::::"
-do_cmd "lspci -nn"
-#echo "::::::::End of PCIe numeric IDs::::::::"
+do_cmd 'lspci -nn' 
+lspci -nn |grep '01:00' || die "EP is not showing in RC"
 
 echo "=============Output of lspci -Dvv=============="
 do_cmd 'lspci -Dvv'
@@ -140,7 +139,6 @@ do
     2) domain_num='0001';;
     3) domain_num='0002';;
   esac
-  #domain_num=`map_domain $i`
   lspci -Dn |grep "${domain_num}:" || continue
  
   rc_bus='00'
