@@ -1,6 +1,6 @@
 armv8
-j7vcl
-j7vcl-evm
+j7200
+j7200-evm
 adc/tscadc
 crypto/sa2ul
 crypto/sa2ul/3des
