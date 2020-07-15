@@ -34,7 +34,7 @@ if [[ "$expected_mode" = "" ]]; then
         expected_mode="HS200";;
       am654x-evm | am654x-idk)
         expected_mode="HS200";;
-      j721e*)
+      j721e* | j7200*)
         expected_mode="HS400";;
 
       *)
