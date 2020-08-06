@@ -102,7 +102,13 @@ get_video_connector_info()
       IFS=$'\n'
       for mode in $__modes_inf
       do
-        __c_mode=$(echo $mode | cut -d ' ' -f 3,4)
+        echo $mode | grep '#' > /dev/null
+        if [ $? -eq 0 ]
+        then
+          __c_mode=$(echo $mode | cut -d ' ' -f 4,5)
+        else
+          __c_mode=$(echo $mode | cut -d ' ' -f 3,4)
+        fi
         __c_mode=${__c_mode/ /-}
         if [[ "$__c_mode" =~ $__mode_regex ]]; then
           __result[${#__result[@]}]="$__c_id:$__c_mode$__format"
