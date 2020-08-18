@@ -43,13 +43,15 @@ for i in range(len(planes)):
     pykms.draw_rect(fbs[i], 0, 0, w, h, pykms.RGB(255*(i==0), 255*(i==1), 255*(i==2)))
     pykms.draw_rect(fbs[i], i*offset, i*offset, int(w/2**(i+1)), int(h/2**(i+1)), pykms.RGB(255*(i!=1), 255*(i!=2), 255*(i!=0)))
 
-if not re.match("am65.*|k2.*|j721e.*", platform, re.I):
+try:
     crtc.set_props({
         "trans-key-mode": 0,
         "trans-key": 0,
         "background": 0,
         "alpha_blender": 1,
     })
+except:
+    print("trans-key-mode, trans-key, background, and alpha_blender will not be set")
 
 #Show the whole frame
 for i in range(len(planes)):
