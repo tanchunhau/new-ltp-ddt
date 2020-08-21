@@ -39,7 +39,7 @@ case $DEVICE_TYPE in
 	nor)
 		IS_BLK_DEVICE="yes"
 	;;
-	spi|qspi|hflash)
+	spi|qspi|ospi|hflash)
 		IS_BLK_DEVICE="yes"
 	;;
         *)
