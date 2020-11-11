@@ -122,7 +122,7 @@ case $MACHINE in
     gpio_nums="285,344,440"
   ;;
   j720*)
-    gpio_nums="465,472,496"
+    gpio_nums="322,355,391"                  
   ;;
   k2g-evm)
     gpio_nums="346,281,484"
