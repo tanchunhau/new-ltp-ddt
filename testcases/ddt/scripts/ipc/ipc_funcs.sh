@@ -1,6 +1,6 @@
 #! /bin/sh
 ############################################################################### 
-# Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
+# Copyright (C) 2011-2020 Texas Instruments Incorporated - https://www.ti.com/
 #  
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as 
@@ -1157,4 +1157,73 @@ ifdown_eth()
   done
 
   return 0
+}
+
+# Function to run a simple userspace test with rpmsg-char driver
+# Inputs:
+#   -r: The id of remote processor to use in the test
+#   -n: (Optional) Number of messages to send, the rpmsg_char_simple example
+#       uses a default of 100
+#   -d: (Optional) Specific rpmsg device to run the test with. The
+#       ti_rpmsg_char library defaults to using 'rpmsg_chrdev'
+#   -p: (Optional) Destination port (endpoint) number for the rpmsg device
+#       in the remote processor. The rpmsg_char_simple example uses a default
+#       value of 14
+# Returns, 0 if the test passed, 1 if the test failed
+rpmsg_char_simple_test()
+{
+  local __test_cmd='rpmsg_char_simple'
+  local __result=0
+  local __port
+  local __num_msg
+  local __rproc
+  local __rpmsg_dev
+
+  OPTIND=1
+  local _iterations
+  while getopts :r:n:d:p: arg
+  do
+    case $arg in
+      r)  __rproc="$OPTARG";;
+      n)  __num_msg="$OPTARG";;
+      d)  __rpmsg_dev="$OPTARG";;
+      p)  __port="$OPTARG";;
+
+      \?)  test_print_trc "Invalid Option -$OPTARG ignored." >&2
+          shift 1
+      ;;
+    esac
+  done
+
+  __command="$__test_cmd -r $__rproc"
+  if [[ -n "$__num_msg" ]] && [[ $__num_msg -gt 0 ]]
+  then
+    __command="$__command -n $__num_msg"
+  fi
+
+  if [[ -n $__rpmsg_dev ]]
+  then
+    __command="$__command -d $__rpmsg_dev"
+  fi
+
+  if [[ -n "$__port" ]] && [[ $__port -gt 0 ]]
+  then
+    __command="$__command -p $__port"
+  fi
+
+  echo -e "Running test using cmd: $__command"
+  __test_log=$(eval $__command)
+  __num_match=$(echo -e "$__test_log" | grep -c -i "TEST STATUS: PASSED")
+  if [ $__num_match -ne 1 ]
+  then
+    __result=1
+    echo -e "\n$__command failed"
+  else
+    echo "$__command passed"
+    echo -e "\n--- Test Log Begin ---"
+    echo -e "$__test_log"
+    echo -e "--- Test Log End ---\n"
+  fi
+
+  return $__result
 }
