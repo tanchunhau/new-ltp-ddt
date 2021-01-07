@@ -32,10 +32,10 @@ if [[ "$expected_mode" = "" ]]; then
         expected_mode="DDR52";;
       dra7xx-evm | dra72x-evm )
         expected_mode="HS200";;
-      am654x-evm | am654x-idk | j721e* | j7200*)
+      am654x-evm | am654x-idk | j721e* | j7200* | am64xx-evm)
         expected_mode="HS200";;
       *)
-        die "No expected eMMC mode is specified for this platform";;
+        die "No expected eMMC mode is specified for this platform in ltp-ddt/testcases/ddt/scripts/blk/check_mmc_speed.sh";;
     esac
   fi
 
