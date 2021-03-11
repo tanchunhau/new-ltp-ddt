@@ -864,7 +864,7 @@ rpmsg_client_sample_test_k3()
   local __test_log
   local __num_goodbye
   # ignore numproces passed as argument, only use procs that loaded 'ti.ipc4.ping-pong'
-  local __num_procs=$(ls -l /sys/bus/rpmsg/devices | grep ti.ipc4.ping-pong | wc -l)  #$1 
+  local __num_procs=$(ls -l /sys/bus/rpmsg/devices | grep -E '(ti\.ipc4\.ping-pong|rpmsg-client-sample)' | wc -l)  #$1 
   local __loops=1
   local __delay=10 # this is a function of number of procs and loops (max currently is 8 on j721e)
 
