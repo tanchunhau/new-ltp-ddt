@@ -32,8 +32,8 @@ setup_firmware()
   local __fw_dst
 
   case $MACHINE in
-      *j721e*)
-          # j721e doesn't yet support loading the firmware
+      *j721e*|*j7200*|*am64xx*|*am65*)
+          # K3 devices don't yet support loading the firmware
           return
       ;;
   esac
@@ -101,8 +101,8 @@ rm_ipc_mods()
   local __modules=(rpmsg_rpc rpmsg_proto rpmsg_client_sample omap_remoteproc ti_k3_r5_remoteproc keystone_remoteproc remoteproc virtio_rpmsg_bus rpmsg_core)
 
   case $MACHINE in
-    j721e*)
-      # J721e does not yet support module unloading for remote procs because the firmware cannot be reloaded
+    *j721e*|*j7200*|*am64xx*|*am65*)
+      # K3 devices do not yet support module unloading for remote procs because the firmware cannot be reloaded
       return
     ;;
   esac
@@ -134,8 +134,8 @@ ins_ipc_mods()
         modprobe ${__mod}
       done
     ;;
-    j721e*)
-      # J721e does not yet support module loading for remote procs because the firmware cannot be reloaded
+    *j721e*|*j7200*|*am64xx*|*am65*)
+      # K3 devices do not yet support module loading for remote procs because the firmware cannot be reloaded
       return
     ;;
     *)
@@ -273,8 +273,9 @@ start_mpm_daemon()
 get_num_remote_procs()
 {
   case $SOC in
-    *j721e)
-      echo 4
+    *j721e*|*j7200*|*am64xx*|*am65*)
+      # returns only those procs that have ping-pong
+      echo $(cat /sys/class/remoteproc/*/name | grep -iE 'r5f|dsp' | wc -l)  
       ;;
     *dra7xx|*j6plus)
       echo 4
@@ -314,9 +315,6 @@ get_num_remote_procs()
 get_rpmsg_proto_rproc_ids()
 { 
   case $SOC in
-    *j721e)
-      rids=( `seq 1 3` )
-      ;;
     *dra7xx|*j6plus)
       rids=( `seq 1 4` )
       ;;
@@ -341,8 +339,9 @@ get_rpmsg_proto_rproc_ids()
       rids=( 1 )
       ;;
     *)
+      # Note -- K3 devices do not yet support module loading for remote procs because the firmware cannot be reloaded
       echo "SOC ${SOC} not supported"
-      return 1
+      rids=( )
       ;;           
   esac
   echo ${rids[@]::$1}
@@ -859,14 +858,27 @@ rpmsg_proto_msgqmulti_test()
   return $__result
 }
 
-rpmsg_client_sample_test_j721e()
+rpmsg_client_sample_test_k3()
 {
   local __result=0
   local __test_log
   local __num_goodbye
-  local __num_procs=$1
+  # ignore numproces passed as argument, only use procs that loaded 'ti.ipc4.ping-pong'
+  local __num_procs=$(ls -l /sys/bus/rpmsg/devices | grep ti.ipc4.ping-pong | wc -l)  #$1 
   local __loops=1
-  local __delay=1
+  local __delay=10 # this is a function of number of procs and loops (max currently is 8 on j721e)
+
+  if [ $__num_procs == 0 ]
+  then
+    __result=$((__result + 1))
+    echo -e "Error: No procs are available for running rpmsg_client_sample_test.\nTest failed..."
+    return $__result
+  fi
+
+  if [ $1 > $__num_procs ]
+  then
+    echo "Only $__num_procs out of $1 procs will be tested, probably because other proc(s) have loaded unrelated firmware"
+  fi
 
   for idx in `seq 1 $__loops`
   do
@@ -903,8 +915,8 @@ rpmsg_client_sample_test()
   local __delay=3
   
   case $SOC in
-    j721e)
-        rpmsg_client_sample_test_j721e $*
+    *j721e*|*j7200*|*am64xx*|*am65*)
+        rpmsg_client_sample_test_k3 $*
         return $?
     ;;
   esac
@@ -976,8 +988,8 @@ toggle_rprocs()
   local __mbox
 
   case $MACHINE in
-      *j721e*)
-          # J721e doesn't yet support toggling the remote proc
+      *j721e*|*j7200*|*am64xx*|*am65*)
+          # K3 devices don't yet support toggling the remote proc
           return
       ;;
   esac
@@ -1084,9 +1096,18 @@ list_pru_devs()
 # Returns the list of rproc devices based on the MACHINE var value
 list_rprocs()
 {
-  case $SOC in
+  case $SOC in # k3 split procs are not represented
     j721e)
-      echo "41000000.r5f 5c00000.r5f 5e00000.r5f"
+      echo "41000000.r5f 5c00000.r5f 5e00000.r5f 4d80800000.dsp 4d81800000.dsp 64800000.dsp" 
+    ;;
+    j7200)
+      echo "41000000.r5f 5c00000.r5f"
+    ;;
+    am64xx)
+      echo "78000000.r5f 78400000.r5f"
+    ;;
+    am65xx)
+      echo "41000000.r5f"
     ;;
     dra7xx)
       echo "40800000.dsp 41000000.dsp 58820000.ipu 55020000.ipu"
