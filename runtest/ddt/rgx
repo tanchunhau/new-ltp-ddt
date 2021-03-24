@@ -3,6 +3,8 @@
 # @requires graphics
 
 
+RGX_S_FUNC_8K_TEXTURE source 'common.sh'; output=`srender_to_tex_test -w 8192 -h 8192 -f 1`;if [[ $output != *"Color match at (10,20)"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
+
 RGX_S_FUNC_BLIT source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
 
 RGX_S_FUNC_BLIT_BTYPEBLIT source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test -btype BLIT`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
