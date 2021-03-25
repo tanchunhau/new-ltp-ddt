@@ -2,36 +2,39 @@
 # @desc Running various graphics demos
 # @requires graphics
 
+errorMessage="Demo reports failed. Re-run manually to find rootcause."
 
-RGX_S_FUNC_BLIT source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
+RGX_S_FUNC_8K_TEXTURE source 'common.sh'; output=`srender_to_tex_test -w 8192 -h 8192 -f 1`;if [[ $output != *"Color match at (10,20)"* ]]; then die "$errorMessage";fi;
 
-RGX_S_FUNC_BLIT_BTYPEBLIT source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test -btype BLIT`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
+RGX_S_FUNC_BLIT source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "$errorMessage";fi;
 
-RGX_S_FUNC_BLIT_BTYPEFILL source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test -btype FILL`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
+RGX_S_FUNC_BLIT_BTYPEBLIT source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test -btype BLIT`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "$errorMessage";fi;
 
-RGX_S_FUNC_BLIT_BTYPECLIP source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test -btype CLIP`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi;
+RGX_S_FUNC_BLIT_BTYPEFILL source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test -btype FILL`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "$errorMessage";fi;
 
-RGX_S_FUNC_KICKSYNC_1 source 'common.sh'; output=`rgx_kicksync_test -n 1`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+RGX_S_FUNC_BLIT_BTYPECLIP source 'common.sh'; ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3; output=`rgx_blit_test -btype CLIP`;if [[ $output != *"Output matches input file"* ]]; then die "Output and Input do not match";fi; if [[ $output != *"Test PASS"* ]]; then die "$errorMessage";fi;
 
-RGX_S_FUNC_KICKSYNC_VERBOSE_1 source 'common.sh'; output=`rgx_kicksync_test -ver -n 1`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+RGX_S_FUNC_KICKSYNC_1 source 'common.sh'; output=`rgx_kicksync_test -n 1`;if [[ $output != *"Test successful"* ]]; then die "$errorMessage";fi
 
-RGX_S_FUNC_KICKSYNC_VERBOSE_10 source 'common.sh'; output=`rgx_kicksync_test -ver -n 10`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+RGX_S_FUNC_KICKSYNC_VERBOSE_1 source 'common.sh'; output=`rgx_kicksync_test -ver -n 1`;if [[ $output != *"Test successful"* ]]; then die "$errorMessage";fi
 
-RGX_M_FUNC_KICKSYNC_VERBOSE_100 source 'common.sh'; output=`rgx_kicksync_test -ver -n 100`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+RGX_S_FUNC_KICKSYNC_VERBOSE_10 source 'common.sh'; output=`rgx_kicksync_test -ver -n 10`;if [[ $output != *"Test successful"* ]]; then die "$errorMessage";fi
 
-RGX_L_STRESS_KICKSYNC_VERBOSE_1000 source 'common.sh'; output=`rgx_kicksync_test -ver -n 1000`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+RGX_M_FUNC_KICKSYNC_VERBOSE_100 source 'common.sh'; output=`rgx_kicksync_test -ver -n 100`;if [[ $output != *"Test successful"* ]]; then die "$errorMessage";fi
 
-RGX_S_FUNC_KICKSYNC_SYNCCONTEXTLOOP_16_16_1000 source 'common.sh'; output=`rgx_kicksync_test -ver -nsctx 16 -nscmd 16 -n 1000`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+RGX_L_STRESS_KICKSYNC_VERBOSE_1000 source 'common.sh'; output=`rgx_kicksync_test -ver -n 1000`;if [[ $output != *"Test successful"* ]]; then die "$errorMessage";fi
 
-RGX_S_FUNC_KICKSYNC_SYNCCONTEXTLOOP_32_16_100 source 'common.sh'; output=`rgx_kicksync_test -ver -nc 32 -nscmd 16 -n 1 -loop 100`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+RGX_S_FUNC_KICKSYNC_SYNCCONTEXTLOOP_16_16_1000 source 'common.sh'; output=`rgx_kicksync_test -ver -nsctx 16 -nscmd 16 -n 1000`;if [[ $output != *"Test successful"* ]]; then die "$errorMessage";fi
 
-RGX_S_FUNC_KICKSYNC_SYNCCONTEXTLOOP_16_32_32 source 'common.sh'; output=`rgx_kicksync_test -ver -nc 16 -nsctx 32 -nscmd 32 -loop 100 -n 10000 -r -seed 81576`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+RGX_S_FUNC_KICKSYNC_SYNCCONTEXTLOOP_32_16_100 source 'common.sh'; output=`rgx_kicksync_test -ver -nc 32 -nscmd 16 -n 1 -loop 100`;if [[ $output != *"Test successful"* ]]; then die "$errorMessage";fi
 
-RGX_S_FUNC_KICKSYNC_SYNCCONTEXTLOOP_32_32_100 source 'common.sh'; output=`rgx_kicksync_test -nsctx 32 -nscmd 32 -n 100`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+RGX_S_FUNC_KICKSYNC_SYNCCONTEXTLOOP_16_32_32 source 'common.sh'; output=`rgx_kicksync_test -ver -nc 16 -nsctx 32 -nscmd 32 -loop 100 -n 10000 -r -seed 81576`;if [[ $output != *"Test successful"* ]]; then die "$errorMessage";fi
 
-RGX_S_FUNC_KICKSYNC_SYNCCONTEXTLOOP_4_10_100 source 'common.sh'; output=`rgx_kicksync_test -ver -nc 4 -loop 10 -n 100`;if [[ $output != *"Test successful"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+RGX_S_FUNC_KICKSYNC_SYNCCONTEXTLOOP_32_32_100 source 'common.sh'; output=`rgx_kicksync_test -nsctx 32 -nscmd 32 -n 100`;if [[ $output != *"Test successful"* ]]; then die "$errorMessage";fi
 
-RGX_S_FUNC_TWIDDLING source 'common.sh'; output=`rgx_twiddling_test`;if [[ $output = *"FAILED"* ]]; then die "Demo reports failed. Re-run manually to find rootcause.";fi
+RGX_S_FUNC_KICKSYNC_SYNCCONTEXTLOOP_4_10_100 source 'common.sh'; output=`rgx_kicksync_test -ver -nc 4 -loop 10 -n 100`;if [[ $output != *"Test successful"* ]]; then die "$errorMessage";fi
+
+RGX_S_FUNC_TWIDDLING source 'common.sh'; output=`rgx_twiddling_test`;if [[ $output = *"FAILED"* ]]; then die "$errorMessage";fi
 
 RGX_S_FUNC_GLES1 source 'common.sh'; cat /sys/kernel/debug/pvr/version | grep WS && bin='wgles1test1 -f' || bin='gles1test1'; $bin 1200
 
