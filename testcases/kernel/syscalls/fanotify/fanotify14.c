@@ -12,12 +12,10 @@
  */
 #define _GNU_SOURCE
 #include "tst_test.h"
-#include "fanotify.h"
-
 #include <errno.h>
 
-#if defined(HAVE_SYS_FANOTIFY_H)
-#include <sys/fanotify.h>
+#ifdef HAVE_SYS_FANOTIFY_H
+#include "fanotify.h"
 
 #define MNTPOINT "mntpoint"
 #define FILE1 MNTPOINT"/file1"
@@ -52,7 +50,15 @@ static struct test_case_t {
 	},
 	{
 		FAN_CLASS_NOTIF | FAN_REPORT_FID, FAN_MARK_MOUNT, INODE_EVENTS
-	}
+	},
+	{
+		/* FAN_REPORT_NAME without FAN_REPORT_DIR_FID is not valid */
+		FAN_CLASS_NOTIF | FAN_REPORT_NAME, 0, 0
+	},
+	{
+		/* FAN_REPORT_NAME without FAN_REPORT_DIR_FID is not valid */
+		FAN_CLASS_NOTIF | FAN_REPORT_FID | FAN_REPORT_NAME, 0, 0
+	},
 };
 
 static void do_test(unsigned int number)

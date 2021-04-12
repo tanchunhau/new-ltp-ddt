@@ -59,11 +59,10 @@
 #include "mem.h"
 #include "ksm_common.h"
 
-static int memcg_mounted;
-
 static void verify_ksm(void)
 {
-	write_memcg();
+	tst_cgroup_move_current(PATH_TMP_CG_MEM);
+	tst_cgroup_mem_set_maxbytes(PATH_TMP_CG_MEM, TESTMEM);
 	create_same_memory(size, num, unit);
 }
 
@@ -79,8 +78,7 @@ static void setup(void)
 	}
 
 	parse_ksm_options(opt_sizestr, &size, opt_numstr, &num, opt_unitstr, &unit);
-	mount_mem("memcg", "cgroup", "memory", MEMCG_PATH, MEMCG_PATH_NEW);
-	memcg_mounted = 1;
+	tst_cgroup_mount(TST_CGROUP_MEMCG, PATH_TMP_CG_MEM);
 }
 
 static void cleanup(void)
@@ -88,18 +86,24 @@ static void cleanup(void)
 	if (access(PATH_KSM "merge_across_nodes", F_OK) == 0)
 		FILE_PRINTF(PATH_KSM "merge_across_nodes",
 				 "%d", merge_across_nodes);
-
-	if (memcg_mounted)
-		umount_mem(MEMCG_PATH, MEMCG_PATH_NEW);
+	tst_cgroup_umount(PATH_TMP_CG_MEM);
 }
 
 static struct tst_test test = {
 	.needs_root = 1,
 	.forks_child = 1,
-	.options = ksm_options,
+	.options = (struct tst_option[]) {
+		{"n:", &opt_numstr,  "-n       Number of processes"},
+		{"s:", &opt_sizestr, "-s       Memory allocation size in MB"},
+		{"u:", &opt_unitstr, "-u       Memory allocation unit in MB"},
+		{}
+	},
 	.setup = setup,
 	.cleanup = cleanup,
-	.save_restore = save_restore,
+	.save_restore = (const char * const[]) {
+		"?/sys/kernel/mm/ksm/max_page_sharing",
+		NULL,
+	},
 	.test_all = verify_ksm,
 	.min_kver = "2.6.32",
 };

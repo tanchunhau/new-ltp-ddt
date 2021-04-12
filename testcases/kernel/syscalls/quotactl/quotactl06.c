@@ -146,19 +146,9 @@ static void verify_quotactl(unsigned int n)
 static void setup(void)
 {
 	const char *const cmd[] = {"quotacheck", "-uF", "vfsv0", MNTPOINT, NULL};
-	int ret;
 	unsigned int i;
 
-	ret = tst_run_cmd(cmd, NULL, NULL, 1);
-	switch (ret) {
-	case 0:
-		break;
-	case 255:
-		tst_brk(TCONF, "quotacheck binary not installed");
-		break;
-	default:
-		tst_brk(TBROK, "quotacheck exited with %i", ret);
-	}
+	SAFE_CMD(cmd, NULL, NULL);
 
 	if (access(USRPATH, F_OK) == -1)
 		tst_brk(TFAIL | TERRNO, "user quotafile didn't exist");
@@ -178,19 +168,21 @@ static void setup(void)
 	}
 }
 
-static const char *kconfigs[] = {
-	"CONFIG_QFMT_V2",
-	NULL
-};
-
 static struct tst_test test = {
 	.setup = setup,
-	.needs_kconfigs = kconfigs,
+	.needs_kconfigs = (const char *[]) {
+		"CONFIG_QFMT_V2",
+		NULL
+	},
 	.tcnt = ARRAY_SIZE(tcases),
 	.test = verify_quotactl,
 	.dev_fs_type = "ext4",
 	.mntpoint = MNTPOINT,
 	.mount_device = 1,
 	.mnt_data = "usrquota",
+	.needs_cmds = (const char *const []) {
+		"quotacheck",
+		NULL
+	},
 	.needs_root = 1,
 };

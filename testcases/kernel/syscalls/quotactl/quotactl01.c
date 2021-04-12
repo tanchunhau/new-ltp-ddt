@@ -162,18 +162,8 @@ static struct tcase {
 static void setup(void)
 {
 	const char *const cmd[] = {"quotacheck", "-ugF", "vfsv0", MNTPOINT, NULL};
-	int ret;
 
-	ret = tst_run_cmd(cmd, NULL, NULL, 1);
-	switch (ret) {
-	case 0:
-		break;
-	case 255:
-		tst_brk(TCONF, "quotacheck binary not installed");
-		break;
-	default:
-		tst_brk(TBROK, "quotacheck exited with %i", ret);
-	}
+	SAFE_CMD(cmd, NULL, NULL);
 
 	test_id = geteuid();
 	if (access(USRPATH, F_OK) == -1)
@@ -220,19 +210,21 @@ static void verify_quota(unsigned int n)
 	tst_res(TPASS, "quotactl succeeded to %s", tc->des);
 }
 
-static const char *kconfigs[] = {
-	"CONFIG_QFMT_V2",
-	NULL
-};
-
 static struct tst_test test = {
 	.needs_root = 1,
-	.needs_kconfigs = kconfigs,
+	.needs_kconfigs = (const char *[]) {
+		"CONFIG_QFMT_V2",
+		NULL
+	},
 	.test = verify_quota,
 	.tcnt = ARRAY_SIZE(tcases),
 	.mount_device = 1,
 	.dev_fs_type = "ext4",
 	.mntpoint = MNTPOINT,
 	.mnt_data = "usrquota,grpquota",
+	.needs_cmds = (const char *const []) {
+		"quotacheck",
+		NULL
+	},
 	.setup = setup,
 };

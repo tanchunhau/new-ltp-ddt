@@ -59,8 +59,6 @@
 #ifdef HAVE_NUMA_V2
 #include <numaif.h>
 
-static int cpuset_mounted;
-
 static void verify_ksm(void)
 {
 	unsigned long nmask[MAXNODES / BITS_PER_LONG] = { 0 };
@@ -78,7 +76,8 @@ static void verify_ksm(void)
 	}
 	create_same_memory(size, num, unit);
 
-	write_cpusets(node);
+	write_cpusets(PATH_TMP_CG_CST, node);
+	tst_cgroup_move_current(PATH_TMP_CG_CST);
 	create_same_memory(size, num, unit);
 }
 
@@ -88,8 +87,7 @@ static void cleanup(void)
 		FILE_PRINTF(PATH_KSM "merge_across_nodes",
 				 "%d", merge_across_nodes);
 
-	if (cpuset_mounted)
-		umount_mem(CPATH, CPATH_NEW);
+	tst_cgroup_umount(PATH_TMP_CG_CST);
 }
 
 static void setup(void)
@@ -105,17 +103,24 @@ static void setup(void)
 		SAFE_FILE_PRINTF(PATH_KSM "merge_across_nodes", "1");
 	}
 
-	mount_mem("cpuset", "cpuset", NULL, CPATH, CPATH_NEW);
-	cpuset_mounted = 1;
+	tst_cgroup_mount(TST_CGROUP_CPUSET, PATH_TMP_CG_CST);
 }
 
 static struct tst_test test = {
 	.needs_root = 1,
 	.forks_child = 1,
-	.options = ksm_options,
+	.options = (struct tst_option[]) {
+		{"n:", &opt_numstr,  "-n       Number of processes"},
+		{"s:", &opt_sizestr, "-s       Memory allocation size in MB"},
+		{"u:", &opt_unitstr, "-u       Memory allocation unit in MB"},
+		{}
+	},
 	.setup = setup,
 	.cleanup = cleanup,
-	.save_restore = save_restore,
+	.save_restore = (const char * const[]) {
+		"?/sys/kernel/mm/ksm/max_page_sharing",
+		NULL,
+	},
 	.test_all = verify_ksm,
 	.min_kver = "2.6.32",
 };

@@ -1,9 +1,9 @@
 #
 #    Top-level Makefile for LTP. See INSTALL for more info.
 #
-#    Copyright (C) 2009-2010, Cisco Systems Inc.
-#    Copyright (C) 2010-2011, Linux Test Project.
-#    Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
+#    Copyright (c) Linux Test Project, 2009-2020
+#    Copyright (c) Cisco Systems Inc., 2009-2010
+#    Copyright (c) Texas Instruments Inc., 2011-2021
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -68,18 +68,10 @@ $(1):: | $$(abs_top_builddir)/$$(basename $$(subst -,.,$(1)))
 endif
 endef
 
-COMMON_TARGETS    += tools testcases/ddt 
-COMMON_TARGETS    += testcases/kernel/ipc
-COMMON_TARGETS    += testcases/kernel/mem
-COMMON_TARGETS    += testcases/kernel/lib
-COMMON_TARGETS    += testcases/kernel/syscalls
-COMMON_TARGETS    += testcases/kernel/security
-COMMON_TARGETS    += testcases/kernel/sched
-COMMON_TARGETS    += testcases/kernel/hotplug
-COMMON_TARGETS    += testcases/misc/math
-COMMON_TARGETS    += testcases/lib
-COMMON_TARGETS    += testcases/realtime
-COMMON_TARGETS    += testcases/cve
+COMMON_TARGETS		+= testcases tools
+ifeq ($(WITH_METADATA),yes)
+COMMON_TARGETS		+= docparse
+endif
 
 # Don't want to nuke the original files if we're installing in-build-tree.
 ifneq ($(BUILD_TREE_STATE),$(BUILD_TREE_SRCDIR_INSTALL))
@@ -107,11 +99,7 @@ include-install: $(top_builddir)/include/config.h include/mk/config.mk include-a
 INSTALL_DIR		:= $(DESTDIR)/$(prefix)
 
 # DO NOT REMOVE THIS CALL (see clean_install_dir call below...)!!!!
-ifdef MAKE_3_80_COMPAT
-INSTALL_DIR		:= $(call MAKE_3_80_abspath,$(INSTALL_DIR))
-else
 INSTALL_DIR		:= $(abspath $(INSTALL_DIR))
-endif
 
 # build tree bootstrap targets and $(INSTALL_DIR) target.
 $(sort $(addprefix $(abs_top_builddir)/,$(BOOTSTRAP_TARGETS)) $(INSTALL_DIR) $(DESTDIR)/$(bindir)):

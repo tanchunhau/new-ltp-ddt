@@ -19,6 +19,8 @@
  * 7) quotactl(2) succeeds to get disk quota limit greater than or equal to
  *    ID with Q_GETNEXTQUOTA flag for project.
  * 8) quotactl(2) succeeds to turn off quota with Q_QUOTAOFF flag for project.
+ *
+ * Minimum e2fsprogs version required is 1.43.
  */
 
 #include <errno.h>
@@ -28,6 +30,7 @@
 #include <sys/stat.h>
 #include "config.h"
 #include "lapi/quotactl.h"
+#include "tst_safe_stdio.h"
 #include "tst_test.h"
 
 #ifndef QFMT_VFS_V1
@@ -102,10 +105,19 @@ static struct tcase {
 
 static void setup(void)
 {
-	const char *const extra_opts[] = {"-O quota,project", NULL};
+	FILE *f;
+	const char *const fs_opts[] = {"-I 256", "-O quota,project", NULL};
+	int rc, major, minor, patch;
 
 	test_id = geteuid();
-	SAFE_MKFS(tst_device->dev, tst_device->fs_type, NULL, extra_opts);
+	f = SAFE_POPEN("mkfs.ext4 -V 2>&1", "r");
+	rc = fscanf(f, "mke2fs %d.%d.%d", &major, &minor, &patch);
+	if (rc != 3)
+		tst_res(TWARN, "Unable parse version number");
+	else if (major * 10000 + minor * 100 + patch < 14300)
+		tst_brk(TCONF, "Test needs mkfs.ext4 >= 1.43 for quota,project option, test skipped");
+	pclose(f);
+	SAFE_MKFS(tst_device->dev, tst_device->fs_type, fs_opts, NULL);
 	SAFE_MOUNT(tst_device->dev, MNTPOINT, tst_device->fs_type, 0, "quota");
 	mount_flag = 1;
 }
@@ -142,14 +154,12 @@ static void verify_quota(unsigned int n)
 	tst_res(TPASS, "quotactl succeeded to %s", tc->des);
 }
 
-static const char *kconfigs[] = {
-	"CONFIG_QFMT_V2",
-	NULL
-};
-
 static struct tst_test test = {
 	.needs_root = 1,
-	.needs_kconfigs = kconfigs,
+	.needs_kconfigs = (const char *[]) {
+		"CONFIG_QFMT_V2",
+		NULL
+	},
 	.min_kver = "4.10", /* commit 689c958cbe6b (ext4: add project quota support) */
 	.test = verify_quota,
 	.tcnt = ARRAY_SIZE(tcases),
@@ -158,4 +168,8 @@ static struct tst_test test = {
 	.needs_device = 1,
 	.dev_fs_type = "ext4",
 	.mntpoint = MNTPOINT,
+	.needs_cmds = (const char *[]) {
+		"mkfs.ext4",
+		NULL
+	}
 };
