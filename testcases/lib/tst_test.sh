@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0-or-later
-# Copyright (c) Linux Test Project, 2014-2019
+# Copyright (c) Linux Test Project, 2014-2020
 # Author: Cyril Hrubis <chrubis@suse.cz>
 #
 # LTP test library for shell.
@@ -28,8 +28,12 @@ _tst_do_exit()
 	local ret=0
 	TST_DO_EXIT=1
 
-	if [ -n "$TST_CLEANUP" -a -z "$TST_NO_CLEANUP" ]; then
-		$TST_CLEANUP
+	if [ -n "$TST_DO_CLEANUP" -a -n "$TST_CLEANUP" -a -z "$TST_NO_CLEANUP" ]; then
+		if type $TST_CLEANUP >/dev/null 2>/dev/null; then
+			$TST_CLEANUP
+		else
+			tst_res TWARN "TST_CLEANUP=$TST_CLEANUP declared, but function not defined (or cmd not found)"
+		fi
 	fi
 
 	if [ "$TST_NEEDS_DEVICE" = 1 -a "$TST_DEVICE_FLAG" = 1 ]; then
@@ -102,9 +106,9 @@ tst_res()
 
 	_tst_inc_res "$res"
 
-	printf "$TST_ID $TST_COUNT "
-	tst_print_colored $res "$res: "
-	echo "$@"
+	printf "$TST_ID $TST_COUNT " >&2
+	tst_print_colored $res "$res: " >&2
+	echo "$@" >&2
 }
 
 tst_brk()
@@ -207,7 +211,7 @@ TST_RETRY_FN_EXP_BACKOFF()
 	fi
 
 	while true; do
-		$tst_fun
+		eval "$tst_fun"
 		if [ "$?" = "$tst_exp" ]; then
 			break
 		fi
@@ -350,7 +354,7 @@ tst_require_cmds()
 tst_check_cmds()
 {
 	local cmd
-	for cmd; do
+	for cmd in $*; do
 		if ! tst_cmd_available $cmd; then
 			tst_res TCONF "'$cmd' not found"
 			return 1
@@ -460,11 +464,32 @@ _tst_setup_timer()
 	_tst_setup_timer_pid=$!
 }
 
-_tst_require_root()
+tst_require_root()
 {
 	if [ "$(id -ru)" != 0 ]; then
 		tst_brk TCONF "Must be super/root for this test!"
 	fi
+}
+
+tst_require_module()
+{
+	local _tst_module=$1
+
+	for tst_module in "$_tst_module" \
+	                  "$LTPROOT/testcases/bin/$_tst_module" \
+	                  "$TST_STARTWD/$_tst_module"; do
+
+			if [ -f "$tst_module" ]; then
+				TST_MODPATH="$tst_module"
+				break
+			fi
+	done
+
+	if [ -z "$TST_MODPATH" ]; then
+		tst_brk TCONF "Failed to find module '$_tst_module'"
+	fi
+
+	tst_res TINFO "Found module at '$TST_MODPATH'"
 }
 
 tst_run()
@@ -485,7 +510,7 @@ tst_run()
 			NEEDS_DRIVERS|FS_TYPE|MNTPOINT|MNT_PARAMS);;
 			IPV6|IPVER|TEST_DATA|TEST_DATA_IFS);;
 			RETRY_FUNC|RETRY_FN_EXP_BACKOFF|TIMEOUT);;
-			NET_MAX_PKT);;
+			NET_DATAROOT|NET_MAX_PKT|NET_RHOST_RUN_DEBUG|NETLOAD_CLN_NUMBER);;
 			*) tst_res TWARN "Reserved variable TST_$_tst_i used!";;
 			esac
 		done
@@ -514,7 +539,7 @@ tst_run()
 		tst_brk TBROK "Number of iterations (-i) must be > 0"
 	fi
 
-	[ "$TST_NEEDS_ROOT" = 1 ] && _tst_require_root
+	[ "$TST_NEEDS_ROOT" = 1 ] && tst_require_root
 
 	[ "$TST_DISABLE_APPARMOR" = 1 ] && tst_disable_apparmor
 	[ "$TST_DISABLE_SELINUX" = 1 ] && tst_disable_selinux
@@ -529,7 +554,7 @@ tst_run()
 
 	_tst_setup_timer
 
-	[ "$TST_NEEDS_DEVICE" = 1 ] && TST_TMPDIR=1
+	[ "$TST_NEEDS_DEVICE" = 1 ] && TST_NEEDS_TMPDIR=1
 
 	if [ "$TST_NEEDS_TMPDIR" = 1 ]; then
 		if [ -z "$TMPDIR" ]; then
@@ -558,26 +583,15 @@ tst_run()
 		TST_DEVICE_FLAG=1
 	fi
 
-	if [ -n "$TST_NEEDS_MODULE" ]; then
-		for tst_module in "$TST_NEEDS_MODULE" \
-		                  "$LTPROOT/testcases/bin/$TST_NEEDS_MODULE" \
-		                  "$TST_STARTWD/$TST_NEEDS_MODULE"; do
-
-				if [ -f "$tst_module" ]; then
-					TST_MODPATH="$tst_module"
-					break
-				fi
-		done
-
-		if [ -z "$TST_MODPATH" ]; then
-			tst_brk TCONF "Failed to find module '$TST_NEEDS_MODULE'"
-		else
-			tst_res TINFO "Found module at '$TST_MODPATH'"
-		fi
-	fi
+	[ -n "$TST_NEEDS_MODULE" ] && tst_require_module "$TST_NEEDS_MODULE"
 
 	if [ -n "$TST_SETUP" ]; then
-		$TST_SETUP
+		if type $TST_SETUP >/dev/null 2>/dev/null; then
+			TST_DO_CLEANUP=1
+			$TST_SETUP
+		else
+			tst_brk TBROK "TST_SETUP=$TST_SETUP declared, but function not defined (or cmd not found)"
+		fi
 	fi
 
 	#TODO check that test reports some results for each test function call
@@ -594,7 +608,6 @@ tst_run()
 		fi
 		TST_ITERATIONS=$((TST_ITERATIONS-1))
 	done
-
 	_tst_do_exit
 }
 
@@ -603,6 +616,7 @@ _tst_run_tests()
 	local _tst_data="$1"
 	local _tst_i
 
+	TST_DO_CLEANUP=1
 	for _tst_i in $(seq ${TST_CNT:-1}); do
 		if type ${TST_TESTFUNC}1 > /dev/null 2>&1; then
 			_tst_run_test "$TST_TESTFUNC$_tst_i" $_tst_i "$_tst_data"

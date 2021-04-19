@@ -63,7 +63,7 @@ static char *opt_maxmbytesstr;
 static char *procpath = "/proc";
 static const char selfpath[] = "/proc/self";
 size_t buffsize = 1024;
-static long long maxbytes;
+static unsigned long long maxbytes;
 
 unsigned long long total_read;
 unsigned int total_obj;
@@ -85,6 +85,7 @@ static const struct mapping known_issues[] = {
 	{"open", "/proc/sal/init/data", EBUSY},
 	{"open", "/proc/sal/mca/data", EBUSY},
 	{"open", "/proc/fs/nfsd/pool_stats", ENODEV},
+	{"read", "/proc/fs/nfsd/clients/*/ctl", EINVAL},
 	{"read", "/proc/acpi/event", EAGAIN},
 	{"read", "/proc/kmsg", EAGAIN},
 	{"read", "/proc/sal/cpe/event", EAGAIN},
@@ -96,7 +97,11 @@ static const struct mapping known_issues[] = {
 	{"read", "/proc/self/mem", EIO},
 	{"read", "/proc/self/task/[0-9]*/mem", EIO},
 	{"read", "/proc/self/attr/*", EINVAL},
+	{"read", "/proc/self/attr/smack/*", EINVAL},
+	{"read", "/proc/self/attr/apparmor/*", EINVAL},
 	{"read", "/proc/self/task/[0-9]*/attr/*", EINVAL},
+	{"read", "/proc/self/task/[0-9]*/attr/smack/*", EINVAL},
+	{"read", "/proc/self/task/[0-9]*/attr/apparmor/*", EINVAL},
 	{"read", "/proc/self/ns/*", EINVAL},
 	{"read", "/proc/self/task/[0-9]*/ns/*", EINVAL},
 	{"read", "/proc/ppc64/rtas/error_log", EINVAL},

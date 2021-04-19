@@ -1,7 +1,7 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (c) 2009 IBM Corporation
-# Copyright (c) 2018-2019 Petr Vorel <pvorel@suse.cz>
+# Copyright (c) 2018-2020 Petr Vorel <pvorel@suse.cz>
 # Author: Mimi Zohar <zohar@linux.ibm.com>
 
 TST_TESTFUNC="test"
@@ -11,13 +11,89 @@ TST_CLEANUP_CALLER="$TST_CLEANUP"
 TST_CLEANUP="ima_cleanup"
 TST_NEEDS_ROOT=1
 
+# TST_NEEDS_DEVICE can be unset, therefore specify explicitly
+TST_NEEDS_TMPDIR=1
+
 . tst_test.sh
 
 SYSFS="/sys"
 UMOUNT=
 TST_FS_TYPE="ext3"
 
-check_ima_policy()
+# TODO: find support for rmd128 rmd256 rmd320 wp256 wp384 tgr128 tgr160
+compute_digest()
+{
+	local algorithm="$1"
+	local file="$2"
+	local digest
+
+	digest="$(${algorithm}sum $file 2>/dev/null | cut -f1 -d ' ')"
+	if [ -n "$digest" ]; then
+		echo "$digest"
+		return 0
+	fi
+
+	digest="$(openssl $algorithm $file 2>/dev/null | cut -f2 -d ' ')"
+	if [ -n "$digest" ]; then
+		echo "$digest"
+		return 0
+	fi
+
+	# uncommon ciphers
+	local arg="$algorithm"
+	case "$algorithm" in
+	tgr192) arg="tiger" ;;
+	wp512) arg="whirlpool" ;;
+	esac
+
+	digest="$(rdigest --$arg $file 2>/dev/null | cut -f1 -d ' ')"
+	if [ -n "$digest" ]; then
+		echo "$digest"
+		return 0
+	fi
+	return 1
+}
+
+check_policy_readable()
+{
+	if [ ! -f $IMA_POLICY ]; then
+		tst_res TINFO "missing $IMA_POLICY (reboot or CONFIG_IMA_WRITE_POLICY=y required)"
+		return 1
+	fi
+	cat $IMA_POLICY > /dev/null 2>/dev/null
+}
+
+require_policy_readable()
+{
+	if [ ! -f $IMA_POLICY ]; then
+		tst_brk TCONF "missing $IMA_POLICY (reboot or CONFIG_IMA_WRITE_POLICY=y required)"
+	fi
+	if ! check_policy_readable; then
+		tst_brk TCONF "cannot read IMA policy (CONFIG_IMA_READ_POLICY=y required)"
+	fi
+}
+
+check_ima_policy_content()
+{
+	local pattern="$1"
+	local grep_params="${2--q}"
+
+	check_policy_readable || return 1
+	grep $grep_params "$pattern" $IMA_POLICY
+}
+
+require_ima_policy_content()
+{
+	local pattern="$1"
+	local grep_params="${2--q}"
+
+	require_policy_readable
+	if ! grep $grep_params "$pattern" $IMA_POLICY; then
+		tst_brk TCONF "IMA policy does not specify '$pattern'"
+	fi
+}
+
+check_ima_policy_cmdline()
 {
 	local policy="$1"
 	local i
@@ -25,10 +101,18 @@ check_ima_policy()
 	grep -q "ima_$policy" /proc/cmdline && return
 	for i in $(cat /proc/cmdline); do
 		if echo "$i" | grep -q '^ima_policy='; then
-			echo "$i" | grep -q -e "|[ ]*$policy" -e "$policy[ ]*|" -e "=$policy" && return
+			echo "$i" | grep -q -e "|[ ]*$policy" -e "$policy[ ]*|" -e "=$policy" && return 0
 		fi
 	done
-	tst_brk TCONF "IMA measurement tests require builtin IMA $policy policy (e.g. ima_policy=$policy kernel parameter)"
+	return 1
+}
+
+require_ima_policy_cmdline()
+{
+	local policy="$1"
+
+	check_ima_policy_cmdline $policy || \
+		tst_brk TCONF "IMA measurement tests require builtin IMA $policy policy (e.g. ima_policy=$policy kernel parameter)"
 }
 
 mount_helper()
@@ -61,7 +145,7 @@ mount_loop_device()
 
 print_ima_config()
 {
-	local config="/boot/config-$(uname -r)"
+	local config="${KCONFIG_PATH:-/boot/config-$(uname -r)}"
 	local i
 
 	if [ -r "$config" ]; then
@@ -82,6 +166,12 @@ ima_setup()
 	[ -d "$IMA_DIR" ] || tst_brk TCONF "IMA not enabled in kernel"
 	ASCII_MEASUREMENTS="$IMA_DIR/ascii_runtime_measurements"
 	BINARY_MEASUREMENTS="$IMA_DIR/binary_runtime_measurements"
+	IMA_POLICY="$IMA_DIR/policy"
+
+	# hack to support running tests locally from ima/tests directory
+	if [ ! -d "$TST_DATAROOT" ]; then
+		TST_DATAROOT="$LTPROOT/../datafiles/$TST_ID/"
+	fi
 
 	print_ima_config
 
@@ -107,6 +197,76 @@ ima_cleanup()
 		cd $TST_TMPDIR
 		tst_umount
 	fi
+}
+
+set_digest_index()
+{
+	DIGEST_INDEX=
+
+	local template="$(tail -1 $ASCII_MEASUREMENTS | cut -d' ' -f 3)"
+	local i word
+
+	# parse digest index
+	# https://www.kernel.org/doc/html/latest/security/IMA-templates.html#use
+	case "$template" in
+	ima|ima-ng|ima-sig) DIGEST_INDEX=4 ;;
+	*)
+		# using ima_template_fmt kernel parameter
+		local IFS="|"
+		i=4
+		for word in $template; do
+			if [ "$word" = 'd' -o "$word" = 'd-ng' ]; then
+				DIGEST_INDEX=$i
+				break
+			fi
+			i=$((i+1))
+		done
+	esac
+
+	[ -z "$DIGEST_INDEX" ] && tst_brk TCONF \
+		"Cannot find digest index (template: '$template')"
+}
+
+get_algorithm_digest()
+{
+	local line="$1"
+	local delimiter=':'
+	local algorithm digest
+
+	if [ -z "$line" ]; then
+		echo "measurement record not found"
+		return 1
+	fi
+
+	[ -z "$DIGEST_INDEX" ] && set_digest_index
+	digest=$(echo "$line" | cut -d' ' -f $DIGEST_INDEX)
+	if [ -z "$digest" ]; then
+		echo "digest not found (index: $DIGEST_INDEX, line: '$line')"
+		return 1
+	fi
+
+	if [ "${digest#*$delimiter}" != "$digest" ]; then
+		algorithm=$(echo "$digest" | cut -d $delimiter -f 1)
+		digest=$(echo "$digest" | cut -d $delimiter -f 2)
+	else
+		case "${#digest}" in
+		32) algorithm="md5" ;;
+		40) algorithm="sha1" ;;
+		*)
+			echo "algorithm must be either md5 or sha1 (digest: '$digest')"
+			return 1 ;;
+		esac
+	fi
+	if [ -z "$algorithm" ]; then
+		echo "algorithm not found"
+		return 1
+	fi
+	if [ -z "$digest" ]; then
+		echo "digest not found"
+		return 1
+	fi
+
+	echo "$algorithm|$digest"
 }
 
 # loop device is needed to use only for tmpfs

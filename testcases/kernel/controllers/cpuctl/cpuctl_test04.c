@@ -77,9 +77,7 @@ extern void cleanup(void)
 	tst_exit();		/* Report exit status */
 }
 
-volatile int timer_expired = 0;
-
-int main(int argc, char *argv[])
+int main(void)
 {
 
 	int test_num;

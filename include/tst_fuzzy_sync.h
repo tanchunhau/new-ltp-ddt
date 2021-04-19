@@ -297,7 +297,10 @@ static void tst_fzsync_pair_reset(struct tst_fzsync_pair *pair,
 	pair->b_cntr = 0;
 	pair->exit = 0;
 	if (run_b) {
-		struct tst_fzsync_run_thread wrap_run_b = {.func = run_b, .arg = NULL};
+		static struct tst_fzsync_run_thread wrap_run_b;
+
+		wrap_run_b.func = run_b;
+		wrap_run_b.arg = NULL;
 		SAFE_PTHREAD_CREATE(&pair->thread_b, 0, tst_fzsync_thread_wrapper, &wrap_run_b);
 	}
 
@@ -508,7 +511,7 @@ static void tst_fzsync_pair_update(struct tst_fzsync_pair *pair)
 		per_spin_time = fabsf(pair->diff_ab.avg) / MAX(pair->spins_avg.avg, 1.0f);
 		time_delay = drand48() * (pair->diff_sa.avg + pair->diff_sb.avg)
 			- pair->diff_sb.avg;
-		pair->delay += (int)(time_delay / per_spin_time);
+		pair->delay += (int)(1.1 * time_delay / per_spin_time);
 
 		if (!pair->sampling) {
 			tst_res(TINFO,
