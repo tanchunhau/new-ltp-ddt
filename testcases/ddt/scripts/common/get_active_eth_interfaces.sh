@@ -32,7 +32,7 @@ do
   interface=`echo $device | cut -c16-`
 
   # Try to bring each interface up
-  timeout 15 ifup $interface > /dev/null
+  ip link set dev $interface up && sleep 15 > /dev/null
 
   if [[ "`cat /sys/class/net/$interface/operstate`" != "down" ]]
   then

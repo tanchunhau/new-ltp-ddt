@@ -56,7 +56,7 @@ esac
 # Try to use /sys and /proc information to determine values dynamically.
 # Alternatively you should check if there is an existing script to get the
 # value you want
-cpsw="cpsw TIKeyStoneEthernetDriver"
+cpsw="cpsw TIKeyStoneEthernetDriver cpsw-switch"
 cpsw2g="am65-cpsw-nuss"
 cpsw9g="j721e-cpsw-virt-mac"
 icssg="icssg-prueth"
