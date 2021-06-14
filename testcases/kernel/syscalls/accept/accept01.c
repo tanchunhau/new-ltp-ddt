@@ -6,9 +6,9 @@
  */
 
 /*\
- * [DESCRIPTION]
+ * [Description]
  * Verify that accept() returns the proper errno for various failure cases.
-\*/
+ */
 
 #include <stdio.h>
 #include <unistd.h>

@@ -4,10 +4,10 @@
  */
 
 /*\
- * [DESCRIPTION]
+ * [Description]
  *
  * Failure tests for name_to_handle_at().
-\*/
+ */
 
 #define _GNU_SOURCE
 #include "lapi/name_to_handle_at.h"
@@ -53,6 +53,8 @@ static void setup(void)
 static void run(unsigned int n)
 {
 	struct tcase *tc = &tcases[n];
+
+	memset(&fh, 0, sizeof(fh));
 
 	TEST(name_to_handle_at(tc->dfd, *tc->pathname, *tc->fhp, *tc->mount_id,
 			       tc->flags));

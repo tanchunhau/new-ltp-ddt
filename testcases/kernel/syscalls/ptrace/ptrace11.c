@@ -5,12 +5,12 @@
  */
 
 /*\
- * [DESCRIPTION]
+ * [Description]
  *
  * Before kernel 2.6.26 we could not trace init(1) process and ptrace() would
  * fail with EPERM. This case just checks whether we can trace init(1) process
  * successfully.
-\*/
+ */
 
 #include <errno.h>
 #include <signal.h>

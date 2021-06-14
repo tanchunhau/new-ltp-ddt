@@ -4,14 +4,14 @@
  */
 
 /*\
- * [DESCRIPTION]
+ * [Description]
  *
  * Basic finit_module() failure tests.
  *
- * [ALGORITHM]
+ * [Algorithm]
  *
  * Tests various failure scenarios for finit_module().
-\*/
+ */
 
 #include <linux/capability.h>
 #include <errno.h>

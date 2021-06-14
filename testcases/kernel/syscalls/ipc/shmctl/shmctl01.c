@@ -5,7 +5,7 @@
  */
 
 /*\
- * [DESCRIPTION]
+ * [Description]
  *
  * Verify that shmctl() IPC_STAT and SHM_STAT reports correct data.
  *
@@ -15,7 +15,7 @@
  * - attaching the SHM before fork and letting the children detach it
  *
  * We check that the number shm_nattach is correct after each step we do.
-\*/
+ */
 
 #define _GNU_SOURCE
 #include <stdlib.h>

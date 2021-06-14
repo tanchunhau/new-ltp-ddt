@@ -5,13 +5,13 @@
  *
  */
 /*\
- * [DESCRIPTION]
+ * [Description]
  * Negative test for dup(2) (too many fds).
  *
- * [ALGORITHM]
+ * [Algorithm]
  * Open the maximum allowed number of file descriptors and then try to call
  * dup() once more and verify it fails with EMFILE.
-\*/
+ */
 
 #include <stdlib.h>
 #include "tst_test.h"
@@ -30,9 +30,9 @@ static void run(void)
 
 	if (TST_RET == -1) {
 		if (TST_ERR == EMFILE)
-			tst_res(TPASS | TERRNO, "dup() failed as expected");
+			tst_res(TPASS | TTERRNO, "dup() failed as expected");
 		else
-			tst_res(TFAIL | TERRNO, "dup() failed unexpectedly");
+			tst_res(TFAIL | TTERRNO, "dup() failed unexpectedly");
 		return;
 	}
 

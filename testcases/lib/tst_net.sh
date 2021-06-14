@@ -18,11 +18,13 @@ TST_SETUP="tst_net_setup"
 # Blank for an IPV4 test; 6 for an IPV6 test.
 TST_IPV6=${TST_IPV6:-}
 TST_IPVER=${TST_IPV6:-4}
+# Blank for IPv4, '-6' for IPv6 test.
+TST_IPV6_FLAG=${TST_IPV6_FLAG:-}
 
 tst_net_parse_args()
 {
 	case $1 in
-	6) TST_IPV6=6 TST_IPVER=6;;
+	6) TST_IPV6=6 TST_IPVER=6 TST_IPV6_FLAG="-6";;
 	*) [ "$TST_PARSE_ARGS_CALLER" ] && $TST_PARSE_ARGS_CALLER "$1" "$2";;
 	esac
 }
@@ -106,6 +108,7 @@ init_ltp_netspace()
 		tst_require_cmds ip
 		tst_require_root
 
+		tst_require_drivers veth
 		ROD ip li add name ltp_ns_veth1 type veth peer name ltp_ns_veth2
 		pid="$(ROD ns_create net,mnt)"
 		mkdir -p /var/run/netns
@@ -128,6 +131,12 @@ init_ltp_netspace()
 
 	tst_restore_ipaddr
 	tst_restore_ipaddr rhost
+}
+
+# return 0: use ssh, 1: use netns
+tst_net_use_netns()
+{
+	[ -n "$TST_USE_NETNS" ]
 }
 
 # Run command on remote host.
@@ -710,7 +719,7 @@ tst_netload()
 	tst_rhost_run -c "pkill -9 netstress\$"
 	rm -f tst_netload.log
 
-	local res=0
+	local results
 	local passed=0
 
 	for i in $(seq 1 $run_cnt); do
@@ -751,7 +760,7 @@ tst_netload()
 		[ ! -f $rfile ] && \
 			tst_netload_brk TFAIL "can't read $rfile"
 
-		res="$((res + $(cat $rfile)))"
+		results="$results $(cat $rfile)"
 		passed=$((passed + 1))
 	done
 
@@ -761,10 +770,10 @@ tst_netload()
 		tst_netload_brk TFAIL "expected '$expect_res' but ret: '$ret'"
 	fi
 
-	res=$((res / $passed))
-	echo "$res" > $rfile
+	local median=$(tst_get_median $results)
+	echo "$median" > $rfile
 
-	tst_res_ TPASS "netstress passed, mean time '$res' ms"
+	tst_res_ TPASS "netstress passed, median time $median ms, data:$results"
 
 	return $ret
 }

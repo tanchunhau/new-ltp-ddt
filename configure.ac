@@ -30,11 +30,15 @@ AC_DEFUN([AC_PROG_STRIP], [AC_CHECK_TOOL(STRIP, strip, :)])
 AC_PROG_STRIP
 AC_PROG_YACC
 
+m4_ifndef([PKG_CHECK_EXISTS],
+	[m4_fatal([must install pkg-config or pkgconfig and pkg.m4 macro (usual dependency), see INSTALL])])
+
 AC_PREFIX_DEFAULT(/opt/ltp)
 
 AC_CHECK_DECLS([IFLA_NET_NS_PID],,,[#include <linux/if_link.h>])
 AC_CHECK_DECLS([MADV_MERGEABLE],,,[#include <sys/mman.h>])
 AC_CHECK_DECLS([PR_CAPBSET_DROP, PR_CAPBSET_READ],,,[#include <sys/prctl.h>])
+AC_CHECK_DECLS([SEM_STAT_ANY],,,[#include <sys/sem.h>])
 
 AC_CHECK_HEADERS_ONCE([ \
     asm/ldt.h \
@@ -43,12 +47,14 @@ AC_CHECK_HEADERS_ONCE([ \
     linux/can.h \
     linux/cgroupstats.h \
     linux/cryptouser.h \
+    linux/close_range.h \
     linux/dccp.h \
     linux/fs.h \
     linux/genetlink.h \
     linux/if_alg.h \
     linux/if_ether.h \
     linux/if_packet.h \
+    linux/io_uring.h \
     linux/keyctl.h \
     linux/mempolicy.h \
     linux/module.h \
@@ -76,6 +82,7 @@ AC_SUBST(HAVE_FTS_H, $have_fts)
 
 AC_CHECK_FUNCS_ONCE([ \
     clone3 \
+    close_range \
     copy_file_range \
     epoll_pwait \
     execveat \
@@ -94,6 +101,8 @@ AC_CHECK_FUNCS_ONCE([ \
     io_uring_register \
     io_uring_enter \
     kcmp \
+    mallinfo \
+    mallopt \
     mkdirat \
     mknodat \
     modify_ldt \

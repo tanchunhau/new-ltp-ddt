@@ -3,15 +3,19 @@
  * Copyright (c) 2020 CTERA Networks. All Rights Reserved.
  *
  * Started by Amir Goldstein <amir73il@gmail.com>
- *
- * DESCRIPTION
- *     Check fanotify directory entry modification events, events on child and
- *     on self with group init flags:
- *     - FAN_REPORT_DFID_NAME (dir fid + name)
- *     - FAN_REPORT_DIR_FID   (dir fid)
- *     - FAN_REPORT_DIR_FID | FAN_REPORT_FID   (dir fid + child fid)
- *     - FAN_REPORT_DFID_NAME | FAN_REPORT_FID (dir fid + name + child fid)
  */
+
+/*\
+ * [Description]
+ * Check fanotify directory entry modification events, events on child and
+ * on self with group init flags:
+ *
+ * - FAN_REPORT_DFID_NAME (dir fid + name)
+ * - FAN_REPORT_DIR_FID   (dir fid)
+ * - FAN_REPORT_DIR_FID | FAN_REPORT_FID   (dir fid + child fid)
+ * - FAN_REPORT_DFID_NAME | FAN_REPORT_FID (dir fid + name + child fid)
+ */
+
 #define _GNU_SOURCE
 #include "config.h"
 
@@ -562,7 +566,6 @@ static struct tst_test test = {
 	.mount_device = 1,
 	.mntpoint = MOUNT_PATH,
 	.all_filesystems = 1,
-	.needs_tmpdir = 1,
 	.needs_root = 1
 };
 

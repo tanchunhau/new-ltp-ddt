@@ -45,7 +45,7 @@ static void sig_handler()
 	printf("thread: interrupted by SIGUSR1\n");
 }
 
-static void *fn_chld(void *arg LTP_ATTRIBUTE_UNUSED)
+static void *fn_chld(void *arg PTS_ATTRIBUTE_UNUSED)
 {
 	int rc = 0;
 	struct sigaction act;
@@ -169,7 +169,7 @@ int main(void)
 	}
 
 	if (pthread_barrier_destroy(&barrier) != 0) {
-		printf("Error at pthread_barrier_destroy()");
+		printf("Error at pthread_barrier_destroy()\n");
 		return PTS_UNRESOLVED;
 	}
 

@@ -4,14 +4,14 @@
  */
 
 /*\
- * [DESCRIPTION]
+ * [Description]
  *
  * Basic finit_module() tests.
  *
- * [ALGORITHM]
+ * [Algorithm]
  *
  * Inserts a simple module after opening and mmaping the module file.
-\*/
+ */
 
 #include <errno.h>
 #include "lapi/init_module.h"
