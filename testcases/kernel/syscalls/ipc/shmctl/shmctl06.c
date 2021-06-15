@@ -4,10 +4,10 @@
  */
 
 /*\
- * [DESCRIPTION]
+ * [Description]
  *
  * Cross verify the _high fields being set to 0 by the kernel.
-\*/
+ */
 
 #include <sys/shm.h>
 #include "lapi/shmbuf.h"

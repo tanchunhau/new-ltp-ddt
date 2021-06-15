@@ -5,14 +5,14 @@
  */
 
 /*\
- * [DESCRIPTION]
+ * [Description]
  *
  * Test to check if fd set bits are cleared by select().
  *
- * [ALGORITHM]
+ * [Algorithm]
  *  - Check that writefds flag is cleared on full pipe
  *  - Check that readfds flag is cleared on empty pipe
-\*/
+ */
 
 #include <unistd.h>
 #include <errno.h>

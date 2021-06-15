@@ -3,16 +3,20 @@
  * Copyright (c) 2018 Matthew Bobrowski. All Rights Reserved.
  *
  * Started by Matthew Bobrowski <mbobrowski@mbobrowski.org>
- *
- * DESCRIPTION
- *	Validate that the values returned within an event when
- *	FAN_REPORT_FID is specified matches those that are obtained via
- *	explicit invocation to system calls statfs(2) and
- *	name_to_handle_at(2).
- *
+ */
+
+/*\
+ * [Description]
+ * Validate that the values returned within an event when FAN_REPORT_FID is
+ * specified matches those that are obtained via explicit invocation to system
+ * calls statfs(2) and name_to_handle_at(2).
+ */
+
+ /*
  * This is also regression test for:
  *     c285a2f01d69 ("fanotify: update connector fsid cache on add mark")
  */
+
 #define _GNU_SOURCE
 #include "config.h"
 
@@ -289,7 +293,6 @@ static struct tst_test test = {
 	.setup = do_setup,
 	.cleanup = do_cleanup,
 	.needs_root = 1,
-	.needs_tmpdir = 1,
 	.mount_device = 1,
 	.mntpoint = MOUNT_PATH,
 	.all_filesystems = 1,

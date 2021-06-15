@@ -4,7 +4,7 @@
  * Author: Feiyu Zhu <zhufy.jy@cn.fujitsu.com>
  */
 /*\
- * [DESCRIPTION]
+ * [Description]
  *
  * Call semctl() with SEM_INFO flag and check that:
  *
@@ -23,15 +23,20 @@
  * completely different meaning than their names seems to suggest.
  *
  * We also calling semctl() directly by syscall(), because of a glibc bug:
- * * semctl SEM_STAT_ANY fails to pass the buffer specified by the caller
- * * to the kernel.
- * * https://sourceware.org/bugzilla/show_bug.cgi?id=26637
  *
+ * semctl SEM_STAT_ANY fails to pass the buffer specified by the caller
+ * to the kernel.
+ *
+ * https://sourceware.org/bugzilla/show_bug.cgi?id=26637
+ */
+
+/*
  * The glibc bug was fixed in:
+ *
  * * commit  574500a108be1d2a6a0dc97a075c9e0a98371aba
  * * Author: Dmitry V. Levin <ldv@altlinux.org>
  * * Date:   Tue, 29 Sep 2020 17:10:20 +0000 (14:10 -0300)
-\*/
+ */
 
 #include <stdio.h>
 #include <pwd.h>
@@ -153,7 +158,7 @@ static void verify_semctl(unsigned int n)
 				"specified by the caller to kernel");
 		return;
 	} else if (semid == -1) {
-		tst_res(TFAIL | TTERRNO, "SEM_INFO haven't returned a valid index");
+		tst_res(TFAIL | TERRNO, "SEM_INFO haven't returned a valid index");
 	} else {
 		tst_res(TPASS, "SEM_INFO returned valid index %li to semid %i",
 			TST_RET, semid);
@@ -180,13 +185,32 @@ static void setup(void)
 
 	nobody_uid = ltpuser->pw_uid;
 	root_uid = 0;
+	test_info();
+
+#if !HAVE_DECL_SEM_STAT_ANY
+	if (tst_variant == 1)
+		tst_brk(TCONF, "libc does not support semctl(SEM_STAT_ANY)");
+#endif
 
 	sem_id = SAFE_SEMGET(IPC_PRIVATE, 2, IPC_CREAT | 0600);
-	test_info();
+
+	TEST(do_semctl(sem_id, 0, SEM_STAT_ANY));
+	if (TST_RET == -1) {
+		if (TST_ERR == EFAULT)
+			tst_brk(TFAIL,
+				"SEM_STAT_ANY doesn't pass the buffer specified by the caller to kernel");
+		if (TST_ERR == EINVAL)
+			tst_brk(TCONF, "kernel doesn't support SEM_STAT_ANY");
+		else
+			tst_brk(TBROK | TTERRNO,
+				"Current environment doesn't permit SEM_STAT_ANY");
+	}
 }
 
 static void cleanup(void)
 {
+	SAFE_SETEUID(root_uid);
+
 	if (sem_id >= 0)
 		SAFE_SEMCTL(sem_id, 0, IPC_RMID);
 }
@@ -198,4 +222,8 @@ static struct tst_test test = {
 	.tcnt = ARRAY_SIZE(tests),
 	.test_variants = 2,
 	.needs_root = 1,
+	.tags = (const struct tst_tag[]) {
+		{"glibc-git", "574500a108be"},
+		{}
+	}
 };

@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0-or-later
-# Copyright (c) Linux Test Project, 2014-2020
+# Copyright (c) Linux Test Project, 2014-2021
 # Author: Cyril Hrubis <chrubis@suse.cz>
 #
 # LTP test library for shell.
@@ -21,7 +21,7 @@ export TST_LIB_LOADED=1
 . tst_security.sh
 
 # default trap function
-trap "tst_brk TBROK 'test interrupted'" INT
+trap "tst_brk TBROK 'test interrupted or timed out'" INT
 
 _tst_do_exit()
 {
@@ -48,10 +48,7 @@ _tst_do_exit()
 		[ "$TST_TMPDIR_RHOST" = 1 ] && tst_cleanup_rhost
 	fi
 
-	if [ -n "$_tst_setup_timer_pid" ]; then
-		kill $_tst_setup_timer_pid 2>/dev/null
-		wait $_tst_setup_timer_pid 2>/dev/null
-	fi
+	_tst_cleanup_timer
 
 	if [ $TST_FAIL -gt 0 ]; then
 		ret=$((ret|1))
@@ -77,6 +74,7 @@ _tst_do_exit()
 	echo "Summary:"
 	echo "passed   $TST_PASS"
 	echo "failed   $TST_FAIL"
+	echo "broken   $TST_BROK"
 	echo "skipped  $TST_CONF"
 	echo "warnings $TST_WARN"
 
@@ -437,6 +435,47 @@ _tst_multiply_timeout()
 	return 0
 }
 
+_tst_kill_test()
+{
+	local i=10
+
+	trap '' INT
+	tst_res TBROK "Test timeouted, sending SIGINT! If you are running on slow machine, try exporting LTP_TIMEOUT_MUL > 1"
+	kill -INT -$pid
+	tst_sleep 100ms
+
+	while kill -0 $pid >/dev/null 2>&1 && [ $i -gt 0 ]; do
+		tst_res TINFO "Test is still running, waiting ${i}s"
+		sleep 1
+		i=$((i-1))
+	done
+
+	if kill -0 $pid >/dev/null 2>&1; then
+		tst_res TBROK "Test still running, sending SIGKILL"
+		kill -KILL -$pid
+	fi
+}
+
+_tst_cleanup_timer()
+{
+	if [ -n "$_tst_setup_timer_pid" ]; then
+		kill -TERM $_tst_setup_timer_pid 2>/dev/null
+		wait $_tst_setup_timer_pid 2>/dev/null
+	fi
+}
+
+_tst_timeout_process()
+{
+	local sleep_pid
+
+	sleep $sec &
+	sleep_pid=$!
+	trap "kill $sleep_pid; exit" TERM
+	wait $sleep_pid
+	trap - TERM
+	_tst_kill_test
+}
+
 _tst_setup_timer()
 {
 	TST_TIMEOUT=${TST_TIMEOUT:-300}
@@ -459,7 +498,9 @@ _tst_setup_timer()
 
 	tst_res TINFO "timeout per run is ${h}h ${m}m ${s}s"
 
-	sleep $sec && tst_res TBROK "test killed, timeout! If you are running on slow machine, try exporting LTP_TIMEOUT_MUL > 1" && kill -9 -$pid &
+	_tst_cleanup_timer
+
+	_tst_timeout_process &
 
 	_tst_setup_timer_pid=$!
 }
@@ -492,6 +533,12 @@ tst_require_module()
 	tst_res TINFO "Found module at '$TST_MODPATH'"
 }
 
+tst_set_timeout()
+{
+	TST_TIMEOUT="$1"
+	_tst_setup_timer
+}
+
 tst_run()
 {
 	local _tst_i
@@ -508,7 +555,7 @@ tst_run()
 			NEEDS_ROOT|NEEDS_TMPDIR|TMPDIR|NEEDS_DEVICE|DEVICE);;
 			NEEDS_CMDS|NEEDS_MODULE|MODPATH|DATAROOT);;
 			NEEDS_DRIVERS|FS_TYPE|MNTPOINT|MNT_PARAMS);;
-			IPV6|IPVER|TEST_DATA|TEST_DATA_IFS);;
+			IPV6|IPV6_FLAG|IPVER|TEST_DATA|TEST_DATA_IFS);;
 			RETRY_FUNC|RETRY_FN_EXP_BACKOFF|TIMEOUT);;
 			NET_DATAROOT|NET_MAX_PKT|NET_RHOST_RUN_DEBUG|NETLOAD_CLN_NUMBER);;
 			*) tst_res TWARN "Reserved variable TST_$_tst_i used!";;
@@ -652,7 +699,7 @@ else
 fi
 
 if [ -z "$TST_NO_DEFAULT_RUN" ]; then
-	if TST_TEST_PATH=$(which $0) 2>/dev/null; then
+	if TST_TEST_PATH=$(command -v $0) 2>/dev/null; then
 		if ! grep -q tst_run "$TST_TEST_PATH"; then
 			tst_brk TBROK "Test $0 must call tst_run!"
 		fi

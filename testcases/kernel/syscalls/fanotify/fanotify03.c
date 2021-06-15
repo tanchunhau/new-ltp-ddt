@@ -3,10 +3,13 @@
  * Copyright (c) 2013 SUSE.  All Rights Reserved.
  *
  * Started by Jan Kara <jack@suse.cz>
- *
- * DESCRIPTION
- *     Check that fanotify permission events work
  */
+
+/*\
+ * [Description]
+ * Check that fanotify permission events work.
+ */
+
 #define _GNU_SOURCE
 #include "config.h"
 
@@ -128,17 +131,15 @@ static void generate_events(void)
 	/*
 	 * Generate sequence of events
 	 */
-	if ((fd = open(fname, O_RDWR | O_CREAT, 0700)) == -1)
-		exit(1);
-	if (write(fd, fname, 1) == -1)
-		exit(2);
+	fd = SAFE_OPEN(fname, O_RDWR | O_CREAT, 0700);
 
-	lseek(fd, 0, SEEK_SET);
+	SAFE_WRITE(0, fd, fname, 1);
+	SAFE_LSEEK(fd, 0, SEEK_SET);
+
 	if (read(fd, buf, BUF_SIZE) != -1)
 		exit(3);
 
-	if (close(fd) == -1)
-		exit(4);
+	SAFE_CLOSE(fd);
 
 	if (execve(FILE_EXEC_PATH, argv, environ) != -1)
 		exit(5);
@@ -151,7 +152,7 @@ static void child_handler(int tmp)
 	 * Close notification fd so that we cannot block while reading
 	 * from it
 	 */
-	close(fd_notify);
+	SAFE_CLOSE(fd_notify);
 	fd_notify = -1;
 }
 
@@ -172,7 +173,7 @@ static void run_child(void)
 
 	if (child_pid == 0) {
 		/* Child will generate events now */
-		close(fd_notify);
+		SAFE_CLOSE(fd_notify);
 		generate_events();
 		exit(0);
 	}

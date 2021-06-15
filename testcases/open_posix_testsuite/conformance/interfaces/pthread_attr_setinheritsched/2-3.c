@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include "posixtest.h"
 
-#define TEST "4-1"
+#define TEST "2-3"
 #define AREA "scheduler"
 #define ERROR_PREFIX "unexpected error: " AREA " " TEST ": "
 
@@ -32,7 +32,7 @@
 static int policy_correct = -1;
 static int priority_correct = -1;
 
-static void *thread(void *tmp LTP_ATTRIBUTE_UNUSED)
+static void *thread(void *tmp PTS_ATTRIBUTE_UNUSED)
 {
 	struct sched_param param;
 	int policy;

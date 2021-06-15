@@ -3,10 +3,13 @@
  * Copyright (c) 2013 SUSE.  All Rights Reserved.
  *
  * Started by Jan Kara <jack@suse.cz>
- *
- * DESCRIPTION
- *     Check that fanotify work for a file
  */
+
+/*\
+ * [Description]
+ * Check that fanotify work for a file.
+ */
+
 #define _GNU_SOURCE
 #include "config.h"
 
@@ -167,7 +170,7 @@ static void test_fanotify(unsigned int n)
 			EVENT_BUF_LEN - len);
 	len += ret;
 
-	lseek(fd, 0, SEEK_SET);
+	SAFE_LSEEK(fd, 0, SEEK_SET);
 	/* Generate modify event to clear ignore mask */
 	SAFE_WRITE(1, fd, fname, 1);
 	event_set[tst_count] = FAN_MODIFY;

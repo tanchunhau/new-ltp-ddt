@@ -3,11 +3,15 @@
  * Copyright (c) 2018 CTERA Networks.  All Rights Reserved.
  *
  * Started by Amir Goldstein <amir73il@gmail.com>
- *
- * DESCRIPTION
- *     Check that fanotify handles events on children correctly when
- *     both parent and subdir or mountpoint marks exist.
- *
+ */
+
+/*\
+ * [Description]
+ * Check that fanotify handles events on children correctly when both parent and
+ * subdir or mountpoint marks exist.
+ */
+
+/*
  * This is a regression test for commit 54a307ba8d3c:
  *
  *      fanotify: fix logic of events on child
@@ -24,6 +28,7 @@
  *
  *      fanotify: fix logic of reporting name info with watched parent
  */
+
 #define _GNU_SOURCE
 #include "config.h"
 
@@ -365,7 +370,6 @@ static struct tst_test test = {
 	.cleanup = cleanup,
 	.mount_device = 1,
 	.mntpoint = MOUNT_PATH,
-	.needs_tmpdir = 1,
 	.needs_root = 1,
 	.tags = (const struct tst_tag[]) {
 		{"linux-git", "54a307ba8d3c"},

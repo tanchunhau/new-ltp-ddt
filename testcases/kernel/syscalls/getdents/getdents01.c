@@ -8,12 +8,12 @@
 
 /*\
  *
- * [DESCRIPTION]
+ * [Description]
  *
  * Basic getdents() test that checks if directory listing is correct and
  * complete.
  *
-\*/
+ */
 
 #define _GNU_SOURCE
 
@@ -61,6 +61,8 @@ static void run(void)
 {
 	int rval;
 
+	fd = SAFE_OPEN(".", O_RDONLY|O_DIRECTORY);
+
 	rval = tst_getdents(fd, dirp, BUFSIZE);
 
 	if (rval < 0) {
@@ -79,19 +81,23 @@ static void run(void)
 
 	reset_flags();
 
+	void *recp = dirp;
+
 	do {
-		size_t d_reclen = tst_dirp_reclen(dirp);
-		const char *d_name = tst_dirp_name(dirp);
+		size_t d_reclen = tst_dirp_reclen(recp);
+		const char *d_name = tst_dirp_name(recp);
 
 		set_flag(d_name);
 
 		tst_res(TINFO, "Found '%s'", d_name);
 
 		rval -= d_reclen;
-		dirp += d_reclen;
+		recp += d_reclen;
 	} while (rval > 0);
 
 	check_flags();
+
+	SAFE_CLOSE(fd);
 }
 
 static void reset_flags(void)
@@ -162,21 +168,12 @@ static void setup(void)
 			}
 		}
 	}
-
-	fd = SAFE_OPEN(".", O_RDONLY|O_DIRECTORY);
-}
-
-static void cleanup(void)
-{
-	if (fd != 0)
-		SAFE_CLOSE(fd);
 }
 
 static struct tst_test test = {
 	.needs_tmpdir = 1,
 	.test_all = run,
 	.setup = setup,
-	.cleanup = cleanup,
 	.bufs = (struct tst_buffers []) {
 		{&dirp, .size = BUFSIZE},
 		{},

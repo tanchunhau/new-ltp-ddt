@@ -50,6 +50,11 @@ int safe_dup(const char *file, const int lineno, int oldfd);
 #define SAFE_DUP(oldfd) \
 	safe_dup(__FILE__, __LINE__, (oldfd))
 
+int safe_dup2(const char *file, const int lineno, int oldfd, int newfd);
+
+#define SAFE_DUP2(oldfd, newfd)			\
+	safe_dup2(__FILE__, __LINE__, (oldfd), (newfd))
+
 #define SAFE_GETCWD(buf, size) \
 	safe_getcwd(__FILE__, __LINE__, NULL, (buf), (size))
 
@@ -61,6 +66,11 @@ int safe_dup(const char *file, const int lineno, int oldfd);
 
 #define SAFE_MALLOC(size) \
 	safe_malloc(__FILE__, __LINE__, NULL, (size))
+
+void *safe_realloc(const char *file, const int lineno, void *ptr, size_t size);
+
+#define SAFE_REALLOC(ptr, size) \
+	safe_realloc(__FILE__, __LINE__, (ptr), (size))
 
 #define SAFE_MKDIR(pathname, mode) \
 	safe_mkdir(__FILE__, __LINE__, NULL, (pathname), (mode))
@@ -201,12 +211,15 @@ pid_t safe_getpgid(const char *file, const int lineno, pid_t pid);
 #define SAFE_READDIR(dirp) \
 	safe_readdir(__FILE__, __LINE__, NULL, (dirp))
 
-#define SAFE_IOCTL(fd, request, ...)                         \
+#define SAFE_IOCTL_(file, lineno, fd, request, ...)          \
 	({int tst_ret_ = ioctl(fd, request, ##__VA_ARGS__);  \
 	  tst_ret_ < 0 ?                                     \
-	   tst_brk(TBROK | TERRNO,                           \
+	   tst_brk_((file), (lineno), TBROK | TERRNO,        \
 	            "ioctl(%i,%s,...) failed", fd, #request), 0 \
 	 : tst_ret_;})
+
+#define SAFE_IOCTL(fd, request, ...) \
+	SAFE_IOCTL_(__FILE__, __LINE__, (fd), (request), ##__VA_ARGS__)
 
 #define SAFE_FCNTL(fd, cmd, ...)                            \
 	({int tst_ret_ = fcntl(fd, cmd, ##__VA_ARGS__);     \
@@ -481,6 +494,12 @@ int safe_sigwait(const char *file, const int lineno,
        tst_brk_(__FILE__, __LINE__, TBROK | TERRNO,		\
                 "execl(%s, %s, ...) failed", file, arg); 	\
        } while (0)
+
+#define SAFE_EXECVP(file, arg) do {                   \
+	execvp((file), (arg));              \
+	tst_brk_(__FILE__, __LINE__, TBROK | TERRNO,       \
+	         "execvp(%s, %p) failed", file, arg); \
+	} while (0)
 
 int safe_getpriority(const char *file, const int lineno, int which, id_t who);
 #define SAFE_GETPRIORITY(which, who) \

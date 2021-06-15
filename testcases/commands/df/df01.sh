@@ -39,7 +39,7 @@ setup()
 {
 	tst_mkfs
 	tst_mount
-	DF_FS_TYPE=$(mount | grep "$TST_DEVICE" | awk '{print $5}')
+	DF_FS_TYPE=$(mount | grep "$TST_DEVICE" | awk 'NR==1{print $5}')
 }
 
 df_test()
@@ -80,10 +80,10 @@ df_verify()
 	if [ $? -ne 0 ]; then
 		grep -q -E "unrecognized option | invalid option" output
 		if [ $? -eq 0 ]; then
-			tst_res TCONF "'$1' not supported."
+			tst_res TCONF "'$@' not supported."
 			return 32
 		else
-			tst_res TFAIL "'$1' failed."
+			tst_res TFAIL "'$@' failed."
 			cat output
 			return 1
 		fi

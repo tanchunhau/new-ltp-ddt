@@ -4,10 +4,10 @@
  */
 
 /*\
- * [DESCRIPTION]
+ * [Description]
  *
  * Test for a SHM_LOCK and SHM_UNLOCK.
-\*/
+ */
 
 #define _GNU_SOURCE
 #include <stdio.h>

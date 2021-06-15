@@ -4,7 +4,7 @@
  */
 
 /*\
- * [DESCRIPTION]
+ * [Description]
  *
  * Call shmctl() with SHM_INFO flag and check that:
  *
@@ -18,7 +18,7 @@
  *
  * Note what we create a SHM segment in the test setup to make sure that there
  * is at least one during the testrun.
-\*/
+ */
 
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -130,7 +130,7 @@ static void verify_shminfo(unsigned int n)
 	shmid = shmctl(TST_RET, SHM_STAT_ANY, &ds);
 
 	if (shmid == -1) {
-		tst_res(TFAIL | TTERRNO, "SHM_INFO haven't returned a valid index");
+		tst_res(TFAIL | TERRNO, "SHM_INFO haven't returned a valid index");
 	} else {
 		tst_res(TPASS,
 			"SHM_INFO returned valid index %li maps to shmid %i",
@@ -155,10 +155,20 @@ static void verify_shminfo(unsigned int n)
 static void setup(void)
 {
 	struct passwd *ltpuser = SAFE_GETPWNAM("nobody");
+	struct shmid_ds temp_ds;
 	nobody_uid = ltpuser->pw_uid;
 	root_uid = 0;
 
 	shm_id = SAFE_SHMGET(IPC_PRIVATE, SHM_SIZE, IPC_CREAT | SHM_RW);
+
+	TEST(shmctl(shm_id, SHM_STAT_ANY, &temp_ds));
+	if (TST_RET == -1) {
+		if (TST_ERR == EINVAL)
+			tst_brk(TCONF, "kernel doesn't support SHM_STAT_ANY");
+		else
+			tst_brk(TBROK | TTERRNO,
+				"Current environment doesn't permit SHM_STAT_ANY");
+	}
 }
 
 static void cleanup(void)
