@@ -58,7 +58,7 @@ esac
 # value you want
 GATEWAY=`route -n | grep UH | grep ${IFACE} | awk '{print $1}'` 
 if [ -z "$GATEWAY" ];then
-  GATEWAY=`ip route show |grep default|awk '{print $3}'` 
+  GATEWAY=`ip route show dev ${IFACE}|grep default|awk '{print $3}'`
 fi
 
 [ ! -z "$GATEWAY" ] || die "Ethernet interface ${IFACE} has no Gateway"
