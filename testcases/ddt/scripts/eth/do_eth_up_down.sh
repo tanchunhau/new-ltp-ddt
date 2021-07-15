@@ -36,7 +36,7 @@ if [ $p_direction == "up" ]
 then
 	do_cmd "ifconfig $p_interface up"
 	sleep 1
-	do_cmd "udhcpc -i $p_interface"
+	do_cmd "udhcpc -n -i $p_interface"
 	operstate=`cat /sys/class/net/$p_interface/operstate`
 	if [ "$operstate" == "down" ]
 	then
