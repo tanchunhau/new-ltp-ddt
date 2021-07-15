@@ -8,5 +8,5 @@
 #	 wl18xx demos are invoked to start/connect/stop station interface 
 # @setup_requires wlan
 
-WLAN_S_FUNC_PING-60s source 'common.sh'; wlan_interface=wlan0; do_cmd "wlan_station_setup.sh"; gw=`udhcpc -i $wlan_interface |awk '/DNS/ {print $4}'`; do_cmd "ping ${gw} -c 60"; do_cmd "wlan_station_teardown.sh"
-WLAN_L_STRESS_PING-3600s source 'common.sh'; wlan_interface=wlan0;do_cmd "wlan_station_setup.sh"; gw=`udhcpc -i $wlan_interface |awk '/DNS/ {print $4}'`;  do_cmd "ping ${gw} -c 3600"; do_cmd "wlan_station_teardown.sh"
+WLAN_S_FUNC_PING-60s source 'common.sh'; wlan_interface=wlan0; do_cmd "wlan_station_setup.sh"; gw=`udhcpc -n -i $wlan_interface |awk '/DNS/ {print $4}'`; do_cmd "ping ${gw} -c 60"; do_cmd "wlan_station_teardown.sh"
+WLAN_L_STRESS_PING-3600s source 'common.sh'; wlan_interface=wlan0;do_cmd "wlan_station_setup.sh"; gw=`udhcpc -n -i $wlan_interface |awk '/DNS/ {print $4}'`;  do_cmd "ping ${gw} -c 3600"; do_cmd "wlan_station_teardown.sh"
