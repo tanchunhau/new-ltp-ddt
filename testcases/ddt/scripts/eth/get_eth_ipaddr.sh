@@ -56,8 +56,14 @@ esac
 # Try to use /sys and /proc information to determine values dynamically.
 # Alternatively you should check if there is an existing script to get the
 # value you want
-IPADDR=`ifconfig $IFACE|grep "inet addr"|awk '/inet addr:/{print $2 }'|awk -F":" '{print $2}'`
 
+# use `ip addr` command and get the ip address. Expect the output to look like this:
+# 3: wlP1p1s0: <BROADCAST,MULTICAST> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
+#     link/ether 00:15:00:d7:84:35 brd ff:ff:ff:ff:ff:ff
+#     inet 192.168.10.102/24 brd 192.168.10.255 scope global wlP1p1s0
+#        valid_lft forever preferred_lft forever
+#
+IPADDR=`ip addr show dev $IFACE |  awk '/inet /{print $2}' | awk -F '/' '{print $1}'`
 [ -n "$IPADDR" ] || die "Ethernet interface ${IFACE} has no IP Address"
 ########################### REUSABLE TEST LOGIC ###############################
 # DO NOT HARDCODE any value. If you need to use a specific value for your setup
