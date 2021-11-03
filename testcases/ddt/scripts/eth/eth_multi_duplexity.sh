@@ -61,8 +61,8 @@ for iface in $interfaces
 do
   speed=`cat /sys/class/net/$iface/speed`
 
-  # Sleep 5 seconds to allow speed change to take place
-  do_cmd "ethtool -s $iface speed $speed duplex $p_duplex && sleep 5" 
+  # Sleep 15 seconds to allow speed change to take place
+  do_cmd "ethtool -s $iface speed $speed duplex $p_duplex && sleep 15"
   final_duplex=`cat /sys/class/net/$iface/duplex`
   
   # Re-enable autonegotiation after test
