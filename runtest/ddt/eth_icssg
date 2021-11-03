@@ -17,3 +17,16 @@ ETH-ICSSG_XS_FUNC_MAC_CONFIG_ALL source 'common.sh'; eth_multi_mac_config.sh -i 
 
 ### MTU Test ###
 ETH-ICSSG_XS_FUNC_MTU_CONFIG source 'common.sh'; iface=`get_test_iface_by_driver.sh -d "icssg"` || die "error getting eth interface name"; do_cmd "ifconfig ${iface} mtu 512"; test_mtu=`ifconfig ${iface} | grep 512`; echo test_mtu: ${test_mtu}; do_cmd "ifconfig ${iface} mtu 1500"; if [ -z "${test_mtu}" ]; then die "MTU was not changed!"; fi; 
+
+### Duplexity tests ###
+ETH-ICSSG_XS_FUNC_DUPLEX_FULL_ALL source 'common.sh'; eth_multi_duplexity.sh -i 1 -t "full" -d "icssg" -a
+
+ETH-ICSSG_XS_FUNC_DUPLEX_HALF_ALL source 'common.sh'; eth_multi_duplexity.sh -i 1 -t "half" -d "icssg" -a
+
+### Speed Tests ###
+ETH-ICSSG_XS_FUNC_SPEED_10Mbps_ALL source 'common.sh'; eth_multi_speed.sh -i 1 -s 10 -d "icssg" -a
+
+ETH-ICSSG_XS_FUNC_SPEED_100Mbps_ALL source 'common.sh'; eth_multi_speed.sh -i 1 -s 100 -d "icssg" -a
+
+ETH-ICSSG_XS_FUNC_SPEED_1000Mbps_ALL source 'common.sh'; eth_multi_speed.sh -i 1 -s 1000 -d "icssg" -a
+
