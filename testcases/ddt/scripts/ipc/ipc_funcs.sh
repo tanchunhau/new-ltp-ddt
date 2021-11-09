@@ -63,6 +63,10 @@ setup_firmware()
         __fw_type=r5f
         __new_pattern=$(find_firmware_id "$__fw" r5f | tr a-z A-Z)
         ;;
+      *mcu*|*m4f*)
+        __fw_type=m4f
+        __new_pattern=$(find_firmware_id "$__fw" m4f | tr a-z A-Z)
+        ;;
       am335x-pm-firmware*)
         continue
         ;;
@@ -275,7 +279,7 @@ get_num_remote_procs()
   case $SOC in
     *j721e*|*j7200*|*am64xx*|*am65*)
       # returns only those procs that have ping-pong
-      echo $(cat /sys/class/remoteproc/*/name | grep -iE 'r5f|dsp' | wc -l)  
+      echo $(cat /sys/class/remoteproc/*/name | grep -iE 'r5f|dsp|m4f' | wc -l)  
       ;;
     *dra7xx|*j6plus)
       echo 4
@@ -1104,7 +1108,7 @@ list_rprocs()
       echo "41000000.r5f 5c00000.r5f"
     ;;
     am64xx)
-      echo "78000000.r5f 78400000.r5f"
+      echo "78000000.r5f 78400000.r5f 5000000.m4fss"
     ;;
     am65xx)
       echo "41000000.r5f"
