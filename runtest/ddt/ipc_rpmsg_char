@@ -13,3 +13,4 @@ IPC_S_FUNC_RPMSG_CHAR_SIMPLE_R5F_MAIN_1_1 source ipc_funcs.sh; rproc_id=5; rpmsg
 IPC_S_FUNC_RPMSG_CHAR_SIMPLE_C66_MAIN_0   source ipc_funcs.sh; rproc_id=6; rpmsg_char_simple_test -r $rproc_id
 IPC_S_FUNC_RPMSG_CHAR_SIMPLE_C66_MAIN_1   source ipc_funcs.sh; rproc_id=7; rpmsg_char_simple_test -r $rproc_id
 IPC_S_FUNC_RPMSG_CHAR_SIMPLE_C71_MAIN_0   source ipc_funcs.sh; rproc_id=8; rpmsg_char_simple_test -r $rproc_id
+IPC_S_FUNC_RPMSG_CHAR_SIMPLE_M4F_MCU_0    source ipc_funcs.sh; rproc_id=9; rpmsg_char_simple_test -r $rproc_id
