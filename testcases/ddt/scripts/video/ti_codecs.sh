@@ -19,9 +19,9 @@ source "functions.sh"
 # Load require video modules
 insert_video_modules()
 {
-	local _modules="videobuf2-common.ko videobuf2-memops.ko videobuf2-v4l2.ko videobuf2-dma-sg.ko videobuf2-dma-contig.ko v4l2-mem2mem.ko vxd-dec.ko vxe_enc.ko"
+	local _modules="videobuf2_common videobuf2_memops videobuf2_v4l2 videobuf2_dma_sg videobuf2_dma_contig v4l2_mem2mem vxd_dec vxe_enc"
 	for m in $_modules; do
-		lsmod | grep ${m%.ko} || modprobe $m
+		lsmod | grep $m || modprobe $m
 	done
 }
 
