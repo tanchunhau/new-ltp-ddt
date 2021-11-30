@@ -226,10 +226,10 @@ reset_rproc_mpm()
 
 ins_pru_mods()
 {
-  local __modules=(pruss pru_rproc pruss_soc_bus prueth)
+  local __modules=(pruss pru_rproc prueth)
 
   case $MACHINE in
-    am57*|am43xx*|am335x*|k2g*|am65*)
+    am57*|am43xx*|am335x*|k2g*|am65*|am64*)
       for __mod in ${__modules[@]}
       do
         modprobe ${__mod}
@@ -241,7 +241,7 @@ ins_pru_mods()
 
 rm_pru_mods()
 {
-  local __modules=(prueth icssg_prueth rpmsg_pru pru_rproc pruss pruss_soc_bus)
+  local __modules=(prueth icssg_prueth rpmsg_pru pru_rproc pruss)
 
   for __mod in ${__modules[@]}
   do
@@ -988,7 +988,7 @@ toggle_rprocs()
   local __mbox
 
   case $MACHINE in
-      *j721e*|*j7200*|*am64xx*|*am65*)
+      *j721e*|*j7200*)
           # K3 devices don't yet support toggling the remote proc
           return
       ;;
@@ -1084,6 +1084,12 @@ list_pru_devs()
       for i in `seq 0 1`
       do
         echo "/dev/rpmsg_pru4${i}"
+      done
+    ;;
+    am64*)
+      for i in `seq 0 7`
+      do
+        echo "/dev/rpmsg_pru3${i}"
       done
     ;;
     *)
