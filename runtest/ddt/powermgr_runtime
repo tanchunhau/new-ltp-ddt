@@ -13,7 +13,7 @@ POWERMGR_S_FUNC_RUNTIME_SERIAL source 'pm_runtime.sh'; is_pm_runtime_enabled ser
                                                         
 POWERMGR_S_FUNC_RUNTIME_GPIO source 'pm_runtime.sh'; is_pm_runtime_enabled gpio || die "pm_runtime is not enabled for GPIO"; is_pm_runtime_suspending_device gpio || die "pm_runtime is not suspending GPIO"
                                                         
-POWERMGR_S_FUNC_RUNTIME_ETHERNET source 'pm_runtime.sh'; notify_and_wait "Please make sure at least one ETH interface is idle before test starts in 20 seconds" 20; notify_and_wait "Starting Test..." 0; is_pm_runtime_enabled ethernet || die "pm_runtime is not enabled for ETH"; is_pm_runtime_suspending_device ethernet || die "pm_runtime is not suspending ETH"
+POWERMGR_S_FUNC_RUNTIME_ETHERNET source 'pm_runtime.sh'; notify_and_wait "Please make sure at least one ETH interface is idle before test starts in 20 seconds" 20; notify_and_wait "Starting Test..." 0; is_pm_runtime_enabled switch || die "pm_runtime is not enabled for ETH"; is_pm_runtime_suspending_device switch || die "pm_runtime is not suspending ETH"
                                                              
 POWERMGR_S_FUNC_RUNTIME_USB source 'pm_runtime.sh'; notify_and_wait "Please make sure at least one USB interface is idle before test starts in 20 seconds" 20; notify_and_wait "Starting Test..." 0; is_pm_runtime_enabled '\.usb' || die "pm_runtime is not enabled for USB"; is_pm_runtime_suspending_device '\.usb' || die "pm_runtime is not suspending USB"
 
