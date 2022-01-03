@@ -109,7 +109,7 @@ is_lnksta_expected()
 get_dut_max_width()
 {
   case $MACHINE in
-    am654x-idk | am574x-idk | j721e-idk-gw | j721e-evm | j7200-evm | j7200-idk-gw | j721e-eaik)
+    am654x-idk | am574x-idk | j721e-idk-gw | j721e-evm | j7200-evm | j7200-idk-gw | j721e-sk)
       rtn=4;;
     *)
       rtn=1;;
