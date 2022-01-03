@@ -152,6 +152,7 @@ disp_audio_test()
   local __diff
   local __min_delta
   local __failed_fr
+  local __min_diff_fr_idx=0
 
   assert [ ${#__modes[@]} -gt 0 ]
   ps -ef | grep -i weston | grep -v grep && /etc/init.d/weston stop && sleep 3
@@ -164,14 +165,14 @@ disp_audio_test()
   for mode in "${__modes[@]}"; do
     __diff=0
     __failed_fr=0
-    __expected_fr=( $(echo "$mode" | grep -o '\-[0-9]\+' | cut -d '-' -f 2 | sort | uniq) )
+    __expected_fr=( $(echo "$mode" | grep -o '\-[0-9.]\+' | cut -d '-' -f 2 | sort | uniq) )
     echo "Expected frame rates: ${__expected_fr[@]}"
     echo "modetest $(get_modetest_hint) -t -d -v -s $mode &>mode_test_log.txt & mt_pid=\$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=\$? ; kill -9 \$mt_pid"
     __test_log=$(modetest $(get_modetest_hint) -t -v -s $mode 2>&1 & mt_pid=$! ; sleep 3 && $__alsa_test_cmd ; __alsa_rc=$? ; kill -9 $mt_pid; echo alsa_rc=$__alsa_rc)
     echo "$__test_log"
     __alsa_rc=$(echo "$__test_log" | grep alsa_rc= | cut -d '=' -f 2) 
     __freqs=( $(echo -e "$__test_log" | grep freq: | cut -d ' ' -f 2) )
-    __fmt_freqs=( $(echo -e "$__test_log" | grep freq: | cut -d ' ' -f 2 | cut -d '.' -f 1) )
+    __fmt_freqs=( $(echo -e "$__test_log" | grep freq: | cut -d ' ' -f 2 | cut -d 'H' -f 1) )
     __fr_length=$((${#__freqs[@]} - 2))
     old_IFS=$IFS
     IFS=$'\n'
@@ -181,27 +182,29 @@ disp_audio_test()
       __result=2
     fi
     __freqs_detected=()
+    __min_diff_fr_idx=-1
     for fr in ${__fmt_freqs[@]:1:$__fr_length}
     do
-      __min_delta=$fr
+      __min_delta=1
       for i in `seq 0 $((${#__expected_fr[@]} - 1))`
       do
-        __fr_delta=$((${__expected_fr[$i]}-fr))
-        if [ $__fr_delta -lt 0 ]; then
-          __fr_delta=$((__fr_delta*-1))
+        __fr_delta=`expr "${__expected_fr[$i]} - $fr" | bc`
+        if(( $(echo "$__fr_delta < 0" |bc -l) )); then
+          __fr_delta=`expr "$__fr_delta * -1" | bc`
         fi
-        if [ $__fr_delta -lt $__min_delta ]; then
+        if(( $(echo "$__fr_delta < $__min_delta" |bc -l) )); then
           __min_delta=$__fr_delta
-        fi
-        if [ $__fr_delta -gt 1 ]; then
-          __freqs_result=1
-        else 
-          __freqs_result=0
-          __freqs_detected[$i]=${__expected_fr[$i]}
-          break
+          __min_diff_fr_idx=$i
         fi
       done
-      __diff=$((__diff + $__min_delta))
+      #  failure condition - check
+      if [ $__min_diff_fr_idx -eq -1 ]; then
+        __freqs_result=1
+      else
+        __freqs_detected[$__min_diff_fr_idx]=${__expected_fr[$__min_diff_fr_idx]}
+        __freqs_result=0
+      fi
+      __diff=`expr "$__diff + $__min_delta" | bc`
       if [ $__freqs_result -ne 0 ]; then
       __failed_fr=$((__failed_fr+1))
         echo "Display test failed for mode $mode expected ${__expected_fr[@]} got $fr"
@@ -262,7 +265,7 @@ get_multidisplay_modes()
       __max_con_modes=$__num_modes
     fi
   done
-  __result=( $(echo $__modes | grep -o $__max_con[0-9]*x[0-9i]*-[0-9]*) )
+  __result=( $(echo $__modes | grep -o $__max_con[0-9]*x[0-9i]*-[0-9.]*) )
   for i in `seq 0 $(($__max_con_modes - 1))`
   do
     for con in ${__conns[@]}
@@ -270,7 +273,7 @@ get_multidisplay_modes()
       if [ "$con" == "$__max_con" ]; then
         continue
       fi
-      __c_modes=( $(echo $__modes | grep -o ${con}[0-9]*x[0-9i]*-[0-9]*) )
+      __c_modes=( $(echo $__modes | grep -o ${con}[0-9]*x[0-9i]*-[0-9.]*) )
       __result[$i]="${__result[$i]} -d -s ${__c_modes[$(($i % ${#__c_modes[@]}))]}"
     done
     if [[ "${__result[$i]}" =~ $__mode_regex ]]; then
