@@ -27,12 +27,24 @@ des|3des)
 		CRYPTO_IP='edma'
 	else
 		CRYPTO_IP='omap-dma-engine'
-	fi;;
+	fi
+	# check for the name change
+	grep -q "${CRYPTO_IP}_ccint" /proc/interrupts
+	if [ $? -ne 0 ];then
+		CRYPTO_IP='dma'
+	fi
+	;;
 *)
 	if [ $SOC != "am654" ]
 	then
 		CRYPTO_IP='edma'
-	fi;;
+	fi
+	# check for the name change
+	grep -q "${CRYPTO_IP}_ccint" /proc/interrupts
+	if [ $? -ne 0 ];then
+		CRYPTO_IP='dma'
+	fi
+	;;
 esac                                                                          
 
 echo $CRYPTO_IP
