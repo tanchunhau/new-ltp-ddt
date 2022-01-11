@@ -121,7 +121,7 @@ case $MACHINE in
   am654x-evm|am654x-idk|j721*)
     gpio_nums="285,344,440"
   ;;
-  am64xx*)
+  am64xx*|am62xx*)
     gpio_nums="420,450,325"
   ;;
   j720*)
