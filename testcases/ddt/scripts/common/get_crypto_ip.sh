@@ -24,25 +24,17 @@ case $ip_type in
 des|3des)
 	if [ $SOC = "am43xx" ]
 	then
-		CRYPTO_IP='edma'
+		# the . is necesssary for not matching omap-dma-engine
+		CRYPTO_IP='\.dma'
 	else
 		CRYPTO_IP='omap-dma-engine'
-	fi
-	# check for the name change
-	grep -q "${CRYPTO_IP}_ccint" /proc/interrupts
-	if [ $? -ne 0 ];then
-		CRYPTO_IP='dma'
 	fi
 	;;
 *)
 	if [ $SOC != "am654" ]
 	then
-		CRYPTO_IP='edma'
-	fi
-	# check for the name change
-	grep -q "${CRYPTO_IP}_ccint" /proc/interrupts
-	if [ $? -ne 0 ];then
-		CRYPTO_IP='dma'
+		# the . is necesssary for not matching omap-dma-engine
+		CRYPTO_IP='\.dma'
 	fi
 	;;
 esac                                                                          
