@@ -118,13 +118,13 @@ case $MACHINE in
   k2hk-evm|k2e-evm|k2l-evm)
     gpio_nums="448,480"
   ;;
-  am654x-evm|am654x-idk|j721*)
+  am654x-evm|am654x-idk|j721s*)
     gpio_nums="285,344,440"
   ;;
   am64xx*|am62xx*)
     gpio_nums="420,450,325"
   ;;
-  j720*)
+  j720*|j721s*)
     gpio_nums="322,355,391"                  
   ;;
   k2g-evm)
