@@ -1090,8 +1090,14 @@ list_pru_devs()
         echo "/dev/rpmsg_pru4${i}"
       done
     ;;
-    am64*|am62*)
+    am64*)
       for i in `seq 0 7`
+      do
+        echo "/dev/rpmsg_pru3${i}"
+      done
+    ;;
+    am62*)
+      for i in `seq 0 1`
       do
         echo "/dev/rpmsg_pru3${i}"
       done
