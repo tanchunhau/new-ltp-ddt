@@ -66,7 +66,9 @@ eth*)
 	omap5-evm)
 		NAME='109';;
 	k2*-evm)
-    NAME='80';;
+		NAME='80';;
+	am57xx-evm)
+		NAME='110';;
 	esac
 	;;
 esac
