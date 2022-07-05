@@ -99,6 +99,12 @@ j721*)
         PLAY_SW_STATE=0
         REC_SW_STATE=0
         ;;
+j784*)
+        CAPTURE_SWITCH_NAME=("ADC1 Mute Switch" "ADC2 Mute Switch" "ADC3 Mute Switch")
+        PLAYBACK_SWITCH_NAME=("DAC1 Invert Switch" "DAC2 Invert Switch" "DAC3 Invert Switch" "DAC4 Invert Switch")
+        PLAY_SW_STATE=0
+        REC_SW_STATE=0
+        ;;
 esac
 
 ########################### REUSABLE TEST LOGIC ###############################

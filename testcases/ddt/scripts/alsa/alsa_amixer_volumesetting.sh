@@ -119,6 +119,14 @@ j721*)
                 MAXVAL=201
                 STEP=60
                 ;;
+j784*)
+                CAPTURE_NAME=("ADC1 Capture Volume" "ADC2 Capture Volume" "ADC3 Capture Volume")
+                PLAYBACK_NAME=("DAC1 Playback Volume" "DAC2 Playback Volume" "DAC3 Playback Volume" "DAC4 Playback Volume")
+                MINVAL=0
+                MAXVAL=201
+                STEP=60
+                ;;
+
 esac
 
 
