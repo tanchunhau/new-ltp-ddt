@@ -14,7 +14,7 @@ source "functions.sh"
 get_pm_runtime_nodes() {
     local device_type=$1
     local nodes
-    nodes=$(find /sys/devices -name power | grep $device_type)
+    nodes=$(find /sys/devices -name power | egrep "$device_type")
     echo "${nodes[@]}"
 }
 
