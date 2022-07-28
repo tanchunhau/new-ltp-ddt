@@ -44,7 +44,7 @@ esac
 case $SOC in
 esac
 case $MACHINE in
-    vision-five)
+    visionfive-evm)
         output_pin=0
         input_pin=2
     ;;

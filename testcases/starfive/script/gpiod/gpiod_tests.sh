@@ -80,8 +80,11 @@ test_print_trc "SLAVE_DEVICE: $SLAVE_DEVICE"
 test_print_trc "Starting GPIOD test"
 
 pins_num=$(gpiod_pin_num.sh "$SLAVE_DEVICE")
-input_pin=$(echo $pins_num | awk '{print $1}')
-output_pin=$(echo $pins_num | awk '{print $2}')
+output_pin=$(echo $pins_num | awk '{print $1}')
+input_pin=$(echo $pins_num | awk '{print $2}')
+
+test_print_trc "Input pin is  pin $input_pin"
+test_print_trc "Output pin is pin $output_pin"
 
 
 # Use do_cmd() (imported from common.sh) to execute your test steps.
