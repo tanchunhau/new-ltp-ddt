@@ -76,8 +76,14 @@ done
 # inverted_return="true"
 
 # Avoid using echo. Instead use print functions provided by st_log.sh
+test_print_trc "SLAVE_DEVICE: $SLAVE_DEVICE"
 test_print_trc "Starting GPIOD test"
+
+pins_num=$(gpiod_pin_num.sh "$SLAVE_DEVICE")
+input_pin=$(echo $pins_num | awk '{print $1}')
+output_pin=$(echo $pins_num | awk '{print $2}')
+
 
 # Use do_cmd() (imported from common.sh) to execute your test steps.
 # do_cmd() will check return code and fail the test is return code is non-zero.
-do_cmd "gpiod_tests"
+do_cmd "gpiod_tests $input_pin $output_pin"
