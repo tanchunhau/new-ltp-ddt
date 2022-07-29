@@ -624,22 +624,22 @@ main()
         echo "FATAL: Directory ${LTPROOT}/platforms/${PLATFORM}. Check -P argument"
         exit 1
     fi
-    
+    echo "DEBUG****************** Here 1"
     # If user does not provide a command file select a default set of testcases
     # to execute.
     if [ -z "$CMDFILES" ] && [ -z "$CMDFILEADDR" ]; then
-
-        SCENARIO_LISTS="$LTPROOT/scenario_groups/default"
+        echo "DEBUG****************** Here 2"
+        #SCENARIO_LISTS="$LTPROOT/scenario_groups/${PLATFORM}"
         #if network option is specified
         if [ "$RUN_NETEST" -eq 1 ]; then
             SCENARIO_LISTS="$LTPROOT/scenario_groups/network"
         fi
 
         #if scenario groups of same platform file name exist
-        if [ -f "${LTPROOT}/scenario_groups/${PLATFORM}" ]; then
+        if [ -f "$LTPROOT/scenario_groups/$PLATFORM" ]; then
+            echo "DEBUG****************** Here 3"
             SCENARIO_LISTS="$LTPROOT/scenario_groups/$PLATFORM"
         fi
-
 
         cat <<-EOF >&1
 INFO: no command files were provided. Executing following runtest scenario files:
