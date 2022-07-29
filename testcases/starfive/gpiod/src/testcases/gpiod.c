@@ -169,5 +169,5 @@ void *detect_pwm( void *ptr ){
             break;
         }
 	}
-    return = ret;
+    return ret;
 }
