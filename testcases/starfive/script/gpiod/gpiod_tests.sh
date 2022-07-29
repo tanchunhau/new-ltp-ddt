@@ -76,10 +76,9 @@ done
 # inverted_return="true"
 
 # Avoid using echo. Instead use print functions provided by st_log.sh
-test_print_trc "SLAVE_DEVICE: $SLAVE_DEVICE"
 test_print_trc "Starting GPIOD test"
 
-pins_num=$(gpiod_pin_num.sh "$SLAVE_DEVICE")
+pins_num=$(gpiod_pin_num.sh)
 output_pin=$(echo $pins_num | awk '{print $1}')
 input_pin=$(echo $pins_num | awk '{print $2}')
 
