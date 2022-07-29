@@ -85,7 +85,6 @@ input_pin=$(echo $pins_num | awk '{print $2}')
 test_print_trc "Input pin is  pin $input_pin"
 test_print_trc "Output pin is pin $output_pin"
 
-
 # Use do_cmd() (imported from common.sh) to execute your test steps.
 # do_cmd() will check return code and fail the test is return code is non-zero.
 do_cmd "gpiod_tests $input_pin $output_pin"
