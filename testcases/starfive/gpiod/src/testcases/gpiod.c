@@ -7,12 +7,14 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <st_log.h>
 
 #ifndef CONSUMER
 #define CONSUMER    "YuSheng"
 #endif
 
 int pwm_num = 0;
+char *testcaseid = "gpiod_tests";
 
 void *generate_pwm_random_interval( void *ptr );
 void *detect_pwm( void *ptr );
@@ -91,6 +93,8 @@ release_line1:
 close_chip:
     gpiod_chip_close(chip);
 end:
+    TEST_PRINT_TST_RESULT(ret, testcaseid);
+	TEST_PRINT_TST_END(testcaseid);
     return ret;
 }
 
