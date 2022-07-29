@@ -21,11 +21,8 @@ int main(int argc, char const *argv[])
 {
     pthread_t thread1, thread2;
     char *chipname = "gpiochip0";
-	static unsigned int line_num1;
-    static unsigned int line_num2;
-    line_num1 = atoi(argv[1]);
-    line_num2 = atoi(argv[2]);
-
+	static unsigned int line_num1 = 0;
+    static unsigned int line_num2 = 2;
 	struct gpiod_chip *chip;
 	struct gpiod_line *line1;
     struct gpiod_line *line2;
