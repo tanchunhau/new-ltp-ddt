@@ -16,9 +16,9 @@ INSTALL_MODE            := 00755
 
 #INSTALL_TARGETS         := $(filter-out $(UNWANTED_FILES),$(notdir $(patsubst $(abs_srcdir)/%,%,$(wildcard $(abs_srcdir)/*))))
 
-CFLAGS          += -g -Wall -O1 -fomit-frame-pointer
-LDFLAGS         += -g -static
-INCLUDES        = -I $(KERNEL_USR_INC) -I src/interface/common -I ../utils/user 
+CFLAGS          += -g -Wall -O1 -fomit-frame-pointer -fcommon -fPIC
+LDFLAGS         += -g -static -fcommon
+INCLUDES        = -I $(KERNEL_USR_INC) -I src/interface/common -I ../utils/user
 
 
 #List of source files- Update this on adding a new C file
