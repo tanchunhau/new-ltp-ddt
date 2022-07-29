@@ -91,6 +91,7 @@ setup()
     export LTPROOT=${PWD}
     export TMPBASE="/tmp"
     export PATH=$( find ${LTPROOT}/testcases/bin/ddt -type d -exec printf {}":" \; )"${PATH}:${LTPROOT}/testcases/bin"
+    export PATH=$( find ${LTPROOT}/testcases/bin/starfive -type d -exec printf {}":" \; )"${PATH}:${LTPROOT}/testcases/bin"
 
     export LTP_DEV_FS_TYPE="ext2"
 
@@ -633,6 +634,9 @@ main()
             SCENARIO_LISTS="$LTPROOT/scenario_groups/network"
         fi
 
+        if [ -f "$LTPROOT/scenario_groups/$PLATFORM" ]; then
+            SCENARIO_LISTS="$LTPROOT/scenario_groups/$PLATFORM"
+        fi
 
         cat <<-EOF >&1
 INFO: no command files were provided. Executing following runtest scenario files:
