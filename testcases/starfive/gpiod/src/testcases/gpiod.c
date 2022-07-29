@@ -159,12 +159,15 @@ void *detect_pwm( void *ptr ){
 
         if (pwm_num == 10 && counter == 10){
             printf("10 signal detected successfully\n");
+            ret = 0;
             break;
         }
         else if (pwm_num == 10 && counter != 10)
         {
             printf("FAILED! %d signal detected\n", counter);
+            ret = -1;
             break;
         }
 	}
+    return = ret;
 }
