@@ -624,11 +624,11 @@ main()
         echo "FATAL: Directory ${LTPROOT}/platforms/${PLATFORM}. Check -P argument"
         exit 1
     fi
-    ehco "DEBUG****************** Here 1"
+    echo "DEBUG****************** Here 1"
     # If user does not provide a command file select a default set of testcases
     # to execute.
     if [ -z "$CMDFILES" ] && [ -z "$CMDFILEADDR" ]; then
-        ehco "DEBUG****************** Here 2"
+        echo "DEBUG****************** Here 2"
         #SCENARIO_LISTS="$LTPROOT/scenario_groups/${PLATFORM}"
         #if network option is specified
         if [ "$RUN_NETEST" -eq 1 ]; then
@@ -637,7 +637,7 @@ main()
 
         #if scenario groups of same platform file name exist
         if [ -f "$LTPROOT/scenario_groups/$PLATFORM" ]; then
-            ehco "DEBUG****************** Here 3"
+            echo "DEBUG****************** Here 3"
             SCENARIO_LISTS="$LTPROOT/scenario_groups/$PLATFORM"
         fi
 
