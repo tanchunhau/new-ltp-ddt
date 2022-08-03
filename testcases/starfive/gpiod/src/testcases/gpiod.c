@@ -157,33 +157,32 @@ void *generate_pwm_random_interval( void *ptr ){
 }
 
 void *detect_pwm( void *ptr ){
-    int i, val = 0, timing, counter = 0;
+    int timing, counter = 0;
     struct gpiod_line *line = ptr;
-    bool stp = false;
     struct timespec ts = { 3, 0 };
     struct gpiod_line_event event;
-    int ret  = -1, pwmFromThread1, result;
+    int ret  = 0, pwmFromThread1, result;
 
     while (true) {
 		ret = gpiod_line_event_wait(line, &ts);
 		if (ret < 0) {
 			TEST_PRINT_ERR("Wait event notification failed\n");
-			stp = true;
+            break;
 		} else if (ret == 0) {
 			TEST_PRINT_ERR("FAILED! Wait event notification on line #%u timeout\n", line);
-			stp = true;
+            break;
 		}
 
 		if (gpiod_line_event_read(line, &event) != SUCCESS){
 			TEST_PRINT_ERR("Read last event notification failed\n");
             ret = -1;
-			stp = true;
+            break;
 		}
 
         if (read(pipeFromThread1ToThread2[0], &pwmFromThread1, sizeof(int)) < SUCCESS){
             TEST_PRINT_ERR("Failed to received from thread 1 pwm count\n");
             ret = -1;
-			stp = true;
+            break;
         }
         switch (event.event_type)
         {
@@ -203,14 +202,8 @@ void *detect_pwm( void *ptr ){
             }
         }
 
-        if (stp == true){
-            printf("break");
-            break;
-        }
-
         if (pwmFromThread1 == counter && pwmFromThread1 == 10){
             TEST_PRINT_TRC("10 signal detected successfully\n");
-            result = 0;
             break;
         }
         else if (pwmFromThread1 != counter)
@@ -221,11 +214,6 @@ void *detect_pwm( void *ptr ){
         }
 	}
 
-    if (result < ret)
-    {
-        ret = result;
-    }
-    
     if (write(pipeFromThreadToMain[1], &ret, sizeof(int)) < SUCCESS){
         TEST_PRINT_ERR("Error! Failed to write into main thread\n");
     }
