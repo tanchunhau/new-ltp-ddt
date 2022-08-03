@@ -134,7 +134,7 @@ end:
     if (ret != 0) resultFromThread = ret;
     TEST_PRINT_TST_RESULT(resultFromThread, testcaseid);
     TEST_PRINT_TST_END(testcaseid);
-    return ret;
+    return resultFromThread;
 }
 
 void *generate_pwm_random_interval( void *ptr ){
