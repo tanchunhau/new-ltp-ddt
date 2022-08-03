@@ -157,7 +157,7 @@ void *generate_pwm_random_interval( void *ptr ){
 }
 
 void *detect_pwm( void *ptr ){
-    int i, ret, val = 0, timing, counter = 0;
+    int i, val = 0, timing, counter = 0;
     struct gpiod_line *line = ptr;
     bool stp = false;
     struct timespec ts = { 3, 0 };
