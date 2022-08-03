@@ -130,7 +130,6 @@ release_line1:
 close_chip:
     gpiod_chip_close(chip);
 end:
-    TEST_PRINT_TST_RESULT(result, testcaseid);
     TEST_PRINT_TST_END(testcaseid);
     return ret;
 }
@@ -200,6 +199,7 @@ void *detect_pwm( void *ptr ){
         if (pwm_num == 10 && counter == 10){
             TEST_PRINT_ERR("10 signal detected successfully\n");
             result = 0;
+            TEST_PRINT_TST_RESULT(result, testcaseid);
             break;
         }
         else if (pwm_num == 10 && counter != 10)
