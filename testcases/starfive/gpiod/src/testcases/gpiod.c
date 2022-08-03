@@ -162,7 +162,7 @@ void *detect_pwm( void *ptr ){
     bool stp = false;
     struct timespec ts = { 3, 0 };
     struct gpiod_line_event event;
-    int ret  = -1, pwmFromThread1;
+    int ret  = -1, pwmFromThread1, result;
 
     while (true) {
 		ret = gpiod_line_event_wait(line, &ts);
@@ -210,17 +210,22 @@ void *detect_pwm( void *ptr ){
 
         if (pwmFromThread1 == counter && pwmFromThread1 == 10){
             TEST_PRINT_TRC("10 signal detected successfully\n");
-            ret = 0;
+            result = 0;
             break;
         }
         else if (pwmFromThread1 != counter)
         {
             TEST_PRINT_ERR("FAILED! %d signal detected while %d signal sent\n", counter, pwmFromThread1);
-            ret = -1;
+            ret= -1;
             break;
         }
 	}
 
+    if (result < ret)
+    {
+        ret = result;
+    }
+    
     if (write(pipeFromThreadToMain[1], &ret, sizeof(int)) < SUCCESS){
         TEST_PRINT_ERR("Error! Failed to write into main thread\n");
     }
