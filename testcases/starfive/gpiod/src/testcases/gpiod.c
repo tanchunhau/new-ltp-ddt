@@ -12,6 +12,7 @@
 #include <st_defines.h>
 #include <st_log.h>
 #include <st_fileapi.h>
+
 #include <st_timer.h>
 #include <st_cpu_load.h>
 
@@ -116,8 +117,6 @@ int main(int argc, char const *argv[])
     }
 
     printf("The result from thread is %d\n", resultFromThread);
-    TEST_PRINT_TST_RESULT(result, testcaseid);
-    TEST_PRINT_TST_END(testcaseid);
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
 
@@ -131,6 +130,8 @@ release_line1:
 close_chip:
     gpiod_chip_close(chip);
 end:
+    TEST_PRINT_TST_RESULT(result, testcaseid);
+    TEST_PRINT_TST_END(testcaseid);
     return ret;
 }
 
