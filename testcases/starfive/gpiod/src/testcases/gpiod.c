@@ -9,6 +9,12 @@
 #include <stdlib.h>
 #include <sys/select.h>
 
+#include <st_defines.h>
+#include <st_log.h>
+#include <st_fileapi.h>
+#include <st_timer.h>
+#include <st_cpu_load.h>
+
 #ifndef CONSUMER
 #define CONSUMER    "YuSheng"
 #endif
@@ -31,11 +37,11 @@ int main(int argc, char const *argv[])
     //checking if correct amount of arguments is passed
     for (int i = 1; i < 4; i++){
         if (i < 3 && argv[i] == NULL){
-            printf("Error! Less than 2 arguments is passed. Please pass 2 arguments to the program\n");
+            TEST_PRINT_ERR("Error! Less than 2 arguments is passed. Please pass 2 arguments to the program\n");
             goto end;
         }
         else if(i == 3 && argv[i] != NULL){
-            printf("Error! More than 2 arguments is passd. Please pass 2 arguments to the program\n");
+            TEST_PRINT_ERR("Error! More than 2 arguments is passd. Please pass 2 arguments to the program\n");
             goto end;
         }
     }
@@ -49,35 +55,35 @@ int main(int argc, char const *argv[])
 
     chip = gpiod_chip_open_by_name(chipname);
 	if (!chip) {
-		perror("Open chip failed\n");
+		TEST_PRINT_ERR("Open chip failed\n");
 		ret = -1;
 		goto end;
 	}
 
     line1 = gpiod_chip_get_line(chip, line_num1);
     if (!line1) {
-		perror("Error! Failed to get line 1\n");
+		TEST_PRINT_ERR("Error! Failed to get line 1\n");
 		ret = -1;
 		goto close_chip;
 	}
 
     line2 = gpiod_chip_get_line(chip, line_num2);
     if (!line2) {
-		perror("Error! Failed to get line 2\n");
+		TEST_PRINT_ERR("Error! Failed to get line 2\n");
 		ret = -1;
 		goto release_line1;
 	}
 
     ret = gpiod_line_request_output(line1, CONSUMER, 0);
     if (ret < 0) {
-		perror("Error! Failed to request output at line 1\n");
+		TEST_PRINT_ERR("Error! Failed to request output at line 1\n");
 		ret = -1;
 		goto release_line2;
 	}
 
     ret = gpiod_line_request_both_edges_events(line2, CONSUMER);
     if (ret < 0) {
-		perror("Error! Failed to request input at line 2\n");
+		TEST_PRINT_ERR("Error! Failed to request input at line 2\n");
 		ret = -1;
 		goto release_line2;
 	}
@@ -86,25 +92,25 @@ int main(int argc, char const *argv[])
     //join both threads
     iret1 = pthread_create( &thread1, NULL, generate_pwm_random_interval, (void*) line1);
     if (iret1 < 0) {
-		perror("Error! Failed to generate pwm at pin 0\n");
+		TEST_PRINT_ERR("Error! Failed to generate pwm at pin 0\n");
 		ret = -1;
 		goto release_line2;
 	}
     iret2 = pthread_create( &thread2, NULL, detect_pwm, (void*) line2);
     if (iret1 < 0) {
-		perror("Error! Failed to generate pwm at pin 0\n");
+		TEST_PRINT_ERR("Error! Failed to generate pwm at pin 0\n");
 		ret = -1;
 		goto release_line2;
 	}
 
     if (pipe(pipeFromThreadToMain) != SUCCESS){
-        printf("Failed to initiate pipe\n");
+        TEST_PRINT_ERR("Failed to initiate pipe\n");
         goto release_line2;
         ret = -1;
     }
 
     if (read(pipeFromThreadToMain[0], &resultFromThread, sizeof(int)) < SUCCESS){
-        printf("Failed to read from thread \n");
+        TEST_PRINT_ERR("Failed to read from thread \n");
         goto close_pipe;
         ret = -1;
     }
@@ -152,8 +158,8 @@ void *detect_pwm( void *ptr ){
     while (true) {
 		ret = gpiod_line_event_wait(line, &ts);
 		if (ret < 0) {
-			perror("Wait event notification failed\n");
-            printf("fail");
+			TEST_PRINT_ERR("Wait event notification failed\n");
+            TEST_PRINT_ERR("fail");
 			ret = -1;
 			stp = true;
 		} else if (ret == 0) {
@@ -162,7 +168,7 @@ void *detect_pwm( void *ptr ){
 		}
 
 		if (gpiod_line_event_read(line, &event) != SUCCESS){
-			perror("Read last event notification failed\n");
+			TEST_PRINT_ERR("Read last event notification failed\n");
 			stp = true;
 		}
 
@@ -190,18 +196,20 @@ void *detect_pwm( void *ptr ){
         }
 
         if (pwm_num == 10 && counter == 10){
-            printf("10 signal detected successfully\n");
+            TEST_PRINT_ERR("10 signal detected successfully\n");
             result = 0;
             break;
         }
         else if (pwm_num == 10 && counter != 10)
         {
-            printf("FAILED! %d signal detected\n", counter);
+            TEST_PRINT_ERR("FAILED! %d signal detected\n", counter);
             result = -1;
             break;
         }
 	}
 
-    write(pipeFromThreadToMain[1], &result, sizeof(int));
+    if (write(pipeFromThreadToMain[1], &result, sizeof(int)) < SUCCESS){
+        TEST_PRINT_ERR("Error! Failed to write into main thread\n");
+    }
     return ret;
 }
