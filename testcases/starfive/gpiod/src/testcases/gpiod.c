@@ -9,9 +9,9 @@
 #include <stdlib.h>
 #include <sys/select.h>
 
-#include <st_defines.h>
-#include <st_log.h>
-#include <st_fileapi.h>
+#include "../../ddt/utils/user/st_defines.h"
+#include "../../ddt/utils/user/st_log.h"
+#include "../../ddt/utils/user/st_fileapi.h"
 
 #include <st_timer.h>
 #include <st_cpu_load.h>
