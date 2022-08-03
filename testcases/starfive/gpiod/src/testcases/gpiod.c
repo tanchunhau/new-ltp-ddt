@@ -146,7 +146,7 @@ void *generate_pwm_random_interval( void *ptr ){
         printf("%d ", val);
         ret = gpiod_line_set_value(line, val);
         timing = (rand()%10 + 1)*100000;            //generate timing of 0.1s, 0.2s, 0.3s...1s
-        if (write(pipeFromThread1ToThread2[1], pwmSent++, sizeof(int)) < SUCCESS){
+        if (write(pipeFromThread1ToThread2[1], &pwmSent++, sizeof(int)) < SUCCESS){
             TEST_PRINT_ERR("Failed to send pwm count to thread 2\n");
         }
         usleep(timing);
@@ -179,7 +179,7 @@ void *detect_pwm( void *ptr ){
 			stp = true;
 		}
 
-        if (read(pipeFromThread1ToThread2, pwmFromThread1, sizeof(int)) < SUCCESS){
+        if (read(pipeFromThread1ToThread2, &pwmFromThread1, sizeof(int)) < SUCCESS){
             TEST_PRINT_ERR("Failed to received from thread 1 pwm count\n");
         }
         switch (event.event_type)
