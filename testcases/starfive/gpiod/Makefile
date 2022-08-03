@@ -20,7 +20,11 @@ LDFLAGS         += -g -fcommon
 INCLUDES        = -I $(KERNEL_USR_INC) -I src/interface/common -I ../utils/user
 
 #List of source files- Update this on adding a new C file
-SOURCES := src/testcases/gpiod.c
+SOURCES := \
+		../,,/ddt/utils/user/st_fileapi.c \
+		../,,/ddt/utils/user/st_timer.c \
+        ../,,/ddt/utils/user/st_cpu_load.c \
+		src/testcases/gpiod.c
 
 MAKE_TARGETS            := gpiod_tests
 
