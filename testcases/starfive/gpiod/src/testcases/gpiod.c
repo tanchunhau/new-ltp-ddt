@@ -121,6 +121,8 @@ int main(int argc, char const *argv[])
     pthread_join(thread2, NULL);
 
 close_pipe:
+    close(pipeFromThread1ToThread2[0]);
+    close(pipeFromThread1ToThread2[1]);
     close(pipeFromThreadToMain[0]);
     close(pipeFromThreadToMain[1]);
 release_line2:
@@ -171,7 +173,7 @@ void *detect_pwm( void *ptr ){
 			ret = -1;
 			stp = true;
 		} else if (ret == 0) {
-			printf("FAILED! Wait event notification on line #%u timeout\n", line);
+			TEST_PRINT_ERR("FAILED! Wait event notification on line #%u timeout\n", line);
 			break;
 		}
 
@@ -180,7 +182,7 @@ void *detect_pwm( void *ptr ){
 			stp = true;
 		}
 
-        if (read(pipeFromThread1ToThread2, &pwmFromThread1, sizeof(int)) < SUCCESS){
+        if (read(pipeFromThread1ToThread2[0], &pwmFromThread1, sizeof(int)) < SUCCESS){
             TEST_PRINT_ERR("Failed to received from thread 1 pwm count\n");
         }
         switch (event.event_type)
@@ -207,13 +209,13 @@ void *detect_pwm( void *ptr ){
         }
 
         if (pwmFromThread1 == counter && pwmFromThread1 == 10){
-            TEST_PRINT_ERR("10 signal detected successfully\n");
+            TEST_PRINT_TRC("10 signal detected successfully\n");
             result = 0;
             break;
         }
         else if (pwmFromThread1 != counter)
         {
-            TEST_PRINT_TRC("FAILED! %d signal detected while %d signal sent\n", counter, pwmFromThread1);
+            TEST_PRINT_ERR("FAILED! %d signal detected while %d signal sent\n", counter, pwmFromThread1);
             result = -1;
             break;
         }
@@ -222,6 +224,5 @@ void *detect_pwm( void *ptr ){
     if (write(pipeFromThreadToMain[1], &result, sizeof(int)) < SUCCESS){
         TEST_PRINT_ERR("Error! Failed to write into main thread\n");
     }
-    close(pipeFromThread1ToThread2[0]);
     return ret;
 }
