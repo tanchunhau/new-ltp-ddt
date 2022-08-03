@@ -130,7 +130,7 @@ release_line1:
 close_chip:
     gpiod_chip_close(chip);
 end:
-    if (ret != 0) result = ret;
+    if (ret != 0) resultFromThread = ret;
     TEST_PRINT_TST_RESULT(result, testcaseid);
     TEST_PRINT_TST_END(testcaseid);
     return ret;
