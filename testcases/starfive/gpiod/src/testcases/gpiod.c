@@ -170,6 +170,7 @@ void *detect_pwm( void *ptr ){
             break;
 		} else if (ret == 0) {
 			TEST_PRINT_ERR("FAILED! Wait event notification on line #%u timeout\n", line);
+            ret = -1;
             break;
 		}
 
@@ -209,7 +210,7 @@ void *detect_pwm( void *ptr ){
         else if (pwmFromThread1 != counter)
         {
             TEST_PRINT_ERR("FAILED! %d signal detected while %d signal sent\n", counter, pwmFromThread1);
-            ret= -1;
+            ret = -1;
             break;
         }
 	}
