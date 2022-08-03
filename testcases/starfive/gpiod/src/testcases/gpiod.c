@@ -7,13 +7,16 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/select.h>
 
 #ifndef CONSUMER
 #define CONSUMER    "YuSheng"
 #endif
+#define SUCCESS 0
 
 int pwm_num = 0;
 char *testcaseid = "gpiod_tests";
+int pipeFromThreadToMain[2];
 
 void *generate_pwm_random_interval( void *ptr );
 void *detect_pwm( void *ptr );
@@ -24,13 +27,25 @@ int main(int argc, char const *argv[])
     char *chipname = "gpiochip0";
 	static unsigned int line_num1;
     static unsigned int line_num2;
+
+    //checking if correct amount of arguments is passed
+    for (int i = 1; i < 4; i++){
+        if (i < 3 && argv[i] == NULL){
+            printf("Error! Less than 2 arguments is passed. Please pass 2 arguments to the program\n");
+            goto end;
+        }
+        else if(i == 3 && argv[i] != NULL){
+            printf("Error! More than 2 arguments is passd. Please pass 2 arguments to the program\n");
+            goto end;
+        }
+    }
     line_num1 = atoi(argv[1]);
     line_num2 = atoi(argv[2]);
 
 	struct gpiod_chip *chip;
 	struct gpiod_line *line1;
     struct gpiod_line *line2;
-    int i, ret = 0, iret1, iret2;
+    int i, ret = 0, iret1, iret2, resultFromThread;
 
     chip = gpiod_chip_open_by_name(chipname);
 	if (!chip) {
@@ -82,9 +97,26 @@ int main(int argc, char const *argv[])
 		goto release_line2;
 	}
 
+    if (pipe(pipeFromThreadToMain) != SUCCESS){
+        printf("Failed to initiate pipe\n");
+        goto release_line2;
+        ret = -1;
+    }
+
+    if (read(pipeFromThreadToMain[0], &resultFromThread, sizeof(int)) < SUCCESS){
+        printf("Failed to read from thread \n");
+        goto close_pipe;
+        ret = -1;
+    }
+
+    printf("The result from thread is %d\n", resultFromThread);
+
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
 
+close_pipe:
+    close(pipeFromThreadToMain[0]);
+    close(pipeFromThreadToMain[1]);
 release_line2:
     gpiod_line_release(line2);
 release_line1:
@@ -115,10 +147,10 @@ void *detect_pwm( void *ptr ){
     bool stp = false;
     struct timespec ts = { 3, 0 };
     struct gpiod_line_event event;
+    int result;
 
     while (true) {
 		ret = gpiod_line_event_wait(line, &ts);
-		// printf("%d \t", ret);
 		if (ret < 0) {
 			perror("Wait event notification failed\n");
             printf("fail");
@@ -129,8 +161,7 @@ void *detect_pwm( void *ptr ){
 			break;
 		}
 
-		ret = gpiod_line_event_read(line, &event);
-		if (ret < 0) {
+		if (gpiod_line_event_read(line, &event) != SUCCESS){
 			perror("Read last event notification failed\n");
 			stp = true;
 		}
@@ -160,15 +191,17 @@ void *detect_pwm( void *ptr ){
 
         if (pwm_num == 10 && counter == 10){
             printf("10 signal detected successfully\n");
-            ret = 0;
+            result = 0;
             break;
         }
         else if (pwm_num == 10 && counter != 10)
         {
             printf("FAILED! %d signal detected\n", counter);
-            ret = -1;
+            result = -1;
             break;
         }
 	}
+
+    write(pipeFromThreadToMain[1], &result, sizeof(int));
     return ret;
 }
