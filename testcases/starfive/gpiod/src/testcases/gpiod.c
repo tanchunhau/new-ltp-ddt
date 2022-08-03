@@ -21,9 +21,9 @@
 #endif
 #define SUCCESS 0
 
-int pwm_num = 0;
 char *testcaseid = "gpiod_tests";
 int pipeFromThreadToMain[2];
+int pipeFromThread1ToThread2[2];
 
 void *generate_pwm_random_interval( void *ptr );
 void *detect_pwm( void *ptr );
@@ -139,15 +139,19 @@ end:
 void *generate_pwm_random_interval( void *ptr ){
     int i, ret, val = 0, timing;
     struct gpiod_line *line = ptr;
-
+    int pwmSent = 0;
+    pipe(pipeFromThread1ToThread2);
     for (i = 0; i < 10; i++){
         val = !val;
         printf("%d ", val);
-        pwm_num++;
         ret = gpiod_line_set_value(line, val);
         timing = (rand()%10 + 1)*100000;            //generate timing of 0.1s, 0.2s, 0.3s...1s
+        if (write(pipeFromThread1ToThread2[1], pwmSent++, sizeof(int)) < SUCCESS){
+            TEST_PRINT_ERR("Failed to send pwm count to thread 2\n");
+        }
         usleep(timing);
     }
+    close(pipeFromThread1ToThread2[1]);
 }
 
 void *detect_pwm( void *ptr ){
@@ -156,7 +160,7 @@ void *detect_pwm( void *ptr ){
     bool stp = false;
     struct timespec ts = { 3, 0 };
     struct gpiod_line_event event;
-    int result;
+    int result, pwmFromThread1;
 
     while (true) {
 		ret = gpiod_line_event_wait(line, &ts);
@@ -175,6 +179,9 @@ void *detect_pwm( void *ptr ){
 			stp = true;
 		}
 
+        if (read(pipeFromThread1ToThread2, pwmFromThread1, sizeof(int)) < SUCCESS){
+            TEST_PRINT_ERR("Failed to received from thread 1 pwm count\n");
+        }
         switch (event.event_type)
         {
         case GPIOD_LINE_EVENT_RISING_EDGE:{
@@ -198,14 +205,14 @@ void *detect_pwm( void *ptr ){
             break;
         }
 
-        if (pwm_num == 10 && counter == 10){
+        if (pwmFromThread1 == counter && pwmFromThread1 == 10){
             TEST_PRINT_ERR("10 signal detected successfully\n");
             result = 0;
             break;
         }
-        else if (pwm_num == 10 && counter != 10)
+        else if (pwmFromThread1 != counter)
         {
-            TEST_PRINT_TRC("FAILED! %d signal detected\n", counter);
+            TEST_PRINT_TRC("FAILED! %d signal detected while %d signal sent\n", counter, pwmFromThread1);
             result = -1;
             break;
         }
@@ -214,5 +221,6 @@ void *detect_pwm( void *ptr ){
     if (write(pipeFromThreadToMain[1], &result, sizeof(int)) < SUCCESS){
         TEST_PRINT_ERR("Error! Failed to write into main thread\n");
     }
+    close(pipeFromThread1ToThread2[0]);
     return ret;
 }
