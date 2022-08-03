@@ -17,7 +17,7 @@ INSTALL_MODE            := 00755
 
 CFLAGS          += -g -Wall -O1 -fomit-frame-pointer -fcommon -fPIC
 LDFLAGS         += -g -fcommon
-INCLUDES        = -I $(KERNEL_USR_INC) -I src/interface/common -I ../utils/user
+INCLUDES        = -I $(KERNEL_USR_INC) -I src/interface/common -I ../../ddt/utils/user
 
 #List of source files- Update this on adding a new C file
 SOURCES := \
