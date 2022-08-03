@@ -116,7 +116,8 @@ int main(int argc, char const *argv[])
     }
 
     printf("The result from thread is %d\n", resultFromThread);
-
+    TEST_PRINT_TST_RESULT(result, testcaseid);
+    TEST_PRINT_TST_END(testcaseid);
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
 
