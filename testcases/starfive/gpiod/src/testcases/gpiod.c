@@ -112,19 +112,18 @@ int main(int argc, char const *argv[])
 
     if (read(pipeFromThreadToMain[0], &resultFromThread, sizeof(int)) < SUCCESS){
         TEST_PRINT_ERR("Failed to read from thread \n");
-        goto close_pipe;
         ret = -1;
     }
+
+    close(pipeFromThread1ToThread2[0]);
+    close(pipeFromThread1ToThread2[1]);
+    close(pipeFromThreadToMain[0]);
+    close(pipeFromThreadToMain[1]);
 
     printf("The result from thread is %d\n", resultFromThread);
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
 
-close_pipe:
-    close(pipeFromThread1ToThread2[0]);
-    close(pipeFromThread1ToThread2[1]);
-    close(pipeFromThreadToMain[0]);
-    close(pipeFromThreadToMain[1]);
 release_line2:
     gpiod_line_release(line2);
 release_line1:
@@ -163,27 +162,28 @@ void *detect_pwm( void *ptr ){
     bool stp = false;
     struct timespec ts = { 3, 0 };
     struct gpiod_line_event event;
-    int result, pwmFromThread1;
+    int ret  = -1, pwmFromThread1;
 
     while (true) {
 		ret = gpiod_line_event_wait(line, &ts);
 		if (ret < 0) {
 			TEST_PRINT_ERR("Wait event notification failed\n");
-            TEST_PRINT_ERR("fail");
-			ret = -1;
 			stp = true;
 		} else if (ret == 0) {
 			TEST_PRINT_ERR("FAILED! Wait event notification on line #%u timeout\n", line);
-			break;
+			stp = true;
 		}
 
 		if (gpiod_line_event_read(line, &event) != SUCCESS){
 			TEST_PRINT_ERR("Read last event notification failed\n");
+            ret = -1;
 			stp = true;
 		}
 
         if (read(pipeFromThread1ToThread2[0], &pwmFromThread1, sizeof(int)) < SUCCESS){
             TEST_PRINT_ERR("Failed to received from thread 1 pwm count\n");
+            ret = -1;
+			stp = true;
         }
         switch (event.event_type)
         {
@@ -210,18 +210,18 @@ void *detect_pwm( void *ptr ){
 
         if (pwmFromThread1 == counter && pwmFromThread1 == 10){
             TEST_PRINT_TRC("10 signal detected successfully\n");
-            result = 0;
+            ret = 0;
             break;
         }
         else if (pwmFromThread1 != counter)
         {
             TEST_PRINT_ERR("FAILED! %d signal detected while %d signal sent\n", counter, pwmFromThread1);
-            result = -1;
+            ret = -1;
             break;
         }
 	}
 
-    if (write(pipeFromThreadToMain[1], &result, sizeof(int)) < SUCCESS){
+    if (write(pipeFromThreadToMain[1], &ret, sizeof(int)) < SUCCESS){
         TEST_PRINT_ERR("Error! Failed to write into main thread\n");
     }
     return ret;
