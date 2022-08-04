@@ -91,23 +91,29 @@ int main(int argc, char const *argv[])
 
     //create 2 thread, one send output, one received input
     //join both threads
-    iret1 = pthread_create( &thread1, NULL, generate_pwm_random_interval, (void*) line1);
-    if (iret1 < 0) {
+    if (pipe(pipeFromThread1ToThread2) < SUCCESS){
+        TEST_PRINT_ERR("Error! Failed to initiate pipe from thread 1 to thread 2");
+        ret = -1;
+        goto release_line2;
+    }
+
+    if (pthread_create( &thread1, NULL, generate_pwm_random_interval, (void*) line1) < SUCCESS){
 		TEST_PRINT_ERR("Error! Failed to generate pwm at pin 0\n");
 		ret = -1;
-		goto release_line2;
+		goto closePipeThreadToMain;
 	}
-    iret2 = pthread_create( &thread2, NULL, detect_pwm, (void*) line2);
-    if (iret1 < 0) {
+
+    if (pthread_create( &thread2, NULL, detect_pwm, (void*) line2) < SUCCESS){
 		TEST_PRINT_ERR("Error! Failed to generate pwm at pin 0\n");
 		ret = -1;
-		goto release_line2;
+        pthread_join(thread1, NULL);
+		goto closePipeThreadToMain;
 	}
 
     if (pipe(pipeFromThreadToMain) != SUCCESS){
         TEST_PRINT_ERR("Failed to initiate pipe\n");
-        goto release_line2;
         ret = -1;
+        goto closePipeThreadToMain;
     }
 
     if (read(pipeFromThreadToMain[0], &resultFromThread, sizeof(int)) < SUCCESS){
@@ -115,26 +121,28 @@ int main(int argc, char const *argv[])
         ret = -1;
     }
 
-    close(pipeFromThread1ToThread2[0]);
-    close(pipeFromThread1ToThread2[1]);
+closePipeThreadToMain:
     close(pipeFromThreadToMain[0]);
     close(pipeFromThreadToMain[1]);
-
-    printf("The result from thread is %d\n", resultFromThread);
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
 
+closePipeThread1ToThread2:
+    close(pipeFromThread1ToThread2[0]);
+    close(pipeFromThread1ToThread2[1]);
+
 release_line2:
     gpiod_line_release(line2);
+
 release_line1:
     gpiod_line_release(line1);
+
 close_chip:
     gpiod_chip_close(chip);
 end:
     if (ret < resultFromThread) resultFromThread = ret;
     TEST_PRINT_TST_RESULT(resultFromThread, testcaseid);
     TEST_PRINT_TST_END(testcaseid);
-    printf("%d\n", resultFromThread);
     return resultFromThread;
 }
 
@@ -142,7 +150,6 @@ void *generate_pwm_random_interval( void *ptr ){
     int i, ret, val = 0, timing;
     struct gpiod_line *line = ptr;
     int pwmSent = 0;
-    pipe(pipeFromThread1ToThread2);
     for (i = 0; i < 10; i++){
         val = !val;
         printf("%d ", val);
@@ -151,10 +158,10 @@ void *generate_pwm_random_interval( void *ptr ){
         pwmSent++;
         if (write(pipeFromThread1ToThread2[1], &pwmSent, sizeof(int)) < SUCCESS){
             TEST_PRINT_ERR("Failed to send pwm count to thread 2\n");
+            break;
         }
         usleep(timing);
     }
-    close(pipeFromThread1ToThread2[1]);
 }
 
 void *detect_pwm( void *ptr ){
