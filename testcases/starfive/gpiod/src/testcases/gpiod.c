@@ -134,6 +134,7 @@ end:
     if (ret < resultFromThread) resultFromThread = ret;
     TEST_PRINT_TST_RESULT(resultFromThread, testcaseid);
     TEST_PRINT_TST_END(testcaseid);
+    printf("%d\n", resultFromThread);
     return resultFromThread;
 }
 
